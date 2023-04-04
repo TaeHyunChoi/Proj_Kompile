@@ -23,7 +23,7 @@ public class UIBattle : MonoBehaviour
         public void Load(string slotName, string rcsCode)
         {
             name.text = slotName;
-            icon.sprite = DataMgr.Icon[rcsCode];
+            icon.sprite = ResourceMgr.SPIcon[rcsCode];
             go.SetActive(true);
         }
         public void SetActive(bool on)

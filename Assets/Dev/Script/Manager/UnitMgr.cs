@@ -2,116 +2,107 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class UnitMgr : MonoBehaviour
+public class UnitMgr
 {
-    public static UnitMgr Instance { get; private set; }
-
     public const byte GROUP_PLY  = 0;   //Player Group
     public const byte GROUP_ENM  = 1;   //Enemy Group
     public const byte GROUP_NPC  = 2;   //NPC Group
 
-    public static Dictionary<int, Unit> UnitList { get => unitList; }
-    private static Dictionary<int, Unit> unitList; //HashCode의 이점이 크게 없어진 기분쓰...
 
-    private static Transform tfPlayer;
-    private static Transform tfEnemy;
+    //유닛 데이터를 어떻게 저장할 것인가?부터 시작이구나. ...거의 뭐 원점으로 돌아왔는데?
+    public static Dictionary<int, Unit> UnitList { get => unitList; }
+    private static Dictionary<int, Unit> unitList;
+
+    private static Transform tfActive;
+    private static Transform tfInactive;
 
     public static Unit MyPC { get => myPC; }
     private static Unit myPC;
 
 
-    private void Awake()
+    public static void Init(Transform tf)
     {
-        if (Instance != null)
+        tfActive    = tf.GetChild(0);
+        tfInactive  = tf.GetChild(1);
+    }
+    public static void New(byte unitCode, Vector3 pos)
+    {
+        Unit newUnit;
+        if (tfInactive.childCount > 0)
         {
-            Destroy(this.gameObject);
-            return;
+            newUnit = tfInactive.GetChild(0).GetComponent<Unit>();
         }
-        Instance = this;
+        else
+        {
+            GameObject unitObj = new GameObject();
+            unitObj.AddComponent<SpriteRenderer>();
+            unitObj.AddComponent<Animator>();
+            newUnit = unitObj.AddComponent<Unit>();
+        }
 
-        SetUnitList();
-
-        tfPlayer    = transform.GetChild(0);
-        tfEnemy     = transform.GetChild(1);
-        myPC        = tfPlayer.GetChild(0).GetComponent<Unit>();
+        newUnit.Init(unitCode);
+        newUnit.gameObject.name = newUnit.Data.RcsCode;
+        newUnit.transform.position = pos;
+        newUnit.transform.Rotate(new Vector3(50, 0, 0), Space.World);
+        newUnit.transform.parent = tfActive;
     }
-    public void SetUnitList()
-    {
-        unitList = new Dictionary<int, Unit>();
-
-        //Group: Players
-        Unit[] units = transform.GetChild(0).GetComponentsInChildren<Unit>();
-        for (int i = 0; i < units.Length; ++i)
-            unitList.Add(units[i].GetHashCode(), units[i]);
-
-
-        //Group: Enemy
-        units = transform.GetChild(1).GetComponentsInChildren<Unit>();
-        for (int i = 0; i < units.Length; ++i)
-            unitList.Add(units[i].GetHashCode(), units[i]);
-    }
-
 
     public static void SetBattlePosition(byte type)
     {
         List<Unit> group = unitList.Values.Where(x => x.Data.Group == type).ToList();
 
-        //맵 위치 띄우기
-        float vx, vz, delta;
+        float delta;
+        Vector3 standard;
         if (type == 0)
         {
-            tfPlayer.position += Vector3.up * 100;
-            vx = -4f; ;     //x축 기준
-            vz = -3.3f;     //z축 기준
+            standard = new Vector3(-4f, 100f, -3.3f);
 
             switch (group.Count)
             {
                 case 1:
                     delta = -1.5f;
-                    group[0].transform.localPosition = new Vector3(vx, 0, vz + delta);
-                    break;
-                case 2:
-                    delta = -1f;
-                    group[0].transform.localPosition = new Vector3(vx, 0, vz + delta);
-                    group[1].transform.localPosition = new Vector3(vx, 0, vz + delta * 2);
-                    break;
-                case 3:
+                    group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                    break;                                             
+                case 2:                                                
+                    delta = -1f;                                       
+                    group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                    group[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                    break;                                             
+                case 3:                                                
                     delta = -1.5f;
-                    group[0].transform.localPosition = new Vector3(vx, 0, vz);
-                    group[1].transform.localPosition = new Vector3(vx, 0, vz + delta);
-                    group[2].transform.localPosition = new Vector3(vx, 0, vz + delta * 2);
+                    group[0].transform.localPosition = standard;
+                    group[1].transform.localPosition = standard + new Vector3(0, 0, delta);
+                    group[2].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
                     break;
             }
         }
         if (type == 1)
         {
-            tfEnemy.position += Vector3.up * 100;
-            //x축은 직접 입력
-            vz = -3f;   //z축 기준
+            standard = new Vector3(4.5f, 100f, -3f);
 
             switch (group.Count)
             {
                 case 1:
                     delta = -1.325f;
-                    group[0].transform.localPosition = new Vector3(4.5f, 0, vz + delta);
+                    group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
                     break;
                 case 2:
                     delta = -1.25f;
-                    group[0].transform.localPosition = new Vector3(4.5f, 0, vz + delta);
-                    group[1].transform.localPosition = new Vector3(4.5f, 0, vz + delta * 2);
+                    group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                    group[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
                     break;
                 case 3:
                     delta = -1.25f;
-                    group[0].transform.localPosition = new Vector3(4f, 0, vz + delta);
-                    group[1].transform.localPosition = new Vector3(4.5f, 0, vz + delta * 2);
-                    group[2].transform.localPosition = new Vector3(4f, 0, vz + delta * 3);
+                    group[0].transform.localPosition = standard + new Vector3(-0.5f, 0, delta);
+                    group[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                    group[2].transform.localPosition = standard + new Vector3(-0.5f, 0, delta * 3);
                     break;
                 case 4:
                     delta = -1.25f;
-                    group[0].transform.localPosition = new Vector3(4f, 0, vz);
-                    group[1].transform.localPosition = new Vector3(4.5f, 0, vz + delta);
-                    group[2].transform.localPosition = new Vector3(4.5f, 0, vz + delta * 2);
-                    group[3].transform.localPosition = new Vector3(3.5f, 0, vz + delta * 3);
+                    group[0].transform.localPosition = standard = new Vector3(-0.5f, 0, 0);
+                    group[1].transform.localPosition = standard + new Vector3(0, 0, delta);
+                    group[2].transform.localPosition = standard + new Vector3(0,0, delta * 2);
+                    group[3].transform.localPosition = standard + new Vector3(-1f, 0, delta * 3);
                     break;
             }
         }
@@ -131,8 +122,6 @@ public class UnitMgr : MonoBehaviour
 
         MyPC.MoveTo(new Vector3(mx, 0, mz));
     }
-
-
     public static int GetGroupCount(byte type)
     {
         return unitList.Values.Where(x => x.Data.Group == type).ToList().Count;

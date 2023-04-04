@@ -14,18 +14,31 @@ public class Main : MonoBehaviour
         }
         instance = this;
 
+
         DataMgr.LoadCSVTable();
-        DataMgr.LoadAssetFromRcs();
+        ResourceMgr.LoadAssetFromRcs();
 
-        //For Test
-        Player.TempItem();
+
+        UnitMgr.Init(transform.Find("Unit"));
+
+
         GameMgr.NowMap = DataMgr.MapTBL.Find(map => map.Code == 1000);
-
         InputMgr.Set(TestInputType);
+
+        TestSetting();
     }
 
-    private void Update()
+    //private void Update()
+    //{
+    //    InputMgr.Update();
+    //}
+    private void TestSetting()
     {
-        InputMgr.Update();
+        UnitMgr.New(0, Vector3.zero);
+        UnitMgr.New(1, Vector3.back);
+        UnitMgr.New(2, Vector3.back * 2);
+
+
+        Player.TempItem();
     }
 }

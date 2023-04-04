@@ -70,18 +70,19 @@ public struct ItemData : Interface.IDataSetter
 }
 public struct UnitData : Interface.IDataSetter
 {
-    public byte Index { get; private set; }
+    public byte Code { get; private set; }
     public byte Group { get; private set; }
     public string Name { get; private set; }
     public ushort[] StatDefault { get; private set; }
+    public string RcsCode { get; private set; }
 
     public void SetTable(Dictionary<string, string> data)
     {
-        Index = byte.Parse(data["Index"]);
+        Code = byte.Parse(data["Code"]);
 
-        if (Index < 3)
+        if (Code < 3)
             Group = UnitMgr.GROUP_PLY;
-        else if (Index < 200)
+        else if (Code < 200)
             Group = UnitMgr.GROUP_ENM;
         else
             Group = UnitMgr.GROUP_NPC;
@@ -100,6 +101,8 @@ public struct UnitData : Interface.IDataSetter
         StatDefault[(byte)StatIndex.AGI] = ushort.Parse(data["AGI"]);
         StatDefault[(byte)StatIndex.CHA] = ushort.Parse(data["CHA"]);
         StatDefault[(byte)StatIndex.LUK] = ushort.Parse(data["LUK"]);
+
+        RcsCode = data["RcsCode"];
     }
 }
 public struct MapData : Interface.IDataSetter

@@ -13,15 +13,20 @@ public class Unit : MonoBehaviour
         Counter,    //반격
     }
 
-
-    public byte Code;
     public UnitData Data { get; private set; }
-    public List<SkillData> Skill { get; private set; }
     public ushort[] Stat { get; private set; }
+    public List<SkillData> Skill { get; private set; }
+
+
+    public Vector3 Pos { get => transform.position; }
+
+
     public BattleMode Mode { get; private set; }
     public float BattleSpeed { get; private set; }
 
-    public Vector3 Pos { get => transform.position; }
+    private Animator animator;
+    private AnimatorOverrideController aoc;
+
 
     public Unit(UnitData data, int level)
     {
@@ -35,7 +40,7 @@ public class Unit : MonoBehaviour
         Array.Copy(Data.StatDefault, Stat, (ushort)StatIndex.CNT);
 
         //캐릭터 스킬
-        List<SkillData> skill = DataMgr.SkillTBL.FindAll(skill => skill.ActorIndex == data.Index);
+        List<SkillData> skill = DataMgr.SkillTBL.FindAll(skill => skill.ActorIndex == data.Code);
         Skill = skill;
 
         //공통 스킬
@@ -47,7 +52,7 @@ public class Unit : MonoBehaviour
     public void Init(byte unitIndex)
     {
         //기본값 정보 저장
-        Data = DataMgr.UnitTBL.Find(unit => unit.Index == unitIndex);
+        Data = DataMgr.UnitTBL.Find(unit => unit.Code == unitIndex);
 
         //스탯 초기화 (깊은 복사 사용)
         Stat = new ushort[(ushort)StatIndex.CNT];
@@ -61,7 +66,23 @@ public class Unit : MonoBehaviour
         skill = DataMgr.SkillTBL.FindAll(skill => skill.ActorIndex == 255); //공통스킬
         for (int i = 0; i < skill.Count; ++i)
             Skill.Add(skill[i]);
+
+        aoc = new AnimatorOverrideController(ResourceMgr.AOC);
+        animator = transform.GetComponent<Animator>();
+        animator.runtimeAnimatorController = aoc;
+        PlayAnime(AocCode.IDLE);
     }
+    
+    public void PlayAnime(string type, string code = null)
+    {
+        if (code == null)
+            code = type;
+
+        AnimationClip ac = ResourceMgr.Anime[Data.RcsCode + "/" + code];
+        aoc[type] = ac;
+        animator.CrossFade(type, 0f);
+    }
+
     public void SetBattleSpeed()
     {
         float isLukcy = Stat[(ushort)StatIndex.LUK];
@@ -82,16 +103,6 @@ public class Unit : MonoBehaviour
     }
 
 
-    public void SetStat()
-    { 
-        
-    }
-    public void AddSkill(SkillData data)
-    {
-        Skill.Add(data);
-    }
-    
-    
     public void MoveTo(Vector3 dir)
     {
         transform.position += dir * Define.SPEED_MOVE * Time.deltaTime;

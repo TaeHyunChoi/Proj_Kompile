@@ -5,23 +5,12 @@ using UnityEngine;
 
 public class DataMgr
 {
-    //## Asset
-    public static Dictionary<string, Sprite> Icon { get; private set; }
-
     //## DataTable
     public static List<SkillData> SkillTBL { get; private set; }
     public static List<ItemData> ItemTBL { get; private set; }
     public static List<UnitData> UnitTBL { get; private set; }
     public static List<MapData> MapTBL { get; private set; }
 
-
-    public static void LoadAssetFromRcs()
-    {
-        Icon = new Dictionary<string, Sprite>();
-        Sprite[] menu = Resources.LoadAll<Sprite>("Sprite/Icon");
-        for (int i = 0; i < menu.Length; ++i)
-            Icon.Add(menu[i].name, menu[i]);
-    }
     public static void LoadCSVTable()
     {
         SkillTBL = LoadTable<SkillData>(ReadCSVFile("SkillData"));

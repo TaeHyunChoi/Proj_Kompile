@@ -84,6 +84,13 @@ public enum TargetType : byte
     All_ExceptMe = 6,
     All = 7
 }
+public static class AocCode
+{
+    public const string IDLE    = "IDLE";
+    public const string MOVE    = "MOVE";
+    public const string SKILL   = "SKILL";
+    public const string EVENT   = "EVENT";
+}
 
 //## DataTable
 public enum Item : ushort

@@ -17,7 +17,7 @@ public class GameMgr
 
     public static MapData NowMap;
 
-    private static List<int> BattleOrder; //HashCode 저장
+    private static List<int> BattleOrder; //HashCode 저장?
     public static Unit NowUnit { get => UnitMgr.UnitList[BattleOrder[nowOrder]]; }
     private static int nowOrder;
     private static Vector3 lastFieldPos;
@@ -38,30 +38,21 @@ public class GameMgr
         UnitMgr.SetBattlePosition(UnitMgr.GROUP_PLY);
 
         //## Set Enemies
-        //Select Enemy units From MapData : 임의 설정
+        //Select Enemy units From MapData
         //Set Enemy Unit Data
         SetEnemies(out List<Unit> enemies);
 
-        //개발중.
-        //---------------------------------------------------------------------------
-        return;
-
-        UnitMgr.SetBattlePosition(UnitMgr.GROUP_ENM);
-
         //Set Battle Order
         OrderByShellSort(out BattleOrder);
-        for (int i = 0; i < BattleOrder.Count; ++i)
-            Debug.Log($"Order[{i}] {UnitMgr.UnitList[BattleOrder[i]]}");
 
+        //Set Position : 공격 순서에 따라 위치를 조금씩 바꾸는 위트도?
+        UnitMgr.SetBattlePosition(UnitMgr.GROUP_ENM);
 
         //Set Game State
         state = GameState.Battle;
         InputMgr.Set(InputMode.Battle_Menu);
 
         //Loop Battle Systems
-
-
-        //UIMgr.Show(UIWindow.Battle, true);
     }
     private static void OrderByShellSort(out List<int> hash)
     {
@@ -112,7 +103,7 @@ public class GameMgr
 
         for (int i = 0; i < battleMap.MobVariety; ++i)
         {
-            UnitData data = DataMgr.UnitTBL.Find(x => x.Index == mobIndex);
+            UnitData data = DataMgr.UnitTBL.Find(x => x.Code == mobIndex);
             mobLv = UnityEngine.Random.Range(battleMap.MinLv, battleMap.MaxLv + 1);
 
             if (totalLv + mobLv > battleMap.TotalLv)
