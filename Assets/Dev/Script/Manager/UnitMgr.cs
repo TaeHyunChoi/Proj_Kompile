@@ -10,22 +10,24 @@ public class UnitMgr
 
 
     //유닛 데이터를 어떻게 저장할 것인가?부터 시작이구나. ...거의 뭐 원점으로 돌아왔는데?
-    public static Dictionary<int, Unit> UnitList { get => unitList; }
-    private static Dictionary<int, Unit> unitList;
+    public static Dictionary<int, Unit> Units { get => units; }
+    private static Dictionary<int, Unit> units;
 
     private static Transform tfActive;
     private static Transform tfInactive;
 
     public static Unit MyPC { get => myPC; }
-    private static Unit myPC;
+    public static Unit myPC;
 
 
     public static void Init(Transform tf)
     {
         tfActive    = tf.GetChild(0);
         tfInactive  = tf.GetChild(1);
+
+        units = new Dictionary<int, Unit>();
     }
-    public static void New(byte unitCode, Vector3 pos)
+    public static void New(int unitCode, Vector3 pos)
     {
         Unit newUnit;
         if (tfInactive.childCount > 0)
@@ -44,12 +46,19 @@ public class UnitMgr
         newUnit.gameObject.name = newUnit.Data.RcsCode;
         newUnit.transform.position = pos;
         newUnit.transform.Rotate(new Vector3(50, 0, 0), Space.World);
+
+        units.Add(newUnit.gameObject.GetHashCode(), newUnit);
         newUnit.transform.parent = tfActive;
     }
+    public static void SetMyPC(int unitCode)
+    {
+        myPC = GetUnitByCode(unitCode);
+    }
 
+ 
     public static void SetBattlePosition(byte type)
     {
-        List<Unit> group = unitList.Values.Where(x => x.Data.Group == type).ToList();
+        List<Unit> group = units.Values.Where(x => x.Data.Group == type).ToList();
 
         float delta;
         Vector3 standard;
@@ -124,9 +133,15 @@ public class UnitMgr
     }
     public static int GetGroupCount(byte type)
     {
-        return unitList.Values.Where(x => x.Data.Group == type).ToList().Count;
+        return units.Values.Where(x => x.Data.Group == type).ToList().Count;
     }
 
+
+    public static Unit GetUnitByCode(int unitCode)
+    {
+        int hash = units.First(x => x.Value.Data.Code == unitCode).Key;
+        return units[hash];
+    }
 
     public static List<SkillData> GetSkillTypeof(Unit unit, int type)
     {

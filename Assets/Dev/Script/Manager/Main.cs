@@ -3,10 +3,11 @@ using UnityEngine;
 public class Main : MonoBehaviour
 {
     public Main instance { private get; set; }
-    public InputMode TestInputType;
+    private InputMode NowInputMode;
 
     private void Awake()
     {
+        //## Instancing
         if (instance != null)
         {
             Destroy(this.gameObject);
@@ -14,31 +15,22 @@ public class Main : MonoBehaviour
         }
         instance = this;
 
-
+        //## Get RawData
         DataMgr.LoadCSVTable();
         ResourceMgr.LoadAssetFromRcs();
 
-
+        //## Init Managers
+        CameraMgr.Init(transform.Find("Camera"));
         UnitMgr.Init(transform.Find("Unit"));
 
-
+        //## Set GameData
+        Player.Init();
         GameMgr.NowMap = DataMgr.MapTBL.Find(map => map.Code == 1000);
-        InputMgr.Set(TestInputType);
-
-        TestSetting();
+        InputMgr.Set(NowInputMode = InputMode.Base);
     }
 
-    //private void Update()
-    //{
-    //    InputMgr.Update();
-    //}
-    private void TestSetting()
+    private void Update()
     {
-        UnitMgr.New(0, Vector3.zero);
-        UnitMgr.New(1, Vector3.back);
-        UnitMgr.New(2, Vector3.back * 2);
-
-
-        Player.TempItem();
+        InputMgr.Update();
     }
 }

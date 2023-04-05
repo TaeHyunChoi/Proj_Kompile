@@ -45,35 +45,18 @@ public class InputMgr
             input |= InputKey.Info;
 
         //테스트
-        if (Input.GetKeyDown(KeyCode.Space))
-            GameMgr.EnterBattle();
+        Test();
     }
     
 
-    //Field
     private static void Field()
     {
-        if (Input.GetButton("Up"))
-            input |= InputKey.Up;
-        if (Input.GetButton("Down"))
-            input |= InputKey.Down;
-        if (Input.GetButton("Left"))
-            input |= InputKey.Left;
-        if (Input.GetButton("Right"))
-            input |= InputKey.Right;
-
         if((input & InputKey.Direction) > 0)
             UnitMgr.PlayerMoveTo(input);
 
         if ((input & InputKey.Confirm) > 0)
-        {
             Debug.Log("Confirm");
-            //상호작용키. 아마도 GameMgr?
-        }
     }
-
-
-    //Battle
     private static void BattleAction()
     {
         if (Input.GetButton("C"))
@@ -90,6 +73,13 @@ public class InputMgr
 
         if (input > 0)
             UIBattle.SelectTarget(input);
+    }
+
+
+    private static void Test()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+            GameMgr.EnterBattle();
     }
     
     

@@ -17,8 +17,8 @@ public class GameMgr
 
     public static MapData NowMap;
 
-    private static List<int> BattleOrder; //HashCode ÀúÀå?
-    public static Unit NowUnit { get => UnitMgr.UnitList[BattleOrder[nowOrder]]; }
+    private static List<int> BattleOrder;
+    public static Unit NowUnit { get => UnitMgr.Units[BattleOrder[nowOrder]]; }
     private static int nowOrder;
     private static Vector3 lastFieldPos;
 
@@ -27,11 +27,11 @@ public class GameMgr
     public static void EnterBattle()
     {
         //Save Field Position For Back To Field
-        lastFieldPos = UnitMgr.MyPC.transform.localPosition;
+        lastFieldPos = UnitMgr.MyPC.Pos;
 
-        //Set Battle Field
+        //## Set Battle Field
+        CameraMgr.OnBattleCam(true);
         //Set Map Rcs
-        CameraMgr.MainCam.transform.position = new Vector3(0f, 105f, -10f);
 
         //## Set Players
         //Get Player Unit Data
@@ -57,22 +57,22 @@ public class GameMgr
     private static void OrderByShellSort(out List<int> hash)
     {
         hash = new List<int>();
-        hash.AddRange(UnitMgr.UnitList.Keys);
+        hash.AddRange(UnitMgr.Units.Keys);
 
         //Set Battle Speed
         int count = hash.Count;
         for (int i = 0; i < count; ++i)
-            UnitMgr.UnitList[hash[i]].SetBattleSpeed();
+            UnitMgr.Units[hash[i]].SetBattleSpeed();
 
         //Ordered by Shell Sort
         for (int gap = (count >> 1); gap > 0; gap >>= 1)
         {
             for (int i = gap; i < count; ++i)
             {
-                Unit temp = UnitMgr.UnitList[hash[i]];
+                Unit temp = UnitMgr.Units[hash[i]];
 
                 int j;
-                for (j = i; j >= gap && UnitMgr.UnitList[hash[j - gap]].BattleSpeed < temp.BattleSpeed; j -= gap)
+                for (j = i; j >= gap && UnitMgr.Units[hash[j - gap]].BattleSpeed < temp.BattleSpeed; j -= gap)
                 {
                     //Swap
                     hash[j] ^= hash[j - gap];
@@ -80,13 +80,13 @@ public class GameMgr
                     hash[j] ^= hash[j - gap];
                 }
 
-                UnitMgr.UnitList[hash[j]] = temp;
+                UnitMgr.Units[hash[j]] = temp;
             }
         }
     }
     public static Unit GetUnitByOrder(int index)
     {
-        return UnitMgr.UnitList[BattleOrder[index]];
+        return UnitMgr.Units[BattleOrder[index]];
     }
 
     public static void SetEnemies(out List<Unit> enemies)

@@ -27,12 +27,28 @@ public class Player
         }
     }
 
-    public static List<SkillData> Skills { get; private set; }
+    private static bool[] activeMember;
     public static List<Item> Items { get; set; }
 
-    public static void TempItem()
+    public static void Init()
     {
+        activeMember = new bool[3];
         Items = new List<Item>();
+
+        Test();
+
+        UnitMgr.SetMyPC(UnitCode.ATAHO);
+    }
+
+    public static void Test()
+    {
+        activeMember[0] = activeMember[1] = activeMember[2] = true;
+        for (int i = 0; i < activeMember.Length; ++i)
+        {
+            if(activeMember[i])
+                UnitMgr.New(i, Vector3.zero);
+        }
+
         for (int i = 0; i < DataMgr.ItemTBL.Count; i++)
             Items.Add(new Item(DataMgr.ItemTBL[i], Random.Range(0, 3)));
     }

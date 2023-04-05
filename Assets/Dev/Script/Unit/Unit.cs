@@ -19,6 +19,7 @@ public class Unit : MonoBehaviour
 
 
     public Vector3 Pos { get => transform.position; }
+    public Vector3 LocalPos { get => transform.localPosition; }
 
 
     public BattleMode Mode { get; private set; }
@@ -27,29 +28,7 @@ public class Unit : MonoBehaviour
     private Animator animator;
     private AnimatorOverrideController aoc;
 
-
-    public Unit(UnitData data, int level)
-    {
-        Data = data;
-
-        //스탯 초기화 (깊은 복사 사용)
-        //여기를 좀 더 생각해보고 싶다?
-        //어차피 가중치 멕이고 이럴거면.. 깊은 복사로 퉁 칠 필요가 있나 싶은데..
-        //으어 졸음 온다;
-        Stat = new ushort[(ushort)StatIndex.CNT];
-        Array.Copy(Data.StatDefault, Stat, (ushort)StatIndex.CNT);
-
-        //캐릭터 스킬
-        List<SkillData> skill = DataMgr.SkillTBL.FindAll(skill => skill.ActorIndex == data.Code);
-        Skill = skill;
-
-        //공통 스킬
-        skill = DataMgr.SkillTBL.FindAll(skill => skill.ActorIndex == 255); //공통스킬
-        for (int i = 0; i < skill.Count; ++i)
-            Skill.Add(skill[i]);
-    }
-
-    public void Init(byte unitIndex)
+    public void Init(int unitIndex)
     {
         //기본값 정보 저장
         Data = DataMgr.UnitTBL.Find(unit => unit.Code == unitIndex);
@@ -67,6 +46,7 @@ public class Unit : MonoBehaviour
         for (int i = 0; i < skill.Count; ++i)
             Skill.Add(skill[i]);
 
+        //애니메이션(AOC)
         aoc = new AnimatorOverrideController(ResourceMgr.AOC);
         animator = transform.GetComponent<Animator>();
         animator.runtimeAnimatorController = aoc;

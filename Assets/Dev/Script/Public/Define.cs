@@ -91,6 +91,12 @@ public static class AocCode
     public const string SKILL   = "SKILL";
     public const string EVENT   = "EVENT";
 }
+public static class UnitCode
+{
+    public const byte ATAHO     = 0;
+    public const byte LINXHANG  = 1;
+    public const byte SMASHU    = 2;
+}
 
 //## DataTable
 public enum Item : ushort
