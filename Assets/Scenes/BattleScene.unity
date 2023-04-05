@@ -7835,7 +7835,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5da76c50605dc643a2acef244d464df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TestMapCode: 100
+  testMapCode: 100
 --- !u!114 &2064621067
 MonoBehaviour:
   m_ObjectHideFlags: 0
