@@ -18,15 +18,15 @@ public struct SkillData : Interface.IDataSetter
     public string Info { get => info; }
     public string RcsCode { get => rcsCode; }
 
-    public int Index { get => (indexPack & 0x0000_00FF); }
-    public int ActorIndex { get => (indexPack & 0x0000_0F00) >> (4 * 2); }
-    public int SkillGroup { get => (indexPack & 0x0000_F000) >> (4 * 3); }
-    public int TargetGroup { get => (indexPack & 0x000F_0000) >> (4 * 4); }
-    public int BuffIndex { get => (indexPack & 0x0FF0_0000) >> (4 * 5); }
+    public int Index        { get => (indexPack & 0x0000_00FF); }
+    public int ActorIndex   { get => (indexPack & 0x0000_0F00) >> (4 * 2); }
+    public int SkillGroup   { get => (indexPack & 0x0000_F000) >> (4 * 3); }
+    public int TargetGroup  { get => (indexPack & 0x000F_0000) >> (4 * 4); }
+    public int BuffIndex    { get => (indexPack & 0x0FF0_0000) >> (4 * 5); }
 
-    public int Accurate { get => (specPack & 0x0000_FFFF); }
-    public int Speed { get => (specPack & 0x000F_0000) >> (4 * 4); }
-    public int Power { get => (specPack & 0x00F0_0000) >> (4 * 5); }
+    public int Accurate     { get => (specPack & 0x0000_FFFF); }
+    public int Speed        { get => (specPack & 0x000F_0000) >> (4 * 4); }
+    public int Power        { get => (specPack & 0x00F0_0000) >> (4 * 5); }
 
     public void SetTable(Dictionary<string, string> data)
     {
@@ -107,50 +107,54 @@ public struct UnitData : Interface.IDataSetter
 }
 public struct MapData : Interface.IDataSetter
 {
-    public ushort Code { get; private set; }
-    public string Name { get; private set; }
-    public ushort BattleMapCode { get; private set; }
-    public byte MinLv { get; private set; }
-    public byte MaxLv { get; private set; }
-    public byte TotalLv { get; private set; }
-    public ushort[] MapNearby { get; private set; }
-    public byte[] Mob { get; private set; }
-    public byte MobVariety { get; private set; }
+    private ushort code;
+    private string name;
+    private ushort battleMapCode;
+    private byte minCount;
+    private byte maxCount;
+    private ushort[] mapNearby;
+    private byte[] mob;
+
+    public ushort Code { get => code; }
+    public string Name { get => name; }
+    public ushort BattleMapCode { get => battleMapCode; }
+    public byte MinCount { get => minCount; }
+    public byte MaxCount { get => maxCount; }
+    public ushort[] MapNearby { get => mapNearby; }
+    public byte[] Mob { get => mob; }
+
     public void SetTable(Dictionary<string, string> data)
     {
-        Code = ushort.Parse(data["Code"]);
-        Name = data["Name"];
-        BattleMapCode = ushort.Parse(data["BattleMapCode"]);
-        MinLv = byte.Parse(data["MinLv"]);
-        MaxLv = byte.Parse(data["MaxLv"]);
-        TotalLv = byte.Parse(data["TotalLv"]);
-
+        code = ushort.Parse(data["Code"]);
+        name = data["Name"];
+        battleMapCode = ushort.Parse(data["BattleMapCode"]);
+        minCount = byte.Parse(data["MinCount"]);
+        maxCount = byte.Parse(data["MaxCount"]);
 
         StringBuilder sb = new StringBuilder();
         sb.Append("Nearby");
-
-        MapNearby = new ushort[4];
+        mapNearby = new ushort[4];
         for (int i = 0; i < MapNearby.Length; ++i)
         {
             sb.Append(i);
             MapNearby[i] = ushort.Parse(data[sb.ToString()]);
             sb.Remove(sb.Length - 1, 1);
         }
-
-        Mob = new byte[10];
         sb.Clear();
+
+        List<byte> temp = new List<byte>();
         sb.Append("Mob");
-        byte variety = 0;
-        for (int i = 0; i < Mob.Length; ++i)
+        for (int i = 0; i < 10; ++i)
         {
             sb.Append(i);
-            Mob[i] = byte.Parse(data[sb.ToString()]);
+            byte mobCode = byte.Parse(data[sb.ToString()]);
+            if (mobCode <= 0)
+                break;
 
-            if (Mob[i] != 0)
-                ++variety;
-
+            //Mob[i] = byte.Parse(data[sb.ToString()]);
+            temp.Add(mobCode);
             sb.Remove(sb.Length - 1, 1);
         }
-        MobVariety = variety;
+        mob = temp.ToArray();
     }
 }

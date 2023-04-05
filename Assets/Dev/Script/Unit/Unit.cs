@@ -50,7 +50,7 @@ public class Unit : MonoBehaviour
         aoc = new AnimatorOverrideController(ResourceMgr.AOC);
         animator = transform.GetComponent<Animator>();
         animator.runtimeAnimatorController = aoc;
-        PlayAnime(AocCode.IDLE);
+        PlayAnime(Define.IDLE);
     }
     
     public void PlayAnime(string type, string code = null)
@@ -63,6 +63,12 @@ public class Unit : MonoBehaviour
         animator.CrossFade(type, 0f);
     }
 
+    public void SetBattleStat()
+    {
+        //모드에 따라 스탯 가중치 달라진다.
+
+        SetBattleSpeed();
+    }
     public void SetBattleSpeed()
     {
         float isLukcy = Stat[(ushort)StatIndex.LUK];

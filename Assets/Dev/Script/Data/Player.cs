@@ -37,7 +37,7 @@ public class Player
 
         Test();
 
-        UnitMgr.SetMyPC(UnitCode.ATAHO);
+        UnitMgr.SetMyPC(Define.ATAHO);
     }
 
     public static void Test()
@@ -45,8 +45,10 @@ public class Player
         activeMember[0] = activeMember[1] = activeMember[2] = true;
         for (int i = 0; i < activeMember.Length; ++i)
         {
-            if(activeMember[i])
+            if (activeMember[i])
+            {
                 UnitMgr.New(i, Vector3.zero);
+            }
         }
 
         for (int i = 0; i < DataMgr.ItemTBL.Count; i++)

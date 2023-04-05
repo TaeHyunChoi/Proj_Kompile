@@ -2,18 +2,18 @@ using UnityEngine;
 
 public class Main : MonoBehaviour
 {
-    public Main instance { private get; set; }
-    private InputMode NowInputMode;
+    public Main Instance { private get; set; }
+    public int testMapCode;
 
     private void Awake()
     {
         //## Instancing
-        if (instance != null)
+        if (Instance != null)
         {
             Destroy(this.gameObject);
             return;
         }
-        instance = this;
+        Instance = this;
 
         //## Get RawData
         DataMgr.LoadCSVTable();
@@ -25,8 +25,8 @@ public class Main : MonoBehaviour
 
         //## Set GameData
         Player.Init();
-        GameMgr.NowMap = DataMgr.MapTBL.Find(map => map.Code == 1000);
-        InputMgr.Set(NowInputMode = InputMode.Base);
+        GameMgr.NowMap = DataMgr.MapTBL.Find(map => map.Code == testMapCode);
+        InputMgr.Set(InputMode.Base);
     }
 
     private void Update()

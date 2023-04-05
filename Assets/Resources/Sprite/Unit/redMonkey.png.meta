@@ -104,7 +104,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: redMonkey_IDLE
+      name: IDLE
       rect:
         serializedVersion: 2
         x: 1
@@ -240,8 +240,8 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
+      IDLE: -2003165996
       redMonkey_3: 2013816758
-      redMonkey_IDLE: -2003165996
       redMonkey_4: -796306989
       redMonkey_1: 642672644
       redMonkey_5: -38515845

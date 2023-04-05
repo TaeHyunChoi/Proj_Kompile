@@ -65,14 +65,14 @@ public class UIBattle : MonoBehaviour
     #endregion
 
     //Index
-    private static int select = UIIndex.BATTLE_ATK_BASIC;
+    private static int select = Index.BATTLE_ATK_BASIC;
     private static int contentMaxIndex;
     private static byte actorIndex;
     private static int menuIndex { get => (select >> MenuShift) - 1; }
     private static int contentIndex { get => select & contentMask; }
 
     //Now unit
-    private static Unit selectedUnit { get => GameMgr.NowUnit; }
+    private static Unit selectedUnit { get => GameMgr.BattleUnits; }
 
     public static void Show(bool on)
     {
@@ -87,7 +87,7 @@ public class UIBattle : MonoBehaviour
             if (actor.Data.Group == UnitMgr.GROUP_PLY)
             {
                 Instance.playerMenuPanel.SetActive(true);
-                Instance.UpdateUIContent(actor, UIIndex.BATTLE_ATK_BASIC);
+                Instance.UpdateUIContent(actor, Index.BATTLE_ATK_BASIC);
             }
             else
                 Instance.playerMenuPanel.SetActive(false);
@@ -130,8 +130,8 @@ public class UIBattle : MonoBehaviour
                 {
                     int check = select;
                     check -= (1 << MenuShift);
-                    if ((check & menuMask) == UIIndex.BATTLE_MIN)
-                        select = UIIndex.BATTLE_MAX - (1 << MenuShift);
+                    if ((check & menuMask) == Index.BATTLE_MIN)
+                        select = Index.BATTLE_MAX - (1 << MenuShift);
                     else
                         select = check;
 
@@ -144,8 +144,8 @@ public class UIBattle : MonoBehaviour
                 {
                     int check = select;
                     check += (1 << MenuShift);
-                    if ((check & menuMask) == UIIndex.BATTLE_MAX)
-                        select = UIIndex.BATTLE_MIN + (1 << MenuShift);
+                    if ((check & menuMask) == Index.BATTLE_MAX)
+                        select = Index.BATTLE_MIN + (1 << MenuShift);
                     else
                         select = check;
 
@@ -208,12 +208,12 @@ public class UIBattle : MonoBehaviour
                                 */
                             }
                             break;
-                        case UIIndex.BATTLE_CHANGE_MODE:
+                        case Index.BATTLE_CHANGE_MODE:
                             {
                                 Debug.Log($"Change Mode");
                             }
                             break;
-                        case UIIndex.BATTLE_USE_ITEM:
+                        case Index.BATTLE_USE_ITEM:
                             {
                                 Debug.Log($"Use Item");
                             }
