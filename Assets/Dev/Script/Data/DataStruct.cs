@@ -81,26 +81,26 @@ public struct UnitData : Interface.IDataSetter
         Code = byte.Parse(data["Code"]);
 
         if (Code < 3)
-            Group = UnitMgr.GROUP_PLY;
+            Group = IDxUNIT.PLAYER;
         else if (Code < 200)
-            Group = UnitMgr.GROUP_ENM;
+            Group = IDxUNIT.ENEMY;
         else
-            Group = UnitMgr.GROUP_NPC;
+            Group = IDxUNIT.NPC;
 
         Name = data["Name"];
 
-        StatDefault = new ushort[(byte)StatIndex.CNT];
-        StatDefault[(byte)StatIndex.HP] = ushort.Parse(data["HP"]);
-        StatDefault[(byte)StatIndex.MP] = ushort.Parse(data["MP"]);
-        StatDefault[(byte)StatIndex.EXP] = 0;
-        StatDefault[(byte)StatIndex.STR] = ushort.Parse(data["STR"]);
-        StatDefault[(byte)StatIndex.CON] = ushort.Parse(data["CON"]);
-        StatDefault[(byte)StatIndex.INT] = ushort.Parse(data["INT"]);
-        StatDefault[(byte)StatIndex.WIS] = ushort.Parse(data["WIS"]);
-        StatDefault[(byte)StatIndex.DEX] = ushort.Parse(data["DEX"]);
-        StatDefault[(byte)StatIndex.AGI] = ushort.Parse(data["AGI"]);
-        StatDefault[(byte)StatIndex.CHA] = ushort.Parse(data["CHA"]);
-        StatDefault[(byte)StatIndex.LUK] = ushort.Parse(data["LUK"]);
+        StatDefault = new ushort[IDxUNIT.STAT_CNT];
+        StatDefault[IDxUNIT.HP]  = ushort.Parse(data["HP"]);
+        StatDefault[IDxUNIT.MP]  = ushort.Parse(data["MP"]);
+        StatDefault[IDxUNIT.EXP] = 0;
+        StatDefault[IDxUNIT.STR] = ushort.Parse(data["STR"]);
+        StatDefault[IDxUNIT.CON] = ushort.Parse(data["CON"]);
+        StatDefault[IDxUNIT.INT] = ushort.Parse(data["INT"]);
+        StatDefault[IDxUNIT.WIS] = ushort.Parse(data["WIS"]);
+        StatDefault[IDxUNIT.DEX] = ushort.Parse(data["DEX"]);
+        StatDefault[IDxUNIT.AGI] = ushort.Parse(data["AGI"]);
+        StatDefault[IDxUNIT.CHA] = ushort.Parse(data["CHA"]);
+        StatDefault[IDxUNIT.LUK] = ushort.Parse(data["LUK"]);
 
         RcsCode = data["RcsCode"];
     }

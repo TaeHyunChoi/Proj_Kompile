@@ -3,7 +3,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static Player;
-using static UnityEditor.Progress;
 
 public class UIBattle : MonoBehaviour
 {
@@ -51,25 +50,43 @@ public class UIBattle : MonoBehaviour
     #endregion
     #region BitMask
     //Mask
-    private const ushort playerMask     = 0b_1100_0000_0000_0000;   // << 14
-    private const ushort groupMask      = 0b_0011_1000_0000_0000;   // << 11 
-    private const ushort targetMask     = 0b_0000_0110_0000_0000;   // << 9
-    private const ushort menuMask       = 0b_0000_0001_1100_0000;   // << 6
-    private const ushort contentMask    = 0b_0000_0000_0011_1111;
+    private const ushort maskPlayer     = 0b_1100_0000_0000_0000;   // << 14
+    private const ushort maskGroup      = 0b_0011_1000_0000_0000;   // << 11 
+    private const ushort maskTarget     = 0b_0000_0110_0000_0000;   // << 9
+    private const ushort maskMenu       = 0b_0000_0001_1100_0000;   // << 6
+    private const ushort maskContent    = 0b_0000_0000_0011_1111;
 
     //Shift
-    public const ushort ActorShift     = 14;    //현재 액션을 선택하는 유닛 인덱스(Players)
-    public const ushort GroupShift     = 11;    //스킬의 타겟 그룹
-    public const ushort TargetShift    = 9;     //스킬의 타겟 유닛
-    public const ushort MenuShift      = 6;     //UI 메뉴
+    private const ushort shiftActor     = 14;    //현재 액션을 선택하는 유닛 인덱스(Players)
+    private const ushort shiftGroup     = 11;    //스킬의 타겟 그룹
+    private const ushort shiftTarget    = 9;     //스킬의 타겟 유닛
+    private const ushort shiftMenu      = 6;     //UI 메뉴
+    #endregion
+    #region Index
+    private static string[] MODE = new string[] { "보통", "돌격", "방어", "선제", "반격" };
+
+    private const byte MODE_NORMAL          = 0;    //보통
+    private const byte MODE_CHARGE          = 1;    //돌격
+    private const byte MODE_DEFENCE         = 2;    //방어
+    private const byte MODE_PREEEMPTIVE     = 3;    //선제
+    private const byte MODE_COUNTER         = 4;    //반격
+
+    private const ushort idxMin             = 0;
+    private const ushort idxAtkBasic        = 1 << shiftMenu;
+    private const ushort idxSkillSolo       = 2 << shiftMenu;
+    private const ushort idxSkillGroup      = 3 << shiftMenu; 
+    private const ushort idxMode            = 4 << shiftMenu;
+    private const ushort idxItem            = 5 << shiftMenu;
+    private const ushort idxSkillSpecial    = 6 << shiftMenu;
+    private const ushort idxMax             = 7 << shiftMenu;
     #endregion
 
     //Index
-    private static int select = Index.BATTLE_ATK_BASIC;
+    private static int select = idxAtkBasic;
     private static int contentMaxIndex;
     private static byte actorIndex;
-    private static int menuIndex { get => (select >> MenuShift) - 1; }
-    private static int contentIndex { get => select & contentMask; }
+    private static int menuIndex { get => (select >> shiftMenu) - 1; }
+    private static int contentIndex { get => select & maskContent; }
 
     //Now unit
     private static Unit selectedUnit { get => GameMgr.BattleUnits; }
@@ -84,10 +101,10 @@ public class UIBattle : MonoBehaviour
 
             //유저 턴? 선택 UI 오픈
             Unit actor = GameMgr.GetUnitByOrder(actorIndex);
-            if (actor.Data.Group == UnitMgr.GROUP_PLY)
+            if (actor.Data.Group == IDxUNIT.PLAYER)
             {
                 Instance.playerMenuPanel.SetActive(true);
-                Instance.UpdateUIContent(actor, Index.BATTLE_ATK_BASIC);
+                Instance.UpdateUIContent(actor, idxAtkBasic);
             }
             else
                 Instance.playerMenuPanel.SetActive(false);
@@ -121,50 +138,50 @@ public class UIBattle : MonoBehaviour
     }
 
     //Select Menu
-    public static void SelectMenu(InputKey input)
+    public static void SelectMenu(int input)
     {
         //Get Input : Direction
-        switch (input & InputKey.Direction)
+        switch (input & IDxINPUT.DIRECTION)
         {
-            case InputKey.Left:
+            case IDxINPUT.LEFT:
                 {
                     int check = select;
-                    check -= (1 << MenuShift);
-                    if ((check & menuMask) == Index.BATTLE_MIN)
-                        select = Index.BATTLE_MAX - (1 << MenuShift);
+                    check -= (1 << shiftMenu);
+                    if ((check & maskMenu) == idxMin)
+                        select = idxMax - (1 << shiftMenu);
                     else
                         select = check;
 
-                    select &= ~contentMask;
+                    select &= ~maskContent;
 
                     Instance.UpdateUIContent(selectedUnit, select);
                 }
                 break;
-            case InputKey.Right:
+            case IDxINPUT.RIGHT:
                 {
                     int check = select;
-                    check += (1 << MenuShift);
-                    if ((check & menuMask) == Index.BATTLE_MAX)
-                        select = Index.BATTLE_MIN + (1 << MenuShift);
+                    check += (1 << shiftMenu);
+                    if ((check & maskMenu) == idxMin)
+                        select = idxMin + (1 << shiftMenu);
                     else
                         select = check;
 
-                    select &= ~contentMask;
+                    select &= ~maskContent;
                     Instance.UpdateUIContent(selectedUnit, select);
                 }
                 break;
-            case InputKey.Up:
+            case IDxINPUT.UP:
                 {
-                    if ((select & contentMask) == 0x00)
+                    if ((select & maskContent) == 0x00)
                         select |= contentMaxIndex;
                     else
                         select -= 0x01;
                 }
                 break;
-            case InputKey.Down:
+            case IDxINPUT.DOWN:
                 {
-                    if ((select & contentMask) == contentMaxIndex)
-                        select &= ~contentMask;
+                    if ((select & maskContent) == contentMaxIndex)
+                        select &= ~maskContent;
                     else
                         select += 0x01;
                 }
@@ -176,19 +193,19 @@ public class UIBattle : MonoBehaviour
         Instance.menuArrow.anchoredPosition = menuArrowDefault + menuIndex * new Vector2(deltaMenu, 0);
 
         //Get Input : Interact
-        switch (input & InputKey.Interact)
+        switch (input & IDxINPUT.INTERACT)
         {
-            case InputKey.Confirm:
+            case IDxINPUT.ENTER:
                 {
-                    switch (select & menuMask) //메뉴 인덱스 비교
+                    switch (select & maskMenu) //메뉴 인덱스 비교
                     {
                         //Basic, Solo, Group, Special
                         default:
                             {
                                 //Get Input : Select Skill
                                 SkillData skill = UnitMgr.GetSkill(UnitMgr.MyPC, menuIndex, contentIndex);
-                                select |= (actorIndex << ActorShift);           //Set Actor Index
-                                select |= (skill.TargetGroup << GroupShift);    //Set TargetGroup Index
+                                select |= (actorIndex << shiftActor);           //Set Actor Index
+                                select |= (skill.TargetGroup << shiftGroup);    //Set TargetGroup Index
 
                                 //그룹에 따라 호출하는 UI가 다른 셈인데...
                                 //(1) 화면에 띄운다가 포인트인건가?
@@ -208,12 +225,12 @@ public class UIBattle : MonoBehaviour
                                 */
                             }
                             break;
-                        case Index.BATTLE_CHANGE_MODE:
+                        case idxMode:
                             {
                                 Debug.Log($"Change Mode");
                             }
                             break;
-                        case Index.BATTLE_USE_ITEM:
+                        case idxItem:
                             {
                                 Debug.Log($"Use Item");
                             }
@@ -221,10 +238,10 @@ public class UIBattle : MonoBehaviour
                     }
                 }
                 break;
-            case InputKey.Cancel:
+            case IDxINPUT.CANCEL:
                 //스킬 대상 지정하기 전에 취소 누르면 다시 스킬 선택으로
                 break;
-            case InputKey.Info:
+            case IDxINPUT.INFO:
                 //UIMain에 띄우던가 그래야 하네
                 break;
         }
@@ -232,7 +249,7 @@ public class UIBattle : MonoBehaviour
     private void UpdateUIContent(Unit unit, int select)
     {
         //인덱스로 맞추기
-        select >>= MenuShift;
+        select >>= shiftMenu;
 
         //Menu Title
         switch (select)
@@ -289,10 +306,10 @@ public class UIBattle : MonoBehaviour
                 break;
             case 4: //모드
                 {
-                    contentMaxIndex = Define.BattleMode.Length - 1;
+                    contentMaxIndex = MODE.Length - 1;
 
                    //슬롯 추가 생성
-                    AddSlot(Define.BattleMode.Length - slots.Count);
+                    AddSlot(MODE.Length - slots.Count);
 
                     //메뉴 슬롯 (비)활성화
                     for (int i = 0; i < slots.Count; ++i)
@@ -300,7 +317,7 @@ public class UIBattle : MonoBehaviour
                         if (i > contentMaxIndex)
                             slots[i].SetActive(false);
                         else
-                            slots[i].Load(Define.BattleMode[i], "Icon_Mode");
+                            slots[i].Load(MODE[i], "Icon_Mode");
                     }
                 }
                 break;
@@ -330,41 +347,41 @@ public class UIBattle : MonoBehaviour
 
 
     //Select Target
-    public static void SelectTarget(InputKey input)
+    public static void SelectTarget(int input)
     {
-        int group = select >> GroupShift;
+        int group = select >> shiftGroup;
 
 
         //targetMaxIndex 설정
         int targetMaxIndex = -1;
         switch (group)
         {
-            case 1: targetMaxIndex = UnitMgr.GetGroupCount(UnitMgr.GROUP_ENM); break;     //상대 개인
-            case 3: targetMaxIndex = UnitMgr.GetGroupCount(UnitMgr.GROUP_PLY); break;     //동료 개인
+            case 1: targetMaxIndex = UnitMgr.GetGroupCount(IDxUNIT.ENEMY);  break;     //상대 개인
+            case 3: targetMaxIndex = UnitMgr.GetGroupCount(IDxUNIT.PLAYER); break;     //동료 개인
         }
 
         //targeting
         if (targetMaxIndex == -1)
         {
             int check = select;
-            switch (input & InputKey.Direction)
+            switch (input & IDxINPUT.DIRECTION)
             {
-                case InputKey.Up:
-                case InputKey.Left:
+                case IDxINPUT.UP:
+                case IDxINPUT.LEFT:
                     {
-                        check -= (1 << TargetShift); //언더플로가 발생할 수 있으니 따로 빼서 체크
-                        if ((check & targetMask) >= (targetMaxIndex << TargetShift))
-                            select &= (targetMaxIndex << TargetShift);
+                        check -= (1 << shiftTarget); //언더플로가 발생할 수 있으니 따로 빼서 체크
+                        if ((check & maskTarget) >= (targetMaxIndex << shiftTarget))
+                            select &= (targetMaxIndex << shiftTarget);
                         else
                             select = check;
                     }
                     break;
-                case InputKey.Down:
-                case InputKey.Right:
+                case IDxINPUT.DOWN:
+                case IDxINPUT.RIGHT:
                     {
-                        check += (1 << TargetShift);
-                        if ((check & targetMask) == 0)
-                            select &= ~targetMask;
+                        check += (1 << shiftTarget);
+                        if ((check & maskTarget) == 0)
+                            select &= ~maskTarget;
                         else
                             select = check;
                     }

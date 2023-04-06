@@ -4,15 +4,6 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
-    public enum BattleMode
-    {
-        Normal,     //보통
-        Charge,     //돌격
-        Defence,    //방어
-        Preemptive, //선제
-        Counter,    //반격
-    }
-
     public UnitData Data { get; private set; }
     public ushort[] Stat { get; private set; }
     public List<SkillData> Skill { get; private set; }
@@ -22,8 +13,10 @@ public class Unit : MonoBehaviour
     public Vector3 LocalPos { get => transform.localPosition; }
 
 
-    public BattleMode Mode { get; private set; }
+    public byte Mode { get; private set; }
     public float BattleSpeed { get; private set; }
+    public delegate void BattleAction();
+    public BattleAction Battle;
 
     private Animator animator;
     private AnimatorOverrideController aoc;
@@ -34,8 +27,8 @@ public class Unit : MonoBehaviour
         Data = DataMgr.UnitTBL.Find(unit => unit.Code == unitIndex);
 
         //스탯 초기화 (깊은 복사 사용)
-        Stat = new ushort[(ushort)StatIndex.CNT];
-        Array.Copy(Data.StatDefault, Stat, (ushort)StatIndex.CNT);
+        Stat = new ushort[IDxUNIT.STAT_CNT];
+        Array.Copy(Data.StatDefault, Stat, IDxUNIT.STAT_CNT);
 
         //캐릭터 스킬
         List<SkillData> skill = DataMgr.SkillTBL.FindAll(skill => skill.ActorIndex == unitIndex);
@@ -46,11 +39,17 @@ public class Unit : MonoBehaviour
         for (int i = 0; i < skill.Count; ++i)
             Skill.Add(skill[i]);
 
+        //Battle
+        if (Data.Group == IDxUNIT.PLAYER)
+            Battle = new BattleAction(UIOpen);
+        else if (Data.Group == IDxUNIT.ENEMY)
+            Battle = new BattleAction(BattleAI);
+
         //애니메이션(AOC)
         aoc = new AnimatorOverrideController(ResourceMgr.AOC);
         animator = transform.GetComponent<Animator>();
         animator.runtimeAnimatorController = aoc;
-        PlayAnime(Define.IDLE);
+        PlayAnime(IDxUNIT.IDLE);
     }
     
     public void PlayAnime(string type, string code = null)
@@ -71,7 +70,7 @@ public class Unit : MonoBehaviour
     }
     public void SetBattleSpeed()
     {
-        float isLukcy = Stat[(ushort)StatIndex.LUK];
+        float isLukcy = Stat[IDxUNIT.LUK];
         float rnd = UnityEngine.Random.Range(0, 10000); //이러면 불러올 때마다 값이 바뀌는구나 흠
 
         if (rnd == 0)
@@ -82,15 +81,24 @@ public class Unit : MonoBehaviour
             isLukcy = 1;
 
         //테스트용
-        if (Data.Group == UnitMgr.GROUP_ENM)
+        if (Data.Group == IDxUNIT.ENEMY)
             isLukcy *= UnityEngine.Random.Range(0.9f, 1.1f);
 
-        BattleSpeed = Stat[(ushort)StatIndex.AGI] * isLukcy;
+        BattleSpeed = Stat[IDxUNIT.AGI] * isLukcy;
+    }
+
+    private void UIOpen()
+    {
+        UIMgr.Show(IDxUI.BATTLE, true);
+    }
+    private void BattleAI()
+    {
+        Debug.Log("AI Tree?");
     }
 
 
-    public void MoveTo(Vector3 dir)
+    public void MoveTo(int mx, int mz)
     {
-        transform.position += dir * Define.SPEED_MOVE * Time.deltaTime;
+        transform.position += new Vector3(mx,0,mz) * IDxUNIT.SPEED_MOVE * Time.deltaTime;
     }
 }

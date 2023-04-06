@@ -4,10 +4,6 @@ using UnityEngine;
 
 public class UnitMgr
 {
-    public static readonly byte GROUP_PLY  = 0;   //Player Group
-    public static readonly byte GROUP_ENM  = 1;   //Enemy Group
-    public static readonly byte GROUP_NPC  = 2;   //NPC Group
-
     public static Dictionary<int, Unit> Units { get => units; }
     private static Dictionary<int, Unit> units = new Dictionary<int, Unit>();
 
@@ -113,20 +109,29 @@ public class UnitMgr
             }
         }
     }
-    public static void PlayerMoveTo(InputKey input)
+    public static void PlayerMoveTo(int input)
     {
         int mx = 0, mz = 0;
 
-        if ((input & InputKey.Up) == InputKey.Up)
+        if ((input & IDxINPUT.UP) != 0)
             mz += 1;
-        if ((input & InputKey.Down) == InputKey.Down)
+        if ((input & IDxINPUT.DOWN) != 0)
             mz -= 1;
-        if ((input & InputKey.Right) == InputKey.Right)
+        if ((input & IDxINPUT.RIGHT) != 0)
             mx += 1;
-        if ((input & InputKey.Left) == InputKey.Left)
+        if ((input & IDxINPUT.LEFT) != 0)
             mx -= 1;
 
-        MyPC.MoveTo(new Vector3(mx, 0, mz));
+        //if ((input & IDxINPUT.UP) == IDxINPUT.UP)
+        //    mz += 1;
+        //if ((input & IDxINPUT.DOWN) == IDxINPUT.DOWN)
+        //    mz -= 1;
+        //if ((input & IDxINPUT.RIGHT) == IDxINPUT.RIGHT)
+        //    mx += 1;
+        //if ((input & IDxINPUT.LEFT) == IDxINPUT.LEFT)
+        //    mx -= 1;
+
+        MyPC.MoveTo(mx, mz);
     }
     public static int GetGroupCount(byte type)
     {
@@ -156,5 +161,11 @@ public class UnitMgr
     public static SkillData GetSkill(Unit unit, int type, int index)
     {
         return unit.Skill.FindAll(x => (x.SkillGroup == type + 1))[index];
+    }
+
+    public static void CallBattleAction(int hash)
+    {
+        //[Delegate] PLY => UI 띄워라, ENM => AI 돌려라
+        units[hash].Battle();
     }
 }

@@ -12,11 +12,11 @@ public class UIMgr : MonoBehaviour
     {
         UICanvas = transform.GetChild(0).GetComponent<Canvas>();
     }
-    public static void Show(UIWindow type, bool on)
+    public static void Show(int type, bool on)
     {
         switch (type)
         {
-            case UIWindow.Battle:   UIBattle.Show(on);      break;
+            case IDxUI.BATTLE:   UIBattle.Show(on);      break;
         }
     }
 }

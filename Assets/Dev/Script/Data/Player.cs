@@ -37,7 +37,7 @@ public class Player
 
         Test();
 
-        UnitMgr.SetMyPC(Define.ATAHO);
+        UnitMgr.SetMyPC(IDxUNIT.ATAHO);
     }
 
     public static void Test()

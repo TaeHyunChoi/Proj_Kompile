@@ -1,0 +1,63 @@
+
+public class IDxUNIT
+{
+    public const byte SPEED_MOVE = 5;
+
+    //Unit Index
+    public const byte ATAHO     = 0;
+    public const byte LINXHANG  = 1;
+    public const byte SMASHU    = 2;
+
+    //Group Index
+    public const byte PLAYER    = 0;
+    public const byte ENEMY     = 1;
+    public const byte NPC       = 2;
+
+    //Stat
+    public const byte HP        = 0;     //체력   
+    public const byte MP        = 1;     //기력   
+    public const byte EXP       = 2;     //경험치
+    public const byte STR       = 3;     //물리 공격력
+    public const byte CON       = 4;     //물리 방어력
+    public const byte INT       = 5;     //마법 공격력
+    public const byte WIS       = 6;     //마법 방어력
+    public const byte DEX       = 7;     //기술력       (명중, 크리티컬)
+    public const byte AGI       = 8;     //순발력       (행동순서, 회피) 
+    public const byte CHA       = 9;     //카리스마     (___)
+    public const byte LUK       = 10;    //운           (___)
+    public const byte STAT_CNT  = 11;
+
+    //Animation
+    public const string IDLE    = "IDLE";
+    public const string MOVE    = "MOVE";
+    public const string SKILL   = "SKILL";
+    public const string EVENT   = "EVENT";
+}
+public class IDxINPUT
+{
+    //Mode
+    public const byte BLOCKED        = 0;
+    public const byte BASE           = 1;
+    public const byte FIELD          = 2;
+    public const byte BATTLE_MENU    = 3;
+    public const byte BATTLE_TARGERT = 4;
+
+    //Direction
+    public const int DIRECTION      = 0xF0;
+    public const int UP             = 0x80;
+    public const int DOWN           = 0x40;
+    public const int LEFT           = 0x20;
+    public const int RIGHT          = 0x10;
+
+    //Interact
+    public const int INTERACT       = 0x0F;
+    public const int ENTER          = 0x08;
+    public const int CANCEL         = 0x04;
+    public const int INFO           = 0x02;
+    public const int ESCAPE         = 0x01;
+    public const int NONE           = 0x00;
+}
+public class IDxUI
+{
+    public const byte BATTLE        = 0X00;
+}

@@ -5,11 +5,11 @@ public class InputMgr
     public delegate void InputDelegate();
     public static InputDelegate Update;
 
-    private static InputKey input = InputKey.None;
+    private static int input = IDxINPUT.NONE;
 
 
     //Default
-    public static void Set(InputMode type)
+    public static void Set(int type)
     {
         //기본 입력값
         Update = Base;
@@ -17,32 +17,34 @@ public class InputMgr
         //상황별 입력값 추가
         switch (type)
         {
-            case InputMode.Field_Moving:       Update += Field;             break;
-            case InputMode.Battle_Menu:      Update += BattleAction;      break;
-            case InputMode.Battle_Targeting:   Update += BattleTargeting;   break;
+            case IDxINPUT.FIELD:            Update += Field;             break;
+            case IDxINPUT.BATTLE_MENU:      Update += BattleAction;      break;
+            case IDxINPUT.BATTLE_TARGERT:   Update += BattleTargeting;   break;
             default: break;
         }
 
         //입력값 초기화
         Update += Reset;
     }
+
+    //이참에 버튼명도 바꾸는 게 좋으려나...
     private static void Base()
     {
         if (Input.GetButtonDown("Up"))
-            input |= InputKey.Up;
+            input |= IDxINPUT.UP;
         if (Input.GetButtonDown("Down"))
-            input |= InputKey.Down;
+            input |= IDxINPUT.DOWN;
         if (Input.GetButtonDown("Left"))
-            input |= InputKey.Left;
+            input |= IDxINPUT.LEFT;
         if (Input.GetButtonDown("Right"))
-            input |= InputKey.Right;
+            input |= IDxINPUT.RIGHT;
 
         if (Input.GetButtonDown("Z"))
-            input |= InputKey.Confirm;
+            input |= IDxINPUT.ENTER;
         if (Input.GetButtonDown("X"))
-            input |= InputKey.Cancel;
+            input |= IDxINPUT.CANCEL;
         if (Input.GetButtonDown("C"))
-            input |= InputKey.Info;
+            input |= IDxINPUT.INFO;
 
         //테스트
         Test();
@@ -51,16 +53,16 @@ public class InputMgr
 
     private static void Field()
     {
-        if((input & InputKey.Direction) > 0)
+        if((input & IDxINPUT.DIRECTION) > 0)
             UnitMgr.PlayerMoveTo(input);
 
-        if ((input & InputKey.Confirm) > 0)
-            Debug.Log("Confirm");
+        if ((input & IDxINPUT.ENTER) > 0)
+            Debug.Log("ENTER");
     }
     private static void BattleAction()
     {
         if (Input.GetButton("C"))
-            input |= InputKey.Info;
+            input |= IDxINPUT.INFO;
 
         if (input > 0)
             UIBattle.SelectMenu(input);
@@ -69,7 +71,7 @@ public class InputMgr
     {
         //TODO: InputKey."C"가 필요할까? >> UI에 편입시키는 것도 고려
         if (Input.GetButton("C"))
-            input |= InputKey.Info;
+            input |= IDxINPUT.INFO;
 
         if (input > 0)
             UIBattle.SelectTarget(input);
@@ -79,7 +81,7 @@ public class InputMgr
     private static void Test()
     {
         if (Input.GetKeyDown(KeyCode.Space))
-            GameMgr.EnterBattle();
+            GameMgr.Battle_Enter();
     }
     
     
