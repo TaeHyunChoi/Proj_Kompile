@@ -17,6 +17,7 @@ public class Unit : MonoBehaviour
     public float BattleSpeed { get; private set; }
     public delegate void BattleAction();
     public BattleAction Battle;
+    private GameObject targetingArrow;
 
     private Animator animator;
     private AnimatorOverrideController aoc;
@@ -39,6 +40,8 @@ public class Unit : MonoBehaviour
             Battle = new BattleAction(UIOpen);
         else if (Data.Group == IDxUNIT.ENEMY)
             Battle = new BattleAction(BattleAI);
+
+        targetingArrow = transform.GetChild(0).gameObject;
 
         //애니메이션(AOC)
         animator = transform.GetComponent<Animator>();
@@ -94,9 +97,14 @@ public class Unit : MonoBehaviour
         GameMgr.Battle_NextTurn();
     }
 
-
     public void MoveTo(int mx, int mz)
     {
         transform.position += new Vector3(mx,0,mz) * IDxUNIT.SPEED_MOVE * Time.deltaTime;
+    }
+
+    public void BeTargeted(bool betargeted)
+    {
+        targetingArrow.SetActive(betargeted);
+        //쉐이더 반짝도 건드리고 싶긴 해~
     }
 }

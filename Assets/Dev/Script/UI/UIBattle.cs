@@ -86,12 +86,12 @@ public class UIBattle : MonoBehaviour
     private static int menuIndex    { get => select >> shiftMenu; }
     private static int contentIndex { get => select & maskContent; }
 
-    //private static byte target_ENMSolo      = 0;    //ENM, 단일
-    //private static byte target_Self         = 1;    //     본인
-    //private static byte target_PLYSolo      = 2;    //PLY, 단일
-    //private static byte target_ENMAll       = 3;    //ENM, 전체
-    //private static byte target_PLYAll       = 4;    //PLY, 전체
-    //private static byte target_AllExceptMe  = 5;    //     전체, 본인 제외
+    private static byte target_ENM_Solo     = 0;
+    private static byte target_Self         = 1;
+    private static byte target_PLY_Solo     = 2;
+    private static byte target_ENM_All      = 3;
+    private static byte target_PLY_All      = 4;
+    private static byte target_Self_XOR     = 5;
     #endregion
 
     private static Unit nowUnit { get => UnitMgr.Units[GameMgr.NowUnitHash]; }
@@ -337,17 +337,39 @@ public class UIBattle : MonoBehaviour
                 break;
         }
     }
+    private void AddSlot(int count)
+    {
+        if (count <= 0)
+            return;
+
+        GameObject rcs = ResourceMgr.Prefab["UIBattleSkill"];
+        GameObject slot;
+        for (int i = 0; i < count; ++i)
+        {
+            slot = Instantiate(rcs, contentScroll);
+            slots.Add(new UIBattleSlot(slot));
+        }
+    }
 
 
     //Select Target
     public static void SelectTarget(int input)
     {
+        //Select Target에 대한 설계가 전혀 이뤄지지 않았군!
+
+        //target_ENM_Solo
+        //target_Self
+        //target_PLY_Solo
+        //target_ENM_All
+        //target_PLY_All
+        //target_SELF_XOR
+
         //targetMaxIndex 설정
         int targetMaxIndex = -1;
         switch (select >> shiftGroup)
         {
-            case 0: targetMaxIndex = GameMgr.Remains[IDxUNIT.ENEMY];        break;
-            case 2: targetMaxIndex = UnitMgr.GetGroupCount(IDxUNIT.PLAYER); break;
+            case 0: targetMaxIndex = GameMgr.Remains[IDxUNIT.ENEMY];    break;
+            case 2: targetMaxIndex = GameMgr.Remains[IDxUNIT.PLAYER];   break;
         }
 
         //targeting
@@ -390,20 +412,8 @@ public class UIBattle : MonoBehaviour
 
         //UpdateUnitTargeting(pos);
     }
-
-
-    //Add Slot
-    private void AddSlot(int count)
-    {
-        if (count <= 0)
-            return;
-
-        GameObject rcs = ResourceMgr.Prefab["UIBattleSkill"];
-        GameObject slot;
-        for (int i = 0; i < count; ++i)
-        {
-            slot = Instantiate(rcs, contentScroll);
-            slots.Add(new UIBattleSlot(slot));
-        }
+    public void UpdateUITargeting()
+    { 
+        
     }
 }
