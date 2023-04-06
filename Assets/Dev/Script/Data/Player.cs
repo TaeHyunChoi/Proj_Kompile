@@ -46,9 +46,7 @@ public class Player
         for (int i = 0; i < activeMember.Length; ++i)
         {
             if (activeMember[i])
-            {
                 UnitMgr.New(i, Vector3.zero);
-            }
         }
 
         for (int i = 0; i < DataMgr.ItemTBL.Count; i++)

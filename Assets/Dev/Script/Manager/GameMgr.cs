@@ -8,23 +8,27 @@ public class GameMgr
     public static MapData LastMap;
     private static Vector3 lastFieldPos;
 
-    //## Battle
-    private static List<int> BattleOrder = new List<int>();
-    private static int[] remainUnits = new int[2];  //각 그룹별 남아있는 유닛 수
 
-    //## 뭔가 지저분한데? 정리해보자.
-    public static Unit BattleUnits { get => UnitMgr.Units[BattleOrder[nowOrder]]; }
+    private static List<int> BattleOrder = new List<int>();
+    public static int NowUnitHash { get => BattleOrder[nowOrder]; }
     private static int nowOrder;
+
+
+    //각 그룹별 남아있는 유닛 수
+    public static int[] Remains { get => remainUnits; } 
+    private static int[] remainUnits = new int[2];  
+
+
     public static Unit GetUnitByOrder(int index)
     {
         return UnitMgr.Units[BattleOrder[index]];
     }
-
     private static MapData ChangeMapData(ushort mapCode)
     {
         LastMap = NowMap;
         return DataMgr.MapTBL.Find(map => map.Code == mapCode);
     }
+
 
     public  static void Battle_Enter()
     {
@@ -33,11 +37,12 @@ public class GameMgr
         CameraMgr.OnBattleCam(true);
         NowMap = ChangeMapData(mapCode: NowMap.BattleMapCode);
         //Set Map Rcs
-
         Battle_SetUnitData();
+
+        //Init Set
+        nowOrder = 0;
         Battle_OrderByShellSort(out BattleOrder);
 
-        //Loop Battle Systems
         Battle_NextTurn();
     }
     public  static void Battle_SetUnitData()
@@ -65,6 +70,7 @@ public class GameMgr
             units[i].SetBattleStat();
             BattleOrder.Add(units[i].gameObject.GetHashCode());
         }
+        remainUnits[IDxUNIT.ENEMY] = units.Count;
         UnitMgr.SetBattlePosition(IDxUNIT.ENEMY, units);
     }
     private static void Battle_OrderByShellSort(out List<int> hash)
@@ -86,29 +92,32 @@ public class GameMgr
                 for (j = i; j >= gap && UnitMgr.Units[hash[j - gap]].BattleSpeed < temp.BattleSpeed; j -= gap)
                 {
                     //Swap
-                    hash[j] ^= hash[j - gap];
+                    hash[j]       ^= hash[j - gap];
                     hash[j - gap] ^= hash[j];
-                    hash[j] ^= hash[j - gap];
+                    hash[j]       ^= hash[j - gap];
                 }
 
                 UnitMgr.Units[hash[j]] = temp;
             }
         }
     }
-    private static void Battle_NextTurn()
+    public static void Battle_NextTurn()
     {
-        //전투 종료 판단
-        //Player or Enemy All Dead
-        //그냥 변수로 취급하는게 좋으려나?
-
-        //1회전이 끝났는지 판단해야 하고
-        if (BattleOrder.Count <= 0)
-        { 
-
+        //End Battle
+        if (remainUnits[0] == 0 || remainUnits[1] == 0)
+        {
+            Debug.Log("End Battle >> Give out Reward");
+            return;
         }
 
-        //1회전 중이라면 다음턴을 넘거야 하고
+        //End All Units Turn
+        if (BattleOrder.Count <= 0)
+        {
+            Battle_OrderByShellSort(out BattleOrder);
+            nowOrder = 0;
+        }
+
+        //Next Trun
         UnitMgr.CallBattleAction(BattleOrder[nowOrder]);
-        ++nowOrder;
     }
 }

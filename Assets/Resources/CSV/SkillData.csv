@@ -14,7 +14,7 @@ Index,Name,Info,ActorIndex,SkillGroup,TargetGroup,Power,AfterBuffIndex,Accurate,
 13,맹호룬룬권,가벼운 스텝으로 가뿐히 적 전체에게 큰 대미지를 줌,0,3,4,5,0,10000,0,Icon_Skill_Kick
 14,비기 맹호유성각,계속 별똥별을 뿌리고 연속으로 날아 차는 기술,0,3,4,5,0,10000,0,Icon_Skill_Kick
 15,도주,도망치자!,15,6,2,5,0,10000,0,Icon_Skill_Run
-16,방어,견고한 자세로 상대의 공격을 막는다,255,6,2,5,0,10000,0,Icon_Skill_Defence
+16,방어,견고한 자세로 상대의 공격을 막는다,15,6,2,5,0,10000,0,Icon_Skill_Defence
 17,기합일발,"혈관이 터질만큼 기합을 넣어, 정신력으로 부상을 치료하는 기술",0,6,2,5,0,10000,0,Icon_Skill_Cheerup
 18,천조족,전투시에만 사용하는 전용기술로 자신의 MP 치료기,0,6,2,5,0,10000,0,Icon_Skill_Drink
 19,손톱공격,할퀴기 공격. 보기보단 아프니까 당하지 않게 주의,1,1,1,5,0,10000,1,Icon_Skill_Punch

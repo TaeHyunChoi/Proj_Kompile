@@ -7,6 +7,7 @@ public class IDxUNIT
     public const byte ATAHO     = 0;
     public const byte LINXHANG  = 1;
     public const byte SMASHU    = 2;
+    public const byte COMMON    = 15;
 
     //Group Index
     public const byte PLAYER    = 0;
@@ -41,6 +42,7 @@ public class IDxINPUT
     public const byte FIELD          = 2;
     public const byte BATTLE_MENU    = 3;
     public const byte BATTLE_TARGERT = 4;
+    public const byte CHEAT          = 7;
 
     //Direction
     public const int DIRECTION      = 0xF0;

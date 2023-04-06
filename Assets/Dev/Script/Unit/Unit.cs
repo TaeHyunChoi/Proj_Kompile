@@ -21,23 +21,18 @@ public class Unit : MonoBehaviour
     private Animator animator;
     private AnimatorOverrideController aoc;
 
-    public void Init(int unitIndex)
+    public void Init(int code)
     {
         //기본값 정보 저장
-        Data = DataMgr.UnitTBL.Find(unit => unit.Code == unitIndex);
+        Data = DataMgr.UnitTBL.Find(unit => unit.Code == code);
 
         //스탯 초기화 (깊은 복사 사용)
         Stat = new ushort[IDxUNIT.STAT_CNT];
         Array.Copy(Data.StatDefault, Stat, IDxUNIT.STAT_CNT);
 
-        //캐릭터 스킬
-        List<SkillData> skill = DataMgr.SkillTBL.FindAll(skill => skill.ActorIndex == unitIndex);
+        //캐릭터 스킬, 공통 스킬
+        List<SkillData> skill = DataMgr.SkillTBL.FindAll(skill => (skill.ActorIndex == code) || (skill.ActorIndex == IDxUNIT.COMMON));
         Skill = skill;
-
-        //공통 스킬
-        skill = DataMgr.SkillTBL.FindAll(skill => skill.ActorIndex == 255); //공통스킬
-        for (int i = 0; i < skill.Count; ++i)
-            Skill.Add(skill[i]);
 
         //Battle
         if (Data.Group == IDxUNIT.PLAYER)
@@ -46,9 +41,9 @@ public class Unit : MonoBehaviour
             Battle = new BattleAction(BattleAI);
 
         //애니메이션(AOC)
-        aoc = new AnimatorOverrideController(ResourceMgr.AOC);
         animator = transform.GetComponent<Animator>();
-        animator.runtimeAnimatorController = aoc;
+        aoc = new AnimatorOverrideController(ResourceMgr.AOC);
+        animator.runtimeAnimatorController = aoc; //여기가 계속 문제네?
         PlayAnime(IDxUNIT.IDLE);
     }
     
@@ -89,11 +84,14 @@ public class Unit : MonoBehaviour
 
     private void UIOpen()
     {
+        Debug.Log($"PLY[{Data.Name}] {BattleSpeed:F2}");
         UIMgr.Show(IDxUI.BATTLE, true);
+        //GameMgr.Battle_NextTurn();
     }
     private void BattleAI()
     {
-        Debug.Log("AI Tree?");
+        Debug.Log($"ENM[{Data.Name}] {BattleSpeed:F2}");
+        GameMgr.Battle_NextTurn();
     }
 
 

@@ -26,7 +26,7 @@ public class Main : MonoBehaviour
         //## Set GameData
         Player.Init();
         GameMgr.NowMap = DataMgr.MapTBL.Find(map => map.Code == testMapCode);
-        InputMgr.Set(IDxINPUT.BASE);
+        InputMgr.Set(IDxINPUT.CHEAT);
     }
 
     private void Update()

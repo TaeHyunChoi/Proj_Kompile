@@ -27,19 +27,17 @@ public class UnitMgr
         }
         else
         {
-            GameObject unitObj = new GameObject();
-            unitObj.AddComponent<SpriteRenderer>();
-            unitObj.AddComponent<Animator>();
-            newUnit = unitObj.AddComponent<Unit>();
+            GameObject go = ResourceMgr.Prefab["UnitBase"];
+            go = GameObject.Instantiate(go, tfActive);
+            newUnit = go.GetComponent<Unit>();
         }
 
         newUnit.Init(unitCode);
-        newUnit.gameObject.name = newUnit.Data.RcsCode;
         newUnit.transform.position = pos;
-        newUnit.transform.Rotate(new Vector3(50, 0, 0), Space.World);
+        newUnit.transform.eulerAngles = new Vector3(50, 0, 0);
+        newUnit.gameObject.name = newUnit.Data.RcsCode;
 
         units.Add(newUnit.gameObject.GetHashCode(), newUnit);
-        newUnit.transform.parent = tfActive;
 
         return newUnit;
     }
@@ -149,18 +147,11 @@ public class UnitMgr
     }
     public static List<SkillData> GetSkillTypeof(Unit unit, int type)
     {
-        //해당 타입의 스킬 모두 추가
-        List<SkillData> result = unit.Skill.FindAll(x => (x.SkillGroup == type));
-
-        //특수기 > 공통스킬 추가
-        if (type == 6) 
-            result.AddRange(DataMgr.SkillTBL.FindAll(x => (x.ActorIndex == 0xF)));
-
-        return result;
+        return unit.Skill.FindAll(x => (x.SkillGroup == type));
     }
     public static SkillData GetSkill(Unit unit, int type, int index)
     {
-        return unit.Skill.FindAll(x => (x.SkillGroup == type + 1))[index];
+        return unit.Skill.FindAll(skill => skill.SkillGroup == type)[index];
     }
 
     public static void CallBattleAction(int hash)

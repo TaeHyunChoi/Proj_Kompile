@@ -20,6 +20,7 @@ public class InputMgr
             case IDxINPUT.FIELD:            Update += Field;             break;
             case IDxINPUT.BATTLE_MENU:      Update += BattleAction;      break;
             case IDxINPUT.BATTLE_TARGERT:   Update += BattleTargeting;   break;
+            case IDxINPUT.CHEAT:            Update += Cheat;             break;
             default: break;
         }
 
@@ -27,7 +28,6 @@ public class InputMgr
         Update += Reset;
     }
 
-    //이참에 버튼명도 바꾸는 게 좋으려나...
     private static void Base()
     {
         if (Input.GetButtonDown("Up"))
@@ -39,15 +39,12 @@ public class InputMgr
         if (Input.GetButtonDown("Right"))
             input |= IDxINPUT.RIGHT;
 
-        if (Input.GetButtonDown("Z"))
+        if (Input.GetButtonDown("Enter"))
             input |= IDxINPUT.ENTER;
-        if (Input.GetButtonDown("X"))
+        if (Input.GetButtonDown("Cancel"))
             input |= IDxINPUT.CANCEL;
-        if (Input.GetButtonDown("C"))
+        if (Input.GetButtonDown("Info"))
             input |= IDxINPUT.INFO;
-
-        //테스트
-        Test();
     }
     
 
@@ -61,7 +58,7 @@ public class InputMgr
     }
     private static void BattleAction()
     {
-        if (Input.GetButton("C"))
+        if (Input.GetButton("Info"))
             input |= IDxINPUT.INFO;
 
         if (input > 0)
@@ -70,7 +67,7 @@ public class InputMgr
     private static void BattleTargeting()
     {
         //TODO: InputKey."C"가 필요할까? >> UI에 편입시키는 것도 고려
-        if (Input.GetButton("C"))
+        if (Input.GetButton("Info"))
             input |= IDxINPUT.INFO;
 
         if (input > 0)
@@ -78,7 +75,7 @@ public class InputMgr
     }
 
 
-    private static void Test()
+    private static void Cheat()
     {
         if (Input.GetKeyDown(KeyCode.Space))
             GameMgr.Battle_Enter();
