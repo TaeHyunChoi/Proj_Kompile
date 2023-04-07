@@ -4,8 +4,11 @@ using UnityEngine;
 
 public class UnitMgr
 {
-    public static Dictionary<int, Unit> Units { get => units; }
-    private static Dictionary<int, Unit> units = new Dictionary<int, Unit>();
+    public static Dictionary<int, Unit> AllUnits { get => allUnits; }
+    private static Dictionary<int, Unit> allUnits = new Dictionary<int, Unit>();
+
+    public static List<Unit> BattleUnits { get => battleUnits; }
+    public static List<Unit> battleUnits = new List<Unit>();
 
     private static Transform tfActive;
     private static Transform tfInactive;
@@ -37,8 +40,7 @@ public class UnitMgr
         newUnit.transform.eulerAngles = new Vector3(50, 0, 0);
         newUnit.gameObject.name = newUnit.Data.RcsCode;
 
-        units.Add(newUnit.gameObject.GetHashCode(), newUnit);
-
+        allUnits.Add(newUnit.gameObject.GetHashCode(), newUnit);
         return newUnit;
     }
     public static void SetMyPC(int unitCode)
@@ -46,67 +48,113 @@ public class UnitMgr
         myPC = GetUnitByCode(unitCode);
     }
 
-    public static void SetBattlePosition(byte type, List<Unit> group = null)
-    {
-        if (group == null)
-            group = units.Values.Where(x => x.Data.Group == type).ToList();
 
+    public static void Battle_SetUnitData(MapData map)
+    {
+        List<Unit> units = GetUnitGroup(IDxUNIT.PLAYER);
+        battleUnits.AddRange(units);
+
+        int count = Random.Range(map.MinCount, map.MaxCount); //¸Ê Mob °³¼ö
+        byte index;
+        units.Clear();
+        for (int i = 0; i < count; ++i)
+        {
+            index = map.Mob[Random.Range(0, map.Mob.Length)];
+            units.Add(New(index, Vector3.zero));
+        }
+        battleUnits.AddRange(units);
+
+        //Set Battle Stats
+        for (int i = 0; i < battleUnits.Count; ++i)
+            battleUnits[i].SetBattleStat();
+    }
+    public static void Battle_SetPosition()
+    {
         float delta;
         Vector3 standard;
-        if (type == 0)
-        {
-            standard = new Vector3(-4f, 100f, -3.3f);
+        List<Unit> group;
 
-            switch (group.Count)
-            {
-                case 1:
-                    delta = -1.5f;
-                    group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
-                    break;                                             
-                case 2:                                                
-                    delta = -1f;                                       
-                    group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
-                    group[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
-                    break;                                             
-                case 3:                                                
-                    delta = -1.5f;
-                    group[0].transform.localPosition = standard;
-                    group[1].transform.localPosition = standard + new Vector3(0, 0, delta);
-                    group[2].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
-                    break;
-            }
+        group = battleUnits.FindAll(x=>x.Data.Group == IDxUNIT.PLAYER);
+        standard = new Vector3(-4f, 100f, -3.3f);
+        switch (group.Count)
+        {
+            case 1:
+                delta = -1.5f;
+                group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                break;
+            case 2:
+                delta = -1f;
+                group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                group[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                break;
+            case 3:
+                delta = -1.5f;
+                group[0].transform.localPosition = standard;
+                group[1].transform.localPosition = standard + new Vector3(0, 0, delta);
+                group[2].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                break;
         }
-        if (type == 1)
-        {
-            standard = new Vector3(4.5f, 100f, -3f);
 
-            switch (group.Count)
-            {
-                case 1:
-                    delta = -1.325f;
-                    group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
-                    break;
-                case 2:
-                    delta = -1.25f;
-                    group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
-                    group[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
-                    break;
-                case 3:
-                    delta = -1.25f;
-                    group[0].transform.localPosition = standard + new Vector3(-0.5f, 0, delta);
-                    group[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
-                    group[2].transform.localPosition = standard + new Vector3(-0.5f, 0, delta * 3);
-                    break;
-                case 4:
-                    delta = -1.25f;
-                    group[0].transform.localPosition = standard = new Vector3(-0.5f, 0, 0);
-                    group[1].transform.localPosition = standard + new Vector3(0, 0, delta);
-                    group[2].transform.localPosition = standard + new Vector3(0,0, delta * 2);
-                    group[3].transform.localPosition = standard + new Vector3(-1f, 0, delta * 3);
-                    break;
-            }
+        group = battleUnits.FindAll(x => x.Data.Group == IDxUNIT.ENEMY);
+        standard = new Vector3(4.5f, 100f, -3f);
+        switch (group.Count)
+        {
+            case 1:
+                delta = -1.325f;
+                group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                break;
+            case 2:
+                delta = -1.25f;
+                group[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                group[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                break;
+            case 3:
+                delta = -1.25f;
+                group[0].transform.localPosition = standard + new Vector3(-0.5f, 0, delta);
+                group[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                group[2].transform.localPosition = standard + new Vector3(-0.5f, 0, delta * 3);
+                break;
+            case 4:
+                delta = -1.25f;
+                group[0].transform.localPosition = standard = new Vector3(-0.5f, 0, 0);
+                group[1].transform.localPosition = standard + new Vector3(0, 0, delta);
+                group[2].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                group[3].transform.localPosition = standard + new Vector3(-1f, 0, delta * 3);
+                break;
         }
     }
+    public static List<int> Battle_GetUnitHashCodes()
+    {
+        List<int> hash = new List<int>();
+        for (int i = 0; i < battleUnits.Count; ++i)
+            hash.Add(battleUnits[i].HashCode);
+
+        return hash;
+    }
+    public static void Battle_UnitReorder(List<int> hash)
+    {
+        List<Unit> reorder = new List<Unit>();
+        foreach (int code in hash)
+        {
+            foreach (Unit unit in battleUnits)
+            {
+                if (code == unit.HashCode)
+                {
+                    reorder.Add(unit);
+                    break;
+                }
+            }
+        }
+        battleUnits.Clear();
+        battleUnits = reorder;
+
+        foreach (var unit in battleUnits)
+            Debug.Log($"[{unit.Data.Name}] {unit.BattleSpeed:F2}");
+
+    }
+
+
+
     public static void PlayerMoveTo(int input)
     {
         int mx = 0, mz = 0;
@@ -133,17 +181,17 @@ public class UnitMgr
     }
     public static int GetGroupCount(byte type)
     {
-        return units.Values.Where(x => x.Data.Group == type).ToList().Count;
+        return allUnits.Values.Where(x => x.Data.Group == type).ToList().Count;
     }
     public static List<Unit> GetUnitGroup(byte type)
     {
-        return units.Values.Where(unit => unit.Data.Group == type).ToList();
+        return allUnits.Values.Where(unit => unit.Data.Group == type).ToList();
     }
 
     public static Unit GetUnitByCode(int unitCode)
     {
-        int hash = units.First(x => x.Value.Data.Code == unitCode).Key;
-        return units[hash];
+        int hash = allUnits.First(x => x.Value.Data.Code == unitCode).Key;
+        return allUnits[hash];
     }
     public static List<SkillData> GetSkillTypeof(Unit unit, int type)
     {
@@ -157,6 +205,6 @@ public class UnitMgr
     public static void CallBattleAction(int hash)
     {
         //[Delegate] PLY => UI ¶ç¿ö¶ó, ENM => AI µ¹·Á¶ó
-        units[hash].Battle();
+        allUnits[hash].Battle();
     }
 }

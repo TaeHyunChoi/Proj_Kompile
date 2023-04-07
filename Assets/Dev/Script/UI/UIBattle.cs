@@ -94,7 +94,7 @@ public class UIBattle : MonoBehaviour
     private static byte target_Self_XOR     = 5;
     #endregion
 
-    private static Unit nowUnit { get => UnitMgr.Units[GameMgr.NowUnitHash]; }
+    private static Unit nowUnit { get => UnitMgr.AllUnits[GameMgr.NowUnitHash]; }
 
     public static void Show(bool on)
     {

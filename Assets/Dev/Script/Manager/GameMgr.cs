@@ -21,7 +21,7 @@ public class GameMgr
 
     public static Unit GetUnitByOrder(int index)
     {
-        return UnitMgr.Units[BattleOrder[index]];
+        return UnitMgr.AllUnits[BattleOrder[index]];
     }
     private static MapData ChangeMapData(ushort mapCode)
     {
@@ -30,66 +30,38 @@ public class GameMgr
     }
 
 
-    public  static void Battle_Enter()
+    public static void Battle_Enter()
     {
-        lastFieldPos = UnitMgr.MyPC.Pos;
-
+        //Set Map
         CameraMgr.OnBattleCam(true);
+        lastFieldPos = UnitMgr.MyPC.Pos;
         NowMap = ChangeMapData(mapCode: NowMap.BattleMapCode);
-        //Set Map Rcs
-        Battle_SetUnitData();
 
-        //Init Set
-        nowOrder = 0;
+        //Set Unit Data
+        UnitMgr.Battle_SetUnitData(NowMap);
+        UnitMgr.Battle_SetPosition();
+
+        //Sort by Speed
         Battle_OrderByShellSort(out BattleOrder);
 
+        //Next
         Battle_NextTurn();
-    }
-    public  static void Battle_SetUnitData()
-    {
-        //## Players
-        List<Unit> units = UnitMgr.GetUnitGroup(IDxUNIT.PLAYER);
-        remainUnits[IDxUNIT.PLAYER] = units.Count;
-        for (int i = 0; i < units.Count; ++i)
-        {
-            BattleOrder.Add(units[i].gameObject.GetHashCode());
-            units[i].SetBattleStat();
-        }
-        UnitMgr.SetBattlePosition(IDxUNIT.PLAYER, units);
-
-        //##Enemies
-        int count = UnityEngine.Random.Range(NowMap.MinCount, NowMap.MaxCount); //¸Ê Mob °³¼ö
-        int mobVariation = NowMap.Mob.Length;
-        byte index;
-
-        units.Clear();
-        for (int i = 0; i < count; ++i)
-        {
-            index = NowMap.Mob[Random.Range(0, mobVariation)];
-            units.Add(UnitMgr.New(index, Vector3.zero));
-            units[i].SetBattleStat();
-            BattleOrder.Add(units[i].gameObject.GetHashCode());
-        }
-        remainUnits[IDxUNIT.ENEMY] = units.Count;
-        UnitMgr.SetBattlePosition(IDxUNIT.ENEMY, units);
     }
     private static void Battle_OrderByShellSort(out List<int> hash)
     {
-        hash = new List<int>();
-        hash.AddRange(UnitMgr.Units.Keys);
-
         //Set Battle Speed
-        int count = hash.Count;
+        hash = UnitMgr.Battle_GetUnitHashCodes();
 
         //Ordered by Shell Sort
+        int count = hash.Count;
         for (int gap = (count >> 1); gap > 0; gap >>= 1)
         {
             for (int i = gap; i < count; ++i)
             {
-                Unit temp = UnitMgr.Units[hash[i]];
+                Unit temp = UnitMgr.AllUnits[hash[i]];
 
                 int j;
-                for (j = i; j >= gap && UnitMgr.Units[hash[j - gap]].BattleSpeed < temp.BattleSpeed; j -= gap)
+                for (j = i; j >= gap && UnitMgr.AllUnits[hash[j - gap]].BattleSpeed < temp.BattleSpeed; j -= gap)
                 {
                     //Swap
                     hash[j]       ^= hash[j - gap];
@@ -97,9 +69,12 @@ public class GameMgr
                     hash[j]       ^= hash[j - gap];
                 }
 
-                UnitMgr.Units[hash[j]] = temp;
+                UnitMgr.AllUnits[hash[j]] = temp;
             }
         }
+
+        //Re-order BattleUnit
+        UnitMgr.Battle_UnitReorder(hash);
     }
     public static void Battle_NextTurn()
     {

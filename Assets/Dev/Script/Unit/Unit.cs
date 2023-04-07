@@ -5,8 +5,9 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     public UnitData Data { get; private set; }
-    public ushort[] Stat { get; private set; }
     public List<SkillData> Skill { get; private set; }
+    public ushort[] Stat { get; private set; }
+    public int HashCode { get; private set; }
 
 
     public Vector3 Pos { get => transform.position; }
@@ -26,6 +27,7 @@ public class Unit : MonoBehaviour
     {
         //기본값 정보 저장
         Data = DataMgr.UnitTBL.Find(unit => unit.Code == code);
+        HashCode = gameObject.GetHashCode();
 
         //스탯 초기화 (깊은 복사 사용)
         Stat = new ushort[IDxUNIT.STAT_CNT];
