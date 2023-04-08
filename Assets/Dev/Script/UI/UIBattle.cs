@@ -94,7 +94,7 @@ public class UIBattle : MonoBehaviour
     private static byte target_Self_XOR     = 5;
     #endregion
 
-    private static Unit nowUnit { get => UnitMgr.AllUnits[GameMgr.NowUnitHash]; }
+    private static Unit nowUnit { get => UnitMgr.Battle_GetUnit(GameMgr.NowOrder); }
 
     public static void Show(bool on)
     {
@@ -105,7 +105,7 @@ public class UIBattle : MonoBehaviour
             Instance = go.GetComponent<UIBattle>();
 
             //유저 턴? 선택 UI 오픈
-            Unit actor = GameMgr.GetUnitByOrder(actorIndex);
+            Unit actor = UnitMgr.Battle_GetUnit(GameMgr.NowOrder);
             if (actor.Data.Group == IDxUNIT.PLAYER)
             {
                 Instance.playerMenuPanel.SetActive(true);
@@ -207,7 +207,7 @@ public class UIBattle : MonoBehaviour
                         default:
                             {
                                 //Get Input : Select Skill
-                                SkillData skill = UnitMgr.GetSkill(nowUnit, menuIndex, contentIndex);
+                                SkillData skill = UnitMgr.Battle_GetSkill(nowUnit, menuIndex, contentIndex);
                                 action = select;
                                 action |= (actorIndex << shiftActor);           //Set Actor Index
                                 action |= (skill.TargetGroup << shiftGroup);    //Set TargetGroup Index
@@ -281,7 +281,7 @@ public class UIBattle : MonoBehaviour
             case 3: //단체기
             case 6: //특수행동
                 {
-                    SkillData[] skills = UnitMgr.GetSkillTypeof(unit, select).ToArray();
+                    SkillData[] skills = UnitMgr.Battle_GetSkillTypeof(unit, select).ToArray();
                     contentMaxIndex = skills.Length - 1;
 
                     //슬롯 추가 생성
@@ -366,11 +366,10 @@ public class UIBattle : MonoBehaviour
 
         //targetMaxIndex 설정
         int targetMaxIndex = -1;
-        switch (select >> shiftGroup)
-        {
-            case 0: targetMaxIndex = GameMgr.Remains[IDxUNIT.ENEMY];    break;
-            case 2: targetMaxIndex = GameMgr.Remains[IDxUNIT.PLAYER];   break;
-        }
+        //switch (select >> shiftGroup)
+        //{
+
+        //}
 
         //targeting
         if (targetMaxIndex == -1)

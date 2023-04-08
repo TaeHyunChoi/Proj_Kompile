@@ -51,7 +51,7 @@ public class InputMgr
     private static void Field()
     {
         if((input & IDxINPUT.DIRECTION) > 0)
-            UnitMgr.PlayerMoveTo(input);
+            UnitMgr.Field_PlayerMoveTo(input);
 
         if ((input & IDxINPUT.ENTER) > 0)
             Debug.Log("ENTER");

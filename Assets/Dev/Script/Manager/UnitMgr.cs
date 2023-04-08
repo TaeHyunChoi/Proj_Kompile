@@ -4,11 +4,8 @@ using UnityEngine;
 
 public class UnitMgr
 {
-    public static Dictionary<int, Unit> AllUnits { get => allUnits; }
-    private static Dictionary<int, Unit> allUnits = new Dictionary<int, Unit>();
-
-    public static List<Unit> BattleUnits { get => battleUnits; }
-    public static List<Unit> battleUnits = new List<Unit>();
+    private static List<Unit> unitAll      = new List<Unit>();
+    private static List<Unit> unitBattle   = new List<Unit>();
 
     private static Transform tfActive;
     private static Transform tfInactive;
@@ -16,10 +13,11 @@ public class UnitMgr
     public static Unit MyPC { get => myPC; }
     public static Unit myPC;
 
+
     public static void Init(Transform tf)
     {
-        tfActive    = tf.GetChild(0);
-        tfInactive  = tf.GetChild(1);
+        tfActive = tf.GetChild(0);
+        tfInactive = tf.GetChild(1);
     }
     public static Unit New(int unitCode, Vector3 pos)
     {
@@ -40,19 +38,25 @@ public class UnitMgr
         newUnit.transform.eulerAngles = new Vector3(50, 0, 0);
         newUnit.gameObject.name = newUnit.Data.RcsCode;
 
-        allUnits.Add(newUnit.gameObject.GetHashCode(), newUnit);
+        unitAll.Add(newUnit);
         return newUnit;
     }
-    public static void SetMyPC(int unitCode)
+    public static void Test_SetMyPC()
     {
-        myPC = GetUnitByCode(unitCode);
+        myPC = unitAll[IDxUNIT.ATAHO];
     }
 
-
+    //## Battle > Set Battle Situation
+    public static void Battle_SetUnit(MapData map)
+    {
+        Battle_SetUnitData(map);    //전투 참여하는 유닛 리스트 생성
+        Battle_OrderByShellSort();  //전투 순서에 따라 정렬
+        Battle_SetPosition();       //화면 상의 전투 위치 설정
+    }
     public static void Battle_SetUnitData(MapData map)
     {
-        List<Unit> units = GetUnitGroup(IDxUNIT.PLAYER);
-        battleUnits.AddRange(units);
+        List<Unit> units = unitAll.FindAll(unit => unit.Data.Group == IDxUNIT.PLAYER);
+        unitBattle.AddRange(units);
 
         int count = Random.Range(map.MinCount, map.MaxCount); //맵 Mob 개수
         byte index;
@@ -62,11 +66,31 @@ public class UnitMgr
             index = map.Mob[Random.Range(0, map.Mob.Length)];
             units.Add(New(index, Vector3.zero));
         }
-        battleUnits.AddRange(units);
+        unitBattle.AddRange(units);
 
         //Set Battle Stats
-        for (int i = 0; i < battleUnits.Count; ++i)
-            battleUnits[i].SetBattleStat();
+        for (int i = 0; i < unitBattle.Count; ++i)
+            unitBattle[i].SetBattleStat();
+    }
+    public static void Battle_OrderByShellSort()
+    {
+        int count = unitBattle.Count;
+        Unit compareTo, swap;
+        for (int gap = (count >> 1); gap > 0; gap >>= 1)
+        {
+            for (int i = gap; i < count; ++i)
+            { 
+                compareTo = unitBattle[i];
+                int j;
+                for (j = i; j >= gap && unitBattle[j - gap].BattleSpeed < compareTo.BattleSpeed; j -= gap)
+                {
+                    swap = unitBattle[j];
+                    unitBattle[j] = unitBattle[j - gap];
+                    unitBattle[j - gap] = swap;
+                }
+                unitBattle[j] = compareTo;
+            }
+        }
     }
     public static void Battle_SetPosition()
     {
@@ -74,7 +98,7 @@ public class UnitMgr
         Vector3 standard;
         List<Unit> group;
 
-        group = battleUnits.FindAll(x=>x.Data.Group == IDxUNIT.PLAYER);
+        group = unitBattle.FindAll(x => x.Data.Group == IDxUNIT.PLAYER);
         standard = new Vector3(-4f, 100f, -3.3f);
         switch (group.Count)
         {
@@ -95,7 +119,7 @@ public class UnitMgr
                 break;
         }
 
-        group = battleUnits.FindAll(x => x.Data.Group == IDxUNIT.ENEMY);
+        group = unitBattle.FindAll(x => x.Data.Group == IDxUNIT.ENEMY);
         standard = new Vector3(4.5f, 100f, -3f);
         switch (group.Count)
         {
@@ -123,39 +147,32 @@ public class UnitMgr
                 break;
         }
     }
-    public static List<int> Battle_GetUnitHashCodes()
-    {
-        List<int> hash = new List<int>();
-        for (int i = 0; i < battleUnits.Count; ++i)
-            hash.Add(battleUnits[i].HashCode);
 
-        return hash;
+
+    //## Battle > Get Unit Data (for Action)
+    public static Unit Battle_GetUnit(int order)
+    {
+        return unitBattle[order];
     }
-    public static void Battle_UnitReorder(List<int> hash)
+    public static List<SkillData> Battle_GetSkillTypeof(Unit unit, int type)
     {
-        List<Unit> reorder = new List<Unit>();
-        foreach (int code in hash)
-        {
-            foreach (Unit unit in battleUnits)
-            {
-                if (code == unit.HashCode)
-                {
-                    reorder.Add(unit);
-                    break;
-                }
-            }
-        }
-        battleUnits.Clear();
-        battleUnits = reorder;
-
-        foreach (var unit in battleUnits)
-            Debug.Log($"[{unit.Data.Name}] {unit.BattleSpeed:F2}");
-
+        return unit.Skill.FindAll(x => (x.SkillGroup == type));
+    }
+    public static SkillData Battle_GetSkill(Unit unit, int type, int index)
+    {
+        return unit.Skill.FindAll(skill => skill.SkillGroup == type)[index];
     }
 
 
+    //## Battle > Call Battle Action
+    public static void Battle_CallAction(int order)
+    {
+        //[Delegate] PLY => UI 띄워라, ENM => AI 돌려라
+        unitBattle[order].Battle();
+    }
 
-    public static void PlayerMoveTo(int input)
+    //## Field
+    public static void Field_PlayerMoveTo(int input)
     {
         int mx = 0, mz = 0;
 
@@ -178,33 +195,5 @@ public class UnitMgr
         //    mx -= 1;
 
         MyPC.MoveTo(mx, mz);
-    }
-    public static int GetGroupCount(byte type)
-    {
-        return allUnits.Values.Where(x => x.Data.Group == type).ToList().Count;
-    }
-    public static List<Unit> GetUnitGroup(byte type)
-    {
-        return allUnits.Values.Where(unit => unit.Data.Group == type).ToList();
-    }
-
-    public static Unit GetUnitByCode(int unitCode)
-    {
-        int hash = allUnits.First(x => x.Value.Data.Code == unitCode).Key;
-        return allUnits[hash];
-    }
-    public static List<SkillData> GetSkillTypeof(Unit unit, int type)
-    {
-        return unit.Skill.FindAll(x => (x.SkillGroup == type));
-    }
-    public static SkillData GetSkill(Unit unit, int type, int index)
-    {
-        return unit.Skill.FindAll(skill => skill.SkillGroup == type)[index];
-    }
-
-    public static void CallBattleAction(int hash)
-    {
-        //[Delegate] PLY => UI 띄워라, ENM => AI 돌려라
-        allUnits[hash].Battle();
     }
 }

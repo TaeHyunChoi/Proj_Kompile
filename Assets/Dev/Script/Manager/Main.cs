@@ -3,7 +3,7 @@ using UnityEngine;
 public class Main : MonoBehaviour
 {
     public Main Instance { private get; set; }
-    public int testMapCode;
+    public ushort testMapCode;
 
     private void Awake()
     {
@@ -25,12 +25,23 @@ public class Main : MonoBehaviour
 
         //## Set GameData
         Player.Init();
-        GameMgr.NowMap = DataMgr.MapTBL.Find(map => map.Code == testMapCode);
-        InputMgr.Set(IDxINPUT.CHEAT);
+
+        //## Set Input Mode
+        InputMgr.Set(IDxINPUT.FIELD);
+
+        //## Test
+        TestSetting();
     }
 
     private void Update()
     {
         InputMgr.Update();
+    }
+
+    private void TestSetting()
+    {
+        Player.Test();
+        GameMgr.ChangeMapData(testMapCode);
+        InputMgr.Set(IDxINPUT.CHEAT);
     }
 }

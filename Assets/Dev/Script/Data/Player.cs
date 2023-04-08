@@ -34,10 +34,6 @@ public class Player
     {
         activeMember = new bool[3];
         Items = new List<Item>();
-
-        Test();
-
-        UnitMgr.SetMyPC(IDxUNIT.ATAHO);
     }
 
     public static void Test()
@@ -48,6 +44,7 @@ public class Player
             if (activeMember[i])
                 UnitMgr.New(i, Vector3.zero);
         }
+        UnitMgr.Test_SetMyPC();
 
         for (int i = 0; i < DataMgr.ItemTBL.Count; i++)
             Items.Add(new Item(DataMgr.ItemTBL[i], Random.Range(0, 3)));
