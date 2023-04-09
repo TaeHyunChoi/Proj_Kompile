@@ -68,7 +68,6 @@ public class UIBattle : MonoBehaviour
     private const byte menuMax          = 7;
 
     private static int select = menuBasic;
-
     private static int selectMenu { get => (select & maskMenu) >> shiftMenu; }
     private static int selectContent { get => (select & maskContent); }
     private static int contentMax;
@@ -136,6 +135,11 @@ public class UIBattle : MonoBehaviour
                                 SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, selectMenu, selectContent);
                                 Debug.Log($"[{skill.Name}] {skill.TargetGroup}");
 
+                                //전투를 어떻게 진행시킬 것인가?에 대한 설계 부족...
+                                //단순 턴제 RPG인데 이렇게 어려울 일인가 ㅎㅎ...
+                                //일단 타겟팅 : 단일부터 해보자...
+                                //아 근데 졸림;
+
                                 select ^= select;
                                 InputMgr.Set(IDxINPUT.BATTLE_TARGERT);
                             }
@@ -152,7 +156,7 @@ public class UIBattle : MonoBehaviour
                             break;
                     }
 
-                    //UnitMgr.Battle_SaveUnitAction(nowOrder, action);
+                    UnitMgr.Battle_SaveUnitAction(nowOrder, select);
                     return;
                 }
             case IDxINPUT.CANCEL:
@@ -246,10 +250,10 @@ public class UIBattle : MonoBehaviour
         code[1] = new List<string>();
         switch (selectMenu)
         {
-            case 1: //기본기
-            case 2: //개인기
-            case 3: //단체기
-            case 6: //특수행동
+            case menuBasic:
+            case menuSkillSolo:
+            case menuSkillGroup:
+            case menuSkillSpecial:
                 {
                     List<SkillData> skills = UnitMgr.Battle_GetSkillTypeof(nowOrder, selectMenu);
                     count = skills.Count;
@@ -261,7 +265,7 @@ public class UIBattle : MonoBehaviour
                     }
                 }
                 break;
-            case 4: //모드
+            case menuMode:
                 {
                     count = MODE.Length;
 
@@ -272,7 +276,7 @@ public class UIBattle : MonoBehaviour
                     }
                 }
                 break;
-            case 5: //아이템
+            case menuItem:
                 {
                     List<Player.Item> items = Player.Items;
                     count = items.Count;
