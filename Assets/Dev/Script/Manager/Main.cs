@@ -19,9 +19,11 @@ public class Main : MonoBehaviour
         DataMgr.LoadCSVTable();
         ResourceMgr.LoadAssetFromRcs();
 
-        //## Init Managers
+        //## Init Managers : Find()·Î ÅüÃÆÀ½;
         CameraMgr.Init(transform.Find("Camera"));
+        UIMgr.Init(transform.Find("UI"));
         UnitMgr.Init(transform.Find("Unit"));
+
 
         //## Set GameData
         Player.Init();

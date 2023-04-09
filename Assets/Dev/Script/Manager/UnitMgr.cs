@@ -70,7 +70,7 @@ public class UnitMgr
 
         //Set Battle Stats
         for (int i = 0; i < unitBattle.Count; ++i)
-            unitBattle[i].SetBattleStat();
+            unitBattle[i].Battle_SetStat();
     }
     public static void Battle_OrderByShellSort()
     {
@@ -82,7 +82,7 @@ public class UnitMgr
             { 
                 compareTo = unitBattle[i];
                 int j;
-                for (j = i; j >= gap && unitBattle[j - gap].BattleSpeed < compareTo.BattleSpeed; j -= gap)
+                for (j = i; j >= gap && unitBattle[j - gap].Priority < compareTo.Priority; j -= gap)
                 {
                     swap = unitBattle[j];
                     unitBattle[j] = unitBattle[j - gap];
@@ -149,18 +149,22 @@ public class UnitMgr
     }
 
 
-    //## Battle > Get Unit Data (for Action)
+    //## Battle > Unit Data (for Action)
     public static Unit Battle_GetUnit(int order)
     {
         return unitBattle[order];
     }
-    public static List<SkillData> Battle_GetSkillTypeof(Unit unit, int type)
+    public static List<SkillData> Battle_GetSkillTypeof(int order, int type)
     {
-        return unit.Skill.FindAll(x => (x.SkillGroup == type));
+        return unitBattle[order].Skill[type];
     }
-    public static SkillData Battle_GetSkill(Unit unit, int type, int index)
+    public static SkillData Battle_GetSkill(int order, int type, int index)
     {
-        return unit.Skill.FindAll(skill => skill.SkillGroup == type)[index];
+        return unitBattle[order].Skill[type][index];
+    }
+    public static void Battle_SaveUnitAction(int order, int act)
+    {
+        unitBattle[order].Battle_SaveLastAction(act);
     }
 
 

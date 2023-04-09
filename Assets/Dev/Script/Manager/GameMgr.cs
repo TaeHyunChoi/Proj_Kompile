@@ -8,7 +8,7 @@ public class GameMgr
     private static MapData LastMap;
     private static Vector3 lastFieldPos;
 
-    public static int NowOrder { get => nowOrder; } //이것도 공개할 필요가 있나..?
+    public static int NowOrder { get => nowOrder; }
     private static int nowOrder;
 
 

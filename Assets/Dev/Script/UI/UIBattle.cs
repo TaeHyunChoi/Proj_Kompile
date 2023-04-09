@@ -47,18 +47,16 @@ public class UIBattle : MonoBehaviour
     private Transform[] targetingArrow;
     #endregion
     #region BitMask
-    //Mask
-    private const ushort maskPlayer     = 0b_1100_0000_0000_0000;   // << 14
-    private const ushort maskGroup      = 0b_0011_1000_0000_0000;   // << 11 
-    private const ushort maskTarget     = 0b_0000_0110_0000_0000;   // << 9
-    private const ushort maskMenu       = 0b_0000_0001_1100_0000;   // << 6
-    private const ushort maskContent    = 0b_0000_0000_0011_1111;
-
-    //Shift
-    private const ushort shiftActor     = 14;    //현재 액션을 선택하는 유닛 인덱스(Players)
+    private const ushort shiftActor     = 14;    //현재 액션을 선택하는 유닛 인덱스
     private const ushort shiftGroup     = 11;    //스킬의 타겟 그룹
     private const ushort shiftTarget    = 9;     //스킬의 타겟 유닛
     private const ushort shiftMenu      = 6;     //UI 메뉴
+
+    private const ushort maskActor      = 0b_11                     << shiftActor;
+    private const ushort maskGroup      = 0b_0011_1                 << shiftGroup;
+    private const ushort maskTarget     = 0b_0000_011               << shiftTarget;
+    private const ushort maskMenu       = 0b_0000_0001_11           << shiftMenu;
+    private const ushort maskContent    = 0b_0000_0000_0011_1111;
     #endregion
     #region Index
     private static string[] MODE = new string[] { "보통", "돌격", "방어", "선제", "반격" };
@@ -70,54 +68,41 @@ public class UIBattle : MonoBehaviour
     private const byte modeCounter         = 4;    //반격
 
     private const ushort idxMin             = 0;
-    private const ushort idxAtkBasic        = 1 << shiftMenu;
-    private const ushort idxSkillSolo       = 2 << shiftMenu;
-    private const ushort idxSkillGroup      = 3 << shiftMenu; 
+    private const ushort idxAtkBasic        = IDxSkill.BASIC << shiftMenu;
+    private const ushort idxSkillSolo       = IDxSkill.SOLO << shiftMenu;
+    private const ushort idxSkillGroup      = IDxSkill.GROUP << shiftMenu; 
     private const ushort idxMode            = 4 << shiftMenu;
     private const ushort idxItem            = 5 << shiftMenu;
-    private const ushort idxSkillSpecial    = 6 << shiftMenu;
+    private const ushort idxSkillSpecial    = IDxSkill.SPECIAL << shiftMenu;
     private const ushort idxMax             = 7 << shiftMenu;
 
+    private const byte target_ENM_Solo = 0;
+    private const byte target_SLF = 1;
+    private const byte target_PLY_Solo = 2;
+    private const byte target_ENM_All = 3;
+    private const byte target_PLY_All = 4;
+    private const byte target_SLF_XOR = 5;
+
     private static int select = idxAtkBasic;
-    private static int action;
+    private static int idxMenu { get => select >> shiftMenu; }
+    private static int idxContent { get => select & maskContent; }
 
     private static int contentMaxIndex;
     private static byte actorIndex;
-    private static int menuIndex    { get => select >> shiftMenu; }
-    private static int contentIndex { get => select & maskContent; }
 
-    private static byte target_ENM_Solo     = 0;
-    private static byte target_Self         = 1;
-    private static byte target_PLY_Solo     = 2;
-    private static byte target_ENM_All      = 3;
-    private static byte target_PLY_All      = 4;
-    private static byte target_Self_XOR     = 5;
     #endregion
 
-    private static Unit nowUnit { get => UnitMgr.Battle_GetUnit(GameMgr.NowOrder); }
+    private static int nowOrder { get => GameMgr.NowOrder; }
 
-    public static void Show(bool on)
+    public static void Init()
     {
-        if (Instance == null)
-        {
-            GameObject go = Resources.Load<GameObject>("Prefab/UIBattle");
-            go = Instantiate(go, UIMgr.Canvas_Battle.transform);
-            Instance = go.GetComponent<UIBattle>();
+        if (Instance != null)
+            return;
 
-            //유저 턴? 선택 UI 오픈
-            Unit actor = UnitMgr.Battle_GetUnit(GameMgr.NowOrder);
-            if (actor.Data.Group == IDxUNIT.PLAYER)
-            {
-                Instance.playerMenuPanel.SetActive(true);
-                Instance.UpdateUIContent(actor, idxAtkBasic);
-            }
-            else
-                Instance.playerMenuPanel.SetActive(false);
-        }
-
-        actorIndex = 0;
-        InputMgr.Set(IDxINPUT.BATTLE_MENU);
-        Instance.gameObject.SetActive(on);
+        GameObject go = Resources.Load<GameObject>("Prefab/UIBattle");
+        go = Instantiate(go, UIMgr.Canvas_Battle.transform);
+        Instance = go.GetComponent<UIBattle>();
+        Instance.gameObject.SetActive(false);
     }
     private void Awake()
     {
@@ -139,11 +124,67 @@ public class UIBattle : MonoBehaviour
         contentInfoText = content.GetChild(1).GetComponentsInChildren<TextMeshProUGUI>();
         targetingArrow = transform.GetChild(0).GetChild(2).GetComponentsInChildren<Transform>(true);
     }
+    public static void Show(bool on)
+    {
+        Unit actor = UnitMgr.Battle_GetUnit(nowOrder);
+        if (actor.Data.Group == IDxUNIT.PLAYER)
+            Instance.UpdateUIContent(idxAtkBasic);
+
+        select = actor.LastAction;
+        InputMgr.Set(IDxINPUT.BATTLE_MENU);
+        Instance.gameObject.SetActive(on);
+    }
 
 
     //Select Menu
     public static void SelectMenu(int input)
     {
+        //Get Input : Interact (=> return;)
+        switch (input & IDxINPUT.INTERACT)
+        {
+            case IDxINPUT.ENTER:
+                {
+                    //select와 action의 차이가 있나..? 용도 다름 + 패킹 포지션 다름 ㅈㅅ;
+
+                    int action = select;
+                    switch (select & maskMenu) //메뉴 인덱스 비교
+                    {
+                        //Get Input : Select Skill
+                        default:
+                            {
+                                //스킬을 이런 식으로 가져와야 하나...?
+                                //아이코 데이터 프레임 쪽에서 또 음청 꼬였구나 후
+                                SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, idxMenu, idxContent);
+                                action |= (actorIndex << shiftActor);           //Set Actor Index
+                                action |= (skill.TargetGroup << shiftGroup);    //Set TargetGroup Index
+
+                                select ^= select;
+                                InputMgr.Set(IDxINPUT.BATTLE_TARGERT);
+                            }
+                            break;
+                        case idxMode:
+                            {
+                                Debug.Log($"Change Mode");
+                            }
+                            break;
+                        case idxItem:
+                            {
+                                Debug.Log($"Use Item");
+                            }
+                            break;
+                    }
+
+                    UnitMgr.Battle_SaveUnitAction(nowOrder, action);
+                    return;
+                }
+            case IDxINPUT.CANCEL:
+                //스킬 대상 지정하기 전에 취소 누르면 다시 스킬 선택으로
+                return;
+            case IDxINPUT.INFO:
+                //UIMain에 띄우던가 그래야 하네
+                return;
+        }
+
         //Get Input : Direction
         switch (input & IDxINPUT.DIRECTION)
         {
@@ -157,8 +198,7 @@ public class UIBattle : MonoBehaviour
                         select = check;
 
                     select &= ~maskContent;
-
-                    Instance.UpdateUIContent(nowUnit, select);
+                    Instance.UpdateUIContent(select);
                 }
                 break;
             case IDxINPUT.RIGHT:
@@ -171,7 +211,7 @@ public class UIBattle : MonoBehaviour
                         select = check;
 
                     select &= ~maskContent;
-                    Instance.UpdateUIContent(nowUnit, select);
+                    Instance.UpdateUIContent(select);
                 }
                 break;
             case IDxINPUT.UP:
@@ -192,55 +232,14 @@ public class UIBattle : MonoBehaviour
                 break;
         }
 
-        //Update UI (Arrow)
-        Instance.contentArrow.anchoredPosition = contentArrowDefault + contentIndex * new Vector2(0, deltaContent);
-        Instance.menuArrow.anchoredPosition = menuArrowDefault + (menuIndex - 1) * new Vector2(deltaMenu, 0);
-
-        //Get Input : Interact
-        switch (input & IDxINPUT.INTERACT)
-        {
-            case IDxINPUT.ENTER:
-                {
-                    switch (select & maskMenu) //메뉴 인덱스 비교
-                    {
-                        //Basic, Solo, Group, Special
-                        default:
-                            {
-                                //Get Input : Select Skill
-                                SkillData skill = UnitMgr.Battle_GetSkill(nowUnit, menuIndex, contentIndex);
-                                action = select;
-                                action |= (actorIndex << shiftActor);           //Set Actor Index
-                                action |= (skill.TargetGroup << shiftGroup);    //Set TargetGroup Index
-
-                                //action에 잘 패킹하고 있는지도 살펴야 하는데 >> 타겟팅까지 살피고 정보 체크하자.
-
-                                select ^= select;
-                                InputMgr.Set(IDxINPUT.BATTLE_TARGERT);
-                            }
-                            break;
-                        case idxMode:
-                            {
-                                Debug.Log($"Change Mode");
-                            }
-                            break;
-                        case idxItem:
-                            {
-                                Debug.Log($"Use Item");
-                            }
-                            break;
-                    }
-                }
-                break;
-            case IDxINPUT.CANCEL:
-                //스킬 대상 지정하기 전에 취소 누르면 다시 스킬 선택으로
-                break;
-            case IDxINPUT.INFO:
-                //UIMain에 띄우던가 그래야 하네
-                break;
-        }
+        //Update UI : Direction
+        Instance.contentArrow.anchoredPosition = contentArrowDefault + idxContent * new Vector2(0, deltaContent);
+        Instance.menuArrow.anchoredPosition = menuArrowDefault + (idxMenu - 1) * new Vector2(deltaMenu, 0);
     }
-    private void UpdateUIContent(Unit unit, int select)
+    private void UpdateUIContent(int select)
     {
+        Unit unit = UnitMgr.Battle_GetUnit(nowOrder);
+
         //인덱스로 맞추기
         select >>= shiftMenu;
 
@@ -281,7 +280,7 @@ public class UIBattle : MonoBehaviour
             case 3: //단체기
             case 6: //특수행동
                 {
-                    SkillData[] skills = UnitMgr.Battle_GetSkillTypeof(unit, select).ToArray();
+                    SkillData[] skills = UnitMgr.Battle_GetSkillTypeof(nowOrder, select).ToArray();
                     contentMaxIndex = skills.Length - 1;
 
                     //슬롯 추가 생성

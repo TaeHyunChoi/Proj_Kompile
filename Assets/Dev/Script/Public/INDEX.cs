@@ -63,3 +63,10 @@ public class IDxUI
 {
     public const byte BATTLE        = 0X00;
 }
+public class IDxSkill
+{
+    public const ushort BASIC   = 1;
+    public const ushort SOLO    = 2;
+    public const ushort GROUP   = 3;
+    public const ushort SPECIAL = 6;
+}
