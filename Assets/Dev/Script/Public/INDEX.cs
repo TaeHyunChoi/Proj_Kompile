@@ -61,12 +61,13 @@ public class IDxINPUT
 }
 public class IDxUI
 {
-    public const byte BATTLE        = 0X00;
+    //UI Window
+    public const byte WND_BATTLE        = 0x00;
 }
 public class IDxSkill
 {
-    public const ushort BASIC   = 1;
-    public const ushort SOLO    = 2;
-    public const ushort GROUP   = 3;
-    public const ushort SPECIAL = 6;
+    public const byte BASIC   = 1;
+    public const byte SOLO    = 2;
+    public const byte GROUP   = 3;
+    public const byte SPECIAL = 6;
 }

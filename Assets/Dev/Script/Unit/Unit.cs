@@ -111,7 +111,7 @@ public class Unit : MonoBehaviour
     private void UIOpen()
     {
         Debug.Log($"PLY[{Data.Name}] {Priority:F2}");
-        UIMgr.Show(IDxUI.BATTLE, true);
+        UIMgr.Show(IDxUI.WND_BATTLE, true);
         //GameMgr.Battle_NextTurn();
     }
     private void BattleAI()

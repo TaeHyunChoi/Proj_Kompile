@@ -21,7 +21,7 @@ public class UIMgr
     {
         switch (type)
         {
-            case IDxUI.BATTLE:   UIBattle.Show(on);      break;
+            case IDxUI.WND_BATTLE:   UIBattle.Show(on);      break;
         }
     }
 }
