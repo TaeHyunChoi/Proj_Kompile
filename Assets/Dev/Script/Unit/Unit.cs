@@ -59,6 +59,7 @@ public class Unit : MonoBehaviour
         else if (Data.Group == IDxUNIT.ENEMY)
             Battle = new BattleAction(BattleAI);
 
+        lastAction = -1;
         targetingArrow = transform.GetChild(0).gameObject;
 
         //애니메이션(AOC)

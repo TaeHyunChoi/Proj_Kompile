@@ -127,12 +127,13 @@ public class UIBattle : MonoBehaviour
     public static void Show(bool on)
     {
         Unit actor = UnitMgr.Battle_GetUnit(nowOrder);
-        if (actor.Data.Group == IDxUNIT.PLAYER)
-            Instance.UpdateUIContent(idxAtkBasic);
-
         select = actor.LastAction;
-        InputMgr.Set(IDxINPUT.BATTLE_MENU);
+        if (select < 0)
+            select = (idxAtkBasic | 0x00);
+
+        Instance.UpdateUIMenu(select);
         Instance.gameObject.SetActive(on);
+        InputMgr.Set(IDxINPUT.BATTLE_MENU);
     }
 
 
@@ -198,7 +199,7 @@ public class UIBattle : MonoBehaviour
                         select = check;
 
                     select &= ~maskContent;
-                    Instance.UpdateUIContent(select);
+                    Instance.UpdateUIMenu(select);
                 }
                 break;
             case IDxINPUT.RIGHT:
@@ -211,7 +212,7 @@ public class UIBattle : MonoBehaviour
                         select = check;
 
                     select &= ~maskContent;
-                    Instance.UpdateUIContent(select);
+                    Instance.UpdateUIMenu(select);
                 }
                 break;
             case IDxINPUT.UP:
@@ -236,10 +237,8 @@ public class UIBattle : MonoBehaviour
         Instance.contentArrow.anchoredPosition = contentArrowDefault + idxContent * new Vector2(0, deltaContent);
         Instance.menuArrow.anchoredPosition = menuArrowDefault + (idxMenu - 1) * new Vector2(deltaMenu, 0);
     }
-    private void UpdateUIContent(int select)
+    private void UpdateUIMenu(int select)
     {
-        Unit unit = UnitMgr.Battle_GetUnit(nowOrder);
-
         //인덱스로 맞추기
         select >>= shiftMenu;
 
@@ -273,6 +272,10 @@ public class UIBattle : MonoBehaviour
         }
 
         //Content
+        int i = 0, count = 0;
+        List<string>[] code = new List<string>[2];
+        code[0] = new List<string>();
+        code[1] = new List<string>();
         switch (select)
         {
             case 1: //기본기
@@ -280,76 +283,61 @@ public class UIBattle : MonoBehaviour
             case 3: //단체기
             case 6: //특수행동
                 {
-                    SkillData[] skills = UnitMgr.Battle_GetSkillTypeof(nowOrder, select).ToArray();
-                    contentMaxIndex = skills.Length - 1;
+                    List<SkillData> skills = UnitMgr.Battle_GetSkillTypeof(nowOrder, select);
+                    count = skills.Count;
 
-                    //슬롯 추가 생성
-                    AddSlot(skills.Length - slots.Count);
-
-                    //슬롯 활성화 + 정보 입력
-                    for (int i = 0; i < slots.Count; ++i)
+                    for (i = 0; i < count; i++)
                     {
-                        if (i < skills.Length)
-                            slots[i].Load(skills[i].Name, skills[i].RcsCode);
-                        else
-                            slots[i].SetActive(false);
+                        code[0].Add(skills[i].Name);
+                        code[1].Add(skills[i].RcsCode);
                     }
                 }
                 break;
             case 4: //모드
                 {
-                    contentMaxIndex = MODE.Length - 1;
+                    count = MODE.Length;
 
-                   //슬롯 추가 생성
-                    AddSlot(MODE.Length - slots.Count);
-
-                    //메뉴 슬롯 (비)활성화
-                    for (int i = 0; i < slots.Count; ++i)
+                    for (i = 0; i < count; i++)
                     {
-                        if (i > contentMaxIndex)
-                            slots[i].SetActive(false);
-                        else
-                            slots[i].Load(MODE[i], "Icon_Mode");
+                        code[0].Add(MODE[i]);
+                        code[1].Add("Icon_Mode"); //리소스가 없으요...
                     }
                 }
                 break;
             case 5: //아이템
                 {
-                    //아이템이 없는 경우를 상정하질 않았네?
-                    //이거 설계 대충했더니 결국 발목 잡히는군 ㅇㅋ..
+                    List<Player.Item> items = Player.Items;
+                    count = items.Count;
 
-                    Player.Item[] items = Player.Items.ToArray();
-                    contentMaxIndex = items.Length - 1;
-
-                    //슬롯 추가 생성
-                    AddSlot(items.Length - slots.Count);
-
-                    //슬롯 활성화 + 정보 입력
-                    for (int i = 0; i < slots.Count; ++i)
+                    for (i = 0; i < count; i++)
                     {
-                        if (i < items.Length)
-                            slots[i].Load(items[i].Tbl.Name, items[i].Tbl.RcsCode);
-                        else
-                            slots[i].SetActive(false);
+                        code[0].Add(items[i].Tbl.Name);
+                        code[1].Add(items[i].Tbl.RcsCode);
                     }
                 }
                 break;
         }
-    }
-    private void AddSlot(int count)
-    {
-        if (count <= 0)
-            return;
 
-        GameObject rcs = ResourceMgr.Prefab["UIBattleSkill"];
-        GameObject slot;
-        for (int i = 0; i < count; ++i)
+        //사용 슬롯 > 생성 또는 갱신
+        for (i = 0; i < count; ++i)
         {
-            slot = Instantiate(rcs, contentScroll);
-            slots.Add(new UIBattleSlot(slot));
-        }
-    }
+            if (i >= slots.Count)
+            {
+                GameObject rcs = ResourceMgr.Prefab["UIBattleSkill"];
+                GameObject slot = Instantiate(rcs, contentScroll);
+                slots.Add(new UIBattleSlot(slot));
+            }
 
+            slots[i].Load(code[0][i], code[1][i]);
+        }
+
+        //사용하지 않는 슬롯 > 비활성화
+        for (; i < slots.Count; ++i)
+            slots[i].SetActive(false);
+
+        //인덱스 최대값 갱신
+        contentMaxIndex = count - 1;
+    }
 
     //Select Target
     public static void SelectTarget(int input)
