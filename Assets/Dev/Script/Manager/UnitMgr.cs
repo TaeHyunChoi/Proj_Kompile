@@ -179,7 +179,7 @@ public class UnitMgr
             case IDxUNIT.TARGET_ENM_SOLO:
             case IDxUNIT.TARGET_PLY_SOLO:
                 {
-                    //Tareg index, Group index 서로 다름
+                    //TargetGroup index, Group index 서로 다름
                     group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
 
                     for (int i = 0; i < unitBattle.Count; ++i)
@@ -191,10 +191,8 @@ public class UnitMgr
                                 targetIndex = i;
 
                             unitBattle[i].BeTargeted(i == targetIndex);
-                            continue;
+                            break;
                         }
-
-                        unitBattle[i].BeTargeted(false);
                     }
 
                     break;
@@ -204,14 +202,14 @@ public class UnitMgr
                 {
                     group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
 
-                    for (int i = 0; i < unitBattle.Count; ++i)
-                        unitBattle[i].BeTargeted(unitBattle[i].Data.Group == group);
+                    List<Unit> groupUnits = unitBattle.FindAll(unit => unit.Data.Group == group);
+                    for (int i = 0; i < groupUnits.Count; ++i)
+                        groupUnits[i].BeTargeted(true);
                     break;
                 }
             case IDxUNIT.TARGET_SELF:
                 {
-                    for (int i = 0; i < unitBattle.Count; ++i)
-                        unitBattle[i].BeTargeted(i == GameMgr.NowOrder);
+                    unitBattle[GameMgr.NowOrder].BeTargeted(true);
                     break;
                 }
             case IDxUNIT.TARGET_XOR_SELF:
@@ -223,6 +221,41 @@ public class UnitMgr
         }
 
         return targetIndex;
+    }
+    public static void Battle_ResetTarget(int group, int targetIndex)
+    {
+        switch (group)
+        {
+            case IDxUNIT.TARGET_ENM_SOLO:
+            case IDxUNIT.TARGET_PLY_SOLO:
+                {
+                    unitBattle[targetIndex].BeTargeted(false);
+                    break;
+                }
+            case IDxUNIT.TARGET_ENM_ALL:
+            case IDxUNIT.TARGET_PLY_ALL:
+                {
+                    //TargetGroup index, Group index 서로 다름
+                    group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
+
+                    List<Unit> groupUnits = unitBattle.FindAll(unit => unit.Data.Group == group);
+                    for (int i = 0; i < groupUnits.Count; ++i)
+                        groupUnits[i].BeTargeted(false);
+                    break;
+                }
+            case IDxUNIT.TARGET_SELF:
+                {
+                    unitBattle[GameMgr.NowOrder].BeTargeted(false);
+                    break;
+                }
+            case IDxUNIT.TARGET_XOR_SELF:
+                {
+                    //하나 정도는 걍 중복 처리하자...
+                    for (int i = 0; i < unitBattle.Count; ++i)
+                        unitBattle[i].BeTargeted(false);
+                    break;
+                }
+        }
     }
 
     //## Battle > Call Battle Action

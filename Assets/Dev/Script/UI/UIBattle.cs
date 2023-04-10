@@ -47,11 +47,13 @@ public class UIBattle : MonoBehaviour
     private Transform[] targetingArrow;
     #endregion
     #region BitMask
-    private const ushort shiftSoloTarget    = 4 * 4;
-    private const ushort shiftMenu      = 4 * 2;
-    //private const ushrot shiftContent = 4 * 0;
+    private const ushort shiftTargetGroup   = 4 * 4;
+    private const ushort shiftTargetOne     = 4 * 3;
+    private const ushort shiftMenu          = 4 * 2;
+    //private const ushrot shiftContent     = 4 * 0;
 
-    private const int maskSoloTarget    = 0x000F_0000;
+    private const int maskTargetGroup   = 0x000F_0000;
+    private const int maskTargetOne     = 0x0000_F000;
     private const int maskMenu          = 0x0000_0F00;
     private const int maskContent       = 0x0000_00FF;
     #endregion
@@ -68,7 +70,9 @@ public class UIBattle : MonoBehaviour
     private const byte menuMax          = 7;
 
     private static int select = menuBasic;
-    private static int selectTarget { get => (select & maskSoloTarget) >> shiftSoloTarget; }
+
+    private static int selectTargetGroup { get => (select & maskTargetGroup) >> shiftTargetGroup; }
+    private static int selectTargetOne { get => (select & maskTargetOne) >> shiftTargetOne; }
     private static int selectMenu { get => (select & maskMenu) >> shiftMenu; }
     private static int selectContent { get => (select & maskContent); }
     private static int contentMax;
@@ -135,9 +139,9 @@ public class UIBattle : MonoBehaviour
                         default:
                             {
                                 SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, selectMenu, selectContent);
-                                select = UnitMgr.Battle_SetTarget(skill.TargetGroup, selectTarget) << shiftSoloTarget;
+                                select |= UnitMgr.Battle_SetTarget(skill.TargetGroup, selectTargetOne) << shiftTargetOne;
+                                select |= (skill.TargetGroup) << shiftTargetGroup;
 
-                                select ^= select;
                                 InputMgr.Set(IDxINPUT.BATTLE_TARGERT);
                             }
                             break;
@@ -156,9 +160,6 @@ public class UIBattle : MonoBehaviour
                     UnitMgr.Battle_SaveUnitAction(nowOrder, select);
                     return;
                 }
-            case IDxINPUT.CANCEL:
-                //스킬 대상 지정하기 전에 취소 누르면 다시 스킬 선택으로
-                return;
             case IDxINPUT.INFO:
                 //UIMain에 띄우던가 그래야 하네
                 return;
@@ -315,52 +316,47 @@ public class UIBattle : MonoBehaviour
     //Select Target
     public static void Select_Target(int input)
     {
-        //Select Target에 대한 설계가 전혀 이뤄지지 않았군!
+        switch (input)
+        {
+            case IDxINPUT.CANCEL:
+                UnitMgr.Battle_ResetTarget(selectTargetGroup, selectTargetOne);
+                select &= ~maskTargetGroup;
+                select &= ~maskTargetOne;
 
-        //target_ENM_Solo
-        //target_Self
-        //target_PLY_Solo
-        //target_ENM_All
-        //target_PLY_All
-        //target_SELF_XOR
-
-        //targetMaxIndex 설정
-        int targetMaxIndex = -1;
-        //switch (select >> shiftGroup)
-        //{
-
-        //}
+                InputMgr.Set(IDxINPUT.BATTLE_MENU);
+                return;
+        }
 
         //targeting
-        if (targetMaxIndex == -1)
-        {
-            /*
-            int check = select;
-            switch (input & IDxINPUT.DIRECTION)
-            {
-                case IDxINPUT.UP:
-                case IDxINPUT.LEFT:
-                    {
-                        check -= (1 << shiftTarget); //언더플로가 발생할 수 있으니 따로 빼서 체크
-                        if ((check & maskTarget) >= (targetMaxIndex << shiftTarget))
-                            select &= (targetMaxIndex << shiftTarget);
-                        else
-                            select = check;
-                    }
-                    break;
-                case IDxINPUT.DOWN:
-                case IDxINPUT.RIGHT:
-                    {
-                        check += (1 << shiftTarget);
-                        if ((check & maskTarget) == 0)
-                            select &= ~maskTarget;
-                        else
-                            select = check;
-                    }
-                    break;
-            }
-            //*/
-        }
+        //if (targetMaxIndex == -1)
+        //{
+        //    /*
+        //    int check = select;
+        //    switch (input & IDxINPUT.DIRECTION)
+        //    {
+        //        case IDxINPUT.UP:
+        //        case IDxINPUT.LEFT:
+        //            {
+        //                check -= (1 << shiftTarget); //언더플로가 발생할 수 있으니 따로 빼서 체크
+        //                if ((check & maskTarget) >= (targetMaxIndex << shiftTarget))
+        //                    select &= (targetMaxIndex << shiftTarget);
+        //                else
+        //                    select = check;
+        //            }
+        //            break;
+        //        case IDxINPUT.DOWN:
+        //        case IDxINPUT.RIGHT:
+        //            {
+        //                check += (1 << shiftTarget);
+        //                if ((check & maskTarget) == 0)
+        //                    select &= ~maskTarget;
+        //                else
+        //                    select = check;
+        //            }
+        //            break;
+        //    }
+        //    //*/
+        //}
 
         //Transform uiElementTransform = uiElement.GetComponent<Transform>();        // RectTransform을 포함한 UI 요소의 Transform을 얻어옵니다.
         //RectTransform rectTransform = uiElement.GetComponent<RectTransform>();        // RectTransform을 얻어옵니다.
@@ -368,11 +364,5 @@ public class UIBattle : MonoBehaviour
         // RectTransform의 위치를 UI 요소의 Transform에 맞춥니다.
         //Vector2 anchoredPosition = new Vector2(uiElementTransform.localPosition.x, uiElementTransform.localPosition.y);
         //rectTransform.anchoredPosition = anchoredPosition;
-
-        //UpdateUnitTargeting(pos);
-    }
-    public void UpdateUI_Targeting()
-    { 
-        
     }
 }
