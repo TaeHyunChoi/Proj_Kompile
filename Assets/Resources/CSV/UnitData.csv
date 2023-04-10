@@ -1,5 +1,5 @@
-Code,Name,HP,MP,STR,CON,INT,WIS,DEX,AGI,CHA,LUK,RcsCode
-0,아타호,20,10,5,5,5,5,5,5,5,5,Ataho
-1,린샹,20,10,4,4,6,6,6,6,4,5,Linxhang
-2,스마슈,20,10,4,4,5,5,7,8,3,5,Smashu
-10,빨간원숭이,10,5,4,4,4,4,4,7,4,4,RedMonkey
+Code,Group,Name,HP,MP,STR,CON,INT,WIS,DEX,AGI,CHA,LUK,RcsCode
+1,1,아타호,20,10,5,5,5,5,5,5,5,5,Ataho
+2,1,린샹,20,10,4,4,6,6,6,6,4,5,Linxhang
+3,1,스마슈,20,10,4,4,5,5,7,8,3,5,Smashu
+10,2,빨간원숭이,10,5,4,4,4,4,4,7,4,4,RedMonkey

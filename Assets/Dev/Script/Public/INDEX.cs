@@ -4,15 +4,15 @@ public class IDxUNIT
     public const byte SPEED_MOVE = 5;
 
     //Unit Index
-    public const byte ATAHO     = 0;
-    public const byte LINXHANG  = 1;
-    public const byte SMASHU    = 2;
+    public const byte ATAHO     = 1;
+    public const byte LINXHANG  = 2;
+    public const byte SMASHU    = 3;
     public const byte COMMON    = 15;
 
     //Group Index
-    public const byte PLAYER    = 0;
-    public const byte ENEMY     = 1;
-    public const byte NPC       = 2;
+    public const byte PLAYER    = 1;
+    public const byte ENEMY     = 2;
+    public const byte NPC       = 3;
 
     //Stat
     public const byte HP        = 0;     //Ã¼·Â   
@@ -33,6 +33,14 @@ public class IDxUNIT
     public const string MOVE    = "MOVE";
     public const string SKILL   = "SKILL";
     public const string EVENT   = "EVENT";
+
+    //[Unit.Group]_[Target Count]
+    public const byte TARGET_ENM_SOLO   = 1;
+    public const byte TARGET_SELF       = 2;
+    public const byte TARGET_PLY_SOLO   = 3;
+    public const byte TARGET_ENM_ALL    = 4;
+    public const byte TARGET_PLY_ALL    = 5;
+    public const byte TARGET_XOR_SELF   = 6;
 }
 public class IDxINPUT
 {

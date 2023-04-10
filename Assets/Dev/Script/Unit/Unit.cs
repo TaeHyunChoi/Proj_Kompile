@@ -17,8 +17,8 @@ public class Unit : MonoBehaviour
     public Vector3 LocalPos { get => transform.localPosition; }
 
 
-    public int LastAction { get => lastAction; }
-    private int lastAction;
+    public int LastSelect { get => lastSelect; }
+    private int lastSelect;
 
     public byte Mode { get => Mode; }
     private byte mode;
@@ -59,7 +59,7 @@ public class Unit : MonoBehaviour
         else if (Data.Group == IDxUNIT.ENEMY)
             Battle = new BattleAction(BattleAI);
 
-        lastAction = -1;
+        lastSelect = -1;
         targetingArrow = transform.GetChild(0).gameObject;
 
         //애니메이션(AOC)
@@ -105,7 +105,7 @@ public class Unit : MonoBehaviour
     }
     public void Battle_SaveLastAction(int act)
     {
-        lastAction = act;
+        lastSelect = act;
     }
 
     private void UIOpen()

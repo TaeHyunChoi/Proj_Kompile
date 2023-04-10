@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 
 public struct SkillData : Interface.IDataSetter
 {
-    //데이터 패킹을 하면 '아주 적게나마' 메모리를 아끼는 셈이로구나.
-
     private string name;
     private string info;
     private string rcsCode;
@@ -70,39 +67,39 @@ public struct ItemData : Interface.IDataSetter
 }
 public struct UnitData : Interface.IDataSetter
 {
-    public byte Code { get; private set; }
-    public byte Group { get; private set; }
-    public string Name { get; private set; }
-    public ushort[] StatDefault { get; private set; }
-    public string RcsCode { get; private set; }
+    private byte        code;
+    private byte        group;
+    private string      name;
+    private ushort[]    statDefault;
+    private string      rcsCode;
+
+    public byte Code { get => code; }
+    public byte Group { get => group; }
+    public string Name { get => name; }
+    public ushort[] StatDefault { get => statDefault; }
+    public string RcsCode { get => rcsCode; }
+
 
     public void SetTable(Dictionary<string, string> data)
     {
-        Code = byte.Parse(data["Code"]);
+        code = byte.Parse(data["Code"]);
+        name = data["Name"];
+        group = byte.Parse(data["Group"]);
 
-        if (Code < 3)
-            Group = IDxUNIT.PLAYER;
-        else if (Code < 200)
-            Group = IDxUNIT.ENEMY;
-        else
-            Group = IDxUNIT.NPC;
+        statDefault = new ushort[IDxUNIT.STAT_CNT];
+        statDefault[IDxUNIT.HP]  = ushort.Parse(data["HP"]);
+        statDefault[IDxUNIT.MP]  = ushort.Parse(data["MP"]);
+        statDefault[IDxUNIT.EXP] = 0;
+        statDefault[IDxUNIT.STR] = ushort.Parse(data["STR"]);
+        statDefault[IDxUNIT.CON] = ushort.Parse(data["CON"]);
+        statDefault[IDxUNIT.INT] = ushort.Parse(data["INT"]);
+        statDefault[IDxUNIT.WIS] = ushort.Parse(data["WIS"]);
+        statDefault[IDxUNIT.DEX] = ushort.Parse(data["DEX"]);
+        statDefault[IDxUNIT.AGI] = ushort.Parse(data["AGI"]);
+        statDefault[IDxUNIT.CHA] = ushort.Parse(data["CHA"]);
+        statDefault[IDxUNIT.LUK] = ushort.Parse(data["LUK"]);
 
-        Name = data["Name"];
-
-        StatDefault = new ushort[IDxUNIT.STAT_CNT];
-        StatDefault[IDxUNIT.HP]  = ushort.Parse(data["HP"]);
-        StatDefault[IDxUNIT.MP]  = ushort.Parse(data["MP"]);
-        StatDefault[IDxUNIT.EXP] = 0;
-        StatDefault[IDxUNIT.STR] = ushort.Parse(data["STR"]);
-        StatDefault[IDxUNIT.CON] = ushort.Parse(data["CON"]);
-        StatDefault[IDxUNIT.INT] = ushort.Parse(data["INT"]);
-        StatDefault[IDxUNIT.WIS] = ushort.Parse(data["WIS"]);
-        StatDefault[IDxUNIT.DEX] = ushort.Parse(data["DEX"]);
-        StatDefault[IDxUNIT.AGI] = ushort.Parse(data["AGI"]);
-        StatDefault[IDxUNIT.CHA] = ushort.Parse(data["CHA"]);
-        StatDefault[IDxUNIT.LUK] = ushort.Parse(data["LUK"]);
-
-        RcsCode = data["RcsCode"];
+        rcsCode = data["RcsCode"];
     }
 }
 public struct MapData : Interface.IDataSetter

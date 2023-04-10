@@ -42,7 +42,7 @@ public class Player
         for (int i = 0; i < activeMember.Length; ++i)
         {
             if (activeMember[i])
-                UnitMgr.New(i, Vector3.zero);
+                UnitMgr.New(i + 1, Vector3.zero);
         }
         UnitMgr.Test_SetMyPC();
 

@@ -47,13 +47,13 @@ public class UIBattle : MonoBehaviour
     private Transform[] targetingArrow;
     #endregion
     #region BitMask
-    private const ushort shiftTarget    = 4 * 3;
+    private const ushort shiftSoloTarget    = 4 * 4;
     private const ushort shiftMenu      = 4 * 2;
     //private const ushrot shiftContent = 4 * 0;
 
-    private const ushort maskTarget     = 0x7000;
-    private const ushort maskMenu       = 0x0F00;
-    private const ushort maskContent    = 0x00FF;
+    private const int maskSoloTarget    = 0x000F_0000;
+    private const int maskMenu          = 0x0000_0F00;
+    private const int maskContent       = 0x0000_00FF;
     #endregion
     #region Index
     private static string[] MODE = new string[] { "보통", "돌격", "방어", "선제", "반격" };
@@ -68,13 +68,14 @@ public class UIBattle : MonoBehaviour
     private const byte menuMax          = 7;
 
     private static int select = menuBasic;
+    private static int selectTarget { get => (select & maskSoloTarget) >> shiftSoloTarget; }
     private static int selectMenu { get => (select & maskMenu) >> shiftMenu; }
     private static int selectContent { get => (select & maskContent); }
     private static int contentMax;
-
     #endregion
 
     private static int nowOrder { get => GameMgr.NowOrder; }
+    private static List<int> targets = new List<int>();
 
     public static void Init()
     {
@@ -108,21 +109,22 @@ public class UIBattle : MonoBehaviour
     }
     public static void Show(bool on)
     {
+        //select 정보가 초기화되어야 UI 표시 가능
         Unit actor = UnitMgr.Battle_GetUnit(nowOrder);
-        select = actor.LastAction;
+        select = actor.LastSelect;
         if (select <= 0)
             select = (menuBasic << shiftMenu);
 
-        Instance.UpdateUIMenu();
+        Instance.UpdateUI_Window();
         Instance.gameObject.SetActive(on);
+
         InputMgr.Set(IDxINPUT.BATTLE_MENU);
     }
 
 
     //Select Menu
-    public static void SelectMenu(int input)
+    public static void Select_Menu(int input)
     {
-        //Get Input : Interact (=> return;)
         switch (input & IDxINPUT.INTERACT)
         {
             case IDxINPUT.ENTER:
@@ -133,12 +135,7 @@ public class UIBattle : MonoBehaviour
                         default:
                             {
                                 SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, selectMenu, selectContent);
-                                Debug.Log($"[{skill.Name}] {skill.TargetGroup}");
-
-                                //전투를 어떻게 진행시킬 것인가?에 대한 설계 부족...
-                                //단순 턴제 RPG인데 이렇게 어려울 일인가 ㅎㅎ...
-                                //일단 타겟팅 : 단일부터 해보자...
-                                //아 근데 졸림;
+                                select = UnitMgr.Battle_SetTarget(skill.TargetGroup, selectTarget) << shiftSoloTarget;
 
                                 select ^= select;
                                 InputMgr.Set(IDxINPUT.BATTLE_TARGERT);
@@ -166,8 +163,6 @@ public class UIBattle : MonoBehaviour
                 //UIMain에 띄우던가 그래야 하네
                 return;
         }
-
-        //Get Input : Direction
         switch (input & IDxINPUT.DIRECTION)
         {
             case IDxINPUT.LEFT:
@@ -177,7 +172,8 @@ public class UIBattle : MonoBehaviour
                     else
                         select -= (1 << shiftMenu);
 
-                    Instance.UpdateUIMenu();
+                    select &= ~maskContent;
+                    Instance.UpdateUI_Window();
                 }
                 break;
             case IDxINPUT.RIGHT:
@@ -187,7 +183,8 @@ public class UIBattle : MonoBehaviour
                     else
                         select += (1 << shiftMenu);
 
-                    Instance.UpdateUIMenu();
+                    select &= ~maskContent;
+                    Instance.UpdateUI_Window();
                 }
                 break;
             case IDxINPUT.UP:
@@ -208,11 +205,9 @@ public class UIBattle : MonoBehaviour
                 break;
         }
 
-        //Update UI : Direction
-        Instance.contentArrow.anchoredPosition  = contentArrowDefault + selectContent * new Vector2(0, deltaContent);
-        Instance.menuArrow.anchoredPosition     = menuArrowDefault + (selectMenu - 1) * new Vector2(deltaMenu, 0);
+        Instance.UpdateUI_WindowArrow();
     }
-    private void UpdateUIMenu()
+    private void UpdateUI_Window()
     {
         //Update Title
         switch (selectMenu)
@@ -310,10 +305,15 @@ public class UIBattle : MonoBehaviour
         //Update Content Max Index
         contentMax = count - 1;
     }
+    private void UpdateUI_WindowArrow()
+    {
+        contentArrow.anchoredPosition = contentArrowDefault + selectContent * new Vector2(0, deltaContent);
+        menuArrow.anchoredPosition = menuArrowDefault + (selectMenu - 1) * new Vector2(deltaMenu, 0);
+    }
 
 
     //Select Target
-    public static void SelectTarget(int input)
+    public static void Select_Target(int input)
     {
         //Select Target에 대한 설계가 전혀 이뤄지지 않았군!
 
@@ -371,7 +371,7 @@ public class UIBattle : MonoBehaviour
 
         //UpdateUnitTargeting(pos);
     }
-    public void UpdateUITargeting()
+    public void UpdateUI_Targeting()
     { 
         
     }

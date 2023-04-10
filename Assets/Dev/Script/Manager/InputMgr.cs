@@ -62,7 +62,7 @@ public class InputMgr
             input |= IDxINPUT.INFO;
 
         if (input > 0)
-            UIBattle.SelectMenu(input);
+            UIBattle.Select_Menu(input);
     }
     private static void BattleTargeting()
     {
@@ -71,7 +71,7 @@ public class InputMgr
             input |= IDxINPUT.INFO;
 
         if (input > 0)
-            UIBattle.SelectTarget(input);
+            UIBattle.Select_Target(input);
     }
 
 

@@ -13,7 +13,6 @@ public class UnitMgr
     public static Unit MyPC { get => myPC; }
     public static Unit myPC;
 
-
     public static void Init(Transform tf)
     {
         tfActive = tf.GetChild(0);
@@ -45,6 +44,7 @@ public class UnitMgr
     {
         myPC = unitAll[IDxUNIT.ATAHO];
     }
+
 
     //## Battle > Set Battle Situation
     public static void Battle_SetUnit(MapData map)
@@ -168,12 +168,70 @@ public class UnitMgr
     }
 
 
+    //## Battle > UI
+    public static int Battle_SetTarget(int group, int targetIndex)
+    {
+        //타겟팅 선택을 취소할 때에 모든 unitBattle.beTargeted(false)로 처리하면 되는데;
+        //아직 기능이 없으니 일단 for()문으로 끈다...
+
+        switch (group)
+        {
+            case IDxUNIT.TARGET_ENM_SOLO:
+            case IDxUNIT.TARGET_PLY_SOLO:
+                {
+                    //Tareg index, Group index 서로 다름
+                    group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
+
+                    for (int i = 0; i < unitBattle.Count; ++i)
+                    {
+                        if (unitBattle[i].Data.Group == group)
+                        {
+                            //(예외적으로) 최초 세팅의 경우?
+                            if (targetIndex <= 0)
+                                targetIndex = i;
+
+                            unitBattle[i].BeTargeted(i == targetIndex);
+                            continue;
+                        }
+
+                        unitBattle[i].BeTargeted(false);
+                    }
+
+                    break;
+                }
+            case IDxUNIT.TARGET_ENM_ALL:
+            case IDxUNIT.TARGET_PLY_ALL:
+                {
+                    group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
+
+                    for (int i = 0; i < unitBattle.Count; ++i)
+                        unitBattle[i].BeTargeted(unitBattle[i].Data.Group == group);
+                    break;
+                }
+            case IDxUNIT.TARGET_SELF:
+                {
+                    for (int i = 0; i < unitBattle.Count; ++i)
+                        unitBattle[i].BeTargeted(i == GameMgr.NowOrder);
+                    break;
+                }
+            case IDxUNIT.TARGET_XOR_SELF:
+                {
+                    for (int i = 0; i < unitBattle.Count; ++i)
+                        unitBattle[i].BeTargeted(i != GameMgr.NowOrder);
+                    break;
+                }
+        }
+
+        return targetIndex;
+    }
+
     //## Battle > Call Battle Action
     public static void Battle_CallAction(int order)
     {
         //[Delegate] PLY => UI 띄워라, ENM => AI 돌려라
         unitBattle[order].Battle();
     }
+
 
     //## Field
     public static void Field_PlayerMoveTo(int input)
