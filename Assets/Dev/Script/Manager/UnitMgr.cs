@@ -59,6 +59,11 @@ public class UnitMgr
         unitBattle.AddRange(units);
 
         int count = Random.Range(map.MinCount, map.MaxCount); //맵 Mob 개수
+        count = 4; //test
+        UIBattle.Set_TargetMaxCount(count);
+
+
+
         byte index;
         units.Clear();
         for (int i = 0; i < count; ++i)
@@ -140,7 +145,7 @@ public class UnitMgr
                 break;
             case 4:
                 delta = -1.25f;
-                group[0].transform.localPosition = standard = new Vector3(-0.5f, 0, 0);
+                group[0].transform.localPosition = standard + new Vector3(-0.5f, 0, 0);
                 group[1].transform.localPosition = standard + new Vector3(0, 0, delta);
                 group[2].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
                 group[3].transform.localPosition = standard + new Vector3(-1f, 0, delta * 3);
@@ -169,11 +174,8 @@ public class UnitMgr
 
 
     //## Battle > UI
-    public static int Battle_SetTarget(int group, int targetIndex)
+    public static void Battle_SetTarget(int group, int targetIndex)
     {
-        //타겟팅 선택을 취소할 때에 모든 unitBattle.beTargeted(false)로 처리하면 되는데;
-        //아직 기능이 없으니 일단 for()문으로 끈다...
-
         switch (group)
         {
             case IDxUNIT.TARGET_ENM_SOLO:
@@ -181,27 +183,15 @@ public class UnitMgr
                 {
                     //TargetGroup index, Group index 서로 다름
                     group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
-
-                    for (int i = 0; i < unitBattle.Count; ++i)
-                    {
-                        if (unitBattle[i].Data.Group == group)
-                        {
-                            //(예외적으로) 최초 세팅의 경우?
-                            if (targetIndex <= 0)
-                                targetIndex = i;
-
-                            unitBattle[i].BeTargeted(i == targetIndex);
-                            break;
-                        }
-                    }
-
+                    List<Unit> groupUnits = unitBattle.FindAll(unit => unit.Data.Group == group);
+                    for (int i = 0; i < groupUnits.Count; ++i)
+                        groupUnits[i].BeTargeted(i == targetIndex);
                     break;
                 }
             case IDxUNIT.TARGET_ENM_ALL:
             case IDxUNIT.TARGET_PLY_ALL:
                 {
                     group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
-
                     List<Unit> groupUnits = unitBattle.FindAll(unit => unit.Data.Group == group);
                     for (int i = 0; i < groupUnits.Count; ++i)
                         groupUnits[i].BeTargeted(true);
@@ -219,8 +209,6 @@ public class UnitMgr
                     break;
                 }
         }
-
-        return targetIndex;
     }
     public static void Battle_ResetTarget(int group, int targetIndex)
     {
@@ -229,15 +217,15 @@ public class UnitMgr
             case IDxUNIT.TARGET_ENM_SOLO:
             case IDxUNIT.TARGET_PLY_SOLO:
                 {
-                    unitBattle[targetIndex].BeTargeted(false);
+                    group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
+                    List<Unit> groupUnits = unitBattle.FindAll(unit => unit.Data.Group == group);
+                    groupUnits[targetIndex].BeTargeted(false);
                     break;
                 }
             case IDxUNIT.TARGET_ENM_ALL:
             case IDxUNIT.TARGET_PLY_ALL:
                 {
-                    //TargetGroup index, Group index 서로 다름
                     group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
-
                     List<Unit> groupUnits = unitBattle.FindAll(unit => unit.Data.Group == group);
                     for (int i = 0; i < groupUnits.Count; ++i)
                         groupUnits[i].BeTargeted(false);
@@ -256,6 +244,10 @@ public class UnitMgr
                     break;
                 }
         }
+    }
+    public static int  Battle_GetLastAction(int order)
+    {
+        return unitBattle[order].LastSelect;
     }
 
     //## Battle > Call Battle Action

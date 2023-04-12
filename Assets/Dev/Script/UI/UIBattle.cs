@@ -75,7 +75,9 @@ public class UIBattle : MonoBehaviour
     private static int selectTargetOne { get => (select & maskTargetOne) >> shiftTargetOne; }
     private static int selectMenu { get => (select & maskMenu) >> shiftMenu; }
     private static int selectContent { get => (select & maskContent); }
+
     private static int contentMax;
+    private static int indexENMMax;
     #endregion
 
     private static int nowOrder { get => GameMgr.NowOrder; }
@@ -124,6 +126,10 @@ public class UIBattle : MonoBehaviour
 
         InputMgr.Set(IDxINPUT.BATTLE_MENU);
     }
+    public static void Set_TargetMaxCount(int count)
+    {
+        indexENMMax = (count - 1);
+    }
 
 
     //Select Menu
@@ -138,10 +144,15 @@ public class UIBattle : MonoBehaviour
                         //Get Input : Select Skill
                         default:
                             {
+                                int last = UnitMgr.Battle_GetLastAction(nowOrder);
+                                last = (last & maskTargetOne);
+                                select &= ~maskTargetOne;
+                                select |= last;
+
                                 SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, selectMenu, selectContent);
-                                select |= UnitMgr.Battle_SetTarget(skill.TargetGroup, selectTargetOne) << shiftTargetOne;
                                 select |= (skill.TargetGroup) << shiftTargetGroup;
 
+                                UnitMgr.Battle_SetTarget(selectTargetGroup, selectTargetOne);
                                 InputMgr.Set(IDxINPUT.BATTLE_TARGERT);
                             }
                             break;
@@ -314,55 +325,61 @@ public class UIBattle : MonoBehaviour
 
 
     //Select Target
+    private static void Reset_Target()
+    {
+        UnitMgr.Battle_SaveUnitAction(nowOrder, select);
+        UnitMgr.Battle_ResetTarget(selectTargetGroup, selectTargetOne);
+        select &= ~maskTargetGroup;
+        select &= ~maskTargetOne;
+    }
     public static void Select_Target(int input)
     {
+        SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, selectMenu, selectContent);
+        bool isSoloTarget = (skill.TargetGroup != IDxUNIT.TARGET_PLY_SOLO || skill.TargetGroup != IDxUNIT.TARGET_ENM_SOLO);
+
+        //단체기 >> 할 필요 없다.
+        //타겟 설정 후 애니메이션 실행까지 긔긔
+
         switch (input)
         {
-            case IDxINPUT.CANCEL:
-                UnitMgr.Battle_ResetTarget(selectTargetGroup, selectTargetOne);
-                select &= ~maskTargetGroup;
-                select &= ~maskTargetOne;
+            case IDxINPUT.UP:
+            case IDxINPUT.LEFT:
+                {
+                    if (!isSoloTarget)
+                        return;
 
-                InputMgr.Set(IDxINPUT.BATTLE_MENU);
+                    if (selectTargetOne == 0x00)
+                        select |= (indexENMMax << shiftTargetOne);
+                    else
+                        select -= (1 << shiftTargetOne);
+                }
+                break;
+            case IDxINPUT.DOWN:
+            case IDxINPUT.RIGHT:
+                {
+                    if (!isSoloTarget)
+                        return;
+
+                    if (selectTargetOne == indexENMMax)
+                        select &= ~maskTargetOne;
+                    else
+                        select += (1 << shiftTargetOne);
+                }
+                break;
+            case IDxINPUT.ENTER:
+                {
+                    Reset_Target();
+                    Debug.Log("Enter Skill");
+                }
+                return;
+            case IDxINPUT.CANCEL:
+                {
+                    Reset_Target();
+                    InputMgr.Set(IDxINPUT.BATTLE_MENU);
+                }
                 return;
         }
 
-        //targeting
-        //if (targetMaxIndex == -1)
-        //{
-        //    /*
-        //    int check = select;
-        //    switch (input & IDxINPUT.DIRECTION)
-        //    {
-        //        case IDxINPUT.UP:
-        //        case IDxINPUT.LEFT:
-        //            {
-        //                check -= (1 << shiftTarget); //언더플로가 발생할 수 있으니 따로 빼서 체크
-        //                if ((check & maskTarget) >= (targetMaxIndex << shiftTarget))
-        //                    select &= (targetMaxIndex << shiftTarget);
-        //                else
-        //                    select = check;
-        //            }
-        //            break;
-        //        case IDxINPUT.DOWN:
-        //        case IDxINPUT.RIGHT:
-        //            {
-        //                check += (1 << shiftTarget);
-        //                if ((check & maskTarget) == 0)
-        //                    select &= ~maskTarget;
-        //                else
-        //                    select = check;
-        //            }
-        //            break;
-        //    }
-        //    //*/
-        //}
-
-        //Transform uiElementTransform = uiElement.GetComponent<Transform>();        // RectTransform을 포함한 UI 요소의 Transform을 얻어옵니다.
-        //RectTransform rectTransform = uiElement.GetComponent<RectTransform>();        // RectTransform을 얻어옵니다.
-
-        // RectTransform의 위치를 UI 요소의 Transform에 맞춥니다.
-        //Vector2 anchoredPosition = new Vector2(uiElementTransform.localPosition.x, uiElementTransform.localPosition.y);
-        //rectTransform.anchoredPosition = anchoredPosition;
+        UnitMgr.Battle_SetTarget(skill.TargetGroup, selectTargetOne);
     }
 }
