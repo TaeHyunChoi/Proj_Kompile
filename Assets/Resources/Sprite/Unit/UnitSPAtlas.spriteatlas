@@ -176,6 +176,7 @@ SpriteAtlas:
   - {fileID: 879859584, guid: eb152cf3f698ab749ba4a1efec9b2268, type: 3}
   - {fileID: -520661607, guid: eb152cf3f698ab749ba4a1efec9b2268, type: 3}
   - {fileID: -2050190319, guid: eb152cf3f698ab749ba4a1efec9b2268, type: 3}
+  - {fileID: -809946162, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 2108713023, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 1601393712, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -1747936019, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
@@ -185,13 +186,10 @@ SpriteAtlas:
   - {fileID: -1845915434, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 862648963, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -570954798, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
-  - {fileID: 1656507853, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -1428176221, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
-  - {fileID: 1970134147, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -2083036316, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 687198486, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 1750606556, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
-  - {fileID: -809946162, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -1080159595, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -2093980061, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -86610297, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
@@ -200,16 +198,12 @@ SpriteAtlas:
   - {fileID: -2112311513, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -1014865371, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 121900252, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
-  - {fileID: -910582975, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 2034455419, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 1263782127, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
-  - {fileID: -1367767444, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -714875004, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -1046220561, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
-  - {fileID: -495457873, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -1204170292, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 2013067745, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
-  - {fileID: -2073989300, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -1552470228, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -1871406612, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 288994445, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
@@ -227,6 +221,12 @@ SpriteAtlas:
   - {fileID: 609283818, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: -1292968012, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 478484794, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
+  - {fileID: -2073989300, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
+  - {fileID: 1656507853, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
+  - {fileID: -910582975, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
+  - {fileID: -1367767444, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
+  - {fileID: -495457873, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
+  - {fileID: 1970134147, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   - {fileID: 1870007337, guid: 57c9261666ed6ab4b8c7e88e9c526109, type: 3}
   m_PackedSpriteNamesToIndex:
   - ataho_70
@@ -364,6 +364,7 @@ SpriteAtlas:
   - linxhang_13
   - linxhang_5
   - linxhang_4
+  - smashu_skill00_00
   - smashu_39
   - smashu_29
   - smashu_28
@@ -373,13 +374,10 @@ SpriteAtlas:
   - smashu_32
   - smashu_48
   - smashu_33
-  - smashu_23
   - smashu_34
-  - smashu_22
   - smashu_18
   - smashu_50
   - smashu_35
-  - smashu_21
   - smashu_19
   - smashu_51
   - smashu_45
@@ -388,16 +386,12 @@ SpriteAtlas:
   - smashu_16
   - smashu_44
   - smashu_37
-  - smashu_27
   - smashu_17
   - smashu_47
-  - smashu_26
   - smashu_14
   - smashu_46
-  - smashu_25
   - smashu_15
   - smashu_41
-  - smashu_24
   - smashu_12
   - smashu_40
   - smashu_13
@@ -415,6 +409,12 @@ SpriteAtlas:
   - smashu_6
   - smashu_5
   - smashu_4
+  - smashu_skill00_06
+  - smashu_skill00_05
+  - smashu_skill00_04
+  - smashu_skill00_03
+  - smashu_skill00_02
+  - smashu_skill00_01
   - smashu_38
   m_RenderDataMap: {}
   m_Tag: UnitSPAtlas

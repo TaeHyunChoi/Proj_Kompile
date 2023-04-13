@@ -36,7 +36,7 @@ public class GameMgr
     public static void Battle_ProcAction(int order, SkillData skill, int targetSolo = 0)
     {
         List<int> targetIndexes = new List<int>();
-
+        UnitMgr.Battle_GetUnit(order).PlayAnime(IDxUNIT.SKILL);
         //모든 대상을 다시 가져와야 하는거구나?
         //UnitMgr.Battle_SetTarget() 방식으로?
         //다른 방법이 있는지 고민 필요
