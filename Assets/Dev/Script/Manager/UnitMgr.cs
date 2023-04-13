@@ -62,8 +62,6 @@ public class UnitMgr
         count = 4; //test
         UIBattle.Set_TargetMaxCount(count);
 
-
-
         byte index;
         units.Clear();
         for (int i = 0; i < count; ++i)
@@ -159,6 +157,13 @@ public class UnitMgr
     {
         return unitBattle[order];
     }
+    public static Unit Battle_GetUnit(int group, int order)
+    {
+        Unit[] targetGroup = unitBattle.FindAll(unit => unit.Data.Group == group).ToArray();
+        return targetGroup[order];
+    }
+
+
     public static List<SkillData> Battle_GetSkillTypeof(int order, int type)
     {
         return unitBattle[order].Skill[type];

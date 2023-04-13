@@ -369,7 +369,8 @@ public class UIBattle : MonoBehaviour
             case IDxINPUT.ENTER:
                 {
                     Reset_Target();
-                    Debug.Log("Enter Skill");
+                    Show(false);
+                    GameMgr.Battle_ProcAction(nowOrder, skill, selectTargetOne);
                 }
                 return;
             case IDxINPUT.CANCEL:
