@@ -125,7 +125,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: HIT
+      name: Ahaot_Hit
       rect:
         serializedVersion: 2
         x: 51
@@ -356,7 +356,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ataho_12
+      name: ataho_skill00_00
       rect:
         serializedVersion: 2
         x: 12
@@ -377,7 +377,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ataho_13
+      name: ataho_skill00_01
       rect:
         serializedVersion: 2
         x: 75
@@ -1564,7 +1564,7 @@ TextureImporter:
     secondaryTextures: []
     nameFileIdTable:
       ataho_58: 1918308619
-      HIT: -1373685027
+      ataho_skill00_00: -1232471411
       ataho_26: -1736347302
       ataho_23: -1764492700
       ataho_50: -2092085476
@@ -1591,15 +1591,15 @@ TextureImporter:
       ataho_40: 904539995
       ataho_56: 638104003
       ataho_32: 1776359894
+      Ahaot_Hit: -1373685027
       ataho_67: -1427700499
       ataho_71: 1429613254
       ataho_9: 442581022
       ataho_60: -892195803
       ataho_75: 750818958
-      ataho_13: -47859800
       ataho_21: 1548211006
-      ataho_47: -177339856
       ataho_66: 22966863
+      ataho_47: -177339856
       ataho_76: 1205633684
       ataho_14: 1653013091
       ataho_7: 1075293786
@@ -1607,6 +1607,7 @@ TextureImporter:
       ataho_44: -247949990
       ataho_15: 213872405
       ataho_39: -684127890
+      ataho_skill00_01: -47859800
       ataho_52: -58702181
       ataho_43: -240759710
       ataho_25: 2050021397
@@ -1619,7 +1620,6 @@ TextureImporter:
       IDLE: 2140645028
       ataho_48: -1847017351
       ataho_2: -934946609
-      ataho_12: -1232471411
       ataho_62: -1503358532
       ataho_72: -240114093
       ataho_3: -1262797608

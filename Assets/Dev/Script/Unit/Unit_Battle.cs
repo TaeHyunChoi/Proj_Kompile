@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public partial class Unit : MonoBehaviour
 {
@@ -58,46 +59,49 @@ public partial class Unit : MonoBehaviour
     }
     public void Battle_AI()
     {
-        //얘는 뭘 어찌해야 할까?
+        //스킬 선정
+        int skillGroup = IDxSkill.BASIC; //임의 설정
+        int max = skill[skillGroup].Count;
+        selectSkill = skill[skillGroup][Random.Range(0, max)];
 
-
-        Debug.Log($"ENM[{Data.Name}] {Priority:F2} => Next");
-        GameMgr.Battle_NextTurn();
+        //타겟 지정 : Mode에 따라
+        targets = Battle_AITargeting();
+        Battle_PlayAction(selectSkill, targets);
     }
-
-
-    public void Battle_PlayAction(SkillData skill, int group, int solo)
+    private List<Unit> Battle_AITargeting()
     {
-        StartCoroutine(IEBattle_PlayAction(skill, group, solo));
-    }
-    private IEnumerator IEBattle_PlayAction(SkillData skill, int group, int solo)
-    {
-        //입력값: 스킬 저장
-        selectSkill = skill;
-
-        //입력값: 타겟 저장
-        targets.Clear();
-        switch (group)
+        List<Unit> result = new List<Unit>();
+        switch (selectSkill.TargetGroup)
         {
-            case IDxUNIT.TARGET_ENM_SOLO:
-            case IDxUNIT.TARGET_PLY_SOLO:
-                group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
-                targets.Add(UnitMgr.Battle_GetUnit(group, solo));
-                break;
-            case IDxUNIT.TARGET_ENM_ALL:
-            case IDxUNIT.TARGET_PLY_ALL:
-                group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
-                targets.AddRange(UnitMgr.Battle_GetUnitGroup(group));
-                break;
-            case IDxUNIT.TARGET_SELF:
-                targets.Add(this);
-                break;
-            case IDxUNIT.TARGET_XOR_SELF:
-                targets.AddRange(UnitMgr.Battle_GetUnitGroup(IDxUNIT.TARGET_ENM_ALL));
-                targets.AddRange(UnitMgr.Battle_GetUnitGroup(IDxUNIT.TARGET_PLY_ALL));
-                targets.Remove(this);
+            case IDxUNIT.TARGET_PLY_SOLO :
+                {
+                    //예시 모드는 보통(Rnd), 선제(One), 방어(XOR)로 걸어본다.
+                    List<Unit> groups = UnitMgr.Battle_GetUnitGroup(IDxUNIT.PLAYER);
+                    switch (mode)
+                    {
+                        case IDxUNIT.MODE_NORMAL:
+                        case IDxUNIT.MODE_DEFENCE:
+                            result.Add(groups[Random.Range(0, groups.Count)]);
+                            break;
+                        case IDxUNIT.MODE_PREEMTIVE:
+                            result.Add(groups[(lastSelect & 0x0000_F000) >> 4 * 3]);
+                            break;
+                    }
+                }
                 break;
         }
+
+        return result;
+    }
+
+    public void Battle_PlayAction(SkillData skill, List<Unit> targets)
+    {
+        selectSkill = skill;
+        StartCoroutine(IEBattle_PlayAction(targets));
+    }
+    private IEnumerator IEBattle_PlayAction(List<Unit> targets)
+    {
+        this.targets = targets;
 
         //잠시 버퍼 후 애니메이션 재생
         float wait = Time.time + 0.25f;
@@ -128,11 +132,10 @@ public partial class Unit : MonoBehaviour
     }
     public void ProcHit(Unit hitter, SkillData hitSkill)
     {
-        ushort dmg = CalcDamage(hitter, hitSkill);
-        Debug.Log($"{dmg:F2}");
+        int dmg = CalcDamage(hitter, hitSkill);
         StartCoroutine(IEBattle_Hit(hitSkill, dmg));
     }
-    private IEnumerator IEBattle_Hit(SkillData hitSkill, ushort dmg)
+    private IEnumerator IEBattle_Hit(SkillData hitSkill, int dmg)
     {
         status[IDxUNIT.HP] -= dmg;
 
@@ -144,13 +147,13 @@ public partial class Unit : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log($"[{UnitMgr.GetUnitByIndex(hitSkill.ActorIndex).data.Name}] Attack [{this.data.Name}] by {hitSkill.Name}");
+        //Debug.Log($"[{UnitMgr.GetUnitByIndex(hitSkill.ActorCode).data.Name}] Attack [{this.data.Name}] by {hitSkill.Name}");
         PlayAnime(IDxUNIT.ANIME_IDLE);
     }
 
 
-    private ushort CalcDamage(Unit hitter, SkillData hitSkill)
+    private int CalcDamage(Unit hitter, SkillData hitSkill)
     {
-        return (ushort)(hitSkill.Power + (hitter.status[IDxUNIT.DEX] >> 2) - status[IDxUNIT.CON]);
+        return hitSkill.Power + (hitter.status[IDxUNIT.DEX] >> 2) - status[IDxUNIT.CON];
     }
 }

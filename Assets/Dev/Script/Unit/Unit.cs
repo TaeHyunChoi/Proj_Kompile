@@ -14,8 +14,8 @@ public partial class Unit : MonoBehaviour
     private Animator animator;
     private AnimatorOverrideController aoc;
 
-    public ushort[] Status { get => status; }
-    private ushort[] status;
+    public int[] Status { get => status; }
+    private int[] status;
 
     public Vector3 Pos { get => transform.position; }
     public Vector3 LocalPos { get => transform.localPosition; }
@@ -26,11 +26,11 @@ public partial class Unit : MonoBehaviour
         data = DataMgr.UnitTBL.Find(unit => unit.Code == code);
 
         //스탯 초기화 (깊은 복사 사용)
-        status = new ushort[IDxUNIT.STAT_CNT];
+        status = new int[IDxUNIT.STAT_CNT];
         Array.Copy(Data.StatDefault, status, IDxUNIT.STAT_CNT);
 
         //캐릭터 스킬, 공통 스킬
-        List<SkillData> skill = DataMgr.SkillTBL.FindAll(skill => (skill.ActorIndex == code) || (skill.ActorIndex == IDxUNIT.COMMON));
+        List<SkillData> skill = DataMgr.SkillTBL.FindAll(skill => (skill.ActorCode == code) || (skill.ActorCode == IDxUNIT.COMMON));
 
         this.skill.Add(IDxSkill.BASIC, new List<SkillData>());
         this.skill.Add(IDxSkill.SOLO, new List<SkillData>());

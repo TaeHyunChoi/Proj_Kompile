@@ -125,7 +125,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: redMonkey_2
+      name: redMonkey_skill
       rect:
         serializedVersion: 2
         x: 40
@@ -246,7 +246,7 @@ TextureImporter:
       redMonkey_1: 642672644
       redMonkey_5: -38515845
       redMonkey_6: -509989254
-      redMonkey_2: 1938666606
+      redMonkey_skill: 1938666606
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

@@ -230,15 +230,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: linxhang_6
+      name: linxhang_skill00_00
       rect:
         serializedVersion: 2
         x: 337
         y: 337
         width: 62
         height: 61
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 9
+      pivot: {x: 0.516129, y: 0.5081967}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -251,15 +251,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: linxhang_7
+      name: linxhang_skill00_01
       rect:
         serializedVersion: 2
         x: 400
         y: 337
         width: 63
         height: 61
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 9
+      pivot: {x: 0.50793654, y: 0.5081967}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -272,7 +272,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: linxhang_8
+      name: linxhang_skill00_02
       rect:
         serializedVersion: 2
         x: 464
@@ -293,15 +293,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: linxhang_9
+      name: linxhang_skill00_03
       rect:
         serializedVersion: 2
         x: 529
         y: 338
         width: 44
         height: 61
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 9
+      pivot: {x: 0.72727275, y: 0.5081967}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1374,12 +1374,11 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      linxhang_42: 979137821
       linxhang_46: -1696193770
       linxhang_51: -1481183012
       linxhang_61: -1714821565
       linxhang_31: 1185217563
-      linxhang_1: 865390026
+      linxhang_33: -1934221534
       linxhang_63: -17102182
       linxhang_12: -1857752505
       linxhang_20: 859120181
@@ -1395,26 +1394,29 @@ TextureImporter:
       linxhang_11: 1091867869
       linxhang_69: -1233056057
       linxhang_14: -1084914314
-      linxhang_9: 609796434
+      linxhang_hit: -360023325
       linxhang_17: -2091381829
       linxhang_32: 1380946751
       linxhang_27: -1044665381
       linxhang_57: -432593881
       linxhang_64: 732257715
       linxhang_13: 879859584
-      linxhang_hit: -360023325
       linxhang_66: -2119195182
+      Linxhang_Idle: -2050344647
+      linxhang_skill00_01: -1536521425
+      linxhang_skill00_00: -216778816
       linxhang_30: -210678026
       linxhang_15: 647392284
       linxhang_19: 1114990122
       linxhang_50: -844142668
       linxhang_47: -1203870516
       linxhang_25: -2141702910
-      linxhang_44: 1420296254
+      linxhang_skill00_03: 609796434
       linxhang_59: -1633158140
       linxhang_22: 2118840605
-      linxhang_23: -447216159
+      linxhang_44: 1420296254
       linxhang_62: 847821017
+      linxhang_23: -447216159
       linxhang_55: 1069233238
       linxhang_67: 2115120469
       linxhang_36: -1128446829
@@ -1424,26 +1426,24 @@ TextureImporter:
       linxhang_28: -1424271238
       linxhang_4: -2050190319
       linxhang_29: 395049762
-      linxhang_8: 527477800
       linxhang_5: -520661607
       linxhang_56: 1764432766
       linxhang_16: -1854676366
       linxhang_26: 1379570790
-      linxhang_7: -1536521425
       linxhang_45: 1932835864
       linxhang_10: -207160409
       linxhang_3: -1035250806
       linxhang_53: -1694624873
       linxhang_37: 1898795542
       linxhang_54: -41747545
-      linxhang_6: -216778816
-      linxhang_24: 569048438
-      linxhang_38: -419310817
-      linxhang_60: 820254574
-      linxhang_33: -1934221534
-      linxhang_68: -323982993
-      Linxhang_Idle: -2050344647
+      linxhang_skill00_02: 527477800
       linxhang_18: -793240033
+      linxhang_24: 569048438
+      linxhang_60: 820254574
+      linxhang_38: -419310817
+      linxhang_42: 979137821
+      linxhang_68: -323982993
+      linxhang_1: 865390026
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

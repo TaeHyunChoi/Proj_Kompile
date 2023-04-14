@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 public struct SkillData : Interface.IDataSetter
@@ -16,7 +17,7 @@ public struct SkillData : Interface.IDataSetter
     public string RcsCode { get => rcsCode; }
 
     public int Index        { get => (indexPack & 0x0000_00FF); }
-    public int ActorIndex   { get => (indexPack & 0x0000_0F00) >> (4 * 2); }
+    public int ActorCode   { get => (indexPack & 0x0000_0F00) >> (4 * 2); }
     public int SkillGroup   { get => (indexPack & 0x0000_F000) >> (4 * 3); }
     public int TargetGroup  { get => (indexPack & 0x000F_0000) >> (4 * 4); }
     public int BuffIndex    { get => (indexPack & 0x0FF0_0000) >> (4 * 5); }
@@ -31,7 +32,7 @@ public struct SkillData : Interface.IDataSetter
         info = data["Info"];
         rcsCode = data["RscCode"];
 
-        indexPack |= byte.Parse(data["ActorIndex"]) << (4 * 2);
+        indexPack |= byte.Parse(data["ActorCode"]) << (4 * 2);
         indexPack |= byte.Parse(data["SkillGroup"]) << (4 * 3);
         indexPack |= byte.Parse(data["TargetGroup"]) << (4 * 4);
         indexPack |= byte.Parse(data["AfterBuffIndex"]) << (4 * 5);
@@ -70,13 +71,13 @@ public struct UnitData : Interface.IDataSetter
     private byte        code;
     private byte        group;
     private string      name;
-    private ushort[]    statDefault;
+    private int[]    statDefault;
     private string      rcsCode;
 
     public byte Code { get => code; }
     public byte Group { get => group; }
     public string Name { get => name; }
-    public ushort[] StatDefault { get => statDefault; }
+    public int[] StatDefault { get => statDefault; }
     public string RcsCode { get => rcsCode; }
 
 
@@ -86,18 +87,18 @@ public struct UnitData : Interface.IDataSetter
         name = data["Name"];
         group = byte.Parse(data["Group"]);
 
-        statDefault = new ushort[IDxUNIT.STAT_CNT];
-        statDefault[IDxUNIT.HP]  = ushort.Parse(data["HP"]);
-        statDefault[IDxUNIT.MP]  = ushort.Parse(data["MP"]);
+        statDefault = new int[IDxUNIT.STAT_CNT];
+        statDefault[IDxUNIT.HP]  = int.Parse(data["HP"]);
+        statDefault[IDxUNIT.MP]  = int.Parse(data["MP"]);
         statDefault[IDxUNIT.EXP] = 0;
-        statDefault[IDxUNIT.STR] = ushort.Parse(data["STR"]);
-        statDefault[IDxUNIT.CON] = ushort.Parse(data["CON"]);
-        statDefault[IDxUNIT.INT] = ushort.Parse(data["INT"]);
-        statDefault[IDxUNIT.WIS] = ushort.Parse(data["WIS"]);
-        statDefault[IDxUNIT.DEX] = ushort.Parse(data["DEX"]);
-        statDefault[IDxUNIT.AGI] = ushort.Parse(data["AGI"]);
-        statDefault[IDxUNIT.CHA] = ushort.Parse(data["CHA"]);
-        statDefault[IDxUNIT.LUK] = ushort.Parse(data["LUK"]);
+        statDefault[IDxUNIT.STR] = int.Parse(data["STR"]);
+        statDefault[IDxUNIT.CON] = int.Parse(data["CON"]);
+        statDefault[IDxUNIT.INT] = int.Parse(data["INT"]);
+        statDefault[IDxUNIT.WIS] = int.Parse(data["WIS"]);
+        statDefault[IDxUNIT.DEX] = int.Parse(data["DEX"]);
+        statDefault[IDxUNIT.AGI] = int.Parse(data["AGI"]);
+        statDefault[IDxUNIT.CHA] = int.Parse(data["CHA"]);
+        statDefault[IDxUNIT.LUK] = int.Parse(data["LUK"]);
 
         rcsCode = data["RcsCode"];
     }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class UnitMgr
 {
@@ -13,6 +14,22 @@ public class UnitMgr
 
     public static Unit MyPC { get => myPC; }
     public static Unit myPC;
+
+    //와 너무 비효율적; 코드 수정 요망
+    public static bool IsEndBattle()
+    {
+        if (unitBattle.FindAll(unit => unit.Data.Group == IDxUNIT.PLAYER).Count <= 0)
+            return true;
+        if (unitBattle.FindAll(unit => unit.Data.Group == IDxUNIT.ENEMY).Count <= 0)
+            return true;
+
+        return false;
+    }
+    public static bool IsEndCycle(int order)
+    {
+        return order >= (unitBattle.Count - 1);
+    }
+
 
     public static void Init(Transform tf)
     {
@@ -53,11 +70,10 @@ public class UnitMgr
     //## Battle > Set Battle Situation
     public static void Battle_SetUnit(MapData map)
     {
-        Battle_SetUnitData(map);    //전투 참여하는 유닛 리스트 생성
         Battle_OrderByShellSort();  //전투 순서에 따라 정렬
         Battle_SetPosition();       //화면 상의 전투 위치 설정
     }
-    public static void Battle_SetUnitData(MapData map)
+    public static void Battle_InitUnit(MapData map)
     {
         List<Unit> units = unitAll.FindAll(unit => unit.Data.Group == IDxUNIT.PLAYER);
         unitBattle.AddRange(units);
@@ -273,7 +289,30 @@ public class UnitMgr
     }
     public static void Battle_CallAction(int order, SkillData skill, int group, int solo)
     {
-        unitBattle[order].Battle_PlayAction(skill, group, solo);
+        List<Unit> targets = new List<Unit>();
+        switch (group)
+        {
+            case IDxUNIT.TARGET_ENM_SOLO:
+            case IDxUNIT.TARGET_PLY_SOLO:
+                group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
+                targets.Add(Battle_GetUnit(group, solo));
+                break;
+            case IDxUNIT.TARGET_ENM_ALL:
+            case IDxUNIT.TARGET_PLY_ALL:
+                group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
+                targets.AddRange(Battle_GetUnitGroup(group));
+                break;
+            case IDxUNIT.TARGET_SELF:
+                targets.Add(unitBattle[order]);
+                break;
+            case IDxUNIT.TARGET_XOR_SELF:
+                targets.AddRange(Battle_GetUnitGroup(IDxUNIT.TARGET_ENM_ALL));
+                targets.AddRange(Battle_GetUnitGroup(IDxUNIT.TARGET_PLY_ALL));
+                targets.Remove(unitBattle[order]);
+                break;
+        }
+
+        unitBattle[order].Battle_PlayAction(skill, targets);
     }
 
 

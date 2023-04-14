@@ -1,4 +1,4 @@
-Index,Name,Info,ActorIndex,SkillGroup,TargetGroup,Power,AfterBuffIndex,Accurate,Speed,RscCode
+Index,Name,Info,ActorCode,SkillGroup,TargetGroup,Power,AfterBuffIndex,Accurate,Speed,RscCode
 1,정권,주먹으로 가격하는 정통파 공격기술로 그만큼 안정감이 좋다,1,1,1,5,0,10000,1,Icon_Skill_Punch
 2,돌려차기,파워를 중시하는 동작 큰 차기공격. 틈이 많은 게 흠,1,1,1,5,0,10000,1,Icon_Skill_Kick
 3,던지기,붙잡아 던지는 기술로 대미지는 꽤 크지만 명중률은 떨어진다,1,1,1,5,0,10000,1,Icon_Skill_Punch
@@ -13,8 +13,8 @@ Index,Name,Info,ActorIndex,SkillGroup,TargetGroup,Power,AfterBuffIndex,Accurate,
 12,호포권,기를 모은 뢰격탄을 적 전체에게 공격! 공격 속도는 느리다.,1,3,4,5,0,10000,0,Icon_Skill_Punch
 13,맹호룬룬권,가벼운 스텝으로 가뿐히 적 전체에게 큰 대미지를 줌,1,3,4,5,0,10000,0,Icon_Skill_Kick
 14,비기 맹호유성각,계속 별똥별을 뿌리고 연속으로 날아 차는 기술,1,3,4,5,0,10000,0,Icon_Skill_Kick
-15,도주,도망치자!,15,6,2,5,0,10000,0,Icon_Skill_Run
-16,방어,견고한 자세로 상대의 공격을 막는다,15,6,2,5,0,10000,0,Icon_Skill_Defence
+15,도주,도망치자!,255,6,2,5,0,10000,0,Icon_Skill_Run
+16,방어,견고한 자세로 상대의 공격을 막는다,255,6,2,5,0,10000,0,Icon_Skill_Defence
 17,기합일발,"혈관이 터질만큼 기합을 넣어, 정신력으로 부상을 치료하는 기술",1,6,2,5,0,10000,0,Icon_Skill_Cheerup
 18,천조족,전투시에만 사용하는 전용기술로 자신의 MP 치료기,1,6,2,5,0,10000,0,Icon_Skill_Drink
 19,손톱공격,할퀴기 공격. 보기보단 아프니까 당하지 않게 주의,2,1,1,5,0,10000,1,Icon_Skill_Punch
@@ -43,3 +43,4 @@ Index,Name,Info,ActorIndex,SkillGroup,TargetGroup,Power,AfterBuffIndex,Accurate,
 42,비검·시공단,검에서 뿜어내는 압력으로 시공을 뒤틀어버리는 초위력의 전체공격기,3,3,4,5,0,10000,1,Icon_Skill_Punch
 43,눈요기,느긋하고 편안할 때 읽는 ○○책!!! 읽으면 공격력 상승. 전투중에는 안돼요!,3,6,2,5,0,10000,1,Icon_Skill_Punch
 44,인법·몸감추기,회피력이 뛰어난 닌자다운 기술! 피하기만 해서야 별 의미가 없지!,3,6,2,5,0,10000,1,Icon_Skill_Punch
+45,원숭이 할퀴기,-1,10,1,3,5,0,10000,1,-1

@@ -7,7 +7,7 @@ public class IDxUNIT
     public const byte ATAHO     = 1;
     public const byte LINXHANG  = 2;
     public const byte SMASHU    = 3;
-    public const byte COMMON    = 15;
+    public const byte COMMON    = 255;
 
     //Group Index
     public const byte PLAYER    = 1;
@@ -27,6 +27,13 @@ public class IDxUNIT
     public const byte CHA       = 9;     //카리스마     (___)
     public const byte LUK       = 10;    //운           (___)
     public const byte STAT_CNT  = 11;
+
+    //Battle Mode
+    public const byte MODE_NORMAL       = 0;
+    public const byte MODE_CHARGE       = 1;
+    public const byte MODE_DEFENCE      = 2;
+    public const byte MODE_PREEMTIVE    = 3;
+    public const byte MODE_COUNTER      = 4;
 
     //Animation
     public const string ANIME_IDLE    = "IDLE";
