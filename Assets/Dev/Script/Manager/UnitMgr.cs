@@ -77,7 +77,7 @@ public class UnitMgr
 
         //Set Battle Stats
         for (int i = 0; i < unitBattle.Count; ++i)
-            unitBattle[i].Battle_SetStat();
+            unitBattle[i].Battle_SetStatus();
     }
     public static void Battle_OrderByShellSort()
     {

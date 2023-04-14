@@ -146,7 +146,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: redMonkey_3
+      name: redMonkey_Hit
       rect:
         serializedVersion: 2
         x: 116
@@ -241,7 +241,7 @@ TextureImporter:
     secondaryTextures: []
     nameFileIdTable:
       IDLE: -2003165996
-      redMonkey_3: 2013816758
+      redMonkey_Hit: 2013816758
       redMonkey_4: -796306989
       redMonkey_1: 642672644
       redMonkey_5: -38515845

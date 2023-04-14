@@ -31,8 +31,7 @@ public class GameMgr
         UnitMgr.Battle_SetUnit(NowMap);
 
         //Start Battle Process
-        nowOrder = -1;
-        Battle_NextTurn();
+        UnitMgr.Battle_SelectAction(nowOrder = 0);
     }
     public static void Battle_NextTurn()
     {
