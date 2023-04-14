@@ -29,10 +29,11 @@ public class IDxUNIT
     public const byte STAT_CNT  = 11;
 
     //Animation
-    public const string IDLE    = "IDLE";
-    public const string MOVE    = "MOVE";
-    public const string SKILL   = "SKILL";
-    public const string EVENT   = "EVENT";
+    public const string ANIME_IDLE    = "IDLE";
+    public const string ANIME_MOVE    = "MOVE";
+    public const string ANIME_SKILL   = "SKILL";
+    public const string ANIME_HIT     = "HIT";
+    public const string ANIME_EVENT   = "EVENT";
 
     //[Unit.Group]_[Target Count]
     public const byte TARGET_ENM_SOLO   = 1;
@@ -45,12 +46,12 @@ public class IDxUNIT
 public class IDxINPUT
 {
     //Mode
-    public const byte BLOCKED        = 0;
-    public const byte BASE           = 1;
-    public const byte FIELD          = 2;
-    public const byte BATTLE_MENU    = 3;
-    public const byte BATTLE_TARGERT = 4;
-    public const byte CHEAT          = 7;
+    public const byte MODE_BLOCKED        = 0;
+    public const byte MODE_BASE           = 1;
+    public const byte MODE_FIELD          = 2;
+    public const byte MODE_BATTLE_MENU    = 3;
+    public const byte MODE_BATTLE_TARGERT = 4;
+    public const byte MODE_CHEAT          = 7;
 
     //Direction
     public const int DIRECTION      = 0xF0;

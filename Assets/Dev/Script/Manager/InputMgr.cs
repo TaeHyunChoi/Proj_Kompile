@@ -7,7 +7,6 @@ public class InputMgr
 
     private static int input = IDxINPUT.NONE;
 
-
     //Default
     public static void Set(int type)
     {
@@ -17,10 +16,10 @@ public class InputMgr
         //상황별 입력값 추가
         switch (type)
         {
-            case IDxINPUT.FIELD:            Update += Field;             break;
-            case IDxINPUT.BATTLE_MENU:      Update += BattleAction;      break;
-            case IDxINPUT.BATTLE_TARGERT:   Update += BattleTargeting;   break;
-            case IDxINPUT.CHEAT:            Update += Cheat;             break;
+            case IDxINPUT.MODE_FIELD:            Update += Field;             break;
+            case IDxINPUT.MODE_BATTLE_MENU:      Update += BattleAction;      break;
+            case IDxINPUT.MODE_BATTLE_TARGERT:   Update += BattleTargeting;   break;
+            case IDxINPUT.MODE_CHEAT:            Update += Cheat;             break;
             default: break;
         }
 

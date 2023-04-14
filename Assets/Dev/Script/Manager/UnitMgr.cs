@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -44,7 +45,10 @@ public class UnitMgr
     {
         myPC = unitAll[IDxUNIT.ATAHO];
     }
-
+    public static Unit GetUnitByIndex(int code)
+    {
+        return unitAll.Find(unit => unit.Data.Code == code);
+    }
 
     //## Battle > Set Battle Situation
     public static void Battle_SetUnit(MapData map)
@@ -162,7 +166,10 @@ public class UnitMgr
         Unit[] targetGroup = unitBattle.FindAll(unit => unit.Data.Group == group).ToArray();
         return targetGroup[order];
     }
-
+    public static List<Unit> Battle_GetUnitGroup(int group)
+    {
+        return unitBattle.FindAll(unit => unit.Data.Group == group);
+    }
 
     public static List<SkillData> Battle_GetSkillTypeof(int order, int type)
     {
@@ -190,7 +197,7 @@ public class UnitMgr
                     group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
                     List<Unit> groupUnits = unitBattle.FindAll(unit => unit.Data.Group == group);
                     for (int i = 0; i < groupUnits.Count; ++i)
-                        groupUnits[i].BeTargeted(i == targetIndex);
+                        groupUnits[i].Battle_BeTargeted(i == targetIndex);
                     break;
                 }
             case IDxUNIT.TARGET_ENM_ALL:
@@ -199,18 +206,18 @@ public class UnitMgr
                     group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
                     List<Unit> groupUnits = unitBattle.FindAll(unit => unit.Data.Group == group);
                     for (int i = 0; i < groupUnits.Count; ++i)
-                        groupUnits[i].BeTargeted(true);
+                        groupUnits[i].Battle_BeTargeted(true);
                     break;
                 }
             case IDxUNIT.TARGET_SELF:
                 {
-                    unitBattle[GameMgr.NowOrder].BeTargeted(true);
+                    unitBattle[GameMgr.NowOrder].Battle_BeTargeted(true);
                     break;
                 }
             case IDxUNIT.TARGET_XOR_SELF:
                 {
                     for (int i = 0; i < unitBattle.Count; ++i)
-                        unitBattle[i].BeTargeted(i != GameMgr.NowOrder);
+                        unitBattle[i].Battle_BeTargeted(i != GameMgr.NowOrder);
                     break;
                 }
         }
@@ -224,7 +231,7 @@ public class UnitMgr
                 {
                     group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
                     List<Unit> groupUnits = unitBattle.FindAll(unit => unit.Data.Group == group);
-                    groupUnits[targetIndex].BeTargeted(false);
+                    groupUnits[targetIndex].Battle_BeTargeted(false);
                     break;
                 }
             case IDxUNIT.TARGET_ENM_ALL:
@@ -233,19 +240,19 @@ public class UnitMgr
                     group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
                     List<Unit> groupUnits = unitBattle.FindAll(unit => unit.Data.Group == group);
                     for (int i = 0; i < groupUnits.Count; ++i)
-                        groupUnits[i].BeTargeted(false);
+                        groupUnits[i].Battle_BeTargeted(false);
                     break;
                 }
             case IDxUNIT.TARGET_SELF:
                 {
-                    unitBattle[GameMgr.NowOrder].BeTargeted(false);
+                    unitBattle[GameMgr.NowOrder].Battle_BeTargeted(false);
                     break;
                 }
             case IDxUNIT.TARGET_XOR_SELF:
                 {
                     //하나 정도는 걍 중복 처리하자...
                     for (int i = 0; i < unitBattle.Count; ++i)
-                        unitBattle[i].BeTargeted(false);
+                        unitBattle[i].Battle_BeTargeted(false);
                     break;
                 }
         }
@@ -255,11 +262,18 @@ public class UnitMgr
         return unitBattle[order].LastSelect;
     }
 
-    //## Battle > Call Battle Action
-    public static void Battle_CallAction(int order)
+
+    //## Battle > Action
+    public static void Battle_SelectAction(int order)
     {
-        //[Delegate] PLY => UI 띄워라, ENM => AI 돌려라
-        unitBattle[order].Battle();
+        if (unitBattle[order].Data.Group == IDxUNIT.PLAYER)
+            UIMgr.Show(IDxUI.WND_BATTLE, true);
+        else
+            unitBattle[order].Battle_AI();
+    }
+    public static void Battle_CallAction(int order, SkillData skill, int group, int solo)
+    {
+        unitBattle[order].Battle_PlayAction(skill, group, solo);
     }
 
 

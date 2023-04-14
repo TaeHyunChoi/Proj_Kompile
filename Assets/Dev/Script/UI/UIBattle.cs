@@ -70,14 +70,13 @@ public class UIBattle : MonoBehaviour
     private const byte menuMax          = 7;
 
     private static int select = menuBasic;
+    private static int contentMax;
+    private static int indexENMMax;
 
     private static int selectTargetGroup { get => (select & maskTargetGroup) >> shiftTargetGroup; }
     private static int selectTargetOne { get => (select & maskTargetOne) >> shiftTargetOne; }
     private static int selectMenu { get => (select & maskMenu) >> shiftMenu; }
     private static int selectContent { get => (select & maskContent); }
-
-    private static int contentMax;
-    private static int indexENMMax;
     #endregion
 
     private static int nowOrder { get => GameMgr.NowOrder; }
@@ -124,7 +123,7 @@ public class UIBattle : MonoBehaviour
         Instance.UpdateUI_Window();
         Instance.gameObject.SetActive(on);
 
-        InputMgr.Set(IDxINPUT.BATTLE_MENU);
+        InputMgr.Set(IDxINPUT.MODE_BATTLE_MENU);
     }
     public static void Set_TargetMaxCount(int count)
     {
@@ -153,7 +152,7 @@ public class UIBattle : MonoBehaviour
                                 select |= (skill.TargetGroup) << shiftTargetGroup;
 
                                 UnitMgr.Battle_SetTarget(selectTargetGroup, selectTargetOne);
-                                InputMgr.Set(IDxINPUT.BATTLE_TARGERT);
+                                InputMgr.Set(IDxINPUT.MODE_BATTLE_TARGERT);
                             }
                             break;
                         case menuMode:
@@ -327,7 +326,7 @@ public class UIBattle : MonoBehaviour
     //Select Target
     private static void Reset_Target()
     {
-        UnitMgr.Battle_SaveUnitAction(nowOrder, select);
+        //UnitMgr.Battle_SaveUnitAction(nowOrder, select);
         UnitMgr.Battle_ResetTarget(selectTargetGroup, selectTargetOne);
         select &= ~maskTargetGroup;
         select &= ~maskTargetOne;
@@ -368,15 +367,19 @@ public class UIBattle : MonoBehaviour
                 break;
             case IDxINPUT.ENTER:
                 {
+                    UnitMgr.Battle_SaveUnitAction(nowOrder, select);
+                    UnitMgr.Battle_CallAction(nowOrder, skill, selectTargetGroup, selectTargetOne);
+
+                    InputMgr.Set(IDxINPUT.MODE_BLOCKED);
+
                     Reset_Target();
                     Show(false);
-                    GameMgr.Battle_ProcAction(nowOrder, skill, selectTargetOne);
                 }
                 return;
             case IDxINPUT.CANCEL:
                 {
+                    InputMgr.Set(IDxINPUT.MODE_BATTLE_MENU);
                     Reset_Target();
-                    InputMgr.Set(IDxINPUT.BATTLE_MENU);
                 }
                 return;
         }

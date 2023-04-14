@@ -29,7 +29,7 @@ public class Main : MonoBehaviour
         Player.Init();
 
         //## Set Input Mode
-        InputMgr.Set(IDxINPUT.FIELD);
+        InputMgr.Set(IDxINPUT.MODE_FIELD);
 
         //## Test
         TestSetting();
@@ -44,6 +44,6 @@ public class Main : MonoBehaviour
     {
         Player.Test();
         GameMgr.ChangeMapData(testMapCode);
-        InputMgr.Set(IDxINPUT.CHEAT);
+        InputMgr.Set(IDxINPUT.MODE_CHEAT);
     }
 }
