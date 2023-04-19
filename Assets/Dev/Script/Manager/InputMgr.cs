@@ -11,7 +11,8 @@ public class InputMgr
     public static void Set(int type)
     {
         //기본 입력값
-        Update = Base;
+        Update =  Base;
+        Update += Option;
 
         //상황별 입력값 추가
         switch (type)
@@ -45,11 +46,25 @@ public class InputMgr
         if (Input.GetButtonDown("Info"))
             input |= IDxINPUT.INFO;
     }
+    private static void Option()
+    { 
+        
+    }
     
 
     private static void Field()
     {
-        if((input & IDxINPUT.DIRECTION) > 0)
+        //꾸욱 눌러도 돌아다닐 수 있도록
+        if (Input.GetButton("Up"))
+            input |= IDxINPUT.UP;
+        if (Input.GetButton("Down"))
+            input |= IDxINPUT.DOWN;
+        if (Input.GetButton("Left"))
+            input |= IDxINPUT.LEFT;
+        if (Input.GetButton("Right"))
+            input |= IDxINPUT.RIGHT;
+
+        if ((input & IDxINPUT.DIRECTION) > 0)
             UnitMgr.Field_PlayerMoveTo(input);
 
         if ((input & IDxINPUT.ENTER) > 0)

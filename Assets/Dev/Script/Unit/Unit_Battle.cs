@@ -59,6 +59,8 @@ public partial class Unit : MonoBehaviour
     }
     public void Battle_AI()
     {
+        //여기서부터 설계+구현 들어가야 하는군
+
         //스킬 선정
         int skillGroup = IDxSkill.BASIC; //임의 설정
         int max = skill[skillGroup].Count;

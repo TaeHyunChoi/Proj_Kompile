@@ -15,7 +15,6 @@ public class UnitMgr
     public static Unit MyPC { get => myPC; }
     public static Unit myPC;
 
-    //와 너무 비효율적; 코드 수정 요망
     public static bool IsEndBattle()
     {
         if (unitBattle.FindAll(unit => unit.Data.Group == IDxUNIT.PLAYER).Count <= 0)
@@ -62,24 +61,17 @@ public class UnitMgr
     {
         myPC = unitAll[IDxUNIT.ATAHO];
     }
-    public static Unit GetUnitByIndex(int code)
-    {
-        return unitAll.Find(unit => unit.Data.Code == code);
-    }
+    
 
     //## Battle > Set Battle Situation
-    public static void Battle_SetUnit(MapData map)
+    public static void Battle_InitUnitList(MapData map)
     {
-        Battle_OrderByShellSort();  //전투 순서에 따라 정렬
-        Battle_SetPosition();       //화면 상의 전투 위치 설정
-    }
-    public static void Battle_InitUnit(MapData map)
-    {
+        //플레이어 정보 가져오기
         List<Unit> units = unitAll.FindAll(unit => unit.Data.Group == IDxUNIT.PLAYER);
         unitBattle.AddRange(units);
 
+        //몬스터 생성
         int count = Random.Range(map.MinCount, map.MaxCount); //맵 Mob 개수
-        count = 4; //test
         UIBattle.Set_TargetMaxCount(count);
 
         byte index;
@@ -94,6 +86,9 @@ public class UnitMgr
         //Set Battle Stats
         for (int i = 0; i < unitBattle.Count; ++i)
             unitBattle[i].Battle_SetStatus();
+
+        //Order
+        Battle_OrderByShellSort();
     }
     public static void Battle_OrderByShellSort()
     {
@@ -171,7 +166,6 @@ public class UnitMgr
         }
     }
 
-
     //## Battle > Unit Data (for Action)
     public static Unit Battle_GetUnit(int order)
     {
@@ -186,7 +180,6 @@ public class UnitMgr
     {
         return unitBattle.FindAll(unit => unit.Data.Group == group);
     }
-
     public static List<SkillData> Battle_GetSkillTypeof(int order, int type)
     {
         return unitBattle[order].Skill[type];
@@ -199,7 +192,6 @@ public class UnitMgr
     {
         unitBattle[order].Battle_SaveLastAction(act);
     }
-
 
     //## Battle > UI
     public static void Battle_SetTarget(int group, int targetIndex)
@@ -278,7 +270,6 @@ public class UnitMgr
         return unitBattle[order].LastSelect;
     }
 
-
     //## Battle > Action
     public static void Battle_SelectAction(int order)
     {
@@ -330,15 +321,7 @@ public class UnitMgr
         if ((input & IDxINPUT.LEFT) != 0)
             mx -= 1;
 
-        //if ((input & IDxINPUT.UP) == IDxINPUT.UP)
-        //    mz += 1;
-        //if ((input & IDxINPUT.DOWN) == IDxINPUT.DOWN)
-        //    mz -= 1;
-        //if ((input & IDxINPUT.RIGHT) == IDxINPUT.RIGHT)
-        //    mx += 1;
-        //if ((input & IDxINPUT.LEFT) == IDxINPUT.LEFT)
-        //    mx -= 1;
-
-        MyPC.MoveTo(mx, mz);
+        Vector3 move = MyPC.MoveTo(new Vector3(mx, 0, mz));
+        CameraMgr.FollowPC(move);
     }
 }
