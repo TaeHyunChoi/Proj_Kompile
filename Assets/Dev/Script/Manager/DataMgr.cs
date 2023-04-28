@@ -23,10 +23,8 @@ public class DataMgr
     private static List<Dictionary<string, string>> ReadCSVFile(string fileName)
     {
         List<Dictionary<string, string>> table = new List<Dictionary<string, string>>();
-        //StreamReader reader = new StreamReader(Application.persistentDataPath + "/Resources/CSV/" + fileName + ".csv");
-
-        TextAsset csv = Resources.Load<TextAsset>("CSV/" + fileName);
-        StringReader reader = new StringReader(csv.text);
+        TextAsset     csv = Resources.Load<TextAsset>("CSV/" + fileName);
+        StringReader  reader = new StringReader(csv.text);
         StringBuilder sb = new StringBuilder();
 
         //Setting

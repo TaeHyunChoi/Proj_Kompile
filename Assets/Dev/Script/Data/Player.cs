@@ -28,12 +28,16 @@ public class Player
     }
 
     private static bool[] activeMember;
+    private static byte[,] memberCombos;
+
     public static List<Item> Items { get; set; }
 
     public static void Init()
     {
-        activeMember = new bool[3];
         Items = new List<Item>();
+        
+        activeMember = new bool[3];
+        memberCombos = new byte[3, 4];
     }
 
     public static void Test()
@@ -46,6 +50,9 @@ public class Player
             if (activeMember[i])
                 UnitMgr.New(i + 1, Vector3.zero);
         }
+        memberCombos[IDxUNIT.ATAHO, 0] = 2; //돌려차기
+        memberCombos[IDxUNIT.ATAHO, 1] = 5; //호격권
+
         UnitMgr.Test_SetMyPC();
 
         for (int i = 0; i < DataMgr.ItemTBL.Count; i++)

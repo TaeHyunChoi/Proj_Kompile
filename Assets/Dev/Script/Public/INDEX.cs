@@ -4,9 +4,9 @@ public class IDxUNIT
     public const byte SPEED_MOVE = 5;
 
     //Unit Index
-    public const byte ATAHO     = 1;
-    public const byte LINXHANG  = 2;
-    public const byte SMASHU    = 3;
+    public const byte ATAHO     = 0;
+    public const byte LINXHANG  = 1;
+    public const byte SMASHU    = 2;
     public const byte COMMON    = 255;
 
     //Group Index
