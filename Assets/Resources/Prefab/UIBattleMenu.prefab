@@ -1114,7 +1114,7 @@ GameObject:
   - component: {fileID: 599221437235560737}
   - component: {fileID: 8109582080584823038}
   m_Layer: 0
-  m_Name: UIBattle
+  m_Name: UIBattleMenu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -74,7 +74,7 @@ public struct UnitData : Interface.IDataSetter
     private int[]    statDefault;
     private string      rcsCode;
 
-    public byte Code { get => code; }
+    public byte Index { get => code; }
     public byte Group { get => group; }
     public string Name { get => name; }
     public int[] StatDefault { get => statDefault; }

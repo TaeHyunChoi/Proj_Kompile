@@ -1,10 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
-using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEngine.EventSystems.EventTrigger;
 
 public partial class Unit : MonoBehaviour
 {
@@ -20,10 +16,11 @@ public partial class Unit : MonoBehaviour
     public Vector3 Pos { get => transform.position; }
     public Vector3 LocalPos { get => transform.localPosition; }
 
+
     public void Init(int code)
     {
         //기본값 정보 저장
-        data = DataMgr.UnitTBL.Find(unit => unit.Code == code);
+        data = DataMgr.UnitTBL.Find(unit => unit.Index == code);
 
         //스탯 초기화 (깊은 복사 사용)
         status = new int[IDxUNIT.STAT_CNT];
@@ -55,6 +52,7 @@ public partial class Unit : MonoBehaviour
         return transform.position;
     }
 
+    //## Animation
     private void PlayAnime(string type, string code = null)
     {
         if (code == null)
@@ -73,5 +71,12 @@ public partial class Unit : MonoBehaviour
             return false;
 
         return true;
+    }
+
+    //## Animation Trigger
+    public void OnAnime_ReadyToCombo()
+    {
+        InputMgr.Set_IsCombo(true);
+        UIMgr.Show(IDxUI.BATTLE_COMBO, true);
     }
 }

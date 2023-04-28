@@ -53,32 +53,34 @@ public class IDxUNIT
 public class IDxINPUT
 {
     //Mode
-    public const byte MODE_BLOCKED        = 0;
-    public const byte MODE_BASE           = 1;
-    public const byte MODE_FIELD          = 2;
-    public const byte MODE_BATTLE_MENU    = 3;
-    public const byte MODE_BATTLE_TARGERT = 4;
-    public const byte MODE_CHEAT          = 7;
+    public const byte BLOCKED          =  0;
+    public const byte BASE             =  1;
+    public const byte FIELD            =  2;
+    public const byte BATTLE_MENU      =  3;
+    public const byte BATTLE_TARGERT   =  4;
+    public const byte BATTLE_COMBO     =  5;
+    public const byte CHEAT            = 15;
 
     //Direction
-    public const int DIRECTION      = 0xF0;
-    public const int UP             = 0x80;
-    public const int DOWN           = 0x40;
-    public const int LEFT           = 0x20;
-    public const int RIGHT          = 0x10;
+    public const byte DIRECTION      = 0xF0;
+    public const byte UP             = 0x80;
+    public const byte DOWN           = 0x40;
+    public const byte LEFT           = 0x20;
+    public const byte RIGHT          = 0x10;
 
     //Interact
-    public const int INTERACT       = 0x0F;
-    public const int ENTER          = 0x08;
-    public const int CANCEL         = 0x04;
-    public const int INFO           = 0x02;
-    public const int ESCAPE         = 0x01;
-    public const int NONE           = 0x00;
+    public const byte INTERACT       = 0x0F;
+    public const byte ENTER          = 0x08;
+    public const byte CANCEL         = 0x04;
+    public const byte OPTION         = 0x02; // System Option
+    public const byte IS_HOLDING     = 0x01; // GetButton() 처럼 계속 누르고 있는 상태인지 여부
+    public const byte NONE           = 0x00;
 }
 public class IDxUI
 {
     //UI Window
-    public const byte WND_BATTLE        = 0x00;
+    public const byte BATTLE_SELECT = 0x00;
+    public const byte BATTLE_COMBO  = 0x01;
 }
 public class IDxSkill
 {

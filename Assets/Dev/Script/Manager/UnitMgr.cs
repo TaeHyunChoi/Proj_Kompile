@@ -1,8 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 public class UnitMgr
 {
@@ -59,7 +56,7 @@ public class UnitMgr
     }
     public static void Test_SetMyPC()
     {
-        myPC = unitAll[IDxUNIT.ATAHO - 1];
+        myPC = unitAll[IDxUNIT.ATAHO];
     }
     
 
@@ -72,7 +69,7 @@ public class UnitMgr
 
         //몬스터 생성
         int count = Random.Range(map.MinCount, map.MaxCount); //맵 Mob 개수
-        UIBattle.Set_TargetMaxCount(count);
+        UIBattleSelect.Set_TargetMaxCount(count);
 
         byte index;
         units.Clear();
@@ -274,19 +271,24 @@ public class UnitMgr
     public static void Battle_SelectAction(int order)
     {
         if (unitBattle[order].Data.Group == IDxUNIT.PLAYER)
-            UIMgr.Show(IDxUI.WND_BATTLE, true);
+            UIMgr.Show(IDxUI.BATTLE_SELECT, true);
         else
             unitBattle[order].Battle_AI();
     }
-    public static void Battle_CallAction(int order, SkillData skill, int group, int solo)
+    public static void Battle_ActUnit(int order, SkillData skill, int select)
     {
         List<Unit> targets = new List<Unit>();
+
+        //더 좋은 수가 있을텐데..?
+        int group = (select & 0x000F_0000) >> 16;           //UIBattle.selectTargetGroup
+        int soloTarget  = (select & 0x0000_F000) >> 12;     //UIBattle.selectTargetOne
+
         switch (group)
         {
             case IDxUNIT.TARGET_ENM_SOLO:
             case IDxUNIT.TARGET_PLY_SOLO:
                 group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PLAYER;
-                targets.Add(Battle_GetUnit(group, solo));
+                targets.Add(Battle_GetUnit(group, soloTarget));
                 break;
             case IDxUNIT.TARGET_ENM_ALL:
             case IDxUNIT.TARGET_PLY_ALL:
@@ -303,6 +305,7 @@ public class UnitMgr
                 break;
         }
 
+        unitBattle[order].Battle_SaveLastAction(select);
         unitBattle[order].Battle_PlayAction(skill, targets);
     }
 

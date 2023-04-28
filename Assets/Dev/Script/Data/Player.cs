@@ -1,7 +1,4 @@
-using Mono.Cecil.Cil;
-using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 
 public class Player
@@ -28,7 +25,9 @@ public class Player
     }
 
     private static bool[] activeMember;
-    private static byte[,] memberCombos;
+
+    public static byte[][] MemberCombo { get => memberCombos; }
+    private static byte[][] memberCombos;
 
     public static List<Item> Items { get; set; }
 
@@ -37,8 +36,11 @@ public class Player
         Items = new List<Item>();
         
         activeMember = new bool[3];
-        memberCombos = new byte[3, 4];
+        memberCombos = new byte[3][];
+        for (int i = 0; i < memberCombos.Length; ++i)
+            memberCombos[i] = new byte[4];
     }
+
 
     public static void Test()
     {
@@ -48,10 +50,10 @@ public class Player
         for (int i = 0; i < activeMember.Length; ++i)
         {
             if (activeMember[i])
-                UnitMgr.New(i + 1, Vector3.zero);
+                UnitMgr.New(i, Vector3.zero);
         }
-        memberCombos[IDxUNIT.ATAHO, 0] = 2; //돌려차기
-        memberCombos[IDxUNIT.ATAHO, 1] = 5; //호격권
+        memberCombos[IDxUNIT.ATAHO][0] = 1; //돌려차기
+        memberCombos[IDxUNIT.ATAHO][1] = 4; //호격권
 
         UnitMgr.Test_SetMyPC();
 

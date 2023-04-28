@@ -13115,7 +13115,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   testMapCode: 100
-  inputMode: 7
+  inputMode: 15
 --- !u!114 &2064621067
 MonoBehaviour:
   m_ObjectHideFlags: 0

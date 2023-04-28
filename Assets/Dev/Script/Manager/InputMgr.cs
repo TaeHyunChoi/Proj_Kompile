@@ -7,8 +7,9 @@ public class InputMgr
 
     private static int input = IDxINPUT.NONE;
 
-    //Default
-    public static void Set(int type)
+    private static bool isCombo;
+
+    public static void SetMobe(int type)
     {
         //기본 입력값
         Update =  Base;
@@ -17,16 +18,18 @@ public class InputMgr
         //상황별 입력값 추가
         switch (type)
         {
-            case IDxINPUT.MODE_FIELD:            Update += Field;             break;
-            case IDxINPUT.MODE_BATTLE_MENU:      Update += BattleAction;      break;
-            case IDxINPUT.MODE_BATTLE_TARGERT:   Update += BattleTargeting;   break;
-            case IDxINPUT.MODE_CHEAT:            Update += Cheat;             break;
+            case IDxINPUT.FIELD:            Update += Field;             break;
+            case IDxINPUT.BATTLE_MENU:      Update += BattleAction;      break;
+            case IDxINPUT.BATTLE_TARGERT:   Update += BattleTargeting;   break;
+            case IDxINPUT.BATTLE_COMBO:     Update += BattleCombo;       break;
+            case IDxINPUT.CHEAT:            Update += Cheat;             break;
             default: break;
         }
 
         //입력값 초기화
         Update += Reset;
     }
+
 
     private static void Base()
     {
@@ -43,18 +46,22 @@ public class InputMgr
             input |= IDxINPUT.ENTER;
         if (Input.GetButtonDown("Cancel"))
             input |= IDxINPUT.CANCEL;
-        if (Input.GetButtonDown("Info"))
-            input |= IDxINPUT.INFO;
+        if (Input.GetButtonDown("Option"))
+            input |= IDxINPUT.OPTION;
     }
     private static void Option()
     { 
         
     }
-    
+    private static void Reset()
+    {
+        input ^= input;
+    }
+
 
     private static void Field()
     {
-        //꾸욱 눌러도 돌아다닐 수 있도록
+        //GetButton: 꾸욱 눌러도 돌아다닐 수 있도록
         if (Input.GetButton("Up"))
             input |= IDxINPUT.UP;
         if (Input.GetButton("Down"))
@@ -67,37 +74,49 @@ public class InputMgr
         if ((input & IDxINPUT.DIRECTION) > 0)
             UnitMgr.Field_PlayerMoveTo(input);
 
+        //npc, 아이템 등과의 상호작용 용도
         if ((input & IDxINPUT.ENTER) > 0)
             Debug.Log("ENTER");
     }
     private static void BattleAction()
     {
-        if (Input.GetButton("Info"))
-            input |= IDxINPUT.INFO;
+        if (input == 0)
+            return;
 
-        if (input > 0)
-            UIBattle.Select_Menu(input);
+        UIMgr.Battle_SelectMenu(input);
     }
     private static void BattleTargeting()
     {
-        //TODO: InputKey."C"가 필요할까? >> UI에 편입시키는 것도 고려
-        if (Input.GetButton("Info"))
-            input |= IDxINPUT.INFO;
+        if (input == 0)
+            return;
 
-        if (input > 0)
-            UIBattle.Select_Target(input);
+        UIMgr.Battle_SelectTarget(input);
+    }
+    private static void BattleCombo()
+    {
+        if (!isCombo)
+            return;
+
+        if (Input.GetButton("Enter"))
+        {
+            input |= IDxINPUT.ENTER;
+            input |= IDxINPUT.IS_HOLDING;
+        }
+
+
+
+        if ((input & IDxINPUT.DIRECTION) > 0)
+            UIMgr.Battle_SelectCombo(input);
     }
 
+    public static void Set_IsCombo(bool isOn)
+    {
+        isCombo = isOn;
+    }
 
     private static void Cheat()
     {
         if (Input.GetKeyDown(KeyCode.Space))
             GameMgr.Battle_Enter();
-    }
-    
-    
-    private static void Reset()
-    {
-        input ^= input;
     }
 }

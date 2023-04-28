@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class GameMgr
@@ -23,11 +21,10 @@ public class GameMgr
 
     public static void Battle_Enter()
     {
-        ChangeMapData(mapCode: NowMap.BattleMapCode);
-
-        UnitMgr.Battle_InitUnitList(NowMap);        //전투에 참여하는 유닛 정보 생성, 추가
-        UnitMgr.Battle_SetPosition();               //화면 상의 전투 위치 설정
-        CameraMgr.OnBattleCam(true);
+        ChangeMapData(mapCode: NowMap.BattleMapCode);   //전투맵 정보로 변경
+        UnitMgr.Battle_InitUnitList(NowMap);            //전투에 참여하는 유닛 정보 생성, 추가
+        UnitMgr.Battle_SetPosition();                   //화면 상의 전투 위치 설정
+        CameraMgr.OnBattleCam(true);                    //전투 카메라 설정
 
         UnitMgr.Battle_SelectAction(nowOrder = 0);  //[0]번째 유닛 액션 선택
     }

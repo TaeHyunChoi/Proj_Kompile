@@ -3,9 +3,10 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UIBattle : MonoBehaviour
+public class UIBattleSelect : MonoBehaviour
 {
-    public static UIBattle Instance { get; private set; }
+    public  static UIBattleSelect Instance { get => instance; }
+    private static UIBattleSelect instance;
     public struct UIBattleSlot
     {
         private GameObject go;
@@ -80,16 +81,15 @@ public class UIBattle : MonoBehaviour
     #endregion
 
     private static int nowOrder { get => GameMgr.NowOrder; }
-    private static List<int> targets = new List<int>();
 
     public static void Init()
     {
         if (Instance != null)
             return;
 
-        GameObject go = Resources.Load<GameObject>("Prefab/UIBattle");
+        GameObject go = Resources.Load<GameObject>("Prefab/UIBattleMenu");
         go = Instantiate(go, UIMgr.Canvas_Battle.transform);
-        Instance = go.GetComponent<UIBattle>();
+        instance = go.GetComponent<UIBattleSelect>();
         Instance.gameObject.SetActive(false);
     }
     private void Awake()
@@ -119,14 +119,12 @@ public class UIBattle : MonoBehaviour
         if (!on)
             return;
 
-        //select 정보가 초기화되어야 UI 표시 가능
+        //Get Unit`s Last Select(Act)
         Unit actor = UnitMgr.Battle_GetUnit(nowOrder);
-        select = actor.LastSelect;
-        if (select <= 0)
-            select = (menuBasic << shiftMenu);
-
+        select = (actor.LastSelect > 0) ? actor.LastSelect : (menuBasic << shiftMenu);
+        
         Instance.UpdateUI(init: true);
-        InputMgr.Set(IDxINPUT.MODE_BATTLE_MENU);
+        InputMgr.SetMobe(IDxINPUT.BATTLE_MENU);
     }
 
     //얘가 좀 짜치네?
@@ -144,8 +142,7 @@ public class UIBattle : MonoBehaviour
                 {
                     switch (selectMenu)
                     {
-                        //Get Input : Select Skill
-                        default:
+                        default: //Select Skill
                             {
                                 int last = UnitMgr.Battle_GetLastAction(nowOrder);
                                 last = (last & maskTargetOne);
@@ -156,7 +153,7 @@ public class UIBattle : MonoBehaviour
                                 select |= (skill.TargetGroup) << shiftTargetGroup;
 
                                 UnitMgr.Battle_SetTarget(selectTargetGroup, selectTargetOne);
-                                InputMgr.Set(IDxINPUT.MODE_BATTLE_TARGERT);
+                                InputMgr.SetMobe(IDxINPUT.BATTLE_TARGERT);
                             }
                             break;
                         case menuMode:
@@ -172,11 +169,6 @@ public class UIBattle : MonoBehaviour
                     }
 
                     UnitMgr.Battle_SaveUnitAction(nowOrder, select);
-                }
-                return;
-            case IDxINPUT.INFO:
-                {
-                    //UIMain에 띄우던가 그래야 하네                
                 }
                 return;
         }
@@ -219,7 +211,6 @@ public class UIBattle : MonoBehaviour
                 }
                 break;
         }
-
         Instance.UpdateUI();
     }
     public static void Select_Target(int input)
@@ -227,10 +218,25 @@ public class UIBattle : MonoBehaviour
         SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, selectMenu, selectContent);
         bool isSoloTarget = (skill.TargetGroup != IDxUNIT.TARGET_PLY_SOLO || skill.TargetGroup != IDxUNIT.TARGET_ENM_SOLO);
 
-        //단체기 >> 할 필요 없다.
-        //타겟 설정 후 애니메이션 실행까지 긔긔
+        switch (input & IDxINPUT.INTERACT)
+        {
+            case IDxINPUT.ENTER:
+                {
+                    UnitMgr.Battle_ActUnit(nowOrder, skill, select);
+                    InputMgr.SetMobe(IDxINPUT.BATTLE_COMBO);
 
-        switch (input)
+                    Reset_Target();
+                    Show(false);
+                }
+                return;
+            case IDxINPUT.CANCEL:
+                {
+                    InputMgr.SetMobe(IDxINPUT.BATTLE_MENU);
+                    Reset_Target();
+                }
+                return;
+        }
+        switch (input & IDxINPUT.DIRECTION)
         {
             case IDxINPUT.UP:
             case IDxINPUT.LEFT:
@@ -256,23 +262,6 @@ public class UIBattle : MonoBehaviour
                         select += (1 << shiftTargetOne);
                 }
                 break;
-            case IDxINPUT.ENTER:
-                {
-                    UnitMgr.Battle_SaveUnitAction(nowOrder, select);
-                    UnitMgr.Battle_CallAction(nowOrder, skill, selectTargetGroup, selectTargetOne);
-
-                    InputMgr.Set(IDxINPUT.MODE_BLOCKED);
-
-                    Reset_Target();
-                    Show(false);
-                }
-                return;
-            case IDxINPUT.CANCEL:
-                {
-                    InputMgr.Set(IDxINPUT.MODE_BATTLE_MENU);
-                    Reset_Target();
-                }
-                return;
         }
 
         UnitMgr.Battle_SetTarget(skill.TargetGroup, selectTargetOne);

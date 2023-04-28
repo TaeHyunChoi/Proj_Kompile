@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 public partial class Unit : MonoBehaviour
 {
@@ -99,7 +98,7 @@ public partial class Unit : MonoBehaviour
     public void Battle_PlayAction(SkillData skill, List<Unit> targets)
     {
         selectSkill = skill;
-        StartCoroutine(IEBattle_PlayAction(targets));
+        StartCoroutine(IEBattle_PlayAction(targets)); //코루틴 날리고 싶은데 다른 방법이 있나?
     }
     private IEnumerator IEBattle_PlayAction(List<Unit> targets)
     {
@@ -114,8 +113,18 @@ public partial class Unit : MonoBehaviour
         PlayAnime(code = IDxUNIT.ANIME_SKILL);
         wait = Time.time + aoc[code].length;
         while (!IsAnimeEnd(code, wait))
-            yield return null;
+        {
+            //여기서 입력이 들어오면 여차저차 하는갑네?
+            if (wait - Time.time <= 0.5f)
+            { 
+                //입력은 어찌 처리?
+                //input & enter = true
+                //속도를 계속 줄이고
+                //
+            }
 
+            yield return null;
+        }
 
         PlayAnime(code = IDxUNIT.ANIME_IDLE);
         wait = Time.time + aoc[code].length + 0.25f;
