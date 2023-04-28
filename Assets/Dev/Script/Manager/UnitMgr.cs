@@ -60,7 +60,7 @@ public class UnitMgr
     }
     public static void Test_SetMyPC()
     {
-        myPC = unitAll[IDxUNIT.ATAHO];
+        myPC = unitAll[IDxUNIT.ATAHO - 1];
     }
     public static Unit GetUnitByIndex(int code)
     {

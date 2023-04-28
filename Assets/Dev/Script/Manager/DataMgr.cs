@@ -23,7 +23,10 @@ public class DataMgr
     private static List<Dictionary<string, string>> ReadCSVFile(string fileName)
     {
         List<Dictionary<string, string>> table = new List<Dictionary<string, string>>();
-        StreamReader reader = new StreamReader(Application.dataPath + "/Resources/CSV/" + fileName + ".csv");
+        //StreamReader reader = new StreamReader(Application.persistentDataPath + "/Resources/CSV/" + fileName + ".csv");
+
+        TextAsset csv = Resources.Load<TextAsset>("CSV/" + fileName);
+        StringReader reader = new StringReader(csv.text);
         StringBuilder sb = new StringBuilder();
 
         //Setting
@@ -34,14 +37,17 @@ public class DataMgr
         bool isSplit;       //분류 여부 (대사 등 본문의 ,와 CSV 구분쉼표를 구분하기 위함)
 
         //Column Index
-        line = reader.ReadLine();
+        line = reader.ReadLine(); //첫줄 날리기
         columns = line.Split(',');
 
         //Content
-        while (!reader.EndOfStream)
+        while (true)
         {
-            Dictionary<string, string> data = new Dictionary<string, string>();
             line = reader.ReadLine();
+            if (line == null)
+                break;
+
+            Dictionary<string, string> data = new Dictionary<string, string>();
             chars = line.ToCharArray();
             isSplit = true;
             index = -1;

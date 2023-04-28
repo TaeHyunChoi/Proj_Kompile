@@ -38,7 +38,9 @@ public class Player
 
     public static void Test()
     {
-        activeMember[0] = activeMember[1] = activeMember[2] = true;
+        activeMember[0] = true;
+        activeMember[1] = false;
+        activeMember[2] = false;
         for (int i = 0; i < activeMember.Length; ++i)
         {
             if (activeMember[i])
