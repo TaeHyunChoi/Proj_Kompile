@@ -49,9 +49,10 @@ public partial class Unit : MonoBehaviour
         PlayAnime(IDxUNIT.ANIME_IDLE);
     }
 
-    public void MoveTo(int mx, int mz)
+    public Vector3 MoveTo(Vector3 move)
     {
-        transform.position += new Vector3(mx, 0, mz) * IDxUNIT.SPEED_MOVE * Time.deltaTime;
+        transform.position += move * IDxUNIT.SPEED_MOVE * Time.deltaTime;
+        return transform.position;
     }
 
     private void PlayAnime(string type, string code = null)

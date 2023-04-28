@@ -23,17 +23,13 @@ public class GameMgr
 
     public static void Battle_Enter()
     {
-        //Set Map
-        CameraMgr.OnBattleCam(true);
         ChangeMapData(mapCode: NowMap.BattleMapCode);
 
-        //Set Unit Data
-        UnitMgr.Battle_InitUnit(NowMap);
-        UnitMgr.Battle_SetUnit(NowMap);    
+        UnitMgr.Battle_InitUnitList(NowMap);        //전투에 참여하는 유닛 정보 생성, 추가
+        UnitMgr.Battle_SetPosition();               //화면 상의 전투 위치 설정
+        CameraMgr.OnBattleCam(true);
 
-        //Start Battle Process
-        UnitMgr.Battle_SelectAction(nowOrder = 0);
-        Debug.Log($"Order[{nowOrder}] {UnitMgr.Battle_GetUnit(nowOrder)}");
+        UnitMgr.Battle_SelectAction(nowOrder = 0);  //[0]번째 유닛 액션 선택
     }
     public static void Battle_NextTurn()
     {
@@ -48,14 +44,13 @@ public class GameMgr
         //End All Units Turn: 전투불능되면 그냥 Remove로 날려야겠다
         if (UnitMgr.IsEndCycle(nowOrder))
         {
-            UnitMgr.Battle_SetUnit(NowMap);
+            UnitMgr.Battle_OrderByShellSort();
             nowOrder = -1;
             Debug.Log($"New Cycle");
         }
 
         //Next Trun
         UnitMgr.Battle_SelectAction(++nowOrder);
-        Debug.Log($"Order[{nowOrder}] {UnitMgr.Battle_GetUnit(nowOrder)}");
     }
     private static void Battle_End()
     { 
