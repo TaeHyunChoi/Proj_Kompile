@@ -54,18 +54,13 @@ public partial class Unit : MonoBehaviour //Default
         transform.position += move * IDxUNIT.SPEED_MOVE * Time.deltaTime;
         return transform.position;
     }
-
     public void SetRenderOrder(int order)
     {
         render.sortingOrder = order;
     }
-    public void SetAnimeSpeed(float end)
+    public void SetAnimeSpeed(float end, float lerpWeight)
     {
-        float speed = Mathf.Lerp(animator.speed, end, IDxVALUE.LERP);
-        animator.speed = speed;
-
-        if (this == UnitMgr.myPC)
-            Debug.Log($"{end} => {animator.speed:F2}");
+        animator.speed = Mathf.Lerp(animator.speed, end, IDxVALUE.LERP * lerpWeight);
     }
 
     //## Animation

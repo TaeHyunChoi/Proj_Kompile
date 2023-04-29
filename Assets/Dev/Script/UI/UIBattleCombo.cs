@@ -97,25 +97,30 @@ public class UIBattleCombo : MonoBehaviour
         }
     }
 
-    public void UpdateUI(bool active)
+    public bool UpdateUI(bool active, float lerpWeight)
     {
         Vector3 positionEnd;
         Color color;
-        float lerp = 20 * Time.deltaTime;
         float alphaEnd = active ? 1 : 0;
 
         //dim alpha 
         color = dimBlack.color;
-        dimBlack.color = new Color(color.r, color.g, color.b, Mathf.Lerp(color.a, alphaEnd * 0.75f, lerp));
+        dimBlack.color = new Color(color.r, color.g, color.b, Mathf.Lerp(color.a, alphaEnd * 0.75f, IDxVALUE.LERP * lerpWeight));
 
         //slot position, alpha
         for (int i = 0; i < rectSlots.Length; ++i)
         {
             positionEnd = active ? endPos[i] : center;
-            rectSlots[i].localPosition = Vector3.Lerp(rectSlots[i].localPosition, positionEnd, lerp);
+            rectSlots[i].localPosition = Vector3.Lerp(rectSlots[i].localPosition, positionEnd, IDxVALUE.LERP * lerpWeight);
 
             color = iconSlots[i].color;
-            iconSlots[i].color = new Color(color.r, color.g, color.b, Mathf.Lerp(color.a, alphaEnd, lerp));
+            iconSlots[i].color = new Color(color.r, color.g, color.b, Mathf.Lerp(color.a, alphaEnd, IDxVALUE.LERP * lerpWeight));
         }
+
+
+        if (!active && iconSlots[0].color.a <= 0.01f)
+            return true;
+
+        return false;
     }
 }

@@ -36,13 +36,10 @@ public class UIMgr
     {
         UIBattleSelect.Select_Target(input);
     }
-    public static void Battle_SelectCombo(int input)
-    { 
-        
-    }
-    //UI 클래스 만들어서 where T: 상속 이러쿵저러쿵 귀찮으니 넘기자.
-    public static void UpdateUI_BattleCombo(bool active)
+
+    //UI 클래스 만들어서 where T: 식으로 하는게 좋았으려나?
+    public static bool UpdateUI_BattleCombo(bool active, float lerpWeight = 1)
     {
-        UIBattleCombo.Instance.UpdateUI(active);
+        return UIBattleCombo.Instance.UpdateUI(active, lerpWeight);
     }
 }

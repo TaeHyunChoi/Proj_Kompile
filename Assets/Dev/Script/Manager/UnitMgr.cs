@@ -323,13 +323,13 @@ public class UnitMgr
         for (int i = 0; i < targets.Count; ++i)
             targets[i].SetRenderOrder(order);
     }
-    public static void Battle_SlowUnitAnime(bool slow)
+    public static void Battle_SlowUnitAnime(bool slow, float lerpWeight = 1f)
     {
         float end = slow ? 0.1f : 1;
 
-        NowActor.SetAnimeSpeed(end);
+        NowActor.SetAnimeSpeed(end, lerpWeight);
         for (int i = 0; i < NowActor.Targets.Count; ++i)
-            NowActor.Targets[i].SetAnimeSpeed(end);
+            NowActor.Targets[i].SetAnimeSpeed(end, lerpWeight);
     }
 
 

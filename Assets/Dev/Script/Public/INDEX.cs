@@ -1,6 +1,3 @@
-
-using UnityEngine;
-
 public class IDxUNIT
 {
     public const byte SPEED_MOVE = 5;
@@ -74,8 +71,8 @@ public class IDxINPUT
     public const byte INTERACT       = 0x0F;
     public const byte ENTER          = 0x08;
     public const byte CANCEL         = 0x04;
-    public const byte OPTION         = 0x02; // System Option
-    public const byte TRIGGER       = 0x01; // GetButton() 처럼 계속 누르고 있는 상태인지 여부
+    public const byte OPTION         = 0x02;  // System Option
+    public const byte TRIGGER        = 0x01;  // joypad [LB] button 
     public const byte NONE           = 0x00;
 }
 public class IDxUI
@@ -93,5 +90,5 @@ public class IDxSkill
 }
 public class IDxVALUE
 {
-    public static float LERP = 20 * Time.deltaTime;
+    public static float LERP = 20 * UnityEngine.Time.deltaTime;
 }

@@ -9,7 +9,7 @@ public class InputMgr
 
     private static bool isCombo;
 
-    public static void SetMobe(int type)
+    public static void SetMode(int type)
     {
         //기본 입력값
         Update =  Base;
@@ -103,14 +103,12 @@ public class InputMgr
         if (Input.GetButton("Right"))
             input |= IDxINPUT.RIGHT;
         
-
         if (isCombo & Input.GetButtonDown("Trigger"))
             UIMgr.Show(IDxUI.BATTLE_COMBO, true);
         if (isCombo & Input.GetButton("Trigger"))
             input |= IDxINPUT.TRIGGER;
         if (Input.GetButtonUp("Trigger"))
             isCombo = false;
-
 
         if (!isCombo)
         {
