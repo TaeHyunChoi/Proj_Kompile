@@ -1,4 +1,6 @@
 
+using UnityEngine;
+
 public class IDxUNIT
 {
     public const byte SPEED_MOVE = 5;
@@ -73,7 +75,7 @@ public class IDxINPUT
     public const byte ENTER          = 0x08;
     public const byte CANCEL         = 0x04;
     public const byte OPTION         = 0x02; // System Option
-    public const byte IS_HOLDING     = 0x01; // GetButton() 처럼 계속 누르고 있는 상태인지 여부
+    public const byte TRIGGER       = 0x01; // GetButton() 처럼 계속 누르고 있는 상태인지 여부
     public const byte NONE           = 0x00;
 }
 public class IDxUI
@@ -88,4 +90,8 @@ public class IDxSkill
     public const byte SOLO    = 2;
     public const byte GROUP   = 3;
     public const byte SPECIAL = 6;
+}
+public class IDxVALUE
+{
+    public static float LERP = 20 * Time.deltaTime;
 }

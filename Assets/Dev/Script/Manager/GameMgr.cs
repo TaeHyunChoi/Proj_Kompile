@@ -10,7 +10,6 @@ public class GameMgr
     public static int NowOrder { get => nowOrder; }
     private static int nowOrder;
 
-
     public static void ChangeMapData(ushort mapCode)
     {
         LastMap = NowMap;

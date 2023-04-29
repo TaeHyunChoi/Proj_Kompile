@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public partial class Unit : MonoBehaviour
+public partial class Unit : MonoBehaviour //Battle
 {
     public Dictionary<int, List<SkillData>> Skill { get => skill; }
     private Dictionary<int, List<SkillData>> skill = new Dictionary<int, List<SkillData>>();
@@ -19,6 +19,7 @@ public partial class Unit : MonoBehaviour
 
     private GameObject targetingArrow;
 
+    public List<Unit> Targets { get => targets; }
     private List<Unit> targets = new List<Unit>();
     private SkillData selectSkill;
 

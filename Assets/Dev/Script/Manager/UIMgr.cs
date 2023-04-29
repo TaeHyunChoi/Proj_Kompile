@@ -40,4 +40,9 @@ public class UIMgr
     { 
         
     }
+    //UI 클래스 만들어서 where T: 상속 이러쿵저러쿵 귀찮으니 넘기자.
+    public static void UpdateUI_BattleCombo(bool active)
+    {
+        UIBattleCombo.Instance.UpdateUI(active);
+    }
 }

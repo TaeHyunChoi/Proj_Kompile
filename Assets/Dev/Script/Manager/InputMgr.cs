@@ -61,7 +61,7 @@ public class InputMgr
 
     private static void Field()
     {
-        //GetButton: 꾸욱 눌러도 돌아다닐 수 있도록
+        //GetButton: 꾸욱 눌러도 입력되도록
         if (Input.GetButton("Up"))
             input |= IDxINPUT.UP;
         if (Input.GetButton("Down"))
@@ -71,11 +71,11 @@ public class InputMgr
         if (Input.GetButton("Right"))
             input |= IDxINPUT.RIGHT;
 
-        if ((input & IDxINPUT.DIRECTION) > 0)
+        if ((input & IDxINPUT.DIRECTION) != 0)
             UnitMgr.Field_PlayerMoveTo(input);
 
         //npc, 아이템 등과의 상호작용 용도
-        if ((input & IDxINPUT.ENTER) > 0)
+        if ((input & IDxINPUT.ENTER) != 0)
             Debug.Log("ENTER");
     }
     private static void BattleAction()
@@ -94,19 +94,40 @@ public class InputMgr
     }
     private static void BattleCombo()
     {
-        if (!isCombo)
-            return;
+        if (Input.GetButton("Up"))
+            input |= IDxINPUT.UP;
+        if (Input.GetButton("Down"))
+            input |= IDxINPUT.DOWN;
+        if (Input.GetButton("Left"))
+            input |= IDxINPUT.LEFT;
+        if (Input.GetButton("Right"))
+            input |= IDxINPUT.RIGHT;
+        
 
-        if (Input.GetButton("Enter"))
+        if (isCombo & Input.GetButtonDown("Trigger"))
+            UIMgr.Show(IDxUI.BATTLE_COMBO, true);
+        if (isCombo & Input.GetButton("Trigger"))
+            input |= IDxINPUT.TRIGGER;
+        if (Input.GetButtonUp("Trigger"))
+            isCombo = false;
+
+
+        if (!isCombo)
         {
-            input |= IDxINPUT.ENTER;
-            input |= IDxINPUT.IS_HOLDING;
+            UIMgr.UpdateUI_BattleCombo(active: false);
+            UnitMgr.Battle_SlowUnitAnime(slow: false);
+            return;
         }
 
-
-
-        if ((input & IDxINPUT.DIRECTION) > 0)
-            UIMgr.Battle_SelectCombo(input);
+        if ((input & IDxINPUT.TRIGGER) != 0)
+        {
+            UIMgr.UpdateUI_BattleCombo(active: true);
+            UnitMgr.Battle_SlowUnitAnime(slow: true);
+        }
+        if ((input & IDxINPUT.DIRECTION) != 0)
+        { 
+            
+        }
     }
 
     public static void Set_IsCombo(bool isOn)

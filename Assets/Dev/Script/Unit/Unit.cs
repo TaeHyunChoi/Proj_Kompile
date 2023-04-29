@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public partial class Unit : MonoBehaviour
+public partial class Unit : MonoBehaviour //Default
 {
     public UnitData Data { get => data; }
     private UnitData data;
 
     private Animator animator;
     private AnimatorOverrideController aoc;
+    private SpriteRenderer render;
 
     public int[] Status { get => status; }
     private int[] status;
@@ -39,6 +40,8 @@ public partial class Unit : MonoBehaviour
 
         targetingArrow = transform.GetChild(0).gameObject;
 
+        render = transform.GetComponent<SpriteRenderer>();
+
         //애니메이션(AOC)
         animator = transform.GetComponent<Animator>();
         aoc = new AnimatorOverrideController(ResourceMgr.AOC);
@@ -50,6 +53,19 @@ public partial class Unit : MonoBehaviour
     {
         transform.position += move * IDxUNIT.SPEED_MOVE * Time.deltaTime;
         return transform.position;
+    }
+
+    public void SetRenderOrder(int order)
+    {
+        render.sortingOrder = order;
+    }
+    public void SetAnimeSpeed(float end)
+    {
+        float speed = Mathf.Lerp(animator.speed, end, IDxVALUE.LERP);
+        animator.speed = speed;
+
+        if (this == UnitMgr.myPC)
+            Debug.Log($"{end} => {animator.speed:F2}");
     }
 
     //## Animation
@@ -73,10 +89,10 @@ public partial class Unit : MonoBehaviour
         return true;
     }
 
+
     //## Animation Trigger
     public void OnAnime_ReadyToCombo()
     {
         InputMgr.Set_IsCombo(true);
-        UIMgr.Show(IDxUI.BATTLE_COMBO, true);
     }
 }
