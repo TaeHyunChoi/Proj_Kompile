@@ -18,6 +18,9 @@ public partial class Unit : MonoBehaviour //Default
     public Vector3 LocalPos { get => transform.localPosition; }
 
 
+
+    private UnitCoroutine coPlayer;
+
     public void Init(int code)
     {
         //기본값 정보 저장
@@ -47,6 +50,8 @@ public partial class Unit : MonoBehaviour //Default
         aoc = new AnimatorOverrideController(ResourceMgr.AOC);
         animator.runtimeAnimatorController = aoc;
         PlayAnime(IDxUNIT.ANIME_IDLE);
+
+        coPlayer = transform.GetComponent<UnitCoroutine>();
     }
 
     public Vector3 MoveTo(Vector3 move)
@@ -64,7 +69,7 @@ public partial class Unit : MonoBehaviour //Default
     }
 
     //## Animation
-    private void PlayAnime(string type, string code = null)
+    public void PlayAnime(string type, string code = null)
     {
         if (code == null)
             code = type;

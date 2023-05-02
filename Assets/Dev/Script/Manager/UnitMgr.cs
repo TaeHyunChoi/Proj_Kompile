@@ -13,7 +13,7 @@ public class UnitMgr
     private static Transform tfInactive;
 
     public static Unit MyPC { get => myPC; }
-    public static Unit myPC;
+    private static Unit myPC;
 
     public static bool IsEndBattle()
     {

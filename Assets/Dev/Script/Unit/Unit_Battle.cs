@@ -98,45 +98,8 @@ public partial class Unit : MonoBehaviour //Battle
     {
         selectSkill = skill;
         this.targets = targets;
-        this.StartCoroutine(IEBattle_PlayAction());
+        coPlayer.Init(type: 0);
     }
-    private IEnumerator IEBattle_PlayAction()
-    {
-        float wait = Time.time + 0.1f;
-        while (wait > Time.time)
-            yield return null;
-
-        PlayAnime(IDxUNIT.ANIME_SKILL);
-        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-
-        //애니메이션 변경 확인
-        while (!state.IsName(IDxUNIT.ANIME_SKILL)
-            || state.normalizedTime < 1)
-            yield return state = animator.GetCurrentAnimatorStateInfo(0); ;
-
-        PlayAnime(IDxUNIT.ANIME_IDLE);
-        if (this == UnitMgr.MyPC)
-        {
-            InputMgr.SetMode(IDxINPUT.BASE);
-
-            while (true)
-            {
-                UnitMgr.Battle_SlowUnitAnime(false, 1.1f);
-                if (UIMgr.UpdateUI_BattleCombo(false, 1.1f))
-                    break;
-
-                yield return null;
-            }
-        }
-
-        wait = Time.time + 0.2f;
-        while (wait > Time.time)
-            yield return null;
-
-        GameMgr.Battle_NextTurn();
-        yield break;
-    }
-
 
     public void OnAnime_Hit()
     {
@@ -169,4 +132,46 @@ public partial class Unit : MonoBehaviour //Battle
     {
         return hitSkill.Power + (hitter.status[IDxUNIT.DEX] >> 2) - status[IDxUNIT.CON];
     }
+
+
+    //Not Use
+    /*
+    private IEnumerator IEBattle_PlayAction()  //Battle_PlayAction()에서 사용했었음
+    {
+        //## 0
+        float wait = Time.time + 0.1f;
+        while (wait > Time.time)
+            yield return null;
+
+        //## 1 애니메이션 변경 확인
+        PlayAnime(IDxUNIT.ANIME_SKILL);
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        while (!state.IsName(IDxUNIT.ANIME_SKILL)
+            || state.normalizedTime < 1)
+            yield return state = animator.GetCurrentAnimatorStateInfo(0);
+
+        //## 2
+        PlayAnime(IDxUNIT.ANIME_IDLE);
+        if (this == UnitMgr.MyPC)
+        {
+            InputMgr.SetMode(IDxINPUT.BASE);
+
+            while (true)
+            {
+                UnitMgr.Battle_SlowUnitAnime(false, 1.1f);
+                if (UIMgr.UpdateUI_BattleCombo(false, 1.1f))
+                    break;
+
+                yield return null;
+            }
+        }
+
+        //## 3
+        wait = Time.time + 0.2f;
+        while (wait > Time.time)
+            yield return null;
+        GameMgr.Battle_NextTurn();
+        yield break;
+    }
+    //*/
 }

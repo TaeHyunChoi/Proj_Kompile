@@ -7,7 +7,7 @@ public class InputMgr
 
     private static int input = IDxINPUT.NONE;
 
-    private static bool isCombo;
+    private static bool isComboPossible;
 
     public static void SetMode(int type)
     {
@@ -103,14 +103,14 @@ public class InputMgr
         if (Input.GetButton("Right"))
             input |= IDxINPUT.RIGHT;
         
-        if (isCombo & Input.GetButtonDown("Trigger"))
+        if (isComboPossible & Input.GetButtonDown("Trigger"))
             UIMgr.Show(IDxUI.BATTLE_COMBO, true);
-        if (isCombo & Input.GetButton("Trigger"))
+        if (isComboPossible & Input.GetButton("Trigger"))
             input |= IDxINPUT.TRIGGER;
         if (Input.GetButtonUp("Trigger"))
-            isCombo = false;
+            isComboPossible = false;
 
-        if (!isCombo)
+        if (!isComboPossible)
         {
             UIMgr.UpdateUI_BattleCombo(active: false);
             UnitMgr.Battle_SlowUnitAnime(slow: false);
@@ -130,7 +130,7 @@ public class InputMgr
 
     public static void Set_IsCombo(bool isOn)
     {
-        isCombo = isOn;
+        isComboPossible = isOn;
     }
 
     private static void Cheat()
