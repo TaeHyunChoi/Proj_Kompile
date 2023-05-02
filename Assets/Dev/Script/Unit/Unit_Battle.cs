@@ -98,7 +98,7 @@ public partial class Unit : MonoBehaviour //Battle
     {
         selectSkill = skill;
         this.targets = targets;
-        coPlayer.Init(type: 0);
+        coPlayer.InitAttack();
     }
 
     public void OnAnime_Hit()
@@ -108,8 +108,10 @@ public partial class Unit : MonoBehaviour //Battle
     }
     public void ProcHit(Unit hitter, SkillData hitSkill)
     {
-        int dmg = CalcDamage(hitter, hitSkill);
-        StartCoroutine(IEBattle_Hit(hitSkill, dmg));
+        coPlayer.InitHit(hitter, hitSkill);
+
+        //int dmg = CalcDamage(hitter, hitSkill);
+        //StartCoroutine(IEBattle_Hit(hitSkill, dmg));
     }
     private IEnumerator IEBattle_Hit(SkillData hitSkill, int dmg)
     {
@@ -128,7 +130,7 @@ public partial class Unit : MonoBehaviour //Battle
     }
 
 
-    private int CalcDamage(Unit hitter, SkillData hitSkill)
+    public int CalcDamage(Unit hitter, SkillData hitSkill)
     {
         return hitSkill.Power + (hitter.status[IDxUNIT.DEX] >> 2) - status[IDxUNIT.CON];
     }

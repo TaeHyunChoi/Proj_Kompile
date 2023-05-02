@@ -4,28 +4,47 @@ using UnityEngine;
 
 public class UnitCoroutine : MonoBehaviour
 {
+    //얘네를 중복하여 참조하는 느낌인데...
     private Unit owner;
     private Animator animator;
 
-    private delegate void SetCoroutine(int type);
-    private SetCoroutine SetNext;
+    private delegate void SetNextCoroutine(int type);
+    private SetNextCoroutine SetNext;
     private delegate bool MoveNextCouroutine(int type);
     private MoveNextCouroutine MoveNext;
 
     private int curType;
-    private int curState;
     private float endTime;
 
-    public void Init(int type)
+    private float fValue;
+
+    private Dictionary<int, int> state;
+
+    private void InitBase(int type)
     {
+        enabled = false;
+
         owner = transform.GetComponent<Unit>();
         animator = transform.GetComponent<Animator>();
 
-        SetNext = Set;
-        MoveNext = Move;
-
         curType = type;
-        curState = 0;
+        state = new Dictionary<int, int>();
+        state.Add(curType, 0);
+
+        SetNext = Set;
+        SetNext(curType);
+
+        MoveNext = Move;
+    }
+    public void InitAttack()
+    {
+        InitBase(type: 0);
+        enabled = true;
+    }
+    public void InitHit(Unit hitter, SkillData hitSkill)
+    {
+        InitBase(type: 1);
+        fValue = owner.CalcDamage(hitter, hitSkill);
         enabled = true;
     }
 
@@ -34,15 +53,18 @@ public class UnitCoroutine : MonoBehaviour
     {
         switch (type)
         {
-            case 0: SetNext_Battle(); break;
+            case 0: SetNext_Attack(); break;
+            case 1: SetNext_Hit(); break;
         }
     }
     private bool Move(int type)
     {
         switch (type)
         {
-            case 0: return MoveNext_Battle();
+            case 0: return MoveNext_Attack();
+            case 1: return MoveNext_Hit();
         }
+
         return false;
     }
     private void Clear()
@@ -51,12 +73,13 @@ public class UnitCoroutine : MonoBehaviour
         animator = null;
         SetNext = null;
         MoveNext = null;
+        state = null;
     }
 
 
-    private void SetNext_Battle()
+    private void SetNext_Attack()
     {
-        switch (curState)
+        switch (state[curType])
         {
             case 0:
                 endTime = Time.time + 0.1f;
@@ -82,9 +105,9 @@ public class UnitCoroutine : MonoBehaviour
                 return;
         }
     }
-    private bool MoveNext_Battle()
+    private bool MoveNext_Attack()
     {
-        switch (curState)
+        switch (state[curType])
         {
             case 0:
                 return endTime <= Time.time;
@@ -102,6 +125,34 @@ public class UnitCoroutine : MonoBehaviour
 
         return false;
     }
+    private void SetNext_Hit()
+    {
+        switch (state[curType])
+        {
+            case 0:
+                owner.Status[IDxUNIT.HP] -= (int)fValue;
+                owner.PlayAnime(IDxUNIT.ANIME_HIT);
+                endTime = Time.time + owner.AOC[IDxUNIT.ANIME_HIT].length;
+                break;
+            default:
+                owner.PlayAnime(IDxUNIT.ANIME_IDLE);
+                enabled = false;
+                Clear();
+                return;
+        }
+    }
+    private bool MoveNext_Hit()
+    {
+        switch (state[curType])
+        {
+            case 0:
+                return endTime <= Time.time;
+        }
+
+        return false;
+    }
+
+
 
 
     private void Update()
@@ -109,7 +160,8 @@ public class UnitCoroutine : MonoBehaviour
         if (!MoveNext(curType))
             return;
 
-        ++curState;
+        ++state[curType];
+        //++curState;
         SetNext(curType);
     }
 }

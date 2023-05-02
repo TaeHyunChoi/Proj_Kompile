@@ -8,7 +8,10 @@ public partial class Unit : MonoBehaviour //Default
     private UnitData data;
 
     private Animator animator;
+
+    public AnimatorOverrideController AOC { get => aoc; }
     private AnimatorOverrideController aoc;
+
     private SpriteRenderer render;
 
     public int[] Status { get => status; }
