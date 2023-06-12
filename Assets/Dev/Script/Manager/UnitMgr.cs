@@ -1,16 +1,19 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class UnitMgr
 {
-    private static List<Unit> unitAll      = new List<Unit>();
-    private static List<Unit> unitBattle   = new List<Unit>();
+    private static List<Unit> unitAll = new List<Unit>();
+    private static List<Unit> unitBattle = new List<Unit>();
+    public static Unit NowActor { get => unitBattle[GameMgr.NowOrder]; }
 
     private static Transform tfActive;
     private static Transform tfInactive;
 
     public static Unit MyPC { get => myPC; }
-    public static Unit myPC;
+    private static Unit myPC;
 
     public static bool IsEndBattle()
     {
@@ -163,6 +166,7 @@ public class UnitMgr
         }
     }
 
+
     //## Battle > Unit Data (for Action)
     public static Unit Battle_GetUnit(int order)
     {
@@ -189,6 +193,7 @@ public class UnitMgr
     {
         unitBattle[order].Battle_SaveLastAction(act);
     }
+
 
     //## Battle > UI
     public static void Battle_SetTarget(int group, int targetIndex)
@@ -267,6 +272,7 @@ public class UnitMgr
         return unitBattle[order].LastSelect;
     }
 
+
     //## Battle > Action
     public static void Battle_SelectAction(int order)
     {
@@ -279,7 +285,7 @@ public class UnitMgr
     {
         List<Unit> targets = new List<Unit>();
 
-        //더 좋은 수가 있을텐데..?
+        //더 좋은 수가 있나?
         int group = (select & 0x000F_0000) >> 16;           //UIBattle.selectTargetGroup
         int soloTarget  = (select & 0x0000_F000) >> 12;     //UIBattle.selectTargetOne
 
@@ -307,6 +313,23 @@ public class UnitMgr
 
         unitBattle[order].Battle_SaveLastAction(select);
         unitBattle[order].Battle_PlayAction(skill, targets);
+    }
+    public static void Battle_SetRenderOrder(bool isTurn)
+    {
+        int order = isTurn ? 2 : 0;
+        NowActor.SetRenderOrder(order);
+
+        List<Unit> targets = NowActor.Targets;
+        for (int i = 0; i < targets.Count; ++i)
+            targets[i].SetRenderOrder(order);
+    }
+    public static void Battle_SlowUnitAnime(bool slow, float lerpWeight = 1f)
+    {
+        float end = slow ? 0.1f : 1;
+
+        NowActor.SetAnimeSpeed(end, lerpWeight);
+        for (int i = 0; i < NowActor.Targets.Count; ++i)
+            NowActor.Targets[i].SetAnimeSpeed(end, lerpWeight);
     }
 
 

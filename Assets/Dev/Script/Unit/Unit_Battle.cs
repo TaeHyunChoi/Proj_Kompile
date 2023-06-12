@@ -1,8 +1,9 @@
+using Mono.Cecil.Cil;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public partial class Unit : MonoBehaviour
+public partial class Unit : MonoBehaviour //Battle
 {
     public Dictionary<int, List<SkillData>> Skill { get => skill; }
     private Dictionary<int, List<SkillData>> skill = new Dictionary<int, List<SkillData>>();
@@ -19,9 +20,9 @@ public partial class Unit : MonoBehaviour
 
     private GameObject targetingArrow;
 
+    public List<Unit> Targets { get => targets; }
     private List<Unit> targets = new List<Unit>();
     private SkillData selectSkill;
-
 
     public void Battle_SetStatus()
     {
@@ -32,7 +33,7 @@ public partial class Unit : MonoBehaviour
     public void Battle_SetSpeed()
     {
         float isLukcy = Status[IDxUNIT.LUK];
-        float rnd = UnityEngine.Random.Range(0, 10000); //이러면 불러올 때마다 값이 바뀌는구나 흠
+        float rnd = Random.Range(0, 10000); //이러면 불러올 때마다 값이 바뀌는구나 흠
 
         if (rnd == 0)
             isLukcy = 0.5f;
@@ -43,7 +44,7 @@ public partial class Unit : MonoBehaviour
 
         //테스트용
         if (Data.Group == IDxUNIT.ENEMY)
-            isLukcy *= UnityEngine.Random.Range(0.9f, 1.1f);
+            isLukcy *= Random.Range(0.9f, 1.1f);
 
         priority = Status[IDxUNIT.AGI] * isLukcy;
     }
@@ -58,8 +59,6 @@ public partial class Unit : MonoBehaviour
     }
     public void Battle_AI()
     {
-        //여기서부터 설계+구현 들어가야 하는군
-
         //스킬 선정
         int skillGroup = IDxSkill.BASIC; //임의 설정
         int max = skill[skillGroup].Count;
@@ -98,43 +97,9 @@ public partial class Unit : MonoBehaviour
     public void Battle_PlayAction(SkillData skill, List<Unit> targets)
     {
         selectSkill = skill;
-        StartCoroutine(IEBattle_PlayAction(targets)); //코루틴 날리고 싶은데 다른 방법이 있나?
-    }
-    private IEnumerator IEBattle_PlayAction(List<Unit> targets)
-    {
         this.targets = targets;
-
-        //잠시 버퍼 후 애니메이션 재생
-        float wait = Time.time + 0.25f;
-        while (wait > Time.time)
-            yield return null;
-
-        string code;
-        PlayAnime(code = IDxUNIT.ANIME_SKILL);
-        wait = Time.time + aoc[code].length;
-        while (!IsAnimeEnd(code, wait))
-        {
-            //여기서 입력이 들어오면 여차저차 하는갑네?
-            if (wait - Time.time <= 0.5f)
-            { 
-                //입력은 어찌 처리?
-                //input & enter = true
-                //속도를 계속 줄이고
-                //
-            }
-
-            yield return null;
-        }
-
-        PlayAnime(code = IDxUNIT.ANIME_IDLE);
-        wait = Time.time + aoc[code].length + 0.25f;
-        while (!IsAnimeEnd(code, wait))
-            yield return null;
-
-        GameMgr.Battle_NextTurn();
-        yield break;
+        coPlayer.InitAttack();
     }
-
 
     public void OnAnime_Hit()
     {
@@ -143,27 +108,29 @@ public partial class Unit : MonoBehaviour
     }
     public void ProcHit(Unit hitter, SkillData hitSkill)
     {
-        int dmg = CalcDamage(hitter, hitSkill);
-        StartCoroutine(IEBattle_Hit(hitSkill, dmg));
+        coPlayer.InitHit(hitter, hitSkill);
+
+        //int dmg = CalcDamage(hitter, hitSkill);
+        //StartCoroutine(IEBattle_Hit(hitSkill, dmg));
     }
     private IEnumerator IEBattle_Hit(SkillData hitSkill, int dmg)
     {
+        //코드 수정 필요(IsAnimeEnd를 사용하지 않는 쪽으로)
         status[IDxUNIT.HP] -= dmg;
 
         PlayAnime(IDxUNIT.ANIME_HIT);
         float wait = Time.time + aoc[IDxUNIT.ANIME_HIT].length;
         while (!IsAnimeEnd(IDxUNIT.ANIME_HIT, wait))
         {
-            //좌우로 흔들어
+            //
             yield return null;
         }
 
-        //Debug.Log($"[{UnitMgr.GetUnitByIndex(hitSkill.ActorCode).data.Name}] Attack [{this.data.Name}] by {hitSkill.Name}");
         PlayAnime(IDxUNIT.ANIME_IDLE);
     }
 
 
-    private int CalcDamage(Unit hitter, SkillData hitSkill)
+    public int CalcDamage(Unit hitter, SkillData hitSkill)
     {
         return hitSkill.Power + (hitter.status[IDxUNIT.DEX] >> 2) - status[IDxUNIT.CON];
     }

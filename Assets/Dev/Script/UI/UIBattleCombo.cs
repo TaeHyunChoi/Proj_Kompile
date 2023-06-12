@@ -1,11 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIBattleCombo : MonoBehaviour
 {
-    public static  UIBattleCombo Instance;
+    public static  UIBattleCombo Instance { get => instance; }
     private static UIBattleCombo instance;
+
+    private RectTransform rect;
+
+    private Image dimBlack;
+    private Image[] iconSlots;
+    private RectTransform[] rectSlots;
+
+    private Vector3     center;
+    private Vector3[]   endPos;
 
     private byte direction;
 
@@ -14,11 +25,33 @@ public class UIBattleCombo : MonoBehaviour
         if (instance != null)
             return;
 
-        GameObject go = Resources.Load<GameObject>("Prefab/UICombo");
+        GameObject go = Resources.Load<GameObject>("Prefab/UIBattleCombo");
         go = Instantiate(go, UIMgr.Canvas_Battle.transform);
         instance = go.GetComponent<UIBattleCombo>();
+        instance.AwakeManually();
 
         instance.gameObject.SetActive(false);
+    }
+    private void AwakeManually()
+    {
+        rect = transform.GetComponent<RectTransform>();
+        iconSlots = new Image[4];
+        rectSlots = new RectTransform[4];
+        endPos = new Vector3[4];
+
+        Color color;
+        dimBlack = rect.GetChild(0).GetComponent<Image>();
+        color = dimBlack.color;
+        dimBlack.color = new Color(color.r, color.g, color.b, 0);
+
+        for (int i = 1; i < rect.childCount; ++i)
+        {
+            iconSlots[i - 1] = rect.GetChild(i).GetComponent<Image>();
+            color = iconSlots[i - 1].color;
+            iconSlots[i - 1].color = new Color(color.r, color.g, color.b, 0);
+
+            rectSlots[i - 1] = rect.GetChild(i).GetComponent<RectTransform>();
+        }
     }
     public static void Show(bool isOn)
     {
@@ -26,36 +59,68 @@ public class UIBattleCombo : MonoBehaviour
         if (!isOn)
             return;
 
-        instance.InitUI();
+        //instance.___ 여러 번 쓰기 싫어서 함수로 호출
+        instance.InitSlotIcons();
+
+        UnitMgr.Battle_SetRenderOrder(isTurn: true);
     }
-    private void InitUI()
+    private void InitSlotIcons()
     {
-        //여기서 최초로 스킬 아이콘을 활성화한다.
-
-        //UnitMgr에서 현재 싸움 중인 유닛의 인덱스를 가져와
-        int index = UnitMgr.Battle_GetUnit(GameMgr.NowOrder).Data.Index;
-
-        //Player.cs에서 해당 인덱스에 저장된 콤보 스킬을 가져와라.
+        Unit actor = UnitMgr.Battle_GetUnit(GameMgr.NowOrder);
+        int index = actor.Data.Index;
         byte[] combo = Player.MemberCombo[index];
 
-        //각 방향에 Image에다가 넣어야 한다
+        SkillData skill;
+        center = CameraMgr.Battle_ScreenToLocalInRect(actor.Pos);
 
-        //위치도 설정해야 함; >> 이동 지점까지 먼저 설정해둬야 하려나?
-        //이걸 어떻게 처리해야 한다?
+        for (int i = 0; i < combo.Length; ++i)
+        {
+            if (combo[i] == 0)
+            {
+                iconSlots[i].gameObject.SetActive(false);
+                continue;
+            }
+
+            skill = DataMgr.SkillTBL[combo[i]];
+            iconSlots[i].sprite = ResourceMgr.SPIcon[skill.RcsCode];
+            iconSlots[i].gameObject.SetActive(true);
+
+            //시계방향: [상][우][하][좌] * 275f
+            rectSlots[i].localPosition = center;
+            switch (i)
+            {
+                case 0: endPos[i] = center + Vector3.up    * 300f;    break;
+                case 1: endPos[i] = center + Vector3.right * 250f;    break;
+                case 2: endPos[i] = center + Vector3.down  * 300f;    break;
+                case 3: endPos[i] = center + Vector3.left  * 250f;    break;
+            }
+        }
     }
 
-    //코루틴 쓰기 싫어서 LateUpdate 쓴다...
-    private void LateUpdate()
+    public bool UpdateUI(bool active, float lerpWeight)
     {
-        //isOn == true
-        //상하좌우 UI슬롯이 밝아지며 커진다. (위 작업이 끝나면 LateUpdate()를 할 필요가 없어지는군요
-        //상하좌우 UI슬롯에 콤보 스킬 아이콘을 입력한다
+        Vector3 positionEnd;
+        Color color;
+        float alphaEnd = active ? 1 : 0;
 
-        //isOn == false;
-        //상하좌우 UI슬롯이 어두워지며 작아진다.
+        //dim alpha 
+        color = dimBlack.color;
+        dimBlack.color = new Color(color.r, color.g, color.b, Mathf.Lerp(color.a, alphaEnd * 0.75f, IDxVALUE.LERP * lerpWeight));
 
-        //추가 조작
-        //IDxInput.Direction => GetButtonDown() ? 해당 UI 슬롯 테두리 밝게
-        //확인키(스페이스 또는 Z)를 누르고 있으면서 + Direction.ButtonUp()을 해야 스킬 발동
+        //slot position, alpha
+        for (int i = 0; i < rectSlots.Length; ++i)
+        {
+            positionEnd = active ? endPos[i] : center;
+            rectSlots[i].localPosition = Vector3.Lerp(rectSlots[i].localPosition, positionEnd, IDxVALUE.LERP * lerpWeight);
+
+            color = iconSlots[i].color;
+            iconSlots[i].color = new Color(color.r, color.g, color.b, Mathf.Lerp(color.a, alphaEnd, IDxVALUE.LERP * lerpWeight));
+        }
+
+
+        if (!active && iconSlots[0].color.a <= 0.01f)
+            return true;
+
+        return false;
     }
 }
