@@ -72,25 +72,25 @@ public partial class Unit : MonoBehaviour
     private List<Unit> Battle_AITargeting()
     {
         List<Unit> result = new List<Unit>();
-        switch (selectSkill.TargetGroup)
-        {
-            case IDxUNIT.TARGET_PLY_SOLO :
-                {
-                    //예시 모드는 보통(Rnd), 선제(One), 방어(XOR)로 걸어본다.
-                    List<Unit> groups = UnitMgr.Battle_GetUnitGroup(IDxUNIT.PLAYER);
-                    switch (mode)
-                    {
-                        case IDxUNIT.MODE_NORMAL:
-                        case IDxUNIT.MODE_DEFENCE:
-                            result.Add(groups[Random.Range(0, groups.Count)]);
-                            break;
-                        case IDxUNIT.MODE_PREEMTIVE:
-                            result.Add(groups[(lastSelect & 0x0000_F000) >> 4 * 3]);
-                            break;
-                    }
-                }
-                break;
-        }
+        //switch (selectSkill.TargetGroup)
+        //{
+        //    case IDxUNIT.TARGET_PLY_SOLO :
+        //        {
+        //            //예시 모드는 보통(Rnd), 선제(One), 방어(XOR)로 걸어본다.
+        //            List<Unit> groups = UnitMgr.Battle_GetUnitGroup(IDxUNIT.PLAYER);
+        //            switch (mode)
+        //            {
+        //                case IDxUNIT.MODE_NORMAL:
+        //                case IDxUNIT.MODE_DEFENCE:
+        //                    result.Add(groups[Random.Range(0, groups.Count)]);
+        //                    break;
+        //                case IDxUNIT.MODE_PREEMTIVE:
+        //                    result.Add(groups[(lastSelect & 0x0000_F000) >> 4 * 3]);
+        //                    break;
+        //            }
+        //        }
+        //        break;
+        //}
 
         return result;
     }

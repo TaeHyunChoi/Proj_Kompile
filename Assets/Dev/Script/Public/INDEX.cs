@@ -34,6 +34,7 @@ public class IDxUNIT
     public const byte MODE_DEFENCE      = 2;
     public const byte MODE_PREEMTIVE    = 3;
     public const byte MODE_COUNTER      = 4;
+    public const byte MODE_COUNT        = 5;
 
     //Animation
     public const string ANIME_IDLE    = "IDLE";

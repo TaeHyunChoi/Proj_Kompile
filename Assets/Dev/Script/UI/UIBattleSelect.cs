@@ -7,13 +7,13 @@ public class UIBattleSelect : MonoBehaviour
 {
     public  static UIBattleSelect Instance { get => instance; }
     private static UIBattleSelect instance;
-    public struct UIBattleSlot
+    public struct UISlot_Battle
     {
         private GameObject go;
         private Image icon;
         private TextMeshProUGUI name;
 
-        public UIBattleSlot(GameObject _go)
+        public UISlot_Battle(GameObject _go)
         {
             go = _go;
             icon = _go.transform.GetChild(0).GetComponent<Image>();
@@ -41,7 +41,7 @@ public class UIBattleSelect : MonoBehaviour
 
     private GameObject playerMenuPanel;
     private Transform contentScroll;
-    private List<UIBattleSlot> slots;
+    private List<UISlot_Battle> slots;
 
     private TextMeshProUGUI[] contentInfoText;
 
@@ -104,15 +104,14 @@ public class UIBattleSelect : MonoBehaviour
         contentArrow = content.GetChild(3).GetComponent<RectTransform>();
         contentArrowDefault = contentArrow.anchoredPosition;
 
-        slots = new List<UIBattleSlot>();
+        slots = new List<UISlot_Battle>();
         contentScroll = content.GetChild(2).GetChild(0).GetChild(0);
         for (int i = 0; i < contentScroll.childCount; ++i)
-            slots.Add(new UIBattleSlot(contentScroll.GetChild(i).gameObject));
+            slots.Add(new UISlot_Battle(contentScroll.GetChild(i).gameObject));
 
         contentInfoText = content.GetChild(1).GetComponentsInChildren<TextMeshProUGUI>();
         targetingArrow = transform.GetChild(0).GetChild(2).GetComponentsInChildren<Transform>(true);
     }
-
     public static void Show(bool on)
     {
         Instance.gameObject.SetActive(on);
@@ -124,7 +123,7 @@ public class UIBattleSelect : MonoBehaviour
         select = (actor.LastSelect > 0) ? actor.LastSelect : (menuBasic << shiftMenu);
         
         Instance.UpdateUI(init: true);
-        InputMgr.SetMobe(IDxINPUT.BATTLE_MENU);
+        InputMgr.SetMode(IDxINPUT.BATTLE_MENU);
     }
 
     //얘가 좀 짜치네?
@@ -153,7 +152,7 @@ public class UIBattleSelect : MonoBehaviour
                                 select |= (skill.TargetGroup) << shiftTargetGroup;
 
                                 UnitMgr.Battle_SetTarget(selectTargetGroup, selectTargetOne);
-                                InputMgr.SetMobe(IDxINPUT.BATTLE_TARGERT);
+                                InputMgr.SetMode(IDxINPUT.BATTLE_TARGERT);
                             }
                             break;
                         case menuMode:
@@ -223,7 +222,7 @@ public class UIBattleSelect : MonoBehaviour
             case IDxINPUT.ENTER:
                 {
                     UnitMgr.Battle_ActUnit(nowOrder, skill, select);
-                    InputMgr.SetMobe(IDxINPUT.BATTLE_COMBO);
+                    InputMgr.SetMode(IDxINPUT.BATTLE_COMBO);
 
                     Reset_Target();
                     Show(false);
@@ -231,7 +230,7 @@ public class UIBattleSelect : MonoBehaviour
                 return;
             case IDxINPUT.CANCEL:
                 {
-                    InputMgr.SetMobe(IDxINPUT.BATTLE_MENU);
+                    InputMgr.SetMode(IDxINPUT.BATTLE_MENU);
                     Reset_Target();
                 }
                 return;
@@ -367,7 +366,7 @@ public class UIBattleSelect : MonoBehaviour
             {
                 GameObject rcs = ResourceMgr.Prefab["UIBattleSkill"];
                 GameObject slot = Instantiate(rcs, contentScroll);
-                slots.Add(new UIBattleSlot(slot));
+                slots.Add(new UISlot_Battle(slot));
             }
 
             slots[i].Load(code[0][i], code[1][i]);

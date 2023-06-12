@@ -9,7 +9,7 @@ public class InputMgr
 
     private static bool isCombo;
 
-    public static void SetMobe(int type)
+    public static void SetMode(int type)
     {
         //기본 입력값
         Update =  Base;
