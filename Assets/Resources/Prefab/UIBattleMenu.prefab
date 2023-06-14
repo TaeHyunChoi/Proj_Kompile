@@ -106,7 +106,6 @@ RectTransform:
   m_Children:
   - {fileID: 3726996525622527541}
   - {fileID: 3228723091343166024}
-  - {fileID: 3994658412663826429}
   m_Father: {fileID: 8098629495360469750}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1112,7 +1111,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8098629495360469750}
   - component: {fileID: 599221437235560737}
-  - component: {fileID: 8109582080584823038}
   m_Layer: 0
   m_Name: UIBattleMenu
   m_TagString: Untagged
@@ -1133,6 +1131,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1481715626591172654}
+  - {fileID: 3994658412663826429}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1149,18 +1148,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7016324362815132114}
   m_CullTransparentMesh: 1
---- !u!114 &8109582080584823038
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7016324362815132114}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 301b6a1859e0efb459f27ee38f4c510b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &7102766581308947454
 GameObject:
   m_ObjectHideFlags: 0
@@ -1499,8 +1486,8 @@ RectTransform:
   - {fileID: 7213361033942206425}
   - {fileID: 4793819061986649589}
   - {fileID: 5511805738475434031}
-  m_Father: {fileID: 1481715626591172654}
-  m_RootOrder: 2
+  m_Father: {fileID: 8098629495360469750}
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}

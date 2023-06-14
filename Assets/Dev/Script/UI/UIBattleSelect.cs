@@ -7,29 +7,6 @@ public class UIBattleSelect : MonoBehaviour
 {
     public  static UIBattleSelect Instance { get => instance; }
     private static UIBattleSelect instance;
-    public struct UISlot_Battle
-    {
-        private GameObject go;
-        private Image icon;
-        private TextMeshProUGUI name;
-
-        public UISlot_Battle(GameObject _go)
-        {
-            go = _go;
-            icon = _go.transform.GetChild(0).GetComponent<Image>();
-            name = _go.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
-        }
-        public void Load(string slotName, string rcsCode)
-        {
-            name.text = slotName;
-            icon.sprite = ResourceMgr.SPIcon[rcsCode];
-            go.SetActive(true);
-        }
-        public void SetActive(bool on)
-        {
-            go.SetActive(on);
-        }
-    }
 
     #region UI
     private RectTransform menuArrow;
@@ -41,7 +18,7 @@ public class UIBattleSelect : MonoBehaviour
 
     private GameObject playerMenuPanel;
     private Transform contentScroll;
-    private List<UISlot_Battle> slots;
+    //private List<UISlot_Battle> slots;
 
     private TextMeshProUGUI[] contentInfoText;
 
@@ -92,26 +69,6 @@ public class UIBattleSelect : MonoBehaviour
         instance = go.GetComponent<UIBattleSelect>();
         Instance.gameObject.SetActive(false);
     }
-    private void Awake()
-    {
-        playerMenuPanel = transform.GetChild(0).gameObject;
-
-        Transform menu = transform.GetChild(0).GetChild(0);
-        menuArrow = menu.GetChild(3).GetComponent<RectTransform>();
-        menuArrowDefault = menuArrow.anchoredPosition;
-
-        Transform content = transform.GetChild(0).GetChild(1);
-        contentArrow = content.GetChild(3).GetComponent<RectTransform>();
-        contentArrowDefault = contentArrow.anchoredPosition;
-
-        slots = new List<UISlot_Battle>();
-        contentScroll = content.GetChild(2).GetChild(0).GetChild(0);
-        for (int i = 0; i < contentScroll.childCount; ++i)
-            slots.Add(new UISlot_Battle(contentScroll.GetChild(i).gameObject));
-
-        contentInfoText = content.GetChild(1).GetComponentsInChildren<TextMeshProUGUI>();
-        targetingArrow = transform.GetChild(0).GetChild(2).GetComponentsInChildren<Transform>(true);
-    }
     public static void Show(bool on)
     {
         Instance.gameObject.SetActive(on);
@@ -122,7 +79,7 @@ public class UIBattleSelect : MonoBehaviour
         Unit actor = UnitMgr.Battle_GetUnit(nowOrder);
         select = (actor.LastSelect > 0) ? actor.LastSelect : (menuBasic << shiftMenu);
         
-        Instance.UpdateUI(init: true);
+        //Instance.UpdateUI(init: true);
         InputMgr.SetMode(IDxINPUT.BATTLE_MENU);
     }
 
@@ -210,12 +167,12 @@ public class UIBattleSelect : MonoBehaviour
                 }
                 break;
         }
-        Instance.UpdateUI();
+        //Instance.UpdateUI();
     }
     public static void Select_Target(int input)
     {
         SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, selectMenu, selectContent);
-        bool isSoloTarget = (skill.TargetGroup != IDxUNIT.TARGET_PLY_SOLO || skill.TargetGroup != IDxUNIT.TARGET_ENM_SOLO);
+        bool isSoloTarget = (skill.TargetGroup != IDxUNIT.TARGET_PRT_SOLO || skill.TargetGroup != IDxUNIT.TARGET_ENM_SOLO);
 
         switch (input & IDxINPUT.INTERACT)
         {
@@ -271,112 +228,118 @@ public class UIBattleSelect : MonoBehaviour
         select &= ~maskTargetGroup;
         select &= ~maskTargetOne;
     }
-
-
-    private void UpdateUI(bool init = false)
-    {
-        //Update Arrow (must)
-        contentArrow.anchoredPosition = contentArrowDefault + selectContent * new Vector2(0, deltaContent);
-        menuArrow.anchoredPosition = menuArrowDefault + (selectMenu - 1) * new Vector2(deltaMenu, 0);
-
-        //Update Window Panel (conditional)
-        if (!init && selectContent != 0)
-            return;
-
-        //Window Title
-        switch (selectMenu)
-        {
-            case 1:
-                contentInfoText[0].text = "기본기";
-                contentInfoText[1].text = string.Empty;
-                break;
-            case 2:
-                contentInfoText[0].text = "개인 공격기";
-                contentInfoText[1].text = "MP";
-                break;
-            case 3:
-                contentInfoText[0].text = "전체 공격기";
-                contentInfoText[1].text = "MP";
-                break;
-            case 4:
-                contentInfoText[0].text = "모드";
-                contentInfoText[1].text = string.Empty;
-                break;
-            case 5:
-                contentInfoText[0].text = "아이템";
-                contentInfoText[1].text = string.Empty;
-                break;
-            case 6:
-                contentInfoText[0].text = "특수기";
-                contentInfoText[1].text = string.Empty;
-                break;
-        }
-
-        //Window Content
-        int i = 0, count = 0;
-        List<string>[] code = new List<string>[2];
-        code[0] = new List<string>();
-        code[1] = new List<string>();
-        switch (selectMenu)
-        {
-            case menuBasic:
-            case menuSkillSolo:
-            case menuSkillGroup:
-            case menuSkillSpecial:
-                {
-                    List<SkillData> skills = UnitMgr.Battle_GetSkillTypeof(nowOrder, selectMenu);
-                    count = skills.Count;
-
-                    for (i = 0; i < count; i++)
-                    {
-                        code[0].Add(skills[i].Name);
-                        code[1].Add(skills[i].RcsCode);
-                    }
-                }
-                break;
-            case menuMode:
-                {
-                    count = MODE.Length;
-
-                    for (i = 0; i < count; i++)
-                    {
-                        code[0].Add(MODE[i]);
-                        code[1].Add("Icon_Mode"); //리소스가 없으요...
-                    }
-                }
-                break;
-            case menuItem:
-                {
-                    List<Player.Item> items = Player.Items;
-                    count = items.Count;
-
-                    for (i = 0; i < count; i++)
-                    {
-                        code[0].Add(items[i].Tbl.Name);
-                        code[1].Add(items[i].Tbl.RcsCode);
-                    }
-                }
-                break;
-        }
-
-        //Use Slot => New or Active(true)
-        for (i = 0; i < count; ++i)
-        {
-            if (i >= slots.Count)
-            {
-                GameObject rcs = ResourceMgr.Prefab["UIBattleSkill"];
-                GameObject slot = Instantiate(rcs, contentScroll);
-                slots.Add(new UISlot_Battle(slot));
-            }
-
-            slots[i].Load(code[0][i], code[1][i]);
-        }
-
-        //Not Used Slot => Active(false)
-        for (; i < slots.Count; ++i)
-            slots[i].SetActive(false);
-
-        //Update Window Content Max Index
-        contentMax = count - 1;
-    }
 }
+
+//## Not Used
+//private void Awake()
+//{
+//    playerMenuPanel = transform.GetChild(0).gameObject;
+//    Transform menu = transform.GetChild(0).GetChild(0);
+//    menuArrow = menu.GetChild(3).GetComponent<RectTransform>();
+//    menuArrowDefault = menuArrow.anchoredPosition;
+//    Transform content = transform.GetChild(0).GetChild(1);
+//    contentArrow = content.GetChild(3).GetComponent<RectTransform>();
+//    contentArrowDefault = contentArrow.anchoredPosition;
+//    slots = new List<UISlot_Battle>();
+//    contentScroll = content.GetChild(2).GetChild(0).GetChild(0);
+//    for (int i = 0; i < contentScroll.childCount; ++i)
+//        slots.Add(new UISlot_Battle(contentScroll.GetChild(i).gameObject));
+//    contentInfoText = content.GetChild(1).GetComponentsInChildren<TextMeshProUGUI>();
+//    targetingArrow = transform.GetChild(0).GetChild(2).GetComponentsInChildren<Transform>(true);
+//}
+//private void UpdateUI(bool init = false)
+//{
+//    //Update Arrow (must)
+//    contentArrow.anchoredPosition = contentArrowDefault + selectContent * new Vector2(0, deltaContent);
+//    menuArrow.anchoredPosition = menuArrowDefault + (selectMenu - 1) * new Vector2(deltaMenu, 0);
+//    //Update Window Panel (conditional)
+//    if (!init && selectContent != 0)
+//        return;
+//    //Window Title
+//    switch (selectMenu)
+//    {
+//        case 1:
+//            contentInfoText[0].text = "기본기";
+//            contentInfoText[1].text = string.Empty;
+//            break;
+//        case 2:
+//            contentInfoText[0].text = "개인 공격기";
+//            contentInfoText[1].text = "MP";
+//            break;
+//        case 3:
+//            contentInfoText[0].text = "전체 공격기";
+//            contentInfoText[1].text = "MP";
+//            break;
+//        case 4:
+//            contentInfoText[0].text = "모드";
+//            contentInfoText[1].text = string.Empty;
+//            break;
+//        case 5:
+//            contentInfoText[0].text = "아이템";
+//            contentInfoText[1].text = string.Empty;
+//            break;
+//        case 6:
+//            contentInfoText[0].text = "특수기";
+//            contentInfoText[1].text = string.Empty;
+//            break;
+//    }
+//    //Window Content
+//    int i = 0, count = 0;
+//    List<string>[] code = new List<string>[2];
+//    code[0] = new List<string>();
+//    code[1] = new List<string>();
+//    switch (selectMenu)
+//    {
+//        case menuBasic:
+//        case menuSkillSolo:
+//        case menuSkillGroup:
+//        case menuSkillSpecial:
+//            {
+//                List<SkillData> skills = UnitMgr.Battle_GetSkillTypeof(nowOrder, selectMenu);
+//                count = skills.Count;
+//                for (i = 0; i < count; i++)
+//                {
+//                    code[0].Add(skills[i].Name);
+//                    code[1].Add(skills[i].RcsCode);
+//                }
+//            }
+//            break;
+//        case menuMode:
+//            {
+//                count = MODE.Length;
+//                for (i = 0; i < count; i++)
+//                {
+//                    code[0].Add(MODE[i]);
+//                    code[1].Add("Icon_Mode"); //리소스가 없으요...
+//                }
+//            }
+//            break;
+//        case menuItem:
+//            {
+//                List<Player.Item> items = Player.Items;
+//                count = items.Count;
+//                for (i = 0; i < count; i++)
+//                {
+//                    code[0].Add(items[i].Tbl.Name);
+//                    code[1].Add(items[i].Tbl.RcsCode);
+//                }
+//            }
+//            break;
+//    }
+//    //Use Slot => New or Active(true)
+//    for (i = 0; i < count; ++i)
+//    {
+//        if (i >= slots.Count)
+//        {
+//            GameObject rcs = ResourceMgr.Prefab["UIBattleSkill"];
+//            GameObject slot = Instantiate(rcs, contentScroll);
+//            slots.Add(new UISlot_Battle(slot));
+//        }
+//        slots[i].Load(code[0][i], code[1][i]);
+//    }
+//    //Not Used Slot => Active(false)
+//    for (; i < slots.Count; ++i)
+//        slots[i].SetActive(false);
+//    //Update Window Content Max Index
+//    contentMax = count - 1;
+//}

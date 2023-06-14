@@ -9,9 +9,9 @@ public class IDxUNIT
     public const byte COMMON    = 255;
 
     //Group Index
-    public const byte PLAYER    = 1;
-    public const byte ENEMY     = 2;
-    public const byte NPC       = 3;
+    public const byte PARTY     = 0;
+    public const byte ENEMY     = 1;
+    public const byte NPC       = 2;
 
     //Stat
     public const byte HP        = 0;     //체력   
@@ -43,12 +43,13 @@ public class IDxUNIT
     public const string ANIME_EVENT   = "EVENT";
 
     //[Unit.Group]_[Target Count]
-    public const byte TARGET_ENM_SOLO   = 1;
-    public const byte TARGET_SELF       = 2;
-    public const byte TARGET_PLY_SOLO   = 3;
-    public const byte TARGET_ENM_ALL    = 4;
-    public const byte TARGET_PLY_ALL    = 5;
-    public const byte TARGET_XOR_SELF   = 6;
+    public const byte TARGET_PRT_SOLO   = 0; // Unit Type : Party One
+    public const byte TARGET_PRT_ALL    = 1; // Unit Type : Party All
+    public const byte TARGET_ENM_SOLO   = 2; // Unit Type : Enemy One
+    public const byte TARGET_ENM_ALL    = 3; // Unit Type : Enemy All
+    public const byte TARGET_SELF       = 4; // 본인
+    public const byte TARGET_XOR_SELF   = 5; // 본인을 제외한 모든 유닛
+    public const byte TARGET_ALL        = 6; // 피아식별X
 }
 public class IDxINPUT
 {
@@ -84,10 +85,10 @@ public class IDxUI
 }
 public class IDxSkill
 {
-    public const byte BASIC   = 1;
-    public const byte SOLO    = 2;
-    public const byte GROUP   = 3;
-    public const byte SPECIAL = 6;
+    public const byte BASIC   = 0;
+    public const byte SOLO    = 1;
+    public const byte GROUP   = 2;
+    public const byte SPECIAL = 3;
 }
 public class IDxVALUE
 {

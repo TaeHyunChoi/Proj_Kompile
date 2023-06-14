@@ -44,8 +44,6 @@ public partial class Unit : MonoBehaviour //Default
         for(int i = 0; i < skill.Count; ++i)
             this.skill[skill[i].SkillGroup].Add(skill[i]);
 
-        targetingArrow = transform.GetChild(0).gameObject;
-
         render = transform.GetComponent<SpriteRenderer>();
 
         //애니메이션(AOC)

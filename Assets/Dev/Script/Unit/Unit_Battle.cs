@@ -5,22 +5,20 @@ using UnityEngine;
 
 public partial class Unit : MonoBehaviour //Battle
 {
-    public Dictionary<int, List<SkillData>> Skill { get => skill; }
+    public  Dictionary<int, List<SkillData>> Skill { get => skill; }
     private Dictionary<int, List<SkillData>> skill = new Dictionary<int, List<SkillData>>();
 
     //Battle: 전투 중 마지막 선택
-    public int LastSelect { get => lastSelect; }
+    public  int LastSelect { get => lastSelect; }
     private int lastSelect;
 
-    public byte Mode { get => Mode; }
+    public  byte Mode { get => Mode; }
     private byte mode;
 
-    public float Priority { get => priority; }
+    public  float Priority { get => priority; }
     private float priority;
 
-    private GameObject targetingArrow;
-
-    public List<Unit> Targets { get => targets; }
+    public  List<Unit> Targets { get => targets; }
     private List<Unit> targets = new List<Unit>();
     private SkillData selectSkill;
 
@@ -48,9 +46,8 @@ public partial class Unit : MonoBehaviour //Battle
 
         priority = Status[IDxUNIT.AGI] * isLukcy;
     }
-    public void Battle_BeTargeted(bool betargeted)
+    public void Battle_BeTargeted(bool beTargeted)
     {
-        targetingArrow.SetActive(betargeted);
         //쉐이더 반짝도 건드리고 싶긴 해~
     }
     public void Battle_SaveLastAction(int act)
