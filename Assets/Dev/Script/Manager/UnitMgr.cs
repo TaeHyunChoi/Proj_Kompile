@@ -245,6 +245,9 @@ public class UnitMgr
     //## Battle > Unit Data (for Action)
     public static Unit Battle_GetUnit(int order)
     {
+        if (order >= battle.Length)
+            return null;
+
         return battle[order];
     }
     public static Unit Battle_GetUnit(int group, int order)

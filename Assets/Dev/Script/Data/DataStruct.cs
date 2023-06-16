@@ -52,7 +52,8 @@ public struct SkillData : Interface.IDataSetter
         mp[3] = int.Parse(data["MP03"]);
         sp = int.Parse(data["SP"]);
 
-        power = int.Parse(data["Accurate"]);
+        accurate = int.Parse(data["Accurate"]);
+        power = int.Parse(data["Power"]);
         speed = int.Parse(data["Speed"]);
         rscCode = data["RscCode"];
     }
