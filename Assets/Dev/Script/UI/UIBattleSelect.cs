@@ -106,7 +106,7 @@ public class UIBattleSelect : MonoBehaviour
                                 select |= last;
 
                                 SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, selectMenu, selectContent);
-                                select |= (skill.TargetGroup) << shiftTargetGroup;
+                                select |= (skill.TargetGroupType) << shiftTargetGroup;
 
                                 UnitMgr.Battle_SetTarget(selectTargetGroup, selectTargetOne);
                                 InputMgr.SetMode(IDxINPUT.BATTLE_TARGERT);
@@ -172,7 +172,7 @@ public class UIBattleSelect : MonoBehaviour
     public static void Select_Target(int input)
     {
         SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, selectMenu, selectContent);
-        bool isSoloTarget = (skill.TargetGroup != IDxUNIT.TARGET_PRT_SOLO || skill.TargetGroup != IDxUNIT.TARGET_ENM_SOLO);
+        bool isSoloTarget = (skill.TargetGroupType != IDxUNIT.TARGET_PRT_SOLO || skill.TargetGroupType != IDxUNIT.TARGET_ENM_SOLO);
 
         switch (input & IDxINPUT.INTERACT)
         {
@@ -220,7 +220,7 @@ public class UIBattleSelect : MonoBehaviour
                 break;
         }
 
-        UnitMgr.Battle_SetTarget(skill.TargetGroup, selectTargetOne);
+        UnitMgr.Battle_SetTarget(skill.TargetGroupType, selectTargetOne);
     }
     private static void Reset_Target()
     {

@@ -89,8 +89,26 @@ public class IDxSkill
     public const byte SOLO    = 1;
     public const byte GROUP   = 2;
     public const byte SPECIAL = 3;
+
+    public const byte TARGET_PARTY = 0;
+    public const byte TARGET_ENEMY = 1;
+    public const byte TARGET_SELF = 2;
+    public const byte TARGET_EXCEPT_SELF = 3;
 }
 public class IDxVALUE
 {
     public static float LERP = 20 * UnityEngine.Time.deltaTime;
+}
+
+public enum ETargetGroup
+{ 
+    Party = 0,  //플레이어가 조작하는 유닛
+    Enemy,      //Party의 적대 유닛
+    Self,       //스킬을 시전하는 유닛
+    ExceptSelf  //Self 이외의 Party, Enemy 모두
+}
+public enum ETargetCount
+{
+    One = 0,
+    All
 }

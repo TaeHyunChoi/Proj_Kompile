@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 
 public class UIBattleSelect_2 : MonoBehaviour
 {
@@ -58,19 +59,19 @@ public class UIBattleSelect_2 : MonoBehaviour
     private static float deltaContent = -125f;
     #endregion
     #region BitMask
-    private static int MASK_TARGET_SOLO     = 0xF000;
-    private static int MASK_MENU            = 0x0F00;
-    private static int MASK_CONTENT         = 0x00FF;
+    private static int MASK_TARGET  = 0x00FF_0000;
+    private static int MASK_MENU    = 0x0000_0F00;
+    private static int MASK_CONTENT = 0x0000_00FF;
 
-    private static int SHIFT_TARGET_SOLO    = 4 * 3;
-    private static int SHIFT_MENU           = 4 * 2;
+    private static int SHIFT_TARGET    = 4 * 4;
+    private static int SHIFT_MENU      = 4 * 2;
     //private static int SHIFT_CONTENT = 0; //사실상 사용X
     #endregion
 
     private int select;         //Total Input Value
     private int menu        { get => (select & MASK_MENU) >> SHIFT_MENU; }
     private int content     { get => (select & MASK_CONTENT)/* >> SHIFT_CONTENT*/; }
-    private int targetSolo  { get => (select & MASK_TARGET_SOLO) >> SHIFT_TARGET_SOLO; }
+    private int targeting   { get => (select & MASK_TARGET) >> SHIFT_TARGET; } //[0-2:Party][3-6:Enemy]
 
     private int lastSlotIndex;  //선택 가능한 마지막 인덱스
 
@@ -123,18 +124,20 @@ public class UIBattleSelect_2 : MonoBehaviour
             return;
 
         //[HOLD] Get Unit`s Last Select(Act)
-        select = 0;
 
         menuArrow.anchoredPosition = menuArrowDefault + menu * new Vector2(deltaMenu, 0);
         contentArrow.anchoredPosition = contentArrowDefault + content * new Vector2(0, deltaContent);
-        UpdateUI_Content();
+        ContentUI_Update();
         InputMgr.SetMode(IDxINPUT.BATTLE_MENU);
     }
-    public void InitArrows(List<Unit> units, Vector3 offset)
+    public void InitArrows(Unit[] units, Vector3 offset)
     {
         Vector3 rect;
-        for (int i = 0; i < units.Count; ++i)
+        for (int i = 0; i < units.Length; ++i)
         {
+            if (units[i] == null)
+                continue;
+
             rect = CameraMgr.Battle_ScreenToLocalInRect(units[i].Pos + offset);
             targetingArrows[i].localPosition = rect;
         }
@@ -142,7 +145,7 @@ public class UIBattleSelect_2 : MonoBehaviour
 
 
     //## Input => Update Content
-    public  void InputUI_Select(int input)
+    public  void Input_Select(int input)
     {
         //## Update Select
         switch (input & IDxINPUT.INTERACT)
@@ -151,16 +154,17 @@ public class UIBattleSelect_2 : MonoBehaviour
                 {
                     switch ((EIdxMENU)menu)
                     {
-                        case EIdxMENU.SkillBasic:   ProcUI_Targeting(IDxSkill.BASIC);   break;
-                        case EIdxMENU.SkillSolo:    ProcUI_Targeting(IDxSkill.SOLO);    break;
-                        case EIdxMENU.SkillGroup:   ProcUI_Targeting(IDxSkill.GROUP);   break;
-                        case EIdxMENU.SkillSpecial: ProcUI_Targeting(IDxSkill.SPECIAL); break;
+                        case EIdxMENU.SkillBasic:   TargetingProc(IDxSkill.BASIC);      break;
+                        case EIdxMENU.SkillSolo:    TargetingProc(IDxSkill.SOLO);       break;
+                        case EIdxMENU.SkillGroup:   TargetingProc(IDxSkill.GROUP);      break;
+                        case EIdxMENU.SkillSpecial: TargetingProc(IDxSkill.SPECIAL);    break;
                         case EIdxMENU.Mode:         ProcUI_ChangeMode();                break;
                         case EIdxMENU.Item:         ProcUI_UseItem();                   break;
                     }
 
                     //끄응.. 이런 식의 정보 저장도 별로네...
-                    UnitMgr.Battle_SaveUnitAction(nowOrder, select);
+                    Debug.Log("Plz Save Unit Action");
+                    //UnitMgr.Battle_SaveUnitAction(nowOrder, select);
                 }
                 return;
             case IDxINPUT.CANCEL:
@@ -177,46 +181,42 @@ public class UIBattleSelect_2 : MonoBehaviour
         switch (input & IDxINPUT.DIRECTION)
         {
             case IDxINPUT.RIGHT:
+                //마지막 메뉴?
+                if (menu == (int)EIdxMENU.Count - 1)
                 {
-                    //마지막 메뉴?
-                    if (menu == (int)EIdxMENU.Count - 1)
-                    {
-                        select = 0;
-                        break;
-                    }
-
-                    select += (1 << SHIFT_MENU);
-                    select &= MASK_MENU;   //MENU 변경 → TARGET, CONTENT 초기화
+                    select &= (0 | MASK_TARGET); //MENU 초기화 → MENU =0, CONTENT 초기화 (TARGET만 남는다)
+                    break;
                 }
+
+                select += (1 << SHIFT_MENU);
+                select &= ~MASK_CONTENT;        //MENU 변경 → CONTENT 초기화
                 break;
             case IDxINPUT.LEFT:
-                {
+                
                     //맨앞의 메뉴?
                     if (menu == 0)
                     {
-                        select = ((int)EIdxMENU.Count - 1) << SHIFT_MENU;
+                        select = (((int)EIdxMENU.Count - 1) << SHIFT_MENU | targeting); //CONTENT 초기화
                         break;
                     }
 
                     select -= (1 << SHIFT_MENU);
-                    select &= MASK_MENU;   //MENU 변경 → TARGET, CONTENT 초기화
-                }
+                    select &= ~MASK_CONTENT;   //MENU 변경 → CONTENT 초기화
+                
                 break;
             case IDxINPUT.DOWN:
-                {
+                
                     if ((select & MASK_CONTENT) == lastSlotIndex)
                         select &= ~MASK_CONTENT; //CONTENT 초기화
                     else
                         select += 0x01;
-                }
+                
                 break;
             case IDxINPUT.UP:
-                {
                     if ((select & MASK_CONTENT) == 0x00)
                         select |= lastSlotIndex;
                     else
                         select -= 0x01;
-                }
                 break;
         }
 
@@ -225,9 +225,9 @@ public class UIBattleSelect_2 : MonoBehaviour
         contentArrow.anchoredPosition = contentArrowDefault + content * new Vector2(0, deltaContent);
 
         //## Update Content Panel
-        UpdateUI_Content();
+        ContentUI_Update();
     }
-    private void UpdateUI_Content() //메뉴판 교체
+    private void ContentUI_Update() //메뉴판 교체
     {
         string[] text = new string[2];
         string[,] code = new string[,] { };
@@ -238,32 +238,32 @@ public class UIBattleSelect_2 : MonoBehaviour
             case EIdxMENU.SkillBasic:
                 text[0] = "기본기";
                 text[1] = string.Empty;
-                code = GetSlotData_Skill(type: IDxSkill.BASIC, out loadCount);
+                code = ContentSlot_SetSkill(type: IDxSkill.BASIC, out loadCount);
                 break;
             case EIdxMENU.SkillSolo:
                 text[0] = "개인 공격기";
                 text[1] = "MP";
-                code = GetSlotData_Skill(type: IDxSkill.SOLO, out loadCount);
+                code = ContentSlot_SetSkill(type: IDxSkill.SOLO, out loadCount);
                 break;
             case EIdxMENU.SkillGroup:
                 text[0] = "전체 공격기";
                 text[1] = "MP";
-                code = GetSlotData_Skill(type: IDxSkill.GROUP, out loadCount);
+                code = ContentSlot_SetSkill(type: IDxSkill.GROUP, out loadCount);
                 break;
             case EIdxMENU.Mode:
                 text[0] = "모드";
                 text[1] = string.Empty;
-                code = GetSlotData_Mode(out loadCount);
+                code = ContentSlot_SetMode(out loadCount);
                 break;
             case EIdxMENU.Item:
                 text[0] = "아이템";
                 text[1] = string.Empty;
-                code = GetSlotData_Item(out loadCount);
+                code = ContentSlot_SetItem(out loadCount);
                 break;
             case EIdxMENU.SkillSpecial:
                 text[0] = "특수기";
                 text[1] = string.Empty;
-                code = GetSlotData_Skill(type: IDxSkill.SPECIAL, out loadCount);
+                code = ContentSlot_SetSkill(type: IDxSkill.SPECIAL, out loadCount);
                 break;
         }
 
@@ -290,7 +290,7 @@ public class UIBattleSelect_2 : MonoBehaviour
         //Update Window Content Max Index
         lastSlotIndex = loadCount - 1;
     }
-    private string[,] GetSlotData_Skill(int type, out int count)
+    private string[,] ContentSlot_SetSkill(int type, out int count)
     {
         List<SkillData> skills = UnitMgr.Battle_GetSkillTypeof(nowOrder, type);
         string[,] code = new string[2, skills.Count];
@@ -299,12 +299,12 @@ public class UIBattleSelect_2 : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             code[0, i] = skills[i].Name;
-            code[1, i] = skills[i].RcsCode;
+            code[1, i] = skills[i].RscCode;
         }
 
         return code;
     }
-    private string[,] GetSlotData_Mode(out int count)
+    private string[,] ContentSlot_SetMode(out int count)
     {
         string[] mode = new string[] { "보통", "공격", "방어", "선제", "반격" };
         string[,] code = new string[2, mode.Length];
@@ -318,7 +318,7 @@ public class UIBattleSelect_2 : MonoBehaviour
 
         return code;
     }
-    private string[,] GetSlotData_Item(out int count)
+    private string[,] ContentSlot_SetItem(out int count)
     {
         List<Player.Item> items = Player.Items;
         string[,] code = new string[2, items.Count];
@@ -335,95 +335,139 @@ public class UIBattleSelect_2 : MonoBehaviour
 
 
     //## Input => Update Target
-    private void ProcUI_Targeting(int type)
+    private void TargetingProc(int type)
     {
         //## 입력
-        //Queue로 현재의 Unit 참조 가능 => now order 삭제하는 것도 가능하겠는데?
-
-        SkillData skillSelected = UnitMgr.Battle_GetSkill(nowOrder, type, content);
+        SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, type, content);
 
         //## 처리
-
-
+        //여기서 이제 타겟 정보를 가져와서 이러쿵 저러쿵 한다는건데...
+        //1. 이전에 저장된 
 
         InputMgr.SetMode(IDxINPUT.BATTLE_TARGERT);  //입력모드: Targeting으로 설정
 
 
         //## 출력(표시)
-        Show(false);    //Close Content Panel
-                        //Targeting Arrow
+        Show(false);                //Close Content Panel
+        TargetingUI_Update(skill);  //Targeting Arrow
     }
-    private void InputUI_Targeting(int input)
+    public void Input_Targeting(int input)
     {
+        //[입력] 범위 제한 (min, max)
         SkillData skill = UnitMgr.Battle_GetSkill(nowOrder, menu, content);
 
-        //최초 몇 명을 가리켜야 하는가?
-        //이전 정보는 아직 없는 셈으로 친다...
-        //타겟수가 몇 명이냐 => 이것도 비트마스킹 바꿔서 다르게 처리해야 하네;
+        //[입력] input => select
+        int before = targeting;
+        if (targeting == 0)
+            TargetingInput_Defalut(skill.TargetGroupType, skill.TargetCountType);
 
-        //int MASK_TARGET = 0x000F_F000; (총 8칸)
+        Debug.Log($"[{skill.Name}] IDxTarget: {before} => {(select & MASK_TARGET) >> SHIFT_TARGET}");
+        return;
+
+        //[처리] select => skill
 
 
-        //타겟을 어떻게 표시할 것이냐
-        //(1) 자료 구조가 바뀌어 데이터 처리 방식도 바꿔야 함
-        //(2) UI를 Unit이 아닌 Target에게 옮겨야 함 (오우야;)
-        //선택한 타겟 정보를 어디에, 어떻게 저장할 것이냐 ()
-
-        #region before
-        /*
-        bool isSoloTarget = (skill.TargetGroup != IDxUNIT.TARGET_PLY_SOLO || skill.TargetGroup != IDxUNIT.TARGET_ENM_SOLO);
-        switch (input & IDxINPUT.INTERACT)
-        {
-            case IDxINPUT.ENTER:
-                {
-                    UnitMgr.Battle_ActUnit(nowOrder, skill, select);
-                    InputMgr.SetMode(IDxINPUT.BATTLE_COMBO);
-
-                    Reset_Target();
-                    Show(false);
-                }
-                return;
-            case IDxINPUT.CANCEL:
-                {
-                    InputMgr.SetMode(IDxINPUT.BATTLE_MENU);
-                    Reset_Target();
-                }
-                return;
-        }
-        switch (input & IDxINPUT.DIRECTION)
-        {
-            case IDxINPUT.UP:
-            case IDxINPUT.LEFT:
-                {
-                    if (!isSoloTarget)
-                        return;
-
-                    if (selectTargetOne == 0x00)
-                        select |= (indexENMMax << shiftTargetOne);
-                    else
-                        select -= (1 << shiftTargetOne);
-                }
-                break;
-            case IDxINPUT.DOWN:
-            case IDxINPUT.RIGHT:
-                {
-                    if (!isSoloTarget)
-                        return;
-
-                    if (selectTargetOne == indexENMMax)
-                        select &= ~maskTargetOne;
-                    else
-                        select += (1 << shiftTargetOne);
-                }
-                break;
-        }
-        UnitMgr.Battle_SetTarget(skill.TargetGroup, selectTargetOne);
-        //*/
-        #endregion
+        //[출력] skill => ui
+        TargetingUI_Update(skill);
     }
-    private void UpdateUI_Targeting()
+    private int SelectTargetDefault(SkillData skill)
     {
 
+
+        return -1;
+    }
+    private void TargetingUI_Update(SkillData skill)
+    {
+        Debug.Log("Dev ing: TargetingUI_Update;");
+
+    }
+    private void TargetingInput_Defalut(int group, int count)
+    {
+        int flagTarget = 0;
+
+        if (count == (int)ETargetCount.All)
+        {
+            switch ((ETargetGroup)group)
+            {
+                case ETargetGroup.Party:
+                    select |= (0b_0111_0000) << SHIFT_TARGET;
+                    return;
+                case ETargetGroup.Enemy:
+                    select |= (0b_0000_1111) << SHIFT_TARGET;
+                    return;
+                case ETargetGroup.ExceptSelf:
+                    flagTarget = ~(1 << nowOrder);
+                    flagTarget <<= SHIFT_TARGET;
+                    select = (flagTarget | menu | content);
+                    return;
+            }
+        }
+        else if (count == (int)ETargetCount.One)
+        {
+            switch ((ETargetGroup)group)
+            {
+                case ETargetGroup.Party:
+                case ETargetGroup.Enemy:
+                    {
+                        //test 중이니까 일단 이렇게. 아 enum 개불편하네 진짜;;;
+                        int min = (group == 1) ? 3 : 0;
+                        int max = (group == 1) ? 6 : 2;
+
+                        //[★★★★★]이거 분명이 헷갈릴텐데? 조치 필요
+                        //인덱스 수정 필요
+                        for (int i = min; i < max; ++i)
+                        {
+                            Unit target = UnitMgr.Battle_GetUnit(i);
+                            if (target != null && !target.IsFaint)
+                            {
+                                flagTarget = (1 << (6 - i) + SHIFT_TARGET);
+                                select = (flagTarget | menu | content);
+                                Debug.Log($"flag:{Mathf.Log(flagTarget >> SHIFT_TARGET, 2)} => targeting:{Mathf.Log(targeting, 2)}");
+                                //idx는 targeting에서 한 번 더 변환이 필요하구나;
+
+                                return;
+                            }
+                        }
+                    }
+                    return;
+                case ETargetGroup.Self:
+                    {
+                        flagTarget = (1 << nowOrder + SHIFT_TARGET);
+                        select = (flagTarget | menu | content);
+                    }
+                    return;
+            }
+        }
+
+        //탐색이 안되면 그냥 target_null로 치자.
+        select = (flagTarget | menu | content);
+    }
+    private void TargetingInput_One(int group)
+    {
+        switch ((ETargetGroup)group)
+        {
+            case ETargetGroup.Party:
+                { 
+                    
+                }
+                break;
+            case ETargetGroup.Enemy:
+                break;
+            case ETargetGroup.Self:
+                break;
+        }
+    }
+    private void TargetingInput_All(int group)
+    {
+        switch ((ETargetGroup)group)
+        {
+            case ETargetGroup.Party:
+                break;
+            case ETargetGroup.Enemy:
+                break;
+            case ETargetGroup.Self:
+                break;
+        }
     }
 
 

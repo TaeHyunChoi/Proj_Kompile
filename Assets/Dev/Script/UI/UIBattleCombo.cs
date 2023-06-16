@@ -82,7 +82,7 @@ public class UIBattleCombo : MonoBehaviour
             }
 
             skill = DataMgr.SkillTBL[combo[i]];
-            iconSlots[i].sprite = ResourceMgr.SPIcon[skill.RcsCode];
+            iconSlots[i].sprite = ResourceMgr.SPIcon[skill.RscCode];
             iconSlots[i].gameObject.SetActive(true);
 
             //시계방향: [상][우][하][좌] * 275f

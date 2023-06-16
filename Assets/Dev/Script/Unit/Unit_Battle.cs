@@ -8,6 +8,11 @@ public partial class Unit : MonoBehaviour //Battle
     public  Dictionary<int, List<SkillData>> Skill { get => skill; }
     private Dictionary<int, List<SkillData>> skill = new Dictionary<int, List<SkillData>>();
 
+    //얘도 언젠간 날리리..
+    public List<Unit> Targets { get => targets; }
+    private List<Unit> targets = new List<Unit>();
+    private SkillData selectSkill;
+
     //Battle: 전투 중 마지막 선택
     public  int LastSelect { get => lastSelect; }
     private int lastSelect;
@@ -18,9 +23,8 @@ public partial class Unit : MonoBehaviour //Battle
     public  float Priority { get => priority; }
     private float priority;
 
-    public  List<Unit> Targets { get => targets; }
-    private List<Unit> targets = new List<Unit>();
-    private SkillData selectSkill;
+    public bool IsFaint { get => isFaint; }
+    private bool isFaint;
 
     public void Battle_SetStatus()
     {

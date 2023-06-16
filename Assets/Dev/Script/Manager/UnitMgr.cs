@@ -2,11 +2,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class UnitMgr
-{
-    private static List<Unit> unitAll    = new List<Unit>();
-    
+{   
     private static List<Unit> unitInBattle = new List<Unit>();
     private static Queue<int> battleOrder = new Queue<int>();
+
+    private static Unit[] party = new Unit[3];
+    private static Unit[] battle = new Unit[7];
+    private static List<Unit> npc = new List<Unit>();
 
     public static Unit NowActor { get => unitInBattle[GameMgr.NowOrder]; } //없어질 친구로군
 
@@ -18,16 +20,29 @@ public class UnitMgr
 
     public static bool IsEndBattle()
     {
-        if (unitInBattle.FindAll(unit => unit.Data.Group == IDxUNIT.PARTY).Count <= 0)
-            return true;
-        if (unitInBattle.FindAll(unit => unit.Data.Group == IDxUNIT.ENEMY).Count <= 0)
-            return true;
+        //PARTY 모두 기절?
+        for (int i = 0; i < 3; ++i)
+        {
+            if (!battle[i].IsFaint)
+                return false;
+        }
+        for (int i = 3; i < battle.Length; ++i)
+        {
+            if (!battle[i].IsFaint)
+                return false;
+        }
 
-        return false;
+        //ENEMY 모두 기절?
+        //if (battle.FindAll(unit => unit.Data.Group == IDxUNIT.PARTY).Count <= 0)
+        //    return true;
+        //if (battle.FindAll(unit => unit.Data.Group == IDxUNIT.ENEMY).Count <= 0)
+        //    return true;
+
+        return true;
     }
-    public static bool IsEndCycle(int order)
+    public static bool IsEndCycle()
     {
-        return order >= (unitInBattle.Count - 1);
+        return battleOrder.Count == 0;
     }
 
 
@@ -55,135 +70,146 @@ public class UnitMgr
         newUnit.transform.eulerAngles = new Vector3(50, 0, 0);
         newUnit.gameObject.name = newUnit.Data.RcsCode;
 
-        unitAll.Add(newUnit);
         return newUnit;
     }
     public static void Test_SetMyPC()
     {
-        myPC = unitAll[IDxUNIT.ATAHO];
+        myPC = party[IDxUNIT.ATAHO] = New(IDxUNIT.ATAHO, Vector3.zero);
+        //myPC = unitAll[IDxUNIT.ATAHO];
     }
 
 
     //## Battle > Set Battle Situation
-    public static void ProcUnit_EnterBattle(MapData map, int order)
+    public  static void BattleProc_Enter(MapData map)
     {
-        Battle_Init(map);               //전투에 참여하는 유닛 생성 & 배치
-        Battle_SetOrder();              //전투 순서 결정
-        Battle_SelectAction(order);     //[order]번째 유닛 액션 선택
-
-        UIMgr.Battle_InitTargetingArrows(unitInBattle);  //타겟팅 표시 UI 배치
+        BattleUnit_Init(map);                           //전투에 참여하는 유닛 생성 & 배치
+        BattleOrder_Set();                              //전투 순서 결정
+        GameMgr.Battle_NextTurn();                      //전투 진행
     }
-    private static void Battle_Init(MapData map)
+    private static void BattleUnit_Init(MapData map)
     {
-        List<Unit> units;
+        List<Unit> temp = new List<Unit>();
         Vector3     standard;
         float       delta;
 
         //## Get Party Data => Add Battle List
-        units = unitAll.FindAll(unit => unit.Data.Group == IDxUNIT.PARTY);
-        unitInBattle.AddRange(units);
+        for (int i = 0; i < party.Length; ++i)
+        {
+            if (party[i] != null)
+            {
+                battle[i] = party[i];
+                temp.Add(battle[i]);
+            }
+        }
 
         //## Set Party Position
         standard = new Vector3(-4f, 100f, -3.3f);
-        switch (units.Count)
+        switch (temp.Count)
         {
             case 1:
                 delta = -1.5f;
-                units[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                temp[0].transform.localPosition = standard + new Vector3(0, 0, delta);
                 break;
             case 2:
                 delta = -1f;
-                units[0].transform.localPosition = standard + new Vector3(0, 0, delta);
-                units[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                temp[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                temp[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
                 break;
             case 3:
                 delta = -1.5f;
-                units[0].transform.localPosition = standard;
-                units[1].transform.localPosition = standard + new Vector3(0, 0, delta);
-                units[2].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                temp[0].transform.localPosition = standard;
+                temp[1].transform.localPosition = standard + new Vector3(0, 0, delta);
+                temp[2].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
                 break;
         }
-        int start = units.Count;
 
         //## Set Enemy Data => Add Battle List
-        units.Clear();
+        temp.Clear();
         int count = Random.Range(map.MinCount, map.MaxCount + 1); //맵 Mob 개수
         UIBattleSelect.Set_TargetMaxCount(count); //짜친다
         int variety = map.Mob.Length;
 
         byte index;
-        for (int i = 0; i < count; ++i)
+        for (int i = 3; i < count + 3; ++i)
         {
             index = map.Mob[Random.Range(0, variety)];
-            units.Add(New(index, Vector3.zero));
+            battle[i] = New(index, Vector3.zero);
+            temp.Add(battle[i]);
         }
-        unitInBattle.AddRange(units);
 
         //## Set Enemy Position
         standard = new Vector3(4.5f, 100f, -3f);
-        switch (units.Count)
+        switch (temp.Count)
         {
             case 1:
                 delta = -1.325f;
-                units[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                temp[0].transform.localPosition = standard + new Vector3(0, 0, delta);
                 break;
             case 2:
                 delta = -1.25f;
-                units[0].transform.localPosition = standard + new Vector3(0, 0, delta);
-                units[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                temp[0].transform.localPosition = standard + new Vector3(0, 0, delta);
+                temp[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
                 break;
             case 3:
                 delta = -1.25f;
-                units[0].transform.localPosition = standard + new Vector3(-0.5f, 0, delta);
-                units[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
-                units[2].transform.localPosition = standard + new Vector3(-0.5f, 0, delta * 3);
+                temp[0].transform.localPosition = standard + new Vector3(-0.5f, 0, delta);
+                temp[1].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                temp[2].transform.localPosition = standard + new Vector3(-0.5f, 0, delta * 3);
                 break;
             case 4:
                 delta = -1.25f;
-                units[0].transform.localPosition = standard + new Vector3(-0.5f, 0, 0);
-                units[1].transform.localPosition = standard + new Vector3(0, 0, delta);
-                units[2].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
-                units[3].transform.localPosition = standard + new Vector3(-1f, 0, delta * 3);
+                temp[0].transform.localPosition = standard + new Vector3(-0.5f, 0, 0);
+                temp[1].transform.localPosition = standard + new Vector3(0, 0, delta);
+                temp[2].transform.localPosition = standard + new Vector3(0, 0, delta * 2);
+                temp[3].transform.localPosition = standard + new Vector3(-1f, 0, delta * 3);
                 break;
         }
 
         //## Set Battle Unit`s Stats
-        for (int i = 0; i < unitInBattle.Count; ++i)
-            unitInBattle[i].Battle_SetStatus();
-    }
-    public  static void Battle_SetOrder()
-    {
-        int count = unitInBattle.Count;
-        int[] arr = new int[count];
-        for (int i = 0; i < count; ++i)
-            arr[i] = i;
-
-        OrderByQuick(ref arr, 0, count - 1);
-
-        for (int i = 0; i < arr.Length; ++i)
+        for (int i = 0; i < battle.Length; ++i)
         {
-            battleOrder.Enqueue(arr[i]);
-            Debug.Log($"Pos[{arr[i]}] {unitInBattle[arr[i]].Data.Name}.Prior: {unitInBattle[arr[i]].Priority:F2}");
+            if (battle[i] != null)
+                battle[i].Battle_SetStatus();
         }
     }
-    private static void OrderByQuick(ref int[] arr, int start, int end)
+    public  static void BattleOrder_Set()
+    {
+        //인덱스 부여
+        int[] arr = new int[battle.Length];
+        for (int i = 0; i < arr.Length; ++i)
+            arr[i] = i;
+
+        //전투순서 정렬
+        OrderByQuickSort(ref arr, 0, arr.Length - 1);
+
+        //전투순서 Queue에 저장
+        for (int i = 0; i < arr.Length; ++i)
+        {
+            if (battle[arr[i]] == null)
+                continue;
+
+            battleOrder.Enqueue(arr[i]);
+            Debug.Log($"Pos[{arr[i]}] {battle[arr[i]].Data.Name}.Prior: {battle[arr[i]].Priority:F2}");
+        }
+    }
+    private static void OrderByQuickSort(ref int[] arr, int start, int end)
     {
         int idxLeft = start;
         int idxRight = end;
-        float pivotPrior = unitInBattle[arr[(idxLeft + idxRight) >> 1]].Priority;
+        float pivotPrior = GetPrior(arr[(idxLeft + idxRight) >> 1]);
 
         //[내림차순] pivot 기준으로 왼쪽은 큰 수, 오른쪽은 작은 수로 정렬 (1 cycle)
         while (idxLeft < idxRight)
         {
-            while (unitInBattle[arr[idxLeft]].Priority > pivotPrior)
+            while (GetPrior(arr[idxLeft]) > pivotPrior)
                 ++idxLeft;
-            while (unitInBattle[arr[idxRight]].Priority < pivotPrior)
+            while (GetPrior(arr[idxRight]) < pivotPrior)
                 --idxRight;
 
             if (idxLeft > idxRight)
                 break;
 
-            if (unitInBattle[arr[idxLeft]].Priority != unitInBattle[arr[idxRight]].Priority)
+            if (GetPrior(arr[idxLeft]) != GetPrior(arr[idxRight]))
             {
                 arr[idxLeft] ^= arr[idxRight];
                 arr[idxRight] ^= arr[idxLeft];
@@ -203,15 +229,23 @@ public class UnitMgr
         }
 
         if (start < idxLeft)
-            OrderByQuick(ref arr, start, idxLeft);
+            OrderByQuickSort(ref arr, start, idxLeft);
         if (idxRight < end)
-            OrderByQuick(ref arr, idxRight, end);
+            OrderByQuickSort(ref arr, idxRight, end);
+    }
+    private static float GetPrior(int index)
+    {
+        Unit unit = battle[index];
+        if (unit == null)
+            return -1f;
+
+        return unit.Priority;
     }
 
     //## Battle > Unit Data (for Action)
     public static Unit Battle_GetUnit(int order)
     {
-        return unitInBattle[order];
+        return battle[order];
     }
     public static Unit Battle_GetUnit(int group, int order)
     {
@@ -224,15 +258,15 @@ public class UnitMgr
     }
     public static List<SkillData> Battle_GetSkillTypeof(int order, int type)
     {
-        return unitInBattle[order].Skill[type];
+        return battle[order].Skill[type];
     }
     public static SkillData Battle_GetSkill(int order, int type, int index)
     {
-        return unitInBattle[order].Skill[type][index];
+        return battle[order].Skill[type][index];
     }
     public static void Battle_SaveUnitAction(int order, int act)
     {
-        unitInBattle[order].Battle_SaveLastAction(act);
+        battle[order].Battle_SaveLastAction(act);
     }
 
 
@@ -262,13 +296,13 @@ public class UnitMgr
                 }
             case IDxUNIT.TARGET_SELF:
                 {
-                    unitInBattle[GameMgr.NowOrder].Battle_BeTargeted(true);
+                    battle[GameMgr.NowOrder].Battle_BeTargeted(true);
                     break;
                 }
             case IDxUNIT.TARGET_XOR_SELF:
                 {
-                    for (int i = 0; i < unitInBattle.Count; ++i)
-                        unitInBattle[i].Battle_BeTargeted(i != GameMgr.NowOrder);
+                    for (int i = 0; i < battle.Length; ++i)
+                        battle[i].Battle_BeTargeted(i != GameMgr.NowOrder);
                     break;
                 }
         }
@@ -296,7 +330,7 @@ public class UnitMgr
                 }
             case IDxUNIT.TARGET_SELF:
                 {
-                    unitInBattle[GameMgr.NowOrder].Battle_BeTargeted(false);
+                    battle[GameMgr.NowOrder].Battle_BeTargeted(false);
                     break;
                 }
             case IDxUNIT.TARGET_XOR_SELF:
@@ -315,12 +349,15 @@ public class UnitMgr
 
 
     //## Battle > Action
-    public static void Battle_SelectAction(int order)
+    public static void BattleAction_Select()
     {
-        if (unitInBattle[order].Data.Group == IDxUNIT.PARTY)
+        int order = battleOrder.Dequeue();
+        GameMgr.UpdateOrder(order);
+
+        if (battle[order].Data.Group == IDxUNIT.PARTY)
             UIMgr.Show(IDxUI.BATTLE_SELECT, true);
         else
-            unitInBattle[order].Battle_AI();
+            battle[order].Battle_AI();
     }
     public static void Battle_ActUnit(int order, SkillData skill, int select)
     {
@@ -343,17 +380,17 @@ public class UnitMgr
                 targets.AddRange(Battle_GetUnitGroup(group));
                 break;
             case IDxUNIT.TARGET_SELF:
-                targets.Add(unitInBattle[order]);
+                targets.Add(battle[order]);
                 break;
             case IDxUNIT.TARGET_XOR_SELF:
                 targets.AddRange(Battle_GetUnitGroup(IDxUNIT.TARGET_ENM_ALL));
                 targets.AddRange(Battle_GetUnitGroup(IDxUNIT.TARGET_PRT_ALL));
-                targets.Remove(unitInBattle[order]);
+                targets.Remove(battle[order]);
                 break;
         }
 
-        unitInBattle[order].Battle_SaveLastAction(select);
-        unitInBattle[order].Battle_PlayAction(skill, targets);
+        battle[order].Battle_SaveLastAction(select);
+        battle[order].Battle_PlayAction(skill, targets);
     }
     public static void Battle_SetRenderOrder(bool isTurn)
     {

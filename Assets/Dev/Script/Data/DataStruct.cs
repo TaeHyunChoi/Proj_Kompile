@@ -5,41 +5,56 @@ using System.Text;
 
 public struct SkillData : Interface.IDataSetter
 {
+    private int index;
     private string name;
     private string info;
-    private string rcsCode;
+    private int actorCode;
+    private int skillGroup;
+    private int targetGroup;
+    private int targetCount;
+    private int power;
+    private int[] mp;
+    private int sp;
+    private int accurate;
+    private int speed;
+    private string rscCode;
 
-    private int indexPack;  //actorIndex, skillGroup, targetGroup, afterBuffIndex
-    private int specPack;   //accurate, power, speed
-
+    public int Index { get => index; }
     public string Name { get => name; }
     public string Info { get => info; }
-    public string RcsCode { get => rcsCode; }
-
-    public int Index        { get => (indexPack & 0x0000_00FF); }
-    public int ActorCode   { get => (indexPack & 0x0000_0F00) >> (4 * 2); }
-    public int SkillGroup   { get => (indexPack & 0x0000_F000) >> (4 * 3); }
-    public int TargetGroup  { get => (indexPack & 0x000F_0000) >> (4 * 4); }
-    public int BuffIndex    { get => (indexPack & 0x0FF0_0000) >> (4 * 5); }
-
-    public int Accurate     { get => (specPack & 0x0000_FFFF); }
-    public int Speed        { get => (specPack & 0x000F_0000) >> (4 * 4); }
-    public int Power        { get => (specPack & 0x00F0_0000) >> (4 * 5); }
+    public int ActorCode { get => actorCode; }
+    public int SkillGroup { get => skillGroup; }
+    public int TargetGroupType { get => targetGroup; }
+    public int TargetCountType { get => targetCount; }
+    public int Power { get => power; }
+    public int[] MP { get => mp; }
+    public int SP { get => sp; }
+    public int Accurate { get => accurate; }
+    public int Speed { get => speed; }
+    public string RscCode { get => rscCode; }
 
     public void SetTable(Dictionary<string, string> data)
     {
+        index = int.Parse(data["Index"]);
         name = data["Name"];
         info = data["Info"];
-        rcsCode = data["RscCode"];
+        actorCode = int.Parse(data["ActorCode"]);
+        skillGroup = int.Parse(data["SkillGroup"]);
+        skillGroup = int.Parse(data["SkillGroup"]);
+        targetGroup = int.Parse(data["TargetGroup"]);
+        targetCount = int.Parse(data["TargetCount"]);
+        power = int.Parse(data["Power"]);
 
-        indexPack |= byte.Parse(data["ActorCode"]) << (4 * 2);
-        indexPack |= byte.Parse(data["SkillGroup"]) << (4 * 3);
-        indexPack |= byte.Parse(data["TargetGroup"]) << (4 * 4);
-        indexPack |= byte.Parse(data["AfterBuffIndex"]) << (4 * 5);
+        mp = new int[4];
+        mp[0] = int.Parse(data["MP00"]);
+        mp[1] = int.Parse(data["MP01"]);
+        mp[2] = int.Parse(data["MP02"]);
+        mp[3] = int.Parse(data["MP03"]);
+        sp = int.Parse(data["SP"]);
 
-        specPack |= ushort.Parse(data["Accurate"]);
-        specPack |= byte.Parse(data["Speed"]) << (4 * 4);
-        specPack |= byte.Parse(data["Power"]) << (4 * 5);
+        power = int.Parse(data["Accurate"]);
+        speed = int.Parse(data["Speed"]);
+        rscCode = data["RscCode"];
     }
 }
 public struct ItemData : Interface.IDataSetter

@@ -30,7 +30,7 @@ public class UIMgr
             case IDxUI.BATTLE_COMBO: UIBattleCombo.Show(on); break;
         }
     }
-    public static void Battle_InitTargetingArrows(List<Unit> units)
+    public static void BattleUI_InitTargetingArrows(Unit[] units)
     {
         UIBattleSelect_2.Instance.InitArrows(units, offset);
     }
@@ -38,11 +38,11 @@ public class UIMgr
     public static void Battle_SelectMenu(int input)
     {
         //UIBattleSelect.Select_Menu(input);
-        UIBattleSelect_2.Instance.InputUI_Select(input);
+        UIBattleSelect_2.Instance.Input_Select(input);
     }
     public static void Battle_SelectTarget(int input)
     {
-        UIBattleSelect.Select_Target(input);
+        UIBattleSelect_2.Instance.Input_Targeting(input);
     }
 
     //UI 클래스 만들어서 where T: 식으로 하는게 좋았으려나?

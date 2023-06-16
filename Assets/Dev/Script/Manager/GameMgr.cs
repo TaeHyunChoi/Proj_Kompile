@@ -19,35 +19,31 @@ public class GameMgr
         NowMap = DataMgr.MapTBL.Find(map => map.Code == mapCode);
     }
 
+    public static void UpdateOrder(int order)
+    {
+        nowOrder = order;
+    }
+
     public static void Battle_Enter()
     {
-        ChangeMapData(mapCode: NowMap.BattleMapCode);               //전투 맵    
-        UnitMgr.ProcUnit_EnterBattle(NowMap, nowOrder = 0);         //전투 유닛  
-        CameraMgr.OnBattleCam(true);                                //전투 카메라
+        ChangeMapData(mapCode: NowMap.BattleMapCode);   //[입력] 전투 맵    
+        UnitMgr.BattleProc_Enter(NowMap);               //[처리] 전투 유닛  
+        CameraMgr.OnBattleCam(true);                    //[출력] 전투 카메라
     }
     public static void Battle_NextTurn()
     {
-        //End Battle
         if (UnitMgr.IsEndBattle())
         {
             Debug.Log("End Battle");
             return;
         }
 
-
-        //End All Units Turn
-        if (UnitMgr.IsEndCycle(nowOrder))
+        if (UnitMgr.IsEndCycle())
         {
-            UnitMgr.Battle_SetOrder();
-            nowOrder = -1;
-            Debug.Log($"New Cycle");
+            Debug.Log($"-- New Cycle --------------------");
+            UnitMgr.BattleOrder_Set();
         }
 
-        //Next Trun
-        UnitMgr.Battle_SelectAction(++nowOrder);
-    }
-    private static void Battle_End()
-    { 
-        
+        UnitMgr.BattleAction_Select();
     }
 }

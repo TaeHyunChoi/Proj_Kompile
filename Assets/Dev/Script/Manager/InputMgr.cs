@@ -90,7 +90,7 @@ public class InputMgr
         if (input == 0)
             return;
 
-        UIMgr.Battle_SelectTarget(input);
+        UIMgr.Battle_SelectTarget(input);  //Update Input
     }
     private static void BattleCombo()
     {
