@@ -126,7 +126,6 @@ public class UnitMgr
         //## Set Enemy Data => Add Battle List
         temp.Clear();
         int count = Random.Range(map.MinCount, map.MaxCount + 1); //맵 Mob 개수
-        UIBattleSelect.Set_TargetMaxCount(count); //짜친다
         int variety = map.Mob.Length;
 
         byte index;
@@ -358,7 +357,7 @@ public class UnitMgr
         GameMgr.UpdateOrder(order);
 
         if (battle[order].Data.Group == IDxUNIT.PARTY)
-            UIMgr.Show(IDxUI.BATTLE_SELECT, true);
+            UIMgr.Show(IDxUI.BATTLE_MENU, true);
         else
             battle[order].Battle_AI();
     }

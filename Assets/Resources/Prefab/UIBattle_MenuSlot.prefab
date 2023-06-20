@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5046608494238262431}
   m_Layer: 0
-  m_Name: UIBattleSkill
+  m_Name: UIBattle_MenuSlot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -51,7 +51,7 @@ GameObject:
   - component: {fileID: 6978466051348550359}
   - component: {fileID: 2331393809447061382}
   m_Layer: 0
-  m_Name: img_SkillIcon
+  m_Name: img_Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -127,7 +127,7 @@ GameObject:
   - component: {fileID: 7184155521247680434}
   - component: {fileID: 6267143827207428055}
   m_Layer: 0
-  m_Name: txt_SkillName
+  m_Name: txt_Name
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -181,7 +181,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC2A4\uD0AC \uC774\uB984"
+  m_text: "\uC774\uB984"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 16c4fc8b318ca9342a5fd9cc2275a9e2, type: 2}
   m_sharedMaterial: {fileID: -690329562818333433, guid: 16c4fc8b318ca9342a5fd9cc2275a9e2, type: 2}

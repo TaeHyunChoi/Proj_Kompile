@@ -1,8 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class UIMgr
 {
@@ -16,8 +12,8 @@ public class UIMgr
         Canvas_Main = tf.GetChild(0).GetComponent<Canvas>();
         Canvas_Battle = tf.GetChild(1).GetComponent<Canvas>();
 
-        UIBattleSelect_2.Instantiate();
-        UIBattleCombo.Init();
+        UIBattle.Instantiate();
+        //UIBattleCombo.Init(); //이걸 합쳐야 하는구나
 
         offset = 0.35f * new Vector3(0, Mathf.Sin(Mathf.Deg2Rad * 50f), Mathf.Cos(Mathf.Deg2Rad * 50f));
     }
@@ -25,24 +21,25 @@ public class UIMgr
     {
         switch (type)
         {
-            //case IDxUI.BATTLE_SELECT:   UIBattleSelect.Show(on);      break;
-            case IDxUI.BATTLE_SELECT: UIBattleSelect_2.Instance.Show(on); break;
-            case IDxUI.BATTLE_COMBO: UIBattleCombo.Show(on); break;
+            case IDxUI.BATTLE_MENU: 
+            case IDxUI.BATTLE_TARGET: 
+            case IDxUI.BATTLE_COMBO:
+                UIBattle.Instance.Show(type, true); 
+                break;
         }
     }
     public static void BattleUI_InitTargetingArrows(Unit[] units)
     {
-        UIBattleSelect_2.Instance.InitArrows(units, offset);
+        UIBattle.Instance.UpdateUI_Target(units, offset);
     }
 
     public static void Battle_SelectMenu(int input)
     {
-        //UIBattleSelect.Select_Menu(input);
-        UIBattleSelect_2.Instance.Input_Select(input);
+        UIBattle.Instance.Input(type: 0, input);
     }
     public static void Battle_SelectTarget(int input)
     {
-        UIBattleSelect_2.Instance.Input_Targeting(input);
+        UIBattle.Instance.Input(type: 1, input);
     }
 
     //UI 클래스 만들어서 where T: 식으로 하는게 좋았으려나?

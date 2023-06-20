@@ -80,8 +80,9 @@ public class IDxINPUT
 public class IDxUI
 {
     //UI Window
-    public const byte BATTLE_SELECT = 0x00;
-    public const byte BATTLE_COMBO  = 0x01;
+    public const byte BATTLE_MENU = 0;
+    public const byte BATTLE_TARGET = 1;
+    public const byte BATTLE_COMBO  = 2;
 }
 public class IDxSkill
 {
