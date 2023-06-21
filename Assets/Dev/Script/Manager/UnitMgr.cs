@@ -356,9 +356,14 @@ public class UnitMgr
         GameMgr.UpdateOrder(order);
 
         if (battle[order].Data.Group == IDxUNIT.PARTY)
+        {
             UIMgr.Show(IDxUI.BATTLE_MENU, true);
+        }
         else
+        {
+            InputMgr.SetMode(IDxINPUT.BASE);
             battle[order].Battle_AI();
+        }
     }
     public static void Battle_ActUnit(int order, SkillData skill, int select)
     {

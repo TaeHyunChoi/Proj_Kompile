@@ -26,9 +26,10 @@ public class GameMgr
 
     public static void Battle_Enter()
     {
+        InputMgr.SetMode(IDxINPUT.NONE);
         ChangeMapData(mapCode: NowMap.BattleMapCode);   //[입력] 전투 맵    
         UnitMgr.BattleProc_Enter(NowMap);               //[처리] 전투 유닛  
-        Battle_NextTurn();                      //[처리] 전투 진행
+        Battle_NextTurn();                              //[처리] 전투 진행
         CameraMgr.OnBattleCam(true);                    //[출력] 전투 카메라
     }
     public static void Battle_NextTurn()

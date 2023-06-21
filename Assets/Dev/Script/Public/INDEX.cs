@@ -53,8 +53,10 @@ public class IDxUNIT
 }
 public class IDxINPUT
 {
+    //None
+    public const byte NONE = 0x00;
+
     //Mode
-    public const byte BLOCKED          =  0;
     public const byte BASE             =  1;
     public const byte FIELD            =  2;
     public const byte BATTLE_MENU      =  3;
@@ -75,7 +77,6 @@ public class IDxINPUT
     public const byte CANCEL         = 0x04;
     public const byte OPTION         = 0x02;  // System Option
     public const byte TRIGGER        = 0x01;  // joypad [LB] button 
-    public const byte NONE           = 0x00;
 }
 public class IDxUI
 {

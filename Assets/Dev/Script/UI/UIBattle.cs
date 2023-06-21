@@ -1,12 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEditor;
 using TMPro;
 using static UIBattle;
-using System;
-using UnityEngine.Windows;
-using static UnityEngine.GraphicsBuffer;
 
 public enum EIdxMENU : int
 {
@@ -44,24 +40,26 @@ public struct UISlot_Battle
 
 public class UIBattle : MonoBehaviour
 {
-    public  static UIBattle Instance { get => instance; }
+    public static UIBattle Instance { get => instance; }
     private static UIBattle instance;
 
-    private UIBattle_Menu       uiMenu;
-    private UIBattle_Targeting  uiTarget;
-    private UIBattle_Combo      uiCombo;
+    private UIBattle_Menu uiMenu;
+    private UIBattle_Targeting uiTarget;
+    private UIBattle_Combo uiCombo;
 
-    public const int MASK_IDX_LAST  = 0x00FF_0000;
-    public const int MASK_MENU      = 0x0000_0F00;
-    public const int MASK_CONTENT   = 0x0000_00FF;
+    public const int MASK_NOW_TARGET = 0x0FF0_0000;
+    public const int MASK_NOW_MENU = 0x000F_0000;
+    public const int MASK_CNT_CONTENT = 0x0000_FF00;
+    public const int MASK_NOW_CONTENT = 0x0000_00FF;
 
-    public const int SHIFT_IDX_LAST = 4 * 4;
-    public const int SHIFT_MENU     = 4 * 2;
+    public const int SHIFT_TARGET = 4 * 5;
+    public const int SHIFT_MENU = 4 * 4;
+    public const int SHIFT_CONTENT_LAST = 4 * 2;
     //public static int SHIFT_CONTENT = 0; //사실상 사용X
 
-    private int selectMenu;
-    private int selectTarget;
-    private int selectCombo;
+    public static int BattleSelect { get => instance.select; }
+    private int select; //[Targeting][Menu][Content]
+    private int combo;
 
     public static void Instantiate()
     {
@@ -75,16 +73,17 @@ public class UIBattle : MonoBehaviour
     }
     private void Init()
     {
-        selectMenu = selectTarget = selectCombo = 0;
+        select = combo = 0;
 
-        uiMenu = new UIBattle_Menu(transform);
+        uiMenu   = new UIBattle_Menu(transform);
         uiTarget = new UIBattle_Targeting(transform);
-        uiCombo = new UIBattle_Combo(transform);
+        uiCombo  = new UIBattle_Combo(transform);
 
         uiMenu.Show(false);
-        uiTarget.Show(false, selectTarget);
+        uiTarget.Show(false);
         uiCombo.Show(false);
     }
+
     public void Active(int type, bool isOn)
     {
         //Get Unit`s Last Select : 함수 다시 만들어야 한다. selct가 menu, target, combo로 나뉨
@@ -95,11 +94,11 @@ public class UIBattle : MonoBehaviour
         {
             case 0:
                 InputMgr.SetMode(IDxINPUT.BATTLE_MENU);
-                selectMenu = uiMenu.ProcInput(selectMenu, 0);
+                select = uiMenu.ProcInput(select, 0);
                 break;
             case 1:
                 InputMgr.SetMode(IDxINPUT.BATTLE_TARGERT);
-                selectTarget = uiTarget.ProcInput(selectTarget, 0);
+                select = uiTarget.ProcInput(select, 0);
                 break;
             case 2:
                 InputMgr.SetMode(IDxINPUT.BATTLE_COMBO);
@@ -108,30 +107,24 @@ public class UIBattle : MonoBehaviour
 
         //Active UI
         uiMenu.Show(type == IDxUI.BATTLE_MENU & isOn);
-        uiTarget.Show(type == IDxUI.BATTLE_TARGET & isOn, selectTarget);
+        uiTarget.Show(type == IDxUI.BATTLE_TARGET & isOn);
         uiCombo.Show(type == IDxUI.BATTLE_COMBO & isOn);
     }
-
-
     public void Input(byte type, int input)
     {
         switch (type)
         {
-            case 0: selectMenu = uiMenu.ProcInput(selectMenu, input);       break;
-            case 1: selectTarget = uiTarget.ProcInput(selectTarget, input); break;
+            case 0: select = uiMenu.ProcInput(select, input);   break;
+            case 1: select = uiTarget.ProcInput(select, input); break;
         }
-    }
-    public void UpdateUI_Target(Unit[] units, Vector3 offset)
-    {
-        uiTarget.InitArrows(units, offset);   
     }
 }
 public class UIBattle_Menu
 {
     private GameObject obj;
 
-    private RectTransform   menuArrow;
-    private RectTransform   contentArrow;
+    private RectTransform       menuArrow;
+    private RectTransform       contentArrow;
 
     private TextMeshProUGUI[]   contentTitleText;
     private GameObject          prefabSlot;
@@ -140,7 +133,7 @@ public class UIBattle_Menu
 
     private static Vector2  menuArrowDefault;
     private static Vector2  contentArrowDefault;
-    private static float    deltaMenu = 150f;
+    private static float    deltaMenu    =  150f;
     private static float    deltaContent = -125f;
 
     public UIBattle_Menu(Transform root)
@@ -163,10 +156,6 @@ public class UIBattle_Menu
 
         contentTitleText = content.GetChild(1).GetComponentsInChildren<TextMeshProUGUI>();
     }
-    public void Show(bool isOn)
-    {
-        obj.SetActive(isOn);
-    }
 
     public int ProcInput(int select, int input)
     {
@@ -178,8 +167,8 @@ public class UIBattle_Menu
     }
     private int Input(int select, int input)
     {
-        int menu = (select & MASK_MENU) >> SHIFT_MENU;
-        int idxLast = (select & MASK_IDX_LAST) >> SHIFT_IDX_LAST;
+        int menu    = (select & MASK_NOW_MENU) >> SHIFT_MENU;
+        int idxLast = (select & MASK_CNT_CONTENT) >> SHIFT_CONTENT_LAST;
 
         //## Update Select
         switch (input & IDxINPUT.INTERACT)
@@ -190,7 +179,9 @@ public class UIBattle_Menu
                     {
                         case EIdxMENU.Mode: ProcChangeMode();                break;
                         case EIdxMENU.Item: ProcUseItem();                   break;
-                        default:/*Battle*/  Instance.Active(type: 1, true);    break;
+                        default: 
+                            Instance.Active(type: 1, true);
+                            return BattleSelect;
                     }
 
                     Debug.Log("Plz Save Unit Action");
@@ -219,7 +210,7 @@ public class UIBattle_Menu
                 }
 
                 select += (1 << SHIFT_MENU);
-                select &= ~MASK_CONTENT;        //MENU 변경 → CONTENT 초기화
+                select &= ~MASK_NOW_CONTENT;        //MENU 변경 → CONTENT 초기화
                 break;
             case IDxINPUT.LEFT:
 
@@ -231,16 +222,16 @@ public class UIBattle_Menu
                 }
 
                 select -= (1 << SHIFT_MENU);
-                select &= ~MASK_CONTENT;   //MENU 변경 → CONTENT 초기화
+                select &= ~MASK_NOW_CONTENT;   //MENU 변경 → CONTENT 초기화
                 break;
             case IDxINPUT.DOWN:
-                if ((select & MASK_CONTENT) == idxLast)
-                    select &= ~MASK_CONTENT; //CONTENT 초기화
+                if ((select & MASK_NOW_CONTENT) == idxLast)
+                    select &= ~MASK_NOW_CONTENT; //CONTENT 초기화
                 else
                     select += 0x01;
                 break;
             case IDxINPUT.UP:
-                if ((select & MASK_CONTENT) == 0x00)
+                if ((select & MASK_NOW_CONTENT) == 0x00)
                     select |= idxLast;
                 else
                     select -= 0x01;
@@ -254,7 +245,7 @@ public class UIBattle_Menu
         string[] text = new string[2];
         string[,] code = new string[,] { };
         int loadCount = 0;
-        int menu = (select & MASK_MENU) >> SHIFT_MENU;
+        int menu = (select & MASK_NOW_MENU) >> SHIFT_MENU;
 
         switch ((EIdxMENU)menu)
         {
@@ -310,13 +301,13 @@ public class UIBattle_Menu
         for (; i < slots.Count; ++i)
             slots[i].SetActive(false);
         
-        select &= ~MASK_IDX_LAST;
-        select |= ((loadCount - 1) << SHIFT_IDX_LAST);
+        select &= ~MASK_CNT_CONTENT;
+        select |= ((loadCount - 1) << SHIFT_CONTENT_LAST);
     }
     private void UpdateUI_Arrow(int select)
     {
-        int menu    = (select & MASK_MENU) >> SHIFT_MENU; ;
-        int content = (select & MASK_CONTENT);
+        int menu    = (select & MASK_NOW_MENU) >> SHIFT_MENU; ;
+        int content = (select & MASK_NOW_CONTENT);
 
         menuArrow.anchoredPosition = menuArrowDefault + menu * new Vector2(deltaMenu, 0);
         contentArrow.anchoredPosition = contentArrowDefault + content * new Vector2(0, deltaContent);
@@ -365,8 +356,6 @@ public class UIBattle_Menu
         return code;
     }
 
-
-    //여기서부터는 다시 UIBattle(Layer)에게 넘겨 요청한다.
     private void ProcChangeMode()
     {
 
@@ -374,6 +363,11 @@ public class UIBattle_Menu
     private void ProcUseItem()
     {
 
+    }
+
+    public void Show(bool isOn)
+    {
+        obj.SetActive(isOn);
     }
 }
 public class UIBattle_Targeting
@@ -401,13 +395,15 @@ public class UIBattle_Targeting
 
         return select;
     }
-
-    public int Input(int select, int input)
+    private int Input(int select, int input)
     {
         //select는 [0b_0111_1111] 형태이다.
+        int idxMenu     = (select & MASK_NOW_MENU) >> SHIFT_MENU;
+        int idxContent  = select & MASK_NOW_CONTENT;
+        int flagTarget  = select >> SHIFT_TARGET;
 
         //input => Get Data
-        SkillData skill = UnitMgr.Battle_GetSkill(GameMgr.NowOrder, (select & MASK_MENU) >> SHIFT_MENU, (select & MASK_CONTENT));
+        SkillData skill = UnitMgr.Battle_GetSkill(GameMgr.NowOrder, idxMenu, idxContent);
         int min = (skill.TargetGroupType == 1) ? 3 : 0;
         int max = (skill.TargetGroupType == 1) ? 6 : 2;
 
@@ -415,12 +411,12 @@ public class UIBattle_Targeting
         max = 1 << max;
 
         //input & data => select_exceptional
-        if (select == 0
+        if (flagTarget == 0
             || skill.TargetGroupType == (int)ETargetGroup.Self
             || skill.TargetCountType == (int)ETargetCount.All)
         {
             //기본으로 세팅된 입력값(Self, All은 계산 방법이 항상 동일하다.)
-            select = TargetingInput_Default(select, skill.TargetGroupType, skill.TargetCountType, FlagToIndex(min), FlagToIndex(max));
+            flagTarget = FlagTarget_Default(flagTarget, skill.TargetGroupType, skill.TargetCountType, FlagTargetToPos(min), FlagTargetToPos(max));
 
             //입력처리를 스킵하지만 + UI Update는 가능하다.
             input = 0;
@@ -431,9 +427,8 @@ public class UIBattle_Targeting
         switch (input & IDxINPUT.INTERACT)
         {
             case IDxINPUT.ENTER:
-                {
-
-                }
+                //공격 지시를 하는 것인데...
+                //여기서 끊자 후..
                 return select;
             case IDxINPUT.CANCEL:
                 {
@@ -451,12 +446,12 @@ public class UIBattle_Targeting
             case IDxINPUT.UP:
                 while (true)
                 {
-                    if (select == min)
-                        select = max;
+                    if (flagTarget == min)
+                        flagTarget = max;
                     else
-                        select >>= 1;
+                        flagTarget >>= 1;
 
-                    int idxPos = FlagToIndex(flag: select);
+                    int idxPos = FlagTargetToPos(flagTarget);
                     target = UnitMgr.Battle_GetUnit(idxPos);
                     if (target != null && !target.IsFaint)
                         break;
@@ -465,12 +460,12 @@ public class UIBattle_Targeting
             case IDxINPUT.DOWN:
                 while (true)
                 {
-                    if (select == max)
-                        select = min;
+                    if (flagTarget == max)
+                        flagTarget = min;
                     else
-                        select <<= 1;
+                        flagTarget <<= 1;
 
-                    int idxPos = FlagToIndex(flag: select);
+                    int idxPos = FlagTargetToPos(flagTarget);
                     target = UnitMgr.Battle_GetUnit(idxPos);
                     if (target != null && !target.IsFaint)
                         break;
@@ -478,13 +473,32 @@ public class UIBattle_Targeting
                 break;
         }
 
-        //select => ui
-        //UpdateUI(select);
+        select &= ~MASK_NOW_TARGET;
+        select |= (flagTarget << SHIFT_TARGET);
 
         return select;
     }
+    public void UpdateUI(int select)
+    {
+        select >>= SHIFT_TARGET;
+        int comp;
+        for (int i = 0; i < 7; ++i)
+        {
+            comp = select & (1 << i);
+            comp >>= i;
 
-    private int FlagToIndex(int flag)
+            targetingArrows[i].gameObject.SetActive(comp != 0);
+            if (comp == 0)
+                continue;
+
+            Unit unit = UnitMgr.Battle_GetUnit(i);
+            Vector3 pos = CameraMgr.Battle_ScreenToLocalInRect(unit.Pos + unit.transform.up); //나중에 unit height를 곱하던가...
+            targetingArrows[i].localPosition = pos;
+            targetingArrows[i].gameObject.SetActive(true);
+        }
+    }
+
+    private int FlagTargetToPos(int flag)
     {
         for (int i = 0; i < 7; ++i)
         {
@@ -494,7 +508,7 @@ public class UIBattle_Targeting
 
         return 0;
     }
-    private int TargetingInput_Default(int select, int targetGroup, int targetCount, int min, int max)
+    private int FlagTarget_Default(int flag, int targetGroup, int targetCount, int min, int max)
     {
         if (targetCount == (int)ETargetCount.All)
         {
@@ -522,64 +536,22 @@ public class UIBattle_Targeting
                             }
                         }
                     }
-                    return select;
+                    return flag;
                 case ETargetGroup.Self:
                     return (1 << GameMgr.NowOrder);
             }
         }
 
-        return select;
-    }
-    public void UpdateUI(int select)
-    {
-        //지금 selectTarget이 들어왔음 [0b_0111_1111]
-
-        Unit unit;
-        Vector3 rect;
-
-        int comp;
-        for (int i = 0; i < 7; ++i)
-        {
-            comp = select & (1 << i);
-            comp >>= i;
-
-            if (comp == 0)
-            {
-                targetingArrows[i].gameObject.SetActive(false);
-                continue;
-            }
-
-            unit = UnitMgr.Battle_GetUnit(i);
-            rect = CameraMgr.Battle_ScreenToLocalInRect(unit.Pos + unit.transform.up); //나중에 unit height를 곱하던가...
-            targetingArrows[i].localPosition = rect;
-            targetingArrows[i].gameObject.SetActive(true);
-        }
+        return flag;
     }
 
-    public void InitArrows(Unit[] units, Vector3 offset)
-    {
-        Vector3 rect;
-        for (int i = 0; i < units.Length; ++i)
-        {
-            if (units[i] == null)
-                continue;
-
-            rect = CameraMgr.Battle_ScreenToLocalInRect(units[i].Pos + offset);
-            targetingArrows[i].localPosition = rect;
-        }
-    }
-    public void Show(bool isOn, int select)
+    public void Show(bool isOn)
     {
         obj.SetActive(isOn);
-
-        if(isOn)
-            UpdateUI(select);
     }
 }
 public class UIBattle_Combo
 {
-    //private int menu        { get => (selectMenu & MASK_MENU) >> SHIFT_MENU; }
-    //private int content     { get => (selectMenu & MASK_CONTENT); }
     private GameObject obj;
 
     public UIBattle_Combo(Transform tf)
