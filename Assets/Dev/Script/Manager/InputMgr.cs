@@ -1,11 +1,12 @@
 using UnityEngine;
+using static IDxINPUT; //오호라?
 
 public class InputMgr
 {
     public delegate void InputDelegate();
     public static InputDelegate Update;
 
-    private static int input = IDxINPUT.NONE;
+    private static int input = NONE;
 
     private static bool isComboPossible;
 
@@ -18,11 +19,11 @@ public class InputMgr
         //상황별 입력값 추가
         switch (type)
         {
-            case IDxINPUT.FIELD:            Update += Field;             break;
-            case IDxINPUT.BATTLE_MENU:      Update += BattleAction;      break;
-            case IDxINPUT.BATTLE_TARGERT:   Update += BattleTargeting;   break;
-            case IDxINPUT.BATTLE_COMBO:     Update += BattleCombo;       break;
-            case IDxINPUT.CHEAT:            Update += Cheat;             break;
+            case FIELD:            Update += Field;             break;
+            case BATTLE_MENU:      Update += BattleAction;      break;
+            case BATTLE_TARGERT:   Update += BattleTargeting;   break;
+            case BATTLE_COMBO:     Update += BattleCombo;       break;
+            case CHEAT:            Update += Cheat;             break;
             default: break;
         }
 
@@ -34,20 +35,20 @@ public class InputMgr
     private static void Base()
     {
         if (Input.GetButtonDown("Up"))
-            input |= IDxINPUT.UP;
+            input |= UP;
         if (Input.GetButtonDown("Down"))
-            input |= IDxINPUT.DOWN;
+            input |= DOWN;
         if (Input.GetButtonDown("Left"))
-            input |= IDxINPUT.LEFT;
+            input |= LEFT;
         if (Input.GetButtonDown("Right"))
-            input |= IDxINPUT.RIGHT;
+            input |= RIGHT;
 
         if (Input.GetButtonDown("Enter"))
-            input |= IDxINPUT.ENTER;
+            input |= ENTER;
         if (Input.GetButtonDown("Cancel"))
-            input |= IDxINPUT.CANCEL;
+            input |= CANCEL;
         if (Input.GetButtonDown("Option"))
-            input |= IDxINPUT.OPTION;
+            input |= OPTION;
     }
     private static void Option()
     { 
@@ -63,19 +64,19 @@ public class InputMgr
     {
         //GetButton: 꾸욱 눌러도 입력되도록
         if (Input.GetButton("Up"))
-            input |= IDxINPUT.UP;
+            input |= UP;
         if (Input.GetButton("Down"))
-            input |= IDxINPUT.DOWN;
+            input |= DOWN;
         if (Input.GetButton("Left"))
-            input |= IDxINPUT.LEFT;
+            input |= LEFT;
         if (Input.GetButton("Right"))
-            input |= IDxINPUT.RIGHT;
+            input |= RIGHT;
 
-        if ((input & IDxINPUT.DIRECTION) != 0)
+        if ((input & DIRECTION) != 0)
             UnitMgr.Field_PlayerMoveTo(input);
 
         //npc, 아이템 등과의 상호작용 용도
-        if ((input & IDxINPUT.ENTER) != 0)
+        if ((input & ENTER) != 0)
             Debug.Log("ENTER");
     }
     private static void BattleAction()
@@ -95,18 +96,18 @@ public class InputMgr
     private static void BattleCombo()
     {
         if (Input.GetButton("Up"))
-            input |= IDxINPUT.UP;
+            input |= UP;
         if (Input.GetButton("Down"))
-            input |= IDxINPUT.DOWN;
+            input |= DOWN;
         if (Input.GetButton("Left"))
-            input |= IDxINPUT.LEFT;
+            input |= LEFT;
         if (Input.GetButton("Right"))
-            input |= IDxINPUT.RIGHT;
+            input |= RIGHT;
         
         if (isComboPossible & Input.GetButtonDown("Trigger"))
             UIMgr.Show(IDxUI.BATTLE_COMBO, true);
         if (isComboPossible & Input.GetButton("Trigger"))
-            input |= IDxINPUT.TRIGGER;
+            input |= TRIGGER;
         if (Input.GetButtonUp("Trigger"))
             isComboPossible = false;
 
@@ -117,12 +118,12 @@ public class InputMgr
             return;
         }
 
-        if ((input & IDxINPUT.TRIGGER) != 0)
+        if ((input & TRIGGER) != 0)
         {
             UIMgr.UpdateUI_BattleCombo(active: true);
             UnitMgr.Battle_SlowUnitAnime(slow: true);
         }
-        if ((input & IDxINPUT.DIRECTION) != 0)
+        if ((input & DIRECTION) != 0)
         { 
             
         }

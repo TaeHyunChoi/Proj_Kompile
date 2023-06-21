@@ -84,7 +84,6 @@ public class UnitMgr
     {
         BattleUnit_Init(map);                           //전투에 참여하는 유닛 생성 & 배치
         BattleOrder_Set();                              //전투 순서 결정
-        GameMgr.Battle_NextTurn();                      //전투 진행
     }
     private static void BattleUnit_Init(MapData map)
     {

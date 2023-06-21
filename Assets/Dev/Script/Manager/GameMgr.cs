@@ -28,6 +28,7 @@ public class GameMgr
     {
         ChangeMapData(mapCode: NowMap.BattleMapCode);   //[입력] 전투 맵    
         UnitMgr.BattleProc_Enter(NowMap);               //[처리] 전투 유닛  
+        Battle_NextTurn();                      //[처리] 전투 진행
         CameraMgr.OnBattleCam(true);                    //[출력] 전투 카메라
     }
     public static void Battle_NextTurn()
@@ -43,7 +44,6 @@ public class GameMgr
             Debug.Log($"-- New Cycle --------------------");
             UnitMgr.BattleOrder_Set();
         }
-
         UnitMgr.BattleAction_Select();
     }
 }
