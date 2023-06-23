@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using static UIBattle;
+using static BIT;
 
 public enum EIdxMENU : int
 {
@@ -46,16 +47,6 @@ public class UIBattle : MonoBehaviour
     private UIBattle_Menu uiMenu;
     private UIBattle_Targeting uiTarget;
     private UIBattle_Combo uiCombo;
-
-    public const int MASK_NOW_TARGET = 0x0FF0_0000;
-    public const int MASK_NOW_MENU = 0x000F_0000;
-    public const int MASK_CNT_CONTENT = 0x0000_FF00;
-    public const int MASK_NOW_CONTENT = 0x0000_00FF;
-
-    public const int SHIFT_TARGET = 4 * 5;
-    public const int SHIFT_MENU = 4 * 4;
-    public const int SHIFT_CONTENT_LAST = 4 * 2;
-    //public static int SHIFT_CONTENT = 0; //사실상 사용X
 
     public static int BattleSelect { get => instance.select; }
     private int select; //[Targeting][Menu][Content]

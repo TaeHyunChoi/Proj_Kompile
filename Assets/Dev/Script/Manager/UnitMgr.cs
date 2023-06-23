@@ -20,23 +20,23 @@ public class UnitMgr
 
     public static bool IsEndBattle()
     {
-        //PARTY 모두 기절?
+        //Party
         for (int i = 0; i < 3; ++i)
         {
             if (!battle[i].IsFaint)
+            {
                 return false;
+            }
         }
+
+        //Enemy
         for (int i = 3; i < battle.Length; ++i)
         {
             if (!battle[i].IsFaint)
+            {
                 return false;
+            }
         }
-
-        //ENEMY 모두 기절?
-        //if (battle.FindAll(unit => unit.Data.Group == IDxUNIT.PARTY).Count <= 0)
-        //    return true;
-        //if (battle.FindAll(unit => unit.Data.Group == IDxUNIT.ENEMY).Count <= 0)
-        //    return true;
 
         return true;
     }
@@ -74,8 +74,9 @@ public class UnitMgr
     }
     public static void Test_SetMyPC()
     {
-        myPC = party[IDxUNIT.ATAHO] = New(IDxUNIT.ATAHO, Vector3.zero);
-        //myPC = unitAll[IDxUNIT.ATAHO];
+        party[IDxUNIT.ATAHO] = New(IDxUNIT.ATAHO, Vector3.zero);
+        party[IDxUNIT.SMASHU] = New(IDxUNIT.SMASHU, Vector3.zero);
+        myPC = party[IDxUNIT.ATAHO];
     }
 
 
@@ -248,15 +249,6 @@ public class UnitMgr
 
         return battle[order];
     }
-    public static Unit Battle_GetUnit(int group, int order)
-    {
-        Unit[] targetGroup = unitInBattle.FindAll(unit => unit.Data.Group == group).ToArray();
-        return targetGroup[order];
-    }
-    public static List<Unit> Battle_GetUnitGroup(int group)
-    {
-        return unitInBattle.FindAll(unit => unit.Data.Group == group);
-    }
     public static List<SkillData> Battle_GetSkillTypeof(int order, int type)
     {
         return battle[order].Skill[type];
@@ -265,88 +257,9 @@ public class UnitMgr
     {
         return battle[order].Skill[type][index];
     }
-    public static void Battle_SaveUnitAction(int order, int act)
-    {
-        battle[order].Battle_SaveLastAction(act);
-    }
-
 
     //## Battle > UI
-    public static void Battle_SetTarget(int group, int targetIndex)
-    {
-        switch (group)
-        {
-            case IDxUNIT.TARGET_ENM_SOLO:
-            case IDxUNIT.TARGET_PRT_SOLO:
-                {
-                    //TargetGroup index, Group index 서로 다름
-                    group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PARTY;
-                    List<Unit> groupUnits = unitInBattle.FindAll(unit => unit.Data.Group == group);
-                    for (int i = 0; i < groupUnits.Count; ++i)
-                        groupUnits[i].Battle_BeTargeted(i == targetIndex);
-                    break;
-                }
-            case IDxUNIT.TARGET_ENM_ALL:
-            case IDxUNIT.TARGET_PRT_ALL:
-                {
-                    group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PARTY;
-                    List<Unit> groupUnits = unitInBattle.FindAll(unit => unit.Data.Group == group);
-                    for (int i = 0; i < groupUnits.Count; ++i)
-                        groupUnits[i].Battle_BeTargeted(true);
-                    break;
-                }
-            case IDxUNIT.TARGET_SELF:
-                {
-                    battle[GameMgr.NowOrder].Battle_BeTargeted(true);
-                    break;
-                }
-            case IDxUNIT.TARGET_XOR_SELF:
-                {
-                    for (int i = 0; i < battle.Length; ++i)
-                        battle[i].Battle_BeTargeted(i != GameMgr.NowOrder);
-                    break;
-                }
-        }
-    }
-    public static void Battle_ResetTarget(int group, int targetIndex)
-    {
-        switch (group)
-        {
-            case IDxUNIT.TARGET_ENM_SOLO:
-            case IDxUNIT.TARGET_PRT_SOLO:
-                {
-                    group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PARTY;
-                    List<Unit> groupUnits = unitInBattle.FindAll(unit => unit.Data.Group == group);
-                    groupUnits[targetIndex].Battle_BeTargeted(false);
-                    break;
-                }
-            case IDxUNIT.TARGET_ENM_ALL:
-            case IDxUNIT.TARGET_PRT_ALL:
-                {
-                    group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PARTY;
-                    List<Unit> groupUnits = unitInBattle.FindAll(unit => unit.Data.Group == group);
-                    for (int i = 0; i < groupUnits.Count; ++i)
-                        groupUnits[i].Battle_BeTargeted(false);
-                    break;
-                }
-            case IDxUNIT.TARGET_SELF:
-                {
-                    battle[GameMgr.NowOrder].Battle_BeTargeted(false);
-                    break;
-                }
-            case IDxUNIT.TARGET_XOR_SELF:
-                {
-                    //하나 정도는 걍 중복 처리하자...
-                    for (int i = 0; i < unitInBattle.Count; ++i)
-                        unitInBattle[i].Battle_BeTargeted(false);
-                    break;
-                }
-        }
-    }
-    public static int  Battle_GetLastAction(int order)
-    {
-        return unitInBattle[order].LastSelect;
-    }
+
 
 
     //## Battle > Action
@@ -362,58 +275,25 @@ public class UnitMgr
         else
         {
             InputMgr.SetMode(IDxINPUT.BASE);
-            battle[order].Battle_AI();
+            battle[order].ProcBattle_AI();
         }
-    }
-    public static void Battle_ActUnit(int order, SkillData skill, int select)
-    {
-        List<Unit> targets = new List<Unit>();
-
-        //더 좋은 수가 있나?
-        int group = (select & 0x000F_0000) >> 16;           //UIBattle.selectTargetGroup
-        int soloTarget  = (select & 0x0000_F000) >> 12;     //UIBattle.selectTargetOne
-
-        switch (group)
-        {
-            case IDxUNIT.TARGET_ENM_SOLO:
-            case IDxUNIT.TARGET_PRT_SOLO:
-                group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PARTY;
-                targets.Add(Battle_GetUnit(group, soloTarget));
-                break;
-            case IDxUNIT.TARGET_ENM_ALL:
-            case IDxUNIT.TARGET_PRT_ALL:
-                group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PARTY;
-                targets.AddRange(Battle_GetUnitGroup(group));
-                break;
-            case IDxUNIT.TARGET_SELF:
-                targets.Add(battle[order]);
-                break;
-            case IDxUNIT.TARGET_XOR_SELF:
-                targets.AddRange(Battle_GetUnitGroup(IDxUNIT.TARGET_ENM_ALL));
-                targets.AddRange(Battle_GetUnitGroup(IDxUNIT.TARGET_PRT_ALL));
-                targets.Remove(battle[order]);
-                break;
-        }
-
-        battle[order].Battle_SaveLastAction(select);
-        battle[order].Battle_PlayAction(skill, targets);
     }
     public static void Battle_SetRenderOrder(bool isTurn)
     {
         int order = isTurn ? 2 : 0;
         NowActor.SetRenderOrder(order);
 
-        List<Unit> targets = NowActor.Targets;
-        for (int i = 0; i < targets.Count; ++i)
-            targets[i].SetRenderOrder(order);
+        //List<Unit> targets = NowActor.Targets;
+        //for (int i = 0; i < targets.Count; ++i)
+        //    targets[i].SetRenderOrder(order);
     }
     public static void Battle_SlowUnitAnime(bool slow, float lerpWeight = 1f)
     {
         float end = slow ? 0.1f : 1;
 
         NowActor.SetAnimeSpeed(end, lerpWeight);
-        for (int i = 0; i < NowActor.Targets.Count; ++i)
-            NowActor.Targets[i].SetAnimeSpeed(end, lerpWeight);
+        //for (int i = 0; i < NowActor.Targets.Count; ++i)
+        //    NowActor.Targets[i].SetAnimeSpeed(end, lerpWeight);
     }
 
 
@@ -437,6 +317,7 @@ public class UnitMgr
 }
 
 //Not Used
+
 //public static void Battle_OrderByShellSort()
 //{
 //    int count = unitInBattle.Count;
@@ -456,4 +337,93 @@ public class UnitMgr
 //            unitInBattle[j] = compareTo;
 //        }
 //    }
+//}
+
+
+//public static void Battle_SetTarget(int group, int targetIndex)
+//{
+//    switch (group)
+//    {
+//        case IDxUNIT.TARGET_ENM_SOLO:
+//        case IDxUNIT.TARGET_PRT_SOLO:
+//            {
+//                //TargetGroup index, Group index 서로 다름
+//                group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PARTY;
+//                List<Unit> groupUnits = unitInBattle.FindAll(unit => unit.Data.Group == group);
+//                for (int i = 0; i < groupUnits.Count; ++i)
+//                    groupUnits[i].Battle_BeTargeted(i == targetIndex);
+//                break;
+//            }
+//        case IDxUNIT.TARGET_ENM_ALL:
+//        case IDxUNIT.TARGET_PRT_ALL:
+//            {
+//                group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PARTY;
+//                List<Unit> groupUnits = unitInBattle.FindAll(unit => unit.Data.Group == group);
+//                for (int i = 0; i < groupUnits.Count; ++i)
+//                    groupUnits[i].Battle_BeTargeted(true);
+//                break;
+//            }
+//        case IDxUNIT.TARGET_SELF:
+//            {
+//                battle[GameMgr.NowOrder].Battle_BeTargeted(true);
+//                break;
+//            }
+//        case IDxUNIT.TARGET_XOR_SELF:
+//            {
+//                for (int i = 0; i < battle.Length; ++i)
+//                    battle[i].Battle_BeTargeted(i != GameMgr.NowOrder);
+//                break;
+//            }
+//    }
+//}
+
+//public static void Battle_ResetTarget(int group, int targetIndex)
+//{
+//    switch (group)
+//    {
+//        case IDxUNIT.TARGET_ENM_SOLO:
+//        case IDxUNIT.TARGET_PRT_SOLO:
+//            {
+//                group = (group == IDxUNIT.TARGET_ENM_SOLO) ? IDxUNIT.ENEMY : IDxUNIT.PARTY;
+//                List<Unit> groupUnits = unitInBattle.FindAll(unit => unit.Data.Group == group);
+//                groupUnits[targetIndex].Battle_BeTargeted(false);
+//                break;
+//            }
+//        case IDxUNIT.TARGET_ENM_ALL:
+//        case IDxUNIT.TARGET_PRT_ALL:
+//            {
+//                group = (group == IDxUNIT.TARGET_ENM_ALL) ? IDxUNIT.ENEMY : IDxUNIT.PARTY;
+//                List<Unit> groupUnits = unitInBattle.FindAll(unit => unit.Data.Group == group);
+//                for (int i = 0; i < groupUnits.Count; ++i)
+//                    groupUnits[i].Battle_BeTargeted(false);
+//                break;
+//            }
+//        case IDxUNIT.TARGET_SELF:
+//            {
+//                battle[GameMgr.NowOrder].Battle_BeTargeted(false);
+//                break;
+//            }
+//        case IDxUNIT.TARGET_XOR_SELF:
+//            {
+//                //하나 정도는 걍 중복 처리하자...
+//                for (int i = 0; i < unitInBattle.Count; ++i)
+//                    unitInBattle[i].Battle_BeTargeted(false);
+//                break;
+//            }
+//    }
+//}
+//public static int Battle_GetLastAction(int order)
+//{
+//    return unitInBattle[order].LastSelect;
+//}
+
+//public static Unit Battle_GetUnit(int group, int order)
+//{
+//    Unit[] targetGroup = unitInBattle.FindAll(unit => unit.Data.Group == group).ToArray();
+//    return targetGroup[order];
+//}
+
+//public static List<Unit> Battle_GetUnitGroup(int group)
+//{
+//    return unitInBattle.FindAll(unit => unit.Data.Group == group);
 //}

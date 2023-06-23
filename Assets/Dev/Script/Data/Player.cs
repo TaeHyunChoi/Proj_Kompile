@@ -44,14 +44,14 @@ public class Player
 
     public static void Test()
     {
-        activeMember[0] = true;
-        activeMember[1] = false;
-        activeMember[2] = false;
-        for (int i = 0; i < activeMember.Length; ++i)
-        {
-            if (activeMember[i])
-                UnitMgr.New(i, Vector3.zero);
-        }
+        //activeMember[0] = true;
+        //activeMember[1] = false;
+        //activeMember[2] = false;
+        //for (int i = 0; i < activeMember.Length; ++i)
+        //{
+        //    if (activeMember[i])
+        //        UnitMgr.New(i, Vector3.zero);
+        //}
         memberCombos[IDxUNIT.ATAHO][0] = 1; //돌려차기
         memberCombos[IDxUNIT.ATAHO][1] = 4; //호격권
 

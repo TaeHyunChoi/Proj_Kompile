@@ -2,18 +2,13 @@ using Mono.Cecil.Cil;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Unity.Burst.Intrinsics.X86.Avx;
 
 public partial class Unit : MonoBehaviour //Battle
 {
     public  Dictionary<int, List<SkillData>> Skill { get => skill; }
     private Dictionary<int, List<SkillData>> skill = new Dictionary<int, List<SkillData>>();
 
-    //얘도 언젠간 날리리..
-    public List<Unit> Targets { get => targets; }
-    private List<Unit> targets = new List<Unit>();
-    private SkillData selectSkill;
-
-    //Battle: 전투 중 마지막 선택
     public  int LastSelect { get => lastSelect; }
     private int lastSelect;
 
@@ -23,7 +18,7 @@ public partial class Unit : MonoBehaviour //Battle
     public  float Priority { get => priority; }
     private float priority;
 
-    public bool IsFaint { get => isFaint; }
+    public  bool IsFaint { get => isFaint; }
     private bool isFaint;
 
     public void Battle_SetStatus()
@@ -50,87 +45,107 @@ public partial class Unit : MonoBehaviour //Battle
 
         priority = Status[IDxUNIT.AGI] * isLukcy;
     }
-    public void Battle_BeTargeted(bool beTargeted)
-    {
-        //쉐이더 반짝도 건드리고 싶긴 해~
-    }
-    public void Battle_SaveLastAction(int act)
-    {
-        lastSelect = act;
-    }
-    public void Battle_AI()
-    {
-        //스킬 선정
-        int skillGroup = IDxSkill.BASIC; //임의 설정
-        int max = skill[skillGroup].Count;
-        selectSkill = skill[skillGroup][Random.Range(0, max)];
 
-        //타겟 지정 : Mode에 따라
-        targets = Battle_AITargeting();
-        Battle_PlayAction(selectSkill, targets);
-    }
-    private List<Unit> Battle_AITargeting()
+    public void ProcBattle_AI()
     {
-        List<Unit> result = new List<Unit>();
-        //switch (selectSkill.TargetGroup)
-        //{
-        //    case IDxUNIT.TARGET_PLY_SOLO :
-        //        {
-        //            //예시 모드는 보통(Rnd), 선제(One), 방어(XOR)로 걸어본다.
-        //            List<Unit> groups = UnitMgr.Battle_GetUnitGroup(IDxUNIT.PLAYER);
-        //            switch (mode)
-        //            {
-        //                case IDxUNIT.MODE_NORMAL:
-        //                case IDxUNIT.MODE_DEFENCE:
-        //                    result.Add(groups[Random.Range(0, groups.Count)]);
-        //                    break;
-        //                case IDxUNIT.MODE_PREEMTIVE:
-        //                    result.Add(groups[(lastSelect & 0x0000_F000) >> 4 * 3]);
-        //                    break;
-        //            }
-        //        }
-        //        break;
-        //}
+        //## Select Skill
+        int idxGroup = IDxSkill.BASIC; //임의 설정
+        int idxSkill = Random.Range(0, skill[idxGroup].Count);
 
-        return result;
-    }
+        //## Select Target
+        BattleAI_SelectTarget(out int flagTarget); //out으로 꺼내는게 결과값 형태 보기에 더 좋은 듯
 
-    public void Battle_PlayAction(SkillData skill, List<Unit> targets)
-    {
-        selectSkill = skill;
-        this.targets = targets;
+        //## Update Last Select
+        lastSelect = 0;
+        lastSelect = (flagTarget << BIT.SHIFT_TARGET) | (idxGroup << BIT.SHIFT_MENU) | idxSkill;
+
+        //## Play Action
         coPlayer.InitAttack();
     }
 
-    public void OnAnime_Hit()
+    private void BattleAI_SelectTarget(out int flag)
     {
-        for (int i = 0; i < targets.Count; ++i)
-            targets[i].ProcHit(this, selectSkill);
-    }
-    public void ProcHit(Unit hitter, SkillData hitSkill)
-    {
-        coPlayer.InitHit(hitter, hitSkill);
-
-        //int dmg = CalcDamage(hitter, hitSkill);
-        //StartCoroutine(IEBattle_Hit(hitSkill, dmg));
-    }
-    private IEnumerator IEBattle_Hit(SkillData hitSkill, int dmg)
-    {
-        //코드 수정 필요(IsAnimeEnd를 사용하지 않는 쪽으로)
-        status[IDxUNIT.HP] -= dmg;
-
-        PlayAnime(IDxUNIT.ANIME_HIT);
-        float wait = Time.time + aoc[IDxUNIT.ANIME_HIT].length;
-        while (!IsAnimeEnd(IDxUNIT.ANIME_HIT, wait))
+        //임의로 랜덤으로 경우의 수 돌렸다.
+        int rnd = Random.Range(0, 3);
+        if (rnd == 0)
         {
-            //
-            yield return null;
+            flag = GetTargetFlag_HPHighest(target: ETargetGroup.Party);
+        }
+        else
+        {
+            flag = GetTargetFlag_HPLowest(target: ETargetGroup.Party);
+        }
+    }
+    private int GetTargetFlag_HPHighest(ETargetGroup target)
+    {
+        int flag = 0;
+        int min = (target == ETargetGroup.Enemy) ? 3 : 0;
+        int max = (target == ETargetGroup.Enemy) ? 6 : 2;
+
+        int saved = min;
+        Unit uComp, uCurrent;
+        for (int i = min + 1; i <= max; ++i)
+        {
+            uComp = UnitMgr.Battle_GetUnit(i);
+            if (uComp == null || uComp.isFaint)
+            {
+                continue;
+            }
+
+            uCurrent = UnitMgr.Battle_GetUnit(saved);
+            if (uCurrent.status[IDxUNIT.HP] < uComp.status[IDxUNIT.HP])
+            {
+                saved = i;
+            }
         }
 
-        PlayAnime(IDxUNIT.ANIME_IDLE);
+        flag |= (1 << saved);
+        return flag;
+    }
+    private int GetTargetFlag_HPLowest(ETargetGroup target)
+    {
+        int flag = 0;
+        int min = (target == ETargetGroup.Enemy) ? 3 : 0;
+        int max = (target == ETargetGroup.Enemy) ? 6 : 2;
+
+        int saved = min;
+        Unit uComp, uCurrent;
+        for (int i = min + 1; i <= max; ++i)
+        {
+            uComp = UnitMgr.Battle_GetUnit(i);
+            if (uComp == null || uComp.isFaint)
+            {
+                continue;
+            }
+
+            uCurrent = UnitMgr.Battle_GetUnit(saved);
+            if (uCurrent.status[IDxUNIT.HP] > uComp.status[IDxUNIT.HP])
+            {
+                saved = i;
+            }
+        }
+
+        flag |= (1 << saved);
+        return flag;
     }
 
 
+    public void OnAnimeSkill_HitTarget()
+    {
+        int idxGroup = (lastSelect & BIT.MASK_NOW_MENU) >> BIT.SHIFT_MENU;
+        int idxSkill = (lastSelect & BIT.MASK_NOW_CONTENT);
+        int flagTarget = (lastSelect >> BIT.SHIFT_TARGET);
+
+        for (int i = 0; i < 7; ++i)
+        {
+            if ((flagTarget >> i) == 1)
+            {
+                Unit target = UnitMgr.Battle_GetUnit(i);
+                SkillData skill = UnitMgr.Battle_GetSkill(i, idxGroup, idxSkill);
+                target.coPlayer.InitHit(target, skill);
+            }
+        }
+    }
     public int CalcDamage(Unit hitter, SkillData hitSkill)
     {
         return hitSkill.Power + (hitter.status[IDxUNIT.DEX] >> 2) - status[IDxUNIT.CON];

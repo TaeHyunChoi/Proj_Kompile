@@ -82,7 +82,7 @@ AnimationClip:
   m_HasMotionFloatCurves: 0
   m_Events:
   - time: 0.3
-    functionName: OnAnime_Hit
+    functionName: OnAnimeSkill_HitTarget
     data: 
     objectReferenceParameter: {fileID: 11500000, guid: c4f62baed9ad6b447848d5f67b172dad, type: 3}
     floatParameter: 0

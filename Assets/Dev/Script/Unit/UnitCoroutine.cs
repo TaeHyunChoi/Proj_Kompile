@@ -36,19 +36,6 @@ public class UnitCoroutine : MonoBehaviour
 
         MoveNext = Move;
     }
-    public void InitAttack()
-    {
-        InitBase(type: 0);
-        enabled = true;
-    }
-    public void InitHit(Unit hitter, SkillData hitSkill)
-    {
-        InitBase(type: 1);
-        fValue = owner.CalcDamage(hitter, hitSkill);
-        enabled = true;
-    }
-
-
     private void Set(int type)
     {
         switch (type)
@@ -77,6 +64,11 @@ public class UnitCoroutine : MonoBehaviour
     }
 
 
+    public  void InitAttack()
+    {
+        InitBase(type: 0);
+        enabled = true;
+    }
     private void SetNext_Attack()
     {
         switch (state[curType])
@@ -125,6 +117,14 @@ public class UnitCoroutine : MonoBehaviour
 
         return false;
     }
+
+
+    public  void InitHit(Unit hitter, SkillData hitSkill)
+    {
+        InitBase(type: 1);
+        fValue = owner.CalcDamage(hitter, hitSkill);
+        enabled = true;
+    }
     private void SetNext_Hit()
     {
         switch (state[curType])
@@ -151,8 +151,6 @@ public class UnitCoroutine : MonoBehaviour
 
         return false;
     }
-
-
 
 
     private void Update()

@@ -1,4 +1,5 @@
-public class IDxUNIT
+//## Index
+public static class IDxUNIT
 {
     public const byte SPEED_MOVE = 5;
 
@@ -51,7 +52,7 @@ public class IDxUNIT
     public const byte TARGET_XOR_SELF   = 5; // 본인을 제외한 모든 유닛
     public const byte TARGET_ALL        = 6; // 피아식별X
 }
-public class IDxINPUT
+public static class IDxINPUT
 {
     //None
     public const byte NONE = 0x00;
@@ -78,14 +79,14 @@ public class IDxINPUT
     public const byte OPTION         = 0x02;  // System Option
     public const byte TRIGGER        = 0x01;  // joypad [LB] button 
 }
-public class IDxUI
+public static class IDxUI
 {
     //UI Window
     public const byte BATTLE_MENU = 0;
     public const byte BATTLE_TARGET = 1;
     public const byte BATTLE_COMBO  = 2;
 }
-public class IDxSkill
+public static class IDxSkill
 {
     public const byte BASIC   = 0;
     public const byte SOLO    = 1;
@@ -97,9 +98,23 @@ public class IDxSkill
     public const byte TARGET_SELF = 2;
     public const byte TARGET_EXCEPT_SELF = 3;
 }
-public class IDxVALUE
+public static class IDxVALUE
 {
     public static float LERP = 20 * UnityEngine.Time.deltaTime;
+}
+
+//## Bit Masking
+public static class BIT
+{
+    public const int MASK_NOW_TARGET     = 0x0FF0_0000;
+    public const int MASK_NOW_MENU       = 0x000F_0000;
+    public const int MASK_CNT_CONTENT    = 0x0000_FF00;
+    public const int MASK_NOW_CONTENT    = 0x0000_00FF;
+
+    public const int SHIFT_TARGET        = 4 * 5;
+    public const int SHIFT_MENU          = 4 * 4;
+    public const int SHIFT_CONTENT_LAST  = 4 * 2;
+    //public static int SHIFT_CONTENT = 0; //사실상 사용X
 }
 
 public enum ETargetGroup
