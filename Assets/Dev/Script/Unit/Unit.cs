@@ -4,25 +4,33 @@ using UnityEngine;
 
 public partial class Unit : MonoBehaviour //Default
 {
-    public UnitData Data { get => data; }
+    public  AnimatorOverrideController AOC { get => aoc; }
+    private AnimatorOverrideController aoc;
+    private Animator animator;
+    private SpriteRenderer render;
+    private UnitCoroutine coPlayer;
+
+    public  UnitData Data { get => data; }
     private UnitData data;
 
-    private Animator animator;
-
-    public AnimatorOverrideController AOC { get => aoc; }
-    private AnimatorOverrideController aoc;
-
-    private SpriteRenderer render;
-
-    public int[] Status { get => status; }
-    private int[] status;
+    public  SkillData[][] Skill { get => skill; }
+    private SkillData[][] skill;
 
     public Vector3 Pos { get => transform.position; }
-    public Vector3 LocalPos { get => transform.localPosition; }
 
+    public  int[] Status { get => status; }
+    private int[] status;
 
+    public  byte Mode { get => Mode; }
+    private byte mode;
 
-    private UnitCoroutine coPlayer;
+    public  float Priority { get => priority; }
+    private float priority;
+
+    public  bool IsFaint { get => isFaint; }
+    private bool isFaint;
+
+    private int lastSelect;
 
     public void Init(int code)
     {
@@ -51,19 +59,19 @@ public partial class Unit : MonoBehaviour //Default
         PlayAnime(IDxUNIT.ANIME_IDLE);
     }
 
+    //## Move
     public Vector3 MoveTo(Vector3 move)
     {
         transform.position += move * IDxUNIT.SPEED_MOVE * Time.deltaTime;
         return transform.position;
     }
+
+    //## Render
     public void SetRenderOrder(int order)
     {
         render.sortingOrder = order;
     }
-    public void SetAnimeSpeed(float end, float lerpWeight)
-    {
-        animator.speed = Mathf.Lerp(animator.speed, end, IDxVALUE.LERP * lerpWeight);
-    }
+
 
     //## Animation
     public void PlayAnime(string type, string code = null)
@@ -75,21 +83,28 @@ public partial class Unit : MonoBehaviour //Default
         aoc[type] = ac;
         animator.CrossFade(type, 0f);
     }
-    private bool IsAnimeEnd(string name, float wait)
+    public void SetAnimeSpeed(float end, float lerpWeight)
     {
-        if (!animator.GetCurrentAnimatorStateInfo(0).IsName(name))
-            return false;
-
-        if (wait > Time.time)
-            return false;
-
-        return true;
+        animator.speed = Mathf.Lerp(animator.speed, end, IDxVALUE.LERP * lerpWeight);
     }
-
-
-    //## Animation Trigger
     public void OnAnime_ReadyToCombo()
     {
         InputMgr.Set_IsCombo(true);
+    }
+    public void OnAnimeSkill_HitTarget()
+    {
+        int idxGroup = (lastSelect & BIT.MASK_NOW_MENU) >> BIT.SHIFT_MENU;
+        int idxSkill = (lastSelect & BIT.MASK_NOW_CONTENT);
+        int flagTarget = (lastSelect >> BIT.SHIFT_TARGET);
+
+        for (int i = 0; i < 7; ++i)
+        {
+            if ((flagTarget >> i) == 1)
+            {
+                Unit target = UnitMgr.InBattle[i];
+                SkillData skill = target.Skill[idxGroup][idxSkill];
+                target.coPlayer.InitHit(target, skill);
+            }
+        }
     }
 }

@@ -129,3 +129,13 @@ public enum ETargetCount
     One = 0,
     All
 }
+public enum EIdxMENU : int
+{
+    SkillBasic = 0,
+    SkillSolo,
+    SkillGroup,
+    Mode,
+    Item,
+    SkillSpecial,
+    Count
+}

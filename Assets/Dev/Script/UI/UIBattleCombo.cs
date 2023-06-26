@@ -66,7 +66,7 @@ public class UIBattleCombo : MonoBehaviour
     }
     private void InitSlotIcons()
     {
-        Unit actor = UnitMgr.Battle_GetUnit(GameMgr.NowOrder);
+        Unit actor = UnitMgr.InBattle[GameMgr.NowOrder];
         int index = actor.Data.Index;
         byte[] combo = Player.MemberCombo[index];
 

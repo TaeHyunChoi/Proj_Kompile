@@ -34,17 +34,6 @@ public class GameMgr
     }
     public static void Battle_NextTurn()
     {
-        if (UnitMgr.IsEndBattle())
-        {
-            Debug.Log("End Battle");
-            return;
-        }
-
-        if (UnitMgr.IsEndCycle())
-        {
-            Debug.Log($"-- New Cycle --------------------");
-            UnitMgr.BattleOrder_Set();
-        }
         UnitMgr.BattleAction_Select();
     }
 }

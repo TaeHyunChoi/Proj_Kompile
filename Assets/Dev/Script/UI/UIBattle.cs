@@ -5,16 +5,6 @@ using TMPro;
 using static UIBattle;
 using static BIT;
 
-public enum EIdxMENU : int
-{
-    SkillBasic = 0,
-    SkillSolo,
-    SkillGroup,
-    Mode,
-    Item,
-    SkillSpecial,
-    Count
-}
 public struct UISlot_Battle
 {
     private GameObject go;
@@ -38,15 +28,14 @@ public struct UISlot_Battle
         go.SetActive(on);
     }
 }
-
 public class UIBattle : MonoBehaviour
 {
-    public static UIBattle Instance { get => instance; }
+    public  static UIBattle Instance { get => instance; }
     private static UIBattle instance;
 
-    private UIBattle_Menu uiMenu;
-    private UIBattle_Targeting uiTarget;
-    private UIBattle_Combo uiCombo;
+    private UIBattle_Menu       uiMenu;
+    private UIBattle_Targeting  uiTarget;
+    private UIBattle_Combo      uiCombo;
 
     public static int BattleSelect { get => instance.select; }
     private int select; //[Targeting][Menu][Content]
@@ -306,7 +295,7 @@ public class UIBattle_Menu
 
     private string[,] ContentSlot_SetSkill(int type, out int count)
     {
-        SkillData[] skills = UnitMgr.Battle_GetSkillTypeof(GameMgr.NowOrder, type);
+        SkillData[] skills = UnitMgr.InBattle[GameMgr.NowOrder].Skill[type];
         string[,] code = new string[2, skills.Length];
         count = code.GetLength(1);
 
@@ -394,7 +383,8 @@ public class UIBattle_Targeting
         int flagTarget  = select >> SHIFT_TARGET;
 
         //input => Get Data
-        SkillData skill = UnitMgr.Battle_GetSkill(GameMgr.NowOrder, idxMenu, idxContent);
+        //
+        SkillData skill = UnitMgr.InBattle[GameMgr.NowOrder].Skill[idxMenu][idxContent];
         int min = (skill.TargetGroupType == 1) ? 3 : 0;
         int max = (skill.TargetGroupType == 1) ? 6 : 2;
 
@@ -443,7 +433,7 @@ public class UIBattle_Targeting
                         flagTarget >>= 1;
 
                     int idxPos = FlagTargetToPos(flagTarget);
-                    target = UnitMgr.Battle_GetUnit(idxPos);
+                    target = UnitMgr.InBattle[idxPos];
                     if (target != null && !target.IsFaint)
                         break;
                 }
@@ -457,7 +447,7 @@ public class UIBattle_Targeting
                         flagTarget <<= 1;
 
                     int idxPos = FlagTargetToPos(flagTarget);
-                    target = UnitMgr.Battle_GetUnit(idxPos);
+                    target = UnitMgr.InBattle[idxPos];
                     if (target != null && !target.IsFaint)
                         break;
                 }
@@ -482,7 +472,7 @@ public class UIBattle_Targeting
             if (comp == 0)
                 continue;
 
-            Unit unit = UnitMgr.Battle_GetUnit(i);
+            Unit unit = UnitMgr.InBattle[i];
             Vector3 pos = CameraMgr.Battle_ScreenToLocalInRect(unit.Pos + unit.transform.up); //나중에 unit height를 곱하던가...
             targetingArrows[i].localPosition = pos;
             targetingArrows[i].gameObject.SetActive(true);
@@ -520,7 +510,7 @@ public class UIBattle_Targeting
                         Unit target;
                         for (int i = min; i < max; ++i)
                         {
-                            target = UnitMgr.Battle_GetUnit(i);
+                            target = UnitMgr.InBattle[i];
                             if (target != null && !target.IsFaint)
                             {
                                 return (1 << i);

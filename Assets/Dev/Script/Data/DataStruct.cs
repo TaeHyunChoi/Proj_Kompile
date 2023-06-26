@@ -84,18 +84,17 @@ public struct ItemData : Interface.IDataSetter
 }
 public struct UnitData : Interface.IDataSetter
 {
-    private byte        code;
-    private byte        group;
-    private string      name;
-    private int[]    statDefault;
-    private string      rcsCode;
+    private byte    code;
+    private byte    group;
+    private string  name;
+    private int[]   statDefault;
+    private string  rcsCode;
 
     public byte Index { get => code; }
     public byte Group { get => group; }
     public string Name { get => name; }
     public int[] StatDefault { get => statDefault; }
     public string RcsCode { get => rcsCode; }
-
 
     public void SetTable(Dictionary<string, string> data)
     {
