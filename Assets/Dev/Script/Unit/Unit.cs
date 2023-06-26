@@ -34,25 +34,21 @@ public partial class Unit : MonoBehaviour //Default
         Array.Copy(Data.StatDefault, status, IDxUNIT.STAT_CNT);
 
         //캐릭터 스킬, 공통 스킬
-        List<SkillData> skill = DataMgr.SkillTBL.FindAll(skill => (skill.ActorCode == code) || (skill.ActorCode == IDxUNIT.COMMON));
-
-        this.skill.Add(IDxSkill.BASIC, new List<SkillData>());
-        this.skill.Add(IDxSkill.SOLO, new List<SkillData>());
-        this.skill.Add(IDxSkill.GROUP, new List<SkillData>());
-        this.skill.Add(IDxSkill.SPECIAL, new List<SkillData>());
-
-        for(int i = 0; i < skill.Count; ++i)
-            this.skill[skill[i].SkillGroup].Add(skill[i]);
-
-        render = transform.GetComponent<SpriteRenderer>();
+        skill = new SkillData[4][];
+        List<SkillData> skillData = DataMgr.SkillTBL.FindAll(skill => (skill.ActorCode == code) || (skill.ActorCode == IDxUNIT.COMMON));
+        skill[IDxSkill.BASIC]     = skillData.FindAll(skill => skill.SkillGroup == IDxSkill.BASIC).ToArray();
+        skill[IDxSkill.SOLO]      = skillData.FindAll(skill => skill.SkillGroup == IDxSkill.SOLO).ToArray();
+        skill[IDxSkill.GROUP]     = skillData.FindAll(skill => skill.SkillGroup == IDxSkill.GROUP).ToArray();
+        skill[IDxSkill.SPECIAL]   = skillData.FindAll(skill => skill.SkillGroup == IDxSkill.SPECIAL).ToArray();
 
         //애니메이션(AOC)
-        animator = transform.GetComponent<Animator>();
         aoc = new AnimatorOverrideController(ResourceMgr.AOC);
+        animator = transform.GetComponent<Animator>();
         animator.runtimeAnimatorController = aoc;
-        PlayAnime(IDxUNIT.ANIME_IDLE);
-
+        render = transform.GetComponent<SpriteRenderer>();
         coPlayer = transform.GetComponent<UnitCoroutine>();
+
+        PlayAnime(IDxUNIT.ANIME_IDLE);
     }
 
     public Vector3 MoveTo(Vector3 move)

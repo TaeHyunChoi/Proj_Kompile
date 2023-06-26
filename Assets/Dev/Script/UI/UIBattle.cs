@@ -306,8 +306,8 @@ public class UIBattle_Menu
 
     private string[,] ContentSlot_SetSkill(int type, out int count)
     {
-        List<SkillData> skills = UnitMgr.Battle_GetSkillTypeof(GameMgr.NowOrder, type);
-        string[,] code = new string[2, skills.Count];
+        SkillData[] skills = UnitMgr.Battle_GetSkillTypeof(GameMgr.NowOrder, type);
+        string[,] code = new string[2, skills.Length];
         count = code.GetLength(1);
 
         for (int i = 0; i < count; i++)

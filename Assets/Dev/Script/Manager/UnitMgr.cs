@@ -249,7 +249,7 @@ public class UnitMgr
 
         return battle[order];
     }
-    public static List<SkillData> Battle_GetSkillTypeof(int order, int type)
+    public static SkillData[] Battle_GetSkillTypeof(int order, int type)
     {
         return battle[order].Skill[type];
     }

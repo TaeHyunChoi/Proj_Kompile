@@ -6,8 +6,10 @@ using static Unity.Burst.Intrinsics.X86.Avx;
 
 public partial class Unit : MonoBehaviour //Battle
 {
-    public  Dictionary<int, List<SkillData>> Skill { get => skill; }
-    private Dictionary<int, List<SkillData>> skill = new Dictionary<int, List<SkillData>>();
+    //public  Dictionary<int, List<SkillData>> Skill { get => skill; }
+    //private Dictionary<int, List<SkillData>> skill = new Dictionary<int, List<SkillData>>();
+    public SkillData[][] Skill { get => skill; }
+    private SkillData[][] skill;
 
     public  int LastSelect { get => lastSelect; }
     private int lastSelect;
@@ -50,7 +52,7 @@ public partial class Unit : MonoBehaviour //Battle
     {
         //## Select Skill
         int idxGroup = IDxSkill.BASIC; //임의 설정
-        int idxSkill = Random.Range(0, skill[idxGroup].Count);
+        int idxSkill = Random.Range(0, skill[idxGroup].Length);
 
         //## Select Target
         BattleAI_SelectTarget(out int flagTarget); //out으로 꺼내는게 결과값 형태 보기에 더 좋은 듯
