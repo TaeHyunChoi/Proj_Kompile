@@ -1,5 +1,5 @@
 using UnityEngine;
-using static IDxINPUT; //오호라?
+using static IDxINPUT;
 
 public class InputMgr
 {
@@ -7,7 +7,6 @@ public class InputMgr
     public static InputDelegate Update;
 
     private static int input = NONE;
-
     private static bool isComboPossible;
 
     public static void SetMode(int type)
@@ -28,35 +27,44 @@ public class InputMgr
         }
 
         //입력값 초기화
-        Update += Reset;
+        Update += delegate { input = 0; };
     }
 
 
     private static void Base()
     {
         if (Input.GetButtonDown("Up"))
+        {
             input |= UP;
+        }
         if (Input.GetButtonDown("Down"))
+        {
             input |= DOWN;
+        }
         if (Input.GetButtonDown("Left"))
+        {
             input |= LEFT;
+        }
         if (Input.GetButtonDown("Right"))
+        {
             input |= RIGHT;
-
+        }
         if (Input.GetButtonDown("Enter"))
+        {
             input |= ENTER;
+        }
         if (Input.GetButtonDown("Cancel"))
+        {
             input |= CANCEL;
+        }
         if (Input.GetButtonDown("Option"))
+        {
             input |= OPTION;
+        }
     }
     private static void Option()
     { 
         
-    }
-    private static void Reset()
-    {
-        input ^= input;
     }
 
 
@@ -64,64 +72,89 @@ public class InputMgr
     {
         //GetButton: 꾸욱 눌러도 입력되도록
         if (Input.GetButton("Up"))
+        {
             input |= UP;
+        }
         if (Input.GetButton("Down"))
+        {
             input |= DOWN;
+        }
         if (Input.GetButton("Left"))
+        {
             input |= LEFT;
+        }
         if (Input.GetButton("Right"))
+        {
             input |= RIGHT;
-
+        }
         if ((input & DIRECTION) != 0)
+        {
             UnitMgr.Field_PlayerMoveTo(input);
+        }
 
         //npc, 아이템 등과의 상호작용 용도
         if ((input & ENTER) != 0)
+        {
             Debug.Log("ENTER");
+        }
     }
     private static void BattleAction()
     {
-        if (input == 0)
-            return;
-
-        UIMgr.Battle_SelectMenu(input);
+        if (input != 0)
+        {
+            UIMgr.Battle_SelectMenu(input);
+        }
     }
     private static void BattleTargeting()
     {
-        if (input == 0)
-            return;
-
-        UIMgr.Battle_SelectTarget(input);  //Update Input
+        if (input != 0)
+        {
+            UIMgr.Battle_SelectTarget(input);  //Update Input        
+        }
     }
     private static void BattleCombo()
     {
         if (Input.GetButton("Up"))
+        {
             input |= UP;
+        }
         if (Input.GetButton("Down"))
+        {
             input |= DOWN;
+        }
         if (Input.GetButton("Left"))
+        {
             input |= LEFT;
+        }
         if (Input.GetButton("Right"))
+        {
             input |= RIGHT;
-        
+        }
+
         if (isComboPossible & Input.GetButtonDown("Trigger"))
+        {
             UIMgr.Show(IDxUI.BATTLE_COMBO, true);
+        }
         if (isComboPossible & Input.GetButton("Trigger"))
+        {
             input |= TRIGGER;
+        }
         if (Input.GetButtonUp("Trigger"))
+        {
             isComboPossible = false;
+        }
 
         if (!isComboPossible)
         {
             UIMgr.UpdateUI_BattleCombo(active: false);
-            UnitMgr.Battle_SlowUnitAnime(slow: false);
+            UnitMgr.SlowUnitAnime(slow: false);
             return;
         }
 
         if ((input & TRIGGER) != 0)
         {
             UIMgr.UpdateUI_BattleCombo(active: true);
-            UnitMgr.Battle_SlowUnitAnime(slow: true);
+            UnitMgr.SlowUnitAnime(slow: true);
         }
         if ((input & DIRECTION) != 0)
         { 
@@ -137,6 +170,8 @@ public class InputMgr
     private static void Cheat()
     {
         if (Input.GetKeyDown(KeyCode.Space))
+        {
             GameMgr.Battle_Enter();
+        }
     }
 }

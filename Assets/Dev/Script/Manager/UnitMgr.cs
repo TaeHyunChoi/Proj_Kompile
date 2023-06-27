@@ -6,22 +6,32 @@ public class UnitMgr
     private static Transform tfActive;
     private static Transform tfInactive;
 
-    public static  Unit[] Party { get => party; }
-    private static Unit[] party = new Unit[3];
-
     public  static Unit MyPC { get => myPC; }
     private static Unit myPC;
 
-    private static UnitMgr_Battle battle;
-    private static UnitMgr_Field  field;
+    private static Unit[][] unit;
+    public  static Unit[] InBattle { get => unit[1]; }
 
+    //가독성을 위한 get; set;
+    private static Unit[] party  { get => unit[0]; set => unit[0] = value; }
+    private static Unit[] battle { get => unit[1]; set => unit[1] = value; }
+    private static Unit[] npc    { get => unit[2]; set => unit[2] = value; }
+
+    private static Queue<int> battleOrder;
+
+
+    //## Init
     public static void Init(Transform tf)
     {
-        tfActive = tf.GetChild(0);
+        tfActive   = tf.GetChild(0);
         tfInactive = tf.GetChild(1);
 
-        battle = new UnitMgr_Battle();
-        field  = new UnitMgr_Field();
+        unit = new Unit[3][];
+        unit[0] = new Unit[3];
+        unit[1] = new Unit[7];
+        unit[2] = new Unit[] { };
+
+        battleOrder = new Queue<int>();
     }
     public static Unit New(int unitCode, Vector3 pos)
     {
@@ -52,29 +62,22 @@ public class UnitMgr
 
         myPC = party[IDxUNIT.ATAHO];
     }
-}
-public class UnitMgr_Battle
-{
-    public static  Unit[] InBattle { get => battle; }
-    private static Unit[] battle = new Unit[7];
-    private static Queue<int> battleOrder = new Queue<int>();
-    public static Unit NowActor { get => battle[GameMgr.NowOrder]; } //없애고 싶은 친구
 
-    //## Battle > Set Battle Situation
-    public static  void ProcEnter(MapData map)
+
+    //## Battle > Enter
+    public static void EnterBattle(MapData map)
     {
         //## Init
         List<Unit> temp = new List<Unit>();
-        Vector3 standard;
-        float delta;
+        Vector3    standard;
+        float      delta;
 
         //## Get Party Data => Add Battle List
-        Unit[] party = UnitMgr.Party;
         for (int i = 0; i < party.Length; ++i)
         {
-            if (party[i] != null)
+            battle[i] = party[i];
+            if (battle[i] != null)
             {
-                battle[i] = party[i];
                 temp.Add(battle[i]);
             }
         }
@@ -146,7 +149,7 @@ public class UnitMgr_Battle
         {
             if (battle[i] != null)
             {
-                battle[i].Battle_SetStatus();
+                battle[i].SetStatus();
             }
         }
 
@@ -167,6 +170,9 @@ public class UnitMgr_Battle
                 Debug.Log($"Pos[{arr[i]}] {battle[arr[i]].Data.Name}.Prior: {battle[arr[i]].Priority:F2}");
             }
         }
+
+        arr  = null;
+        temp = null;
     }
     private static void OrderByQuickSort(ref int[] arr, int start, int end)
     {
@@ -219,7 +225,7 @@ public class UnitMgr_Battle
     }
 
 
-    //## Battle > Unit Data (for Action)
+    //## Battle > Select
     public static void SelectAction()
     {
         int order = battleOrder.Dequeue();
@@ -232,13 +238,93 @@ public class UnitMgr_Battle
         else
         {
             InputMgr.SetMode(IDxINPUT.BASE);
-            battle[order].ProcBattle_AI();
+            battle[order].BattleProc_AISelect();
+        }
+    }
+
+
+    //## Battle > Get Data
+    public  static int GetTargetFlag(int index, ETargetGroup group)
+    {
+        switch (index)
+        {
+            case 0:     return GetTargetFlag_HPHighest(group);
+            case 1:     return GetTargetFlag_HPLowest(group);
+        }
+
+        return -1;
+    }
+    private static int GetTargetFlag_HPHighest(ETargetGroup target)
+    {
+        int flag = 0;
+        int min = (target == ETargetGroup.Enemy) ? 3 : 0;
+        int max = (target == ETargetGroup.Enemy) ? 6 : 2;
+
+        int saved = min;
+        Unit uComp, uCurrent;
+        for (int i = min + 1; i <= max; ++i)
+        {
+            uComp = battle[i];
+            if (uComp == null || uComp.IsFaint)
+            {
+                continue;
+            }
+
+            uCurrent = battle[saved];
+            if (uCurrent.Status[IDxUNIT.HP] < uComp.Status[IDxUNIT.HP])
+            {
+                saved = i;
+            }
+        }
+
+        flag |= (1 << saved);
+        return flag;
+    }
+    private static int GetTargetFlag_HPLowest(ETargetGroup target)
+    {
+        int flag = 0;
+        int min = (target == ETargetGroup.Enemy) ? 3 : 0;
+        int max = (target == ETargetGroup.Enemy) ? 6 : 2;
+
+        int saved = min;
+        Unit uComp, uCurrent;
+        for (int i = min + 1; i <= max; ++i)
+        {
+            uComp = battle[i];
+            if (uComp == null || uComp.IsFaint)
+            {
+                continue;
+            }
+
+            uCurrent = battle[saved];
+            if (uCurrent.Status[IDxUNIT.HP] > uComp.Status[IDxUNIT.HP])
+            {
+                saved = i;
+            }
+        }
+
+        flag |= (1 << saved);
+        return flag;
+    }
+
+
+    //## Battle > Play Anime
+    public static void PlayAnime_Hit(int idxActor, int flagTarget, int idxGroup, int idxSkill)
+    {
+        SkillData skill = battle[idxActor].Skill[idxGroup][idxSkill];
+
+        for (int i = 0; i < 7; ++i)
+        {
+            if ((flagTarget >> i) == 1)
+            {
+                battle[i].PlayCoroutine(idxActor, skill);
+            }
         }
     }
     public static void SetRenderOrder(bool isTurn)
     {
         int order = isTurn ? 2 : 0;
-        NowActor.SetRenderOrder(order);
+        battle[GameMgr.NowOrder].SetRenderOrder(order);
 
         //List<Unit> targets = NowActor.Targets;
         //for (int i = 0; i < targets.Count; ++i)
@@ -248,15 +334,13 @@ public class UnitMgr_Battle
     {
         float end = slow ? 0.1f : 1;
 
-        NowActor.SetAnimeSpeed(end, lerpWeight);
+        battle[GameMgr.NowOrder].SetAnimeSpeed(end, lerpWeight);
         //for (int i = 0; i < NowActor.Targets.Count; ++i)
         //    NowActor.Targets[i].SetAnimeSpeed(end, lerpWeight);
     }
 
-}
-public class UnitMgr_Field
-{
-    private static List<Unit> npc = new List<Unit>();
+
+    //## Field > Move
     public static void Field_PlayerMoveTo(int input)
     {
         int mx = 0, mz = 0;
@@ -272,5 +356,16 @@ public class UnitMgr_Field
 
         Vector3 move = MyPC.MoveTo(new Vector3(mx, 0, mz));
         CameraMgr.FollowPC(move);
+    }
+
+
+    //## Free(memory)
+    public static void Clear()
+    {
+        for (int i = 0; i < unit.Length; ++i)
+        {
+            unit[i] = null;
+        }
+        battleOrder = null;
     }
 }

@@ -97,6 +97,9 @@ public class UIBattle : MonoBehaviour
             case 0: select = uiMenu.ProcInput(select, input);   break;
             case 1: select = uiTarget.ProcInput(select, input); break;
         }
+
+        //여기서 Save_Select() 한 번 걸어주는 것도 나쁘지 않겠군
+        Debug.Log("Plz Save Last Input => Select");
     }
 }
 public class UIBattle_Menu
@@ -383,7 +386,6 @@ public class UIBattle_Targeting
         int flagTarget  = select >> SHIFT_TARGET;
 
         //input => Get Data
-        //
         SkillData skill = UnitMgr.InBattle[GameMgr.NowOrder].Skill[idxMenu][idxContent];
         int min = (skill.TargetGroupType == 1) ? 3 : 0;
         int max = (skill.TargetGroupType == 1) ? 6 : 2;
@@ -408,8 +410,6 @@ public class UIBattle_Targeting
         switch (input & IDxINPUT.INTERACT)
         {
             case IDxINPUT.ENTER:
-                //공격 지시를 하는 것인데...
-                //여기서 끊자 후..
                 return select;
             case IDxINPUT.CANCEL:
                 {

@@ -85,7 +85,7 @@ public class UnitCoroutine : MonoBehaviour
                     break;
 
                 InputMgr.SetMode(IDxINPUT.BASE);
-                UnitMgr.Battle_SlowUnitAnime(false, 1.1f);
+                UnitMgr.SlowUnitAnime(false, 1.1f);
                 break;
             case 3:
                 endTime = Time.time + 0.5f;
@@ -118,7 +118,6 @@ public class UnitCoroutine : MonoBehaviour
         return false;
     }
 
-
     public  void InitHit(Unit hitter, SkillData hitSkill)
     {
         InitBase(type: 1);
@@ -132,7 +131,7 @@ public class UnitCoroutine : MonoBehaviour
             case 0:
                 owner.Status[IDxUNIT.HP] -= (int)fValue;
                 owner.PlayAnime(IDxUNIT.ANIME_HIT);
-                endTime = Time.time + owner.AOC[IDxUNIT.ANIME_HIT].length;
+                endTime = Time.time + owner.GetAnimeLength(IDxUNIT.ANIME_HIT);
                 break;
             default:
                 owner.PlayAnime(IDxUNIT.ANIME_IDLE);

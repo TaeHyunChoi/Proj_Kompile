@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public partial class Unit : MonoBehaviour //Default
+public partial class Unit : MonoBehaviour
 {
-    public  AnimatorOverrideController AOC { get => aoc; }
-    private AnimatorOverrideController aoc;
-    private Animator animator;
-    private SpriteRenderer render;
-    private UnitCoroutine coPlayer;
+    //Component (모두 private을 지향)
+    private AnimatorOverrideController  aoc;
+    private Animator                    animator;
+    private SpriteRenderer              render;
+    private UnitCoroutine               coroutine; //custom coroutine
 
     public  UnitData Data { get => data; }
     private UnitData data;
@@ -20,9 +20,6 @@ public partial class Unit : MonoBehaviour //Default
 
     public  int[] Status { get => status; }
     private int[] status;
-
-    public  byte Mode { get => Mode; }
-    private byte mode;
 
     public  float Priority { get => priority; }
     private float priority;
@@ -54,26 +51,38 @@ public partial class Unit : MonoBehaviour //Default
         animator = transform.GetComponent<Animator>();
         animator.runtimeAnimatorController = aoc;
         render = transform.GetComponent<SpriteRenderer>();
-        coPlayer = transform.GetComponent<UnitCoroutine>();
+        coroutine = transform.GetComponent<UnitCoroutine>();
 
         PlayAnime(IDxUNIT.ANIME_IDLE);
     }
 
-    //## Move
+    
     public Vector3 MoveTo(Vector3 move)
     {
         transform.position += move * IDxUNIT.SPEED_MOVE * Time.deltaTime;
         return transform.position;
     }
 
-    //## Render
-    public void SetRenderOrder(int order)
+    //역시 뒤숭숭했군..
+    public void BattleProc_AISelect()
     {
-        render.sortingOrder = order;
-    }
+        //## Select Skill
+        int idxGroup = IDxSkill.BASIC; //임의 설정
+        int idxSkill = UnityEngine.Random.Range(0, skill[idxGroup].Length);
+
+        //## Select Target
+        int rnd = UnityEngine.Random.Range(0, 3);
+        int flagTarget = UnitMgr.GetTargetFlag(rnd, (ETargetGroup)skill[idxGroup][idxSkill].TargetGroupType);
+
+        //## Update Last Select
+        lastSelect = 0;
+        lastSelect = (flagTarget << BIT.SHIFT_TARGET) | (idxGroup << BIT.SHIFT_MENU) | idxSkill;
+
+        //## Play Action
+        coroutine.InitAttack();
+    }     //For AI
 
 
-    //## Animation
     public void PlayAnime(string type, string code = null)
     {
         if (code == null)
@@ -83,10 +92,64 @@ public partial class Unit : MonoBehaviour //Default
         aoc[type] = ac;
         animator.CrossFade(type, 0f);
     }
+    public void PlayCoroutine(int idxHitter, SkillData skill)
+    {
+        coroutine.InitHit(UnitMgr.InBattle[idxHitter], skill);
+    }
+
+
+    public float GetAnimeLength(string code)
+    {
+        return aoc[code].length;
+    }
+
+    public void SetStatus()
+    {
+        //## Mode => Status Weighted
+        //추후 개발
+
+        //## Set Priority
+        float isLukcy = Status[IDxUNIT.LUK];
+        float rnd = UnityEngine.Random.Range(0, 10000);
+
+        if (rnd == 0)
+        {
+            isLukcy = 0.5f;
+        }
+        else if (rnd <= isLukcy)
+        {
+            isLukcy = 2;
+        }
+        else
+        {
+            isLukcy = 1;
+        }
+
+        //테스트용
+        if (Data.Group == IDxUNIT.ENEMY)
+        {
+            isLukcy *= UnityEngine.Random.Range(0.9f, 1.1f);
+        }
+
+        priority = Status[IDxUNIT.AGI] * isLukcy;
+    }
+    public void SetRenderOrder(int order)
+    {
+        render.sortingOrder = order;
+    }
     public void SetAnimeSpeed(float end, float lerpWeight)
     {
         animator.speed = Mathf.Lerp(animator.speed, end, IDxVALUE.LERP * lerpWeight);
     }
+
+
+    //얘도 고민 좀. 데미지 계산이면 Mgr급으로 빠져도 될 것 같은데?
+    public int CalcDamage(Unit hitter, SkillData hitSkill)
+    {
+        return hitSkill.Power + (hitter.status[IDxUNIT.DEX] >> 2) - status[IDxUNIT.CON];
+    }
+
+    //## Animation Tag
     public void OnAnime_ReadyToCombo()
     {
         InputMgr.Set_IsCombo(true);
@@ -97,14 +160,6 @@ public partial class Unit : MonoBehaviour //Default
         int idxSkill = (lastSelect & BIT.MASK_NOW_CONTENT);
         int flagTarget = (lastSelect >> BIT.SHIFT_TARGET);
 
-        for (int i = 0; i < 7; ++i)
-        {
-            if ((flagTarget >> i) == 1)
-            {
-                Unit target = UnitMgr.InBattle[i];
-                SkillData skill = target.Skill[idxGroup][idxSkill];
-                target.coPlayer.InitHit(target, skill);
-            }
-        }
+        UnitMgr.PlayAnime_Hit(GameMgr.NowOrder, flagTarget, idxGroup, idxSkill);
     }
 }

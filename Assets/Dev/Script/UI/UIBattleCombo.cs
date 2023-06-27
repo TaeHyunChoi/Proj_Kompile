@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class UIBattleCombo : MonoBehaviour
 {
-    public static  UIBattleCombo Instance { get => instance; }
+    public static UIBattleCombo Instance { get => instance; }
     private static UIBattleCombo instance;
 
     private RectTransform rect;
@@ -15,8 +15,8 @@ public class UIBattleCombo : MonoBehaviour
     private Image[] iconSlots;
     private RectTransform[] rectSlots;
 
-    private Vector3     center;
-    private Vector3[]   endPos;
+    private Vector3 center;
+    private Vector3[] endPos;
 
     private byte direction;
 
@@ -62,7 +62,7 @@ public class UIBattleCombo : MonoBehaviour
         //instance.___ 여러 번 쓰기 싫어서 함수로 호출
         instance.InitSlotIcons();
 
-        UnitMgr.Battle_SetRenderOrder(isTurn: true);
+        UnitMgr.SetRenderOrder(isTurn: true);
     }
     private void InitSlotIcons()
     {
@@ -89,10 +89,10 @@ public class UIBattleCombo : MonoBehaviour
             rectSlots[i].localPosition = center;
             switch (i)
             {
-                case 0: endPos[i] = center + Vector3.up    * 300f;    break;
-                case 1: endPos[i] = center + Vector3.right * 250f;    break;
-                case 2: endPos[i] = center + Vector3.down  * 300f;    break;
-                case 3: endPos[i] = center + Vector3.left  * 250f;    break;
+                case 0: endPos[i] = center + Vector3.up * 300f; break;
+                case 1: endPos[i] = center + Vector3.right * 250f; break;
+                case 2: endPos[i] = center + Vector3.down * 300f; break;
+                case 3: endPos[i] = center + Vector3.left * 250f; break;
             }
         }
     }
