@@ -410,6 +410,8 @@ public class UIBattle_Targeting
         switch (input & IDxINPUT.INTERACT)
         {
             case IDxINPUT.ENTER:
+                UnitMgr.InBattle[GameMgr.NowOrder].SaveSelect(select);
+                UnitMgr.InBattle[GameMgr.NowOrder].ProcBattle_Attack();
                 return select;
             case IDxINPUT.CANCEL:
                 {

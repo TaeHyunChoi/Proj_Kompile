@@ -149,7 +149,7 @@ public class UnitMgr
         {
             if (battle[i] != null)
             {
-                battle[i].SetStatus();
+                battle[i].Status_SetBattle();
             }
         }
 
@@ -238,7 +238,7 @@ public class UnitMgr
         else
         {
             InputMgr.SetMode(IDxINPUT.BASE);
-            battle[order].BattleProc_AISelect();
+            battle[order].ProcBattle_Attack();
         }
     }
 
@@ -309,22 +309,22 @@ public class UnitMgr
 
 
     //## Battle > Play Anime
-    public static void PlayAnime_Hit(int idxActor, int flagTarget, int idxGroup, int idxSkill)
+    public static void PlayAnime_Hit(Unit hitter, int flagTarget, int idxGroup, int idxSkill)
     {
-        SkillData skill = battle[idxActor].Skill[idxGroup][idxSkill];
+        SkillData skill = hitter.Skill[idxGroup][idxSkill];
 
         for (int i = 0; i < 7; ++i)
         {
             if ((flagTarget >> i) == 1)
             {
-                battle[i].PlayCoroutine(idxActor, skill);
+                battle[i].ProcBattle_Hit(hitter, skill);
             }
         }
     }
     public static void SetRenderOrder(bool isTurn)
     {
         int order = isTurn ? 2 : 0;
-        battle[GameMgr.NowOrder].SetRenderOrder(order);
+        battle[GameMgr.NowOrder].Render_SetOrder(order);
 
         //List<Unit> targets = NowActor.Targets;
         //for (int i = 0; i < targets.Count; ++i)
@@ -333,8 +333,8 @@ public class UnitMgr
     public static void SlowUnitAnime(bool slow, float lerpWeight = 1f)
     {
         float end = slow ? 0.1f : 1;
+        battle[GameMgr.NowOrder].Anime_SetSpeed(end, lerpWeight);
 
-        battle[GameMgr.NowOrder].SetAnimeSpeed(end, lerpWeight);
         //for (int i = 0; i < NowActor.Targets.Count; ++i)
         //    NowActor.Targets[i].SetAnimeSpeed(end, lerpWeight);
     }
@@ -344,18 +344,30 @@ public class UnitMgr
     public static void Field_PlayerMoveTo(int input)
     {
         int mx = 0, mz = 0;
-
         if ((input & IDxINPUT.UP) != 0)
+        {
             mz += 1;
+        }
         if ((input & IDxINPUT.DOWN) != 0)
+        {
             mz -= 1;
+        }
         if ((input & IDxINPUT.RIGHT) != 0)
+        {
             mx += 1;
+        }
         if ((input & IDxINPUT.LEFT) != 0)
+        {
             mx -= 1;
+        }
 
-        Vector3 move = MyPC.MoveTo(new Vector3(mx, 0, mz));
-        CameraMgr.FollowPC(move);
+        if (mx == 0 & mz == 0)
+        {
+            return;
+        }    
+
+        Vector3 delta = new Vector3(mx, 0, mz) * IDxUNIT.SPEED_MOVE * Time.deltaTime;
+        CameraMgr.FollowPC(MyPC.MoveTo(delta));
     }
 
 

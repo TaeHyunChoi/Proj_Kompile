@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class UnitCoroutine : MonoBehaviour
 {
-    //얘네를 중복하여 참조하는 느낌인데...
     private Unit owner;
     private Animator animator;
 
@@ -64,7 +63,7 @@ public class UnitCoroutine : MonoBehaviour
     }
 
 
-    public  void InitAttack()
+    public void InitAttack()
     {
         InitBase(type: 0);
         enabled = true;
@@ -77,15 +76,15 @@ public class UnitCoroutine : MonoBehaviour
                 endTime = Time.time + 0.1f;
                 break;
             case 1:
-                owner.PlayAnime(IDxUNIT.ANIME_SKILL);
+                owner.Anime_Play(IDxUNIT.ANIME_SKILL);
                 break;
             case 2:
-                owner.PlayAnime(IDxUNIT.ANIME_IDLE);
+                owner.Anime_Play(IDxUNIT.ANIME_IDLE);
                 if (owner != UnitMgr.MyPC)
                     break;
 
                 InputMgr.SetMode(IDxINPUT.BASE);
-                UnitMgr.SlowUnitAnime(false, 1.1f);
+                UnitMgr.SlowUnitAnime(slow: false, 1.1f);
                 break;
             case 3:
                 endTime = Time.time + 0.5f;
@@ -118,7 +117,7 @@ public class UnitCoroutine : MonoBehaviour
         return false;
     }
 
-    public  void InitHit(Unit hitter, SkillData hitSkill)
+    public void InitHit(Unit hitter, SkillData hitSkill)
     {
         InitBase(type: 1);
         fValue = owner.CalcDamage(hitter, hitSkill);
@@ -130,11 +129,11 @@ public class UnitCoroutine : MonoBehaviour
         {
             case 0:
                 owner.Status[IDxUNIT.HP] -= (int)fValue;
-                owner.PlayAnime(IDxUNIT.ANIME_HIT);
-                endTime = Time.time + owner.GetAnimeLength(IDxUNIT.ANIME_HIT);
+                owner.Anime_Play(IDxUNIT.ANIME_HIT);
+                endTime = Time.time + owner.Anime_GetLength(IDxUNIT.ANIME_HIT);
                 break;
             default:
-                owner.PlayAnime(IDxUNIT.ANIME_IDLE);
+                owner.Anime_Play(IDxUNIT.ANIME_IDLE);
                 enabled = false;
                 Clear();
                 return;

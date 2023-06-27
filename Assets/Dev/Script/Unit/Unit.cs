@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using UnityEngine;
 
 public partial class Unit : MonoBehaviour
 {
-    //Component (모두 private을 지향)
+    //Component
     private AnimatorOverrideController  aoc;
     private Animator                    animator;
     private SpriteRenderer              render;
@@ -29,7 +30,9 @@ public partial class Unit : MonoBehaviour
 
     private int lastSelect;
 
-    public void Init(int code)
+
+    //## Set Data
+    public  void Init(int code)
     {
         //기본값 정보 저장
         data = DataMgr.UnitTBL.Find(unit => unit.Index == code);
@@ -53,57 +56,9 @@ public partial class Unit : MonoBehaviour
         render = transform.GetComponent<SpriteRenderer>();
         coroutine = transform.GetComponent<UnitCoroutine>();
 
-        PlayAnime(IDxUNIT.ANIME_IDLE);
+        Anime_Play(IDxUNIT.ANIME_IDLE);
     }
-
-    
-    public Vector3 MoveTo(Vector3 move)
-    {
-        transform.position += move * IDxUNIT.SPEED_MOVE * Time.deltaTime;
-        return transform.position;
-    }
-
-    //역시 뒤숭숭했군..
-    public void BattleProc_AISelect()
-    {
-        //## Select Skill
-        int idxGroup = IDxSkill.BASIC; //임의 설정
-        int idxSkill = UnityEngine.Random.Range(0, skill[idxGroup].Length);
-
-        //## Select Target
-        int rnd = UnityEngine.Random.Range(0, 3);
-        int flagTarget = UnitMgr.GetTargetFlag(rnd, (ETargetGroup)skill[idxGroup][idxSkill].TargetGroupType);
-
-        //## Update Last Select
-        lastSelect = 0;
-        lastSelect = (flagTarget << BIT.SHIFT_TARGET) | (idxGroup << BIT.SHIFT_MENU) | idxSkill;
-
-        //## Play Action
-        coroutine.InitAttack();
-    }     //For AI
-
-
-    public void PlayAnime(string type, string code = null)
-    {
-        if (code == null)
-            code = type;
-
-        AnimationClip ac = ResourceMgr.Anime[Data.RcsCode + "/" + code];
-        aoc[type] = ac;
-        animator.CrossFade(type, 0f);
-    }
-    public void PlayCoroutine(int idxHitter, SkillData skill)
-    {
-        coroutine.InitHit(UnitMgr.InBattle[idxHitter], skill);
-    }
-
-
-    public float GetAnimeLength(string code)
-    {
-        return aoc[code].length;
-    }
-
-    public void SetStatus()
+    public  void Status_SetBattle()
     {
         //## Mode => Status Weighted
         //추후 개발
@@ -133,13 +88,78 @@ public partial class Unit : MonoBehaviour
 
         priority = Status[IDxUNIT.AGI] * isLukcy;
     }
-    public void SetRenderOrder(int order)
+    private int Select_BattleAI()
     {
-        render.sortingOrder = order;
+        //## Select Skill
+        int idxGroup = IDxSkill.BASIC; //임의 설정
+        int idxSkill = UnityEngine.Random.Range(0, skill[idxGroup].Length);
+
+        //## Select Target
+        int rnd = UnityEngine.Random.Range(0, 3);
+        int flagTarget = UnitMgr.GetTargetFlag(rnd, (ETargetGroup)skill[idxGroup][idxSkill].TargetGroupType);
+
+        //## Update Last Select
+        return (flagTarget << BIT.SHIFT_TARGET) | (idxGroup << BIT.SHIFT_MENU) | idxSkill;
     }
-    public void SetAnimeSpeed(float end, float lerpWeight)
+    public void SaveSelect(int select)
+    {
+        lastSelect = select;
+    }
+
+    //## Move
+    public Vector3 MoveTo(Vector3 move)
+    {
+        return transform.position += move;
+    }
+
+
+    //## Call Action
+    public void ProcBattle_Attack()
+    {
+        if (data.Group == IDxUNIT.ENEMY)
+        {
+            lastSelect = Select_BattleAI();
+        }
+
+        //여기도 쪼까 쎄하네? 로직 정리 추가로 필요
+        //
+        //else if(data.Group == IDxUNIT.PARTY)
+        //{
+        //    lastSelect = select;
+        //}
+
+        coroutine.InitAttack();
+    }
+    public void ProcBattle_Hit(Unit hitter, SkillData skill)
+    {
+        coroutine.InitHit(hitter, skill);
+    }
+
+
+    //## Anime
+    public  void Anime_Play(string type, string code = null)
+    {
+        if (code == null)
+            code = type;
+
+        AnimationClip ac = ResourceMgr.Anime[Data.RcsCode + "/" + code];
+        aoc[type] = ac;
+        animator.CrossFade(type, 0f);
+    }
+    public float Anime_GetLength(string code)
+    {
+        return aoc[code].length;
+    }
+    public  void Anime_SetSpeed(float end, float lerpWeight)
     {
         animator.speed = Mathf.Lerp(animator.speed, end, IDxVALUE.LERP * lerpWeight);
+    }
+
+
+    //## Render
+    public void Render_SetOrder(int order)
+    {
+        render.sortingOrder = order;
     }
 
 
@@ -148,6 +168,7 @@ public partial class Unit : MonoBehaviour
     {
         return hitSkill.Power + (hitter.status[IDxUNIT.DEX] >> 2) - status[IDxUNIT.CON];
     }
+
 
     //## Animation Tag
     public void OnAnime_ReadyToCombo()
@@ -160,6 +181,6 @@ public partial class Unit : MonoBehaviour
         int idxSkill = (lastSelect & BIT.MASK_NOW_CONTENT);
         int flagTarget = (lastSelect >> BIT.SHIFT_TARGET);
 
-        UnitMgr.PlayAnime_Hit(GameMgr.NowOrder, flagTarget, idxGroup, idxSkill);
+        UnitMgr.PlayAnime_Hit(this, flagTarget, idxGroup, idxSkill);
     }
 }
