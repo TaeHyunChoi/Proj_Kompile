@@ -35,11 +35,9 @@ public class UIBattle : MonoBehaviour
 
     private UIBattle_Menu uiMenu;
     private UIBattle_Targeting uiTarget;
-    private UIBattle_Combo uiCombo;
 
     public static Unit NowUnit { get => UnitMgr.InBattle[GameMgr.NowOrder]; }
 
-    public static int BattleSelect { get => instance.select; }
     private int select; //[Targeting][Menu][Content]
 
     public static void Instantiate()
@@ -60,23 +58,25 @@ public class UIBattle : MonoBehaviour
 
         uiMenu = new UIBattle_Menu(transform);
         uiTarget = new UIBattle_Targeting(transform);
-        uiCombo = new UIBattle_Combo(transform);
     }
 
     public void Active(int type, bool isOn)
     {
-        //근데 이 친구도 좀 더 효율적으로 만들 순 없나?
-        //솔직히 퉁 치려는거 티나긴 함 ㅎㅎ!
+        //입력: 매개변수
 
-        uiMenu.  Show(type == IDxUI.BATTLE_MENU   & isOn, NowUnit.LastSelect);
-        uiTarget.Show(type == IDxUI.BATTLE_TARGET & isOn);
+        //처리: 입력모드
+        InputMgr.SetMode(type);
+
+        //출력: UI
+        uiMenu.  Show(type == IDxSTATE.BATTLE_MENU   & isOn, NowUnit.LastSelect);
+        uiTarget.Show(type == IDxSTATE.BATTLE_TARGET & isOn, NowUnit.LastSelect);
     }
     public void Input(byte type, int input)
     {
         switch (type)
         {
             case 0: select = uiMenu.ProcInput(select, input);   break;
-            case 1: select = uiTarget.ProcInput(select, input); break;
+            case 1: select = uiTarget.ProcInput(select, input);   break;
         }
     }
 }
@@ -120,54 +120,19 @@ public class UIBattle_Menu
         Show(false, 0);
     }
 
-    public int ProcInput(int select, int input)
+
+    public  int ProcInput(int select, int input)
     {
         //입력
         select = Input(select, input);
 
         //처리
-        select = GetSlotContent(select, out string[,] info);
-        InputMgr.SetMode(IDxINPUT.BATTLE_MENU);
+        select = SlotText_GetSlotInfo(select, out string[,] info);
+        InputMgr.SetMode(IDxSTATE.BATTLE_MENU);
 
         //출력
         UI_UpdatePanel(select, info);
         UI_UpdateArrow(select);
-
-        return select;
-    }
-    private int GetSlotContent(int select, out string[,] info)
-    {
-        info = new string[,] { };
-        int menu = (select & MASK_NOW_MENU) >> SHIFT_MENU;
-        int idxLast;
-
-        switch ((EIdxMENU)menu)
-        {
-            case EIdxMENU.SkillBasic:
-                info = SlotText_GetSkillInfo(type: IDxSkill.BASIC, out idxLast);
-                break;
-            case EIdxMENU.SkillSolo:
-                info = SlotText_GetSkillInfo(type: IDxSkill.SOLO, out idxLast);
-                break;
-            case EIdxMENU.SkillGroup:
-                info = SlotText_GetSkillInfo(type: IDxSkill.GROUP, out idxLast);
-                break;
-            case EIdxMENU.Mode:
-                info = SlotText_GetModeInfo(out idxLast);
-                break;
-            case EIdxMENU.Item:
-                info = SlotText_GetItemInfo(out idxLast);
-                break;
-            case EIdxMENU.SkillSpecial:
-                info = SlotText_GetSkillInfo(type: IDxSkill.SPECIAL, out idxLast);
-                break;
-            default:
-                idxLast = 1; //밑에서 (index - 1)= 0 으로 만들기 위함
-                break;
-        }
-
-        select &= ~MASK_CNT_CONTENT;
-        select |= ((idxLast - 1) << SHIFT_CNT_CONTENT);
 
         return select;
     }
@@ -180,13 +145,12 @@ public class UIBattle_Menu
         switch (input & IDxINPUT.INTERACT)
         {
             case IDxINPUT.ENTER:
-                switch ((EIdxMENU)idxMenu)
+                NowUnit.LastSelect_Update(select);
+                switch (idxMenu)
                 {
-                    case EIdxMENU.Mode: ProcChangeMode(); break;
-                    case EIdxMENU.Item: ProcUseItem(); break;
-                    default:
-                        Instance.Active(type: 1, true);
-                        return BattleSelect;
+                    case IDxUI.BATTLE_MODE: ProcChangeMode();                break;
+                    case IDxUI.BATTLE_ITEM: ProcUseItem();                   break;
+                    default: Instance.Active(IDxSTATE.BATTLE_TARGET, true); break;
                 }
                 return select;
             case IDxINPUT.CANCEL:
@@ -198,7 +162,7 @@ public class UIBattle_Menu
         {
             case IDxINPUT.RIGHT:
                 //마지막 메뉴?
-                if (idxMenu == (int)EIdxMENU.Count - 1)
+                if (idxMenu == (int)IDxUI.BATTLE_MAX - 1)
                 {
                     select = 0; //MENU 초기화 → MENU =0, CONTENT 초기화 (TARGET만 남는다)
                     break;
@@ -212,7 +176,7 @@ public class UIBattle_Menu
                 //맨앞의 메뉴?
                 if (idxMenu == 0)
                 {
-                    select = (((int)EIdxMENU.Count - 1) << SHIFT_MENU); //CONTENT 초기화
+                    select = ((IDxUI.BATTLE_MAX - 1) << SHIFT_MENU); //CONTENT 초기화
                     break;
                 }
 
@@ -249,29 +213,29 @@ public class UIBattle_Menu
         int menu = (select & MASK_NOW_MENU) >> SHIFT_MENU;
         int idxLast = (select & MASK_CNT_CONTENT) >> SHIFT_CNT_CONTENT;
 
-        switch ((EIdxMENU)menu)
+        switch (menu)
         {
-            case EIdxMENU.SkillBasic:
+            case IDxUI.BATTLE_BASIC:
                 text[0] = "기본기";
                 text[1] = string.Empty;
                 break;
-            case EIdxMENU.SkillSolo:
+            case IDxUI.BATTLE_SOLO:
                 text[0] = "개인 공격기";
                 text[1] = "MP";
                 break;
-            case EIdxMENU.SkillGroup:
+            case IDxUI.BATTLE_GROUP:
                 text[0] = "전체 공격기";
                 text[1] = "MP";
                 break;
-            case EIdxMENU.Mode:
+            case IDxUI.BATTLE_MODE:
                 text[0] = "모드";
                 text[1] = string.Empty;
                 break;
-            case EIdxMENU.Item:
+            case IDxUI.BATTLE_ITEM:
                 text[0] = "아이템";
                 text[1] = string.Empty;
                 break;
-            case EIdxMENU.SkillSpecial:
+            case IDxUI.BATTLE_SPECIAL:
                 text[0] = "특수기";
                 text[1] = string.Empty;
                 break;
@@ -307,6 +271,43 @@ public class UIBattle_Menu
         contentArrow.anchoredPosition = contentArrowDefault + content * new Vector2(0, deltaContent);
     }
 
+
+    private int SlotText_GetSlotInfo(int select, out string[,] info)
+    {
+        info = new string[,] { };
+        int menu = (select & MASK_NOW_MENU) >> SHIFT_MENU;
+        int idxLast;
+
+        switch (menu)
+        {
+            case IDxUI.BATTLE_BASIC:
+                info = SlotText_GetSkillInfo(type: IDxSkill.BASIC, out idxLast);
+                break;
+            case IDxUI.BATTLE_SOLO:
+                info = SlotText_GetSkillInfo(type: IDxSkill.SOLO, out idxLast);
+                break;
+            case IDxUI.BATTLE_GROUP:
+                info = SlotText_GetSkillInfo(type: IDxSkill.GROUP, out idxLast);
+                break;
+            case IDxUI.BATTLE_MODE:
+                info = SlotText_GetModeInfo(out idxLast);
+                break;
+            case IDxUI.BATTLE_ITEM:
+                info = SlotText_GetItemInfo(out idxLast);
+                break;
+            case IDxUI.BATTLE_SPECIAL:
+                info = SlotText_GetSkillInfo(type: IDxSkill.SPECIAL, out idxLast);
+                break;
+            default:
+                idxLast = 1; //밑에서 (index - 1)= 0 으로 만들기 위함
+                break;
+        }
+
+        select &= ~MASK_CNT_CONTENT;
+        select |= ((idxLast - 1) << SHIFT_CNT_CONTENT);
+
+        return select;
+    }
     private string[,] SlotText_GetSkillInfo(int type, out int count)
     {
         SkillData[] skills = NowUnit.Skill[type];
@@ -350,6 +351,7 @@ public class UIBattle_Menu
         return code;
     }
 
+
     private void ProcChangeMode()
     {
 
@@ -358,6 +360,7 @@ public class UIBattle_Menu
     {
 
     }
+
 
     public void Show(bool isOn, int select)
     {
@@ -368,8 +371,7 @@ public class UIBattle_Menu
         }
 
         //입력(select) => 처리
-        select = GetSlotContent(select, out string[,] info);
-        InputMgr.SetMode(IDxINPUT.BATTLE_MENU);
+        select = SlotText_GetSlotInfo(select, out string[,] info);
 
         //출력
         UI_UpdatePanel(select, info);
@@ -393,15 +395,12 @@ public class UIBattle_Targeting
             targetingArrows[i - 1].gameObject.SetActive(false);
         }
 
-        Show(false);
+        Show(false, 0);
     }
 
     public int ProcInput(int select, int input)
     {
         select = Input(select, input);
-
-        InputMgr.SetMode(IDxINPUT.BATTLE_TARGERT);
-
         UI_UpdateArrow(select);
 
         return select;
@@ -423,8 +422,8 @@ public class UIBattle_Targeting
 
         //input & data => select_exceptional
         if (flagTarget == 0
-            || skill.TargetGroupType == (int)ETargetGroup.Self
-            || skill.TargetCountType == (int)ETargetCount.All)
+            || skill.TargetGroupType == IDxSkill.TARGET_SELF
+            || skill.TargetCountType == IDxSkill.TARGET_ALL)
         {
             //기본으로 세팅된 입력값(Self, All은 계산 방법이 항상 동일하다.)
             flagTarget = FlagTarget_SetDefaultPositionIndex(flagTarget, skill.TargetGroupType, skill.TargetCountType, FlagTarget_GetPositionIndex(min), FlagTarget_GetPositionIndex(max));
@@ -442,7 +441,7 @@ public class UIBattle_Targeting
                 NowUnit.ProcBattle_Attack();
                 return select;
             case IDxINPUT.CANCEL:
-                Instance.Active(type: 0, true);
+                Instance.Active(IDxSTATE.BATTLE_MENU, true);
                 return select;
             case IDxINPUT.OPTION:
                 return select;
@@ -518,21 +517,21 @@ public class UIBattle_Targeting
     }
     private int FlagTarget_SetDefaultPositionIndex(int flag, int targetGroup, int targetCount, int min, int max)
     {
-        if (targetCount == (int)ETargetCount.All)
+        if (targetCount == IDxSkill.TARGET_ALL)
         {
-            switch ((ETargetGroup)targetGroup)
+            switch (targetGroup)
             {
-                case ETargetGroup.Party: return (0b_0000_0111); ;
-                case ETargetGroup.Enemy: return (0b_0111_1000); ;
-                case ETargetGroup.ExceptSelf: return ~(1 << GameMgr.NowOrder); ;
+                case IDxSkill.TARGET_PARTY: return (0b_0000_0111); ;
+                case IDxSkill.TARGET_ENEMY: return (0b_0111_1000); ;
+                case IDxSkill.TARGET_XORSELF: return ~(1 << GameMgr.NowOrder); ;
             }
         }
-        else if (targetCount == (int)ETargetCount.One)
+        else if (targetCount == IDxSkill.TARGET_ONE)
         {
-            switch ((ETargetGroup)targetGroup)
+            switch (targetGroup)
             {
-                case ETargetGroup.Party:
-                case ETargetGroup.Enemy:
+                case IDxSkill.TARGET_PARTY:
+                case IDxSkill.TARGET_ENEMY:
                     {
                         Unit target;
                         for (int i = min; i < max; ++i)
@@ -545,7 +544,7 @@ public class UIBattle_Targeting
                         }
                     }
                     return flag;
-                case ETargetGroup.Self:
+                case IDxSkill.TARGET_SELF:
                     return (1 << GameMgr.NowOrder);
             }
         }
@@ -553,23 +552,15 @@ public class UIBattle_Targeting
         return flag;
     }
 
-    public void Show(bool isOn)
+    public void Show(bool isOn, int select)
     {
         obj.SetActive(isOn);
-    }
-}
-public class UIBattle_Combo
-{
-    private GameObject obj;
+        if (!isOn)
+        {
+            return;
+        }
 
-    public UIBattle_Combo(Transform tf)
-    {
-        obj = tf.GetChild(2).gameObject;
-
-        Show(false);
-    }
-    public void Show(bool isOn)
-    {
-        obj.SetActive(isOn);
+        select = ProcInput(select, 0);      //여기서는 기본 입력이 들어가야 하니 넣어야겠군;
+        NowUnit.LastSelect_Update(select);
     }
 }

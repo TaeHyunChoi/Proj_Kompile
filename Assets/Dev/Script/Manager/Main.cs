@@ -7,9 +7,9 @@ public class Main : MonoBehaviour
 
     public enum TestMode : byte
     { 
-        Field   = IDxINPUT.FIELD,
-        Battle  = IDxINPUT.BATTLE_MENU,
-        Cheat   = IDxINPUT.CHEAT
+        Field   = IDxSTATE.FIELD,
+        Battle  = IDxSTATE.BATTLE_MENU,
+        Cheat   = IDxSTATE.CHEAT
     }
     public TestMode inputMode;
 
@@ -38,7 +38,7 @@ public class Main : MonoBehaviour
         Player.Init();
 
         //## Set Input Mode
-        InputMgr.SetMode(IDxINPUT.FIELD);
+        InputMgr.SetMode(IDxSTATE.FIELD);
 
         //## Test
         TestSetting();

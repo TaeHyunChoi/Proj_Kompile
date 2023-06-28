@@ -1,4 +1,34 @@
-//## Index
+public static class IDxVALUE
+{
+    public static float LERP = 20 * UnityEngine.Time.deltaTime;
+}
+public static class IDxSTATE
+{
+    public const byte NONE          =  0;
+    public const byte FIELD         =  1;
+    public const byte BATTLE_MENU   =  2;
+    public const byte BATTLE_TARGET =  3;
+    public const byte BATTLE_COMBO  =  4;
+    public const byte CHEAT         = 15;
+}
+public static class IDxINPUT
+{
+    public const byte NONE      = 0x00;
+
+    public const byte DIRECTION = 0xF0;
+    public const byte UP        = 0x80;
+    public const byte DOWN      = 0x40;
+    public const byte LEFT      = 0x20;
+    public const byte RIGHT     = 0x10;
+
+    public const byte INTERACT  = 0x0F;
+    public const byte ENTER     = 0x08;
+    public const byte CANCEL    = 0x04;
+    public const byte OPTION    = 0x02;  // System Option
+    public const byte TRIGGER   = 0x01;  // joypad [LB] button 
+}
+
+
 public static class IDxUNIT
 {
     public const byte SPEED_MOVE = 5;
@@ -42,49 +72,6 @@ public static class IDxUNIT
     public const string ANIME_SKILL   = "SKILL";
     public const string ANIME_HIT     = "HIT";
     public const string ANIME_EVENT   = "EVENT";
-
-    //[Unit.Group]_[Target Count]
-    public const byte TARGET_PRT_SOLO   = 0; // Unit Type : Party One
-    public const byte TARGET_PRT_ALL    = 1; // Unit Type : Party All
-    public const byte TARGET_ENM_SOLO   = 2; // Unit Type : Enemy One
-    public const byte TARGET_ENM_ALL    = 3; // Unit Type : Enemy All
-    public const byte TARGET_SELF       = 4; // 본인
-    public const byte TARGET_XOR_SELF   = 5; // 본인을 제외한 모든 유닛
-    public const byte TARGET_ALL        = 6; // 피아식별X
-}
-public static class IDxINPUT
-{
-    //None
-    public const byte NONE = 0x00;
-
-    //Mode
-    public const byte BASE             =  1;
-    public const byte FIELD            =  2;
-    public const byte BATTLE_MENU      =  3;
-    public const byte BATTLE_TARGERT   =  4;
-    public const byte BATTLE_COMBO     =  5;
-    public const byte CHEAT            = 15;
-
-    //Direction
-    public const byte DIRECTION      = 0xF0;
-    public const byte UP             = 0x80;
-    public const byte DOWN           = 0x40;
-    public const byte LEFT           = 0x20;
-    public const byte RIGHT          = 0x10;
-
-    //Interact
-    public const byte INTERACT       = 0x0F;
-    public const byte ENTER          = 0x08;
-    public const byte CANCEL         = 0x04;
-    public const byte OPTION         = 0x02;  // System Option
-    public const byte TRIGGER        = 0x01;  // joypad [LB] button 
-}
-public static class IDxUI
-{
-    //UI Window
-    public const byte BATTLE_MENU = 0;
-    public const byte BATTLE_TARGET = 1;
-    public const byte BATTLE_COMBO  = 2;
 }
 public static class IDxSkill
 {
@@ -93,17 +80,16 @@ public static class IDxSkill
     public const byte GROUP   = 2;
     public const byte SPECIAL = 3;
 
-    public const byte TARGET_PARTY = 0;
-    public const byte TARGET_ENEMY = 1;
-    public const byte TARGET_SELF = 2;
-    public const byte TARGET_EXCEPT_SELF = 3;
-}
-public static class IDxVALUE
-{
-    public static float LERP = 20 * UnityEngine.Time.deltaTime;
-}
+    //TargetGroup
+    public const byte TARGET_PARTY   = 0; //플레이어가 조작하는 유닛
+    public const byte TARGET_ENEMY   = 1; //Party의 적대 유닛
+    public const byte TARGET_SELF    = 2; //스킬을 시전하는 유닛
+    public const byte TARGET_XORSELF = 3; //Self 이외의 Party, Enemy 모두
 
-//## Bit Masking
+    //TargetCount
+    public const byte TARGET_ONE = 0;
+    public const byte TARGET_ALL = 1;
+}
 public static class BIT
 {
     public const int MASK_NOW_TARGET     = 0x0FF0_0000;
@@ -113,29 +99,18 @@ public static class BIT
 
     public const int SHIFT_TARGET        = 4 * 5;
     public const int SHIFT_MENU          = 4 * 4;
-    public const int SHIFT_CNT_CONTENT  = 4 * 2;
+    public const int SHIFT_CNT_CONTENT   = 4 * 2;
     //public static int SHIFT_CONTENT = 0; //사실상 사용X
 }
 
-public enum ETargetGroup
-{ 
-    Party = 0,  //플레이어가 조작하는 유닛
-    Enemy,      //Party의 적대 유닛
-    Self,       //스킬을 시전하는 유닛
-    ExceptSelf  //Self 이외의 Party, Enemy 모두
-}
-public enum ETargetCount
+
+public static class IDxUI
 {
-    One = 0,
-    All
-}
-public enum EIdxMENU : int
-{
-    SkillBasic = 0,
-    SkillSolo,
-    SkillGroup,
-    Mode,
-    Item,
-    SkillSpecial,
-    Count
+    public const byte BATTLE_BASIC   = 0;
+    public const byte BATTLE_SOLO    = 1;
+    public const byte BATTLE_GROUP   = 2;
+    public const byte BATTLE_MODE    = 3;
+    public const byte BATTLE_ITEM    = 4;
+    public const byte BATTLE_SPECIAL = 5;
+    public const byte BATTLE_MAX     = 6;
 }

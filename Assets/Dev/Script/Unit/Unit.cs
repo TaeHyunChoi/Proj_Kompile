@@ -107,7 +107,7 @@ public class Unit : MonoBehaviour
 
         //## Select Target
         int rnd = UnityEngine.Random.Range(0, 3);
-        int flagTarget = UnitMgr.GetFlag_Target(rnd, (ETargetGroup)skill[idxGroup][idxSkill].TargetGroupType);
+        int flagTarget = UnitMgr.GetFlag_Target(rnd, skill[idxGroup][idxSkill].TargetGroupType);
 
         //## Update Last Select
         return (flagTarget << BIT.SHIFT_TARGET) | (idxGroup << BIT.SHIFT_MENU) | idxSkill;
@@ -120,7 +120,7 @@ public class Unit : MonoBehaviour
         int idxMenu    = (lastSelect & BIT.MASK_NOW_MENU) >> BIT.SHIFT_MENU;
         int idxContent = (lastSelect & BIT.MASK_NOW_CONTENT);
 
-        Debug.Log($"[Update:{Data.Name}] {skill[idxMenu][idxContent]} => Target:{Convert.ToString(idxTarget, 2).PadLeft(7, '0')}");
+        Debug.Log($"[Update:{Data.Name}] {skill[idxMenu][idxContent].Name} => Target:{Convert.ToString(idxTarget, 2).PadLeft(7, '0')}");
     }
 
 

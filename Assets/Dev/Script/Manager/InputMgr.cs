@@ -1,12 +1,13 @@
 using UnityEngine;
 using static IDxINPUT;
+using static IDxSTATE;
 
 public class InputMgr
 {
     public delegate void InputDelegate();
     public static InputDelegate Update;
 
-    private static int input = NONE;
+    private static int input = IDxSTATE.NONE;
     private static bool isComboPossible;
 
     public static void SetMode(int type)
@@ -20,7 +21,7 @@ public class InputMgr
         {
             case FIELD:            Update += Field;             break;
             case BATTLE_MENU:      Update += BattleAction;      break;
-            case BATTLE_TARGERT:   Update += BattleTargeting;   break;
+            case BATTLE_TARGET:   Update += BattleTargeting;   break;
             case BATTLE_COMBO:     Update += BattleCombo;       break;
             case CHEAT:            Update += Cheat;             break;
             default: break;
@@ -109,7 +110,7 @@ public class InputMgr
     {
         if (input != 0)
         {
-            UIMgr.Battle_SelectTarget(input);  //Update Input        
+            UIMgr.Battle_SelectTarget(input);    
         }
     }
     private static void BattleCombo()
@@ -133,7 +134,7 @@ public class InputMgr
 
         if (isComboPossible & Input.GetButtonDown("Trigger"))
         {
-            UIMgr.Show(IDxUI.BATTLE_COMBO, true);
+            UIMgr.Show(IDxSTATE.BATTLE_COMBO, true);
         }
         if (isComboPossible & Input.GetButton("Trigger"))
         {

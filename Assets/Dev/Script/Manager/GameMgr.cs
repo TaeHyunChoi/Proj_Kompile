@@ -25,6 +25,7 @@ public class GameMgr
 
     public static void Battle_Enter()
     {
+        //Phase 1
         InputMgr.SetMode(IDxINPUT.NONE);
         ChangeMapData(mapCode: NowMap.BattleMapCode);   //[입력] 전투 맵    
         UnitMgr.Proc_EnterBattle(NowMap);               //[처리] 전투 유닛  

@@ -83,7 +83,7 @@ public class UnitCoroutine : MonoBehaviour
                 if (owner != UnitMgr.MyPC)
                     break;
 
-                InputMgr.SetMode(IDxINPUT.BASE);
+                InputMgr.SetMode(IDxSTATE.NONE);
                 UnitMgr.Anime_PlaySlow(slow: false, 1.1f);
                 break;
             case 3:

@@ -233,18 +233,18 @@ public class UnitMgr
 
         if (battle[order].Data.Group == IDxUNIT.PARTY)
         {
-            UIMgr.Show(IDxUI.BATTLE_MENU, true);
+            UIMgr.Show(IDxSTATE.BATTLE_MENU, true);
         }
         else
         {
-            InputMgr.SetMode(IDxINPUT.BASE);
+            InputMgr.SetMode(IDxINPUT.NONE);
             battle[order].ProcBattle_Attack();
         }
     }
 
 
     //## Battle > Get Data
-    public  static int GetFlag_Target(int index, ETargetGroup group)
+    public  static int GetFlag_Target(int index, int group)
     {
         switch (index)
         {
@@ -254,11 +254,11 @@ public class UnitMgr
 
         return -1;
     }
-    private static int GetFlag_TargetHPHighest(ETargetGroup target)
+    private static int GetFlag_TargetHPHighest(int target)
     {
         int flag = 0;
-        int min = (target == ETargetGroup.Enemy) ? 3 : 0;
-        int max = (target == ETargetGroup.Enemy) ? 6 : 2;
+        int min = (target == IDxSkill.TARGET_ENEMY) ? 3 : 0;
+        int max = (target == IDxSkill.TARGET_ENEMY) ? 6 : 2;
 
         int saved = min;
         Unit uComp, uCurrent;
@@ -280,11 +280,11 @@ public class UnitMgr
         flag |= (1 << saved);
         return flag;
     }
-    private static int GetFlag_TargetHPLowest(ETargetGroup target)
+    private static int GetFlag_TargetHPLowest(int target)
     {
         int flag = 0;
-        int min = (target == ETargetGroup.Enemy) ? 3 : 0;
-        int max = (target == ETargetGroup.Enemy) ? 6 : 2;
+        int min = (target == IDxSkill.TARGET_ENEMY) ? 3 : 0;
+        int max = (target == IDxSkill.TARGET_ENEMY) ? 6 : 2;
 
         int saved = min;
         Unit uComp, uCurrent;

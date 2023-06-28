@@ -19,9 +19,9 @@ public class UIMgr
     {
         switch (type)
         {
-            case IDxUI.BATTLE_MENU: 
-            case IDxUI.BATTLE_TARGET: 
-            case IDxUI.BATTLE_COMBO:
+            case IDxSTATE.BATTLE_MENU: 
+            case IDxSTATE.BATTLE_TARGET: 
+            case IDxSTATE.BATTLE_COMBO:
                 UIBattle.Instance.Active(type, on);
                 break;
         }
