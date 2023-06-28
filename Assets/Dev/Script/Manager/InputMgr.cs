@@ -147,14 +147,14 @@ public class InputMgr
         if (!isComboPossible)
         {
             UIMgr.UpdateUI_BattleCombo(active: false);
-            UnitMgr.SlowUnitAnime(slow: false);
+            UnitMgr.Anime_PlaySlow(slow: false);
             return;
         }
 
         if ((input & TRIGGER) != 0)
         {
             UIMgr.UpdateUI_BattleCombo(active: true);
-            UnitMgr.SlowUnitAnime(slow: true);
+            UnitMgr.Anime_PlaySlow(slow: true);
         }
         if ((input & DIRECTION) != 0)
         { 

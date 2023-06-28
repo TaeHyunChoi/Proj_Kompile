@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using UnityEngine;
 
-public partial class Unit : MonoBehaviour
+public class Unit : MonoBehaviour
 {
     //Component
     private AnimatorOverrideController  aoc;
@@ -11,6 +11,7 @@ public partial class Unit : MonoBehaviour
     private SpriteRenderer              render;
     private UnitCoroutine               coroutine; //custom coroutine
 
+    //뭔가 너저분하게 있어서 아쉬운걸;
     public  UnitData Data { get => data; }
     private UnitData data;
 
@@ -28,6 +29,7 @@ public partial class Unit : MonoBehaviour
     public  bool IsFaint { get => isFaint; }
     private bool isFaint;
 
+    public  int LastSelect { get => lastSelect; }
     private int lastSelect;
 
     public void Init(int code)
@@ -38,6 +40,7 @@ public partial class Unit : MonoBehaviour
         //스탯 초기화 (깊은 복사 사용)
         status = new int[IDxUNIT.STAT_CNT];
         Array.Copy(Data.StatDefault, status, IDxUNIT.STAT_CNT);
+        isFaint = false;
 
         //캐릭터 스킬, 공통 스킬
         skill = new SkillData[4][];
@@ -96,7 +99,7 @@ public partial class Unit : MonoBehaviour
 
 
     //## Select > Battle
-    private int Select_SetBattleAI()
+    private int LastSelect_SetAIBattle()
     {
         //## Select Skill
         int idxGroup = IDxSkill.BASIC; //임의 설정
@@ -104,14 +107,20 @@ public partial class Unit : MonoBehaviour
 
         //## Select Target
         int rnd = UnityEngine.Random.Range(0, 3);
-        int flagTarget = UnitMgr.GetTargetFlag(rnd, (ETargetGroup)skill[idxGroup][idxSkill].TargetGroupType);
+        int flagTarget = UnitMgr.GetFlag_Target(rnd, (ETargetGroup)skill[idxGroup][idxSkill].TargetGroupType);
 
         //## Update Last Select
         return (flagTarget << BIT.SHIFT_TARGET) | (idxGroup << BIT.SHIFT_MENU) | idxSkill;
     }
-    public void Select_UpdateLastSelect(int select)
+    public void LastSelect_Update(int select)
     {
         lastSelect = select;
+
+        int idxTarget  = (lastSelect & BIT.MASK_NOW_TARGET) >> BIT.SHIFT_TARGET;
+        int idxMenu    = (lastSelect & BIT.MASK_NOW_MENU) >> BIT.SHIFT_MENU;
+        int idxContent = (lastSelect & BIT.MASK_NOW_CONTENT);
+
+        Debug.Log($"[Update:{Data.Name}] {skill[idxMenu][idxContent]} => Target:{Convert.ToString(idxTarget, 2).PadLeft(7, '0')}");
     }
 
 
@@ -120,7 +129,7 @@ public partial class Unit : MonoBehaviour
     {
         if (data.Group == IDxUNIT.ENEMY)
         {
-            lastSelect = Select_SetBattleAI();
+            lastSelect = LastSelect_SetAIBattle();
         }
 
         //여기도 쪼까 쎄하네? 로직 정리 추가로 필요
@@ -183,6 +192,6 @@ public partial class Unit : MonoBehaviour
         int idxSkill = (lastSelect & BIT.MASK_NOW_CONTENT);
         int flagTarget = (lastSelect >> BIT.SHIFT_TARGET);
 
-        UnitMgr.PlayAnime_Hit(this, flagTarget, idxGroup, idxSkill);
+        UnitMgr.Anime_PlayHit(this, flagTarget, idxGroup, idxSkill);
     }
 }

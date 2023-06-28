@@ -62,7 +62,7 @@ public class UIBattleCombo : MonoBehaviour
         //instance.___ 여러 번 쓰기 싫어서 함수로 호출
         instance.InitSlotIcons();
 
-        UnitMgr.SetRenderOrder(isTurn: true);
+        UnitMgr.Render_SetOrder(isTurn: true);
     }
     private void InitSlotIcons()
     {

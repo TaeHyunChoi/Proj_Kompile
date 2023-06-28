@@ -27,12 +27,12 @@ public class GameMgr
     {
         InputMgr.SetMode(IDxINPUT.NONE);
         ChangeMapData(mapCode: NowMap.BattleMapCode);   //[입력] 전투 맵    
-        UnitMgr.EnterBattle(NowMap);               //[처리] 전투 유닛  
+        UnitMgr.Proc_EnterBattle(NowMap);               //[처리] 전투 유닛  
         Battle_NextTurn();                              //[처리] 전투 진행
         CameraMgr.OnBattleCam(true);                    //[출력] 전투 카메라
     }
     public static void Battle_NextTurn()
     {
-        UnitMgr.SelectAction();
+        UnitMgr.Select_SetNextUnit();
     }
 }

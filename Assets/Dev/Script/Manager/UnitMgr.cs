@@ -65,7 +65,7 @@ public class UnitMgr
 
 
     //## Battle > Enter
-    public static void EnterBattle(MapData map)
+    public static void Proc_EnterBattle(MapData map)
     {
         //## Init
         List<Unit> temp = new List<Unit>();
@@ -159,7 +159,7 @@ public class UnitMgr
         {
             arr[i] = i;
         }
-        OrderByQuickSort(ref arr, 0, arr.Length - 1);
+        Sort_OrderByQuick(ref arr, 0, arr.Length - 1);
 
         //## Enqueue Order In Battle
         for (int i = 0; i < arr.Length; ++i)
@@ -167,31 +167,31 @@ public class UnitMgr
             if (battle[arr[i]] != null)
             {
                 battleOrder.Enqueue(arr[i]);
-                Debug.Log($"Pos[{arr[i]}] {battle[arr[i]].Data.Name}.Prior: {battle[arr[i]].Priority:F2}");
+                //Debug.Log($"Pos[{arr[i]}] {battle[arr[i]].Data.Name}.Prior: {battle[arr[i]].Priority:F2}");
             }
         }
 
         arr  = null;
         temp = null;
     }
-    private static void OrderByQuickSort(ref int[] arr, int start, int end)
+    private static void Sort_OrderByQuick(ref int[] arr, int start, int end)
     {
         int idxLeft = start;
         int idxRight = end;
-        float pivotPrior = GetPrior(arr[(idxLeft + idxRight) >> 1]);
+        float pivotPrior = Sort_GetPrior(arr[(idxLeft + idxRight) >> 1]);
 
         //[내림차순] pivot 기준으로 왼쪽은 큰 수, 오른쪽은 작은 수로 정렬 (1 cycle)
         while (idxLeft < idxRight)
         {
-            while (GetPrior(arr[idxLeft]) > pivotPrior)
+            while (Sort_GetPrior(arr[idxLeft]) > pivotPrior)
                 ++idxLeft;
-            while (GetPrior(arr[idxRight]) < pivotPrior)
+            while (Sort_GetPrior(arr[idxRight]) < pivotPrior)
                 --idxRight;
 
             if (idxLeft > idxRight)
                 break;
 
-            if (GetPrior(arr[idxLeft]) != GetPrior(arr[idxRight]))
+            if (Sort_GetPrior(arr[idxLeft]) != Sort_GetPrior(arr[idxRight]))
             {
                 arr[idxLeft] ^= arr[idxRight];
                 arr[idxRight] ^= arr[idxLeft];
@@ -211,11 +211,11 @@ public class UnitMgr
         }
 
         if (start < idxLeft)
-            OrderByQuickSort(ref arr, start, idxLeft);
+            Sort_OrderByQuick(ref arr, start, idxLeft);
         if (idxRight < end)
-            OrderByQuickSort(ref arr, idxRight, end);
+            Sort_OrderByQuick(ref arr, idxRight, end);
     }
-    private static float GetPrior(int index)
+    private static float Sort_GetPrior(int index)
     {
         Unit unit = battle[index];
         if (unit == null)
@@ -226,7 +226,7 @@ public class UnitMgr
 
 
     //## Battle > Select
-    public static void SelectAction()
+    public static void Select_SetNextUnit()
     {
         int order = battleOrder.Dequeue();
         GameMgr.UpdateOrder(order);
@@ -244,17 +244,17 @@ public class UnitMgr
 
 
     //## Battle > Get Data
-    public  static int GetTargetFlag(int index, ETargetGroup group)
+    public  static int GetFlag_Target(int index, ETargetGroup group)
     {
         switch (index)
         {
-            case 0:     return GetTargetFlag_HPHighest(group);
-            case 1:     return GetTargetFlag_HPLowest(group);
+            case 0:     return GetFlag_TargetHPHighest(group);
+            case 1:     return GetFlag_TargetHPLowest(group);
         }
 
         return -1;
     }
-    private static int GetTargetFlag_HPHighest(ETargetGroup target)
+    private static int GetFlag_TargetHPHighest(ETargetGroup target)
     {
         int flag = 0;
         int min = (target == ETargetGroup.Enemy) ? 3 : 0;
@@ -280,7 +280,7 @@ public class UnitMgr
         flag |= (1 << saved);
         return flag;
     }
-    private static int GetTargetFlag_HPLowest(ETargetGroup target)
+    private static int GetFlag_TargetHPLowest(ETargetGroup target)
     {
         int flag = 0;
         int min = (target == ETargetGroup.Enemy) ? 3 : 0;
@@ -309,7 +309,7 @@ public class UnitMgr
 
 
     //## Battle > Play Anime
-    public static void PlayAnime_Hit(Unit hitter, int flagTarget, int idxGroup, int idxSkill)
+    public static void Anime_PlayHit(Unit hitter, int flagTarget, int idxGroup, int idxSkill)
     {
         SkillData skill = hitter.Skill[idxGroup][idxSkill];
 
@@ -321,7 +321,7 @@ public class UnitMgr
             }
         }
     }
-    public static void SetRenderOrder(bool isTurn)
+    public static void Render_SetOrder(bool isTurn)
     {
         int order = isTurn ? 2 : 0;
         battle[GameMgr.NowOrder].Render_SetOrder(order);
@@ -330,7 +330,7 @@ public class UnitMgr
         //for (int i = 0; i < targets.Count; ++i)
         //    targets[i].SetRenderOrder(order);
     }
-    public static void SlowUnitAnime(bool slow, float lerpWeight = 1f)
+    public static void Anime_PlaySlow(bool slow, float lerpWeight = 1f)
     {
         float end = slow ? 0.1f : 1;
         battle[GameMgr.NowOrder].Anime_SetSpeed(end, lerpWeight);

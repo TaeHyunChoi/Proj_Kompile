@@ -84,7 +84,7 @@ public class UnitCoroutine : MonoBehaviour
                     break;
 
                 InputMgr.SetMode(IDxINPUT.BASE);
-                UnitMgr.SlowUnitAnime(slow: false, 1.1f);
+                UnitMgr.Anime_PlaySlow(slow: false, 1.1f);
                 break;
             case 3:
                 endTime = Time.time + 0.5f;

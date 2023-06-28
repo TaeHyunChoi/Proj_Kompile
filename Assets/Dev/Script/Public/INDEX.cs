@@ -113,7 +113,7 @@ public static class BIT
 
     public const int SHIFT_TARGET        = 4 * 5;
     public const int SHIFT_MENU          = 4 * 4;
-    public const int SHIFT_CONTENT_LAST  = 4 * 2;
+    public const int SHIFT_CNT_CONTENT  = 4 * 2;
     //public static int SHIFT_CONTENT = 0; //사실상 사용X
 }
 
