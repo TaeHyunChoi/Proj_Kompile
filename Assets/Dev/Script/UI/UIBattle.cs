@@ -74,11 +74,11 @@ public class UIBattle : MonoBehaviour
         {
             case 0:
                 InputMgr.SetMode(IDxINPUT.BATTLE_MENU);
-                select = uiMenu.ProcInput(select, 0);
+                select = uiMenu.Proc_Input(select, 0);
                 break;
             case 1:
                 InputMgr.SetMode(IDxINPUT.BATTLE_TARGERT);
-                select = uiTarget.ProcInput(select, 0);
+                select = uiTarget.Proc_Input(select, 0);
                 break;
             case 2:
                 InputMgr.SetMode(IDxINPUT.BATTLE_COMBO);
@@ -94,8 +94,8 @@ public class UIBattle : MonoBehaviour
     {
         switch (type)
         {
-            case 0: select = uiMenu.ProcInput(select, input);   break;
-            case 1: select = uiTarget.ProcInput(select, input); break;
+            case 0: select = uiMenu.Proc_Input(select, input);   break;
+            case 1: select = uiTarget.Proc_Input(select, input); break;
         }
 
         //여기서 Save_Select() 한 번 걸어주는 것도 나쁘지 않겠군
@@ -140,11 +140,12 @@ public class UIBattle_Menu
         contentTitleText = content.GetChild(1).GetComponentsInChildren<TextMeshProUGUI>();
     }
 
-    public int ProcInput(int select, int input)
+
+    public int Proc_Input(int select, int input)
     {
         select = Input(select, input);
-        UpdateUI_Panel(ref select); //UpdateUI에서 select를 반환하니 오히려 가독성 떨어짐. ref로 처리
-        UpdateUI_Arrow(select);
+        UpdateUI_WindowPanel(ref select); //UpdateUI에서 select를 반환하니 오히려 가독성 떨어짐. ref로 처리
+        UpdateUI_WindowArrow(select);
 
         return select;
     }
@@ -160,8 +161,8 @@ public class UIBattle_Menu
                 {
                     switch ((EIdxMENU)menu)
                     {
-                        case EIdxMENU.Mode: ProcChangeMode();                break;
-                        case EIdxMENU.Item: ProcUseItem();                   break;
+                        case EIdxMENU.Mode: Proc_ChangeMode();                break;
+                        case EIdxMENU.Item: Proc_UseItem();                   break;
                         default: 
                             Instance.Active(type: 1, true);
                             return BattleSelect;
@@ -223,7 +224,7 @@ public class UIBattle_Menu
 
         return select;
     }
-    private void UpdateUI_Panel(ref int select)
+    private void UpdateUI_WindowPanel(ref int select)
     {
         string[] text = new string[2];
         string[,] code = new string[,] { };
@@ -235,32 +236,32 @@ public class UIBattle_Menu
             case EIdxMENU.SkillBasic:
                 text[0] = "기본기";
                 text[1] = string.Empty;
-                code = ContentSlot_SetSkill(type: IDxSkill.BASIC, out loadCount);
+                code = GetString_SkillSlot(type: IDxSkill.BASIC, out loadCount);
                 break;
             case EIdxMENU.SkillSolo:
                 text[0] = "개인 공격기";
                 text[1] = "MP";
-                code = ContentSlot_SetSkill(type: IDxSkill.SOLO, out loadCount);
+                code = GetString_SkillSlot(type: IDxSkill.SOLO, out loadCount);
                 break;
             case EIdxMENU.SkillGroup:
                 text[0] = "전체 공격기";
                 text[1] = "MP";
-                code = ContentSlot_SetSkill(type: IDxSkill.GROUP, out loadCount);
+                code = GetString_SkillSlot(type: IDxSkill.GROUP, out loadCount);
                 break;
             case EIdxMENU.Mode:
                 text[0] = "모드";
                 text[1] = string.Empty;
-                code = ContentSlot_SetMode(out loadCount);
+                code = GetString_ModeSlot(out loadCount);
                 break;
             case EIdxMENU.Item:
                 text[0] = "아이템";
                 text[1] = string.Empty;
-                code = ContentSlot_SetItem(out loadCount);
+                code = GetString_ItemSlot(out loadCount);
                 break;
             case EIdxMENU.SkillSpecial:
                 text[0] = "특수기";
                 text[1] = string.Empty;
-                code = ContentSlot_SetSkill(type: IDxSkill.SPECIAL, out loadCount);
+                code = GetString_SkillSlot(type: IDxSkill.SPECIAL, out loadCount);
                 break;
         }
 
@@ -287,7 +288,7 @@ public class UIBattle_Menu
         select &= ~MASK_CNT_CONTENT;
         select |= ((loadCount - 1) << SHIFT_CONTENT_LAST);
     }
-    private void UpdateUI_Arrow(int select)
+    private void UpdateUI_WindowArrow(int select)
     {
         int menu    = (select & MASK_NOW_MENU) >> SHIFT_MENU; ;
         int content = (select & MASK_NOW_CONTENT);
@@ -296,7 +297,8 @@ public class UIBattle_Menu
         contentArrow.anchoredPosition = contentArrowDefault + content * new Vector2(0, deltaContent);
     }
 
-    private string[,] ContentSlot_SetSkill(int type, out int count)
+
+    private string[,] GetString_SkillSlot(int type, out int count)
     {
         SkillData[] skills = UnitMgr.InBattle[GameMgr.NowOrder].Skill[type];
         string[,] code = new string[2, skills.Length];
@@ -310,7 +312,7 @@ public class UIBattle_Menu
 
         return code;
     }
-    private string[,] ContentSlot_SetMode(out int count)
+    private string[,] GetString_ModeSlot(out int count)
     {
         string[] mode = new string[] { "보통", "공격", "방어", "선제", "반격" };
         string[,] code = new string[2, mode.Length];
@@ -324,7 +326,7 @@ public class UIBattle_Menu
 
         return code;
     }
-    private string[,] ContentSlot_SetItem(out int count)
+    private string[,] GetString_ItemSlot(out int count)
     {
         List<Player.Item> items = Player.Items;
         string[,] code = new string[2, items.Count];
@@ -339,11 +341,12 @@ public class UIBattle_Menu
         return code;
     }
 
-    private void ProcChangeMode()
+
+    private void Proc_ChangeMode()
     {
 
     }
-    private void ProcUseItem()
+    private void Proc_UseItem()
     {
 
     }
@@ -371,10 +374,10 @@ public class UIBattle_Targeting
         }
     }
 
-    public int ProcInput(int select, int input)
+    public int Proc_Input(int select, int input)
     {
         select = Input(select, input);
-        UpdateUI(select);
+        UpdateUI_TargetingArrow(select);
 
         return select;
     }
@@ -399,7 +402,7 @@ public class UIBattle_Targeting
             || skill.TargetCountType == (int)ETargetCount.All)
         {
             //기본으로 세팅된 입력값(Self, All은 계산 방법이 항상 동일하다.)
-            flagTarget = FlagTarget_Default(flagTarget, skill.TargetGroupType, skill.TargetCountType, FlagTargetToPos(min), FlagTargetToPos(max));
+            flagTarget = SetFlag_IDxTargetDefault(flagTarget, skill.TargetGroupType, skill.TargetCountType, GetFlag_IDxTargetPos(min), GetFlag_IDxTargetPos(max));
 
             //입력처리를 스킵하지만 + UI Update는 가능하다.
             input = 0;
@@ -410,7 +413,7 @@ public class UIBattle_Targeting
         switch (input & IDxINPUT.INTERACT)
         {
             case IDxINPUT.ENTER:
-                UnitMgr.InBattle[GameMgr.NowOrder].SaveSelect(select);
+                UnitMgr.InBattle[GameMgr.NowOrder].Select_UpdateLastSelect(select);
                 UnitMgr.InBattle[GameMgr.NowOrder].ProcBattle_Attack();
                 return select;
             case IDxINPUT.CANCEL:
@@ -434,7 +437,7 @@ public class UIBattle_Targeting
                     else
                         flagTarget >>= 1;
 
-                    int idxPos = FlagTargetToPos(flagTarget);
+                    int idxPos = GetFlag_IDxTargetPos(flagTarget);
                     target = UnitMgr.InBattle[idxPos];
                     if (target != null && !target.IsFaint)
                         break;
@@ -448,7 +451,7 @@ public class UIBattle_Targeting
                     else
                         flagTarget <<= 1;
 
-                    int idxPos = FlagTargetToPos(flagTarget);
+                    int idxPos = GetFlag_IDxTargetPos(flagTarget);
                     target = UnitMgr.InBattle[idxPos];
                     if (target != null && !target.IsFaint)
                         break;
@@ -461,7 +464,7 @@ public class UIBattle_Targeting
 
         return select;
     }
-    public void UpdateUI(int select)
+    public void UpdateUI_TargetingArrow(int select)
     {
         select >>= SHIFT_TARGET;
         int comp;
@@ -481,17 +484,19 @@ public class UIBattle_Targeting
         }
     }
 
-    private int FlagTargetToPos(int flag)
+    private int GetFlag_IDxTargetPos(int flag)
     {
         for (int i = 0; i < 7; ++i)
         {
             if ((flag >> i) == 1)
+            {
                 return i;
+            }
         }
 
         return 0;
     }
-    private int FlagTarget_Default(int flag, int targetGroup, int targetCount, int min, int max)
+    private int SetFlag_IDxTargetDefault(int flag, int targetGroup, int targetCount, int min, int max)
     {
         if (targetCount == (int)ETargetCount.All)
         {

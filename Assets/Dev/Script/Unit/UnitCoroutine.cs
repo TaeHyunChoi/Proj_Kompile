@@ -120,7 +120,7 @@ public class UnitCoroutine : MonoBehaviour
     public void InitHit(Unit hitter, SkillData hitSkill)
     {
         InitBase(type: 1);
-        fValue = owner.CalcDamage(hitter, hitSkill);
+        fValue = owner.Status_CalcDamage(hitter, hitSkill);
         enabled = true;
     }
     private void SetNext_Hit()

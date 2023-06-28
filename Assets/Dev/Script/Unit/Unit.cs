@@ -30,9 +30,7 @@ public partial class Unit : MonoBehaviour
 
     private int lastSelect;
 
-
-    //## Set Data
-    public  void Init(int code)
+    public void Init(int code)
     {
         //기본값 정보 저장
         data = DataMgr.UnitTBL.Find(unit => unit.Index == code);
@@ -58,7 +56,10 @@ public partial class Unit : MonoBehaviour
 
         Anime_Play(IDxUNIT.ANIME_IDLE);
     }
-    public  void Status_SetBattle()
+
+
+    //## Status
+    public void Status_SetInBattle()
     {
         //## Mode => Status Weighted
         //추후 개발
@@ -88,7 +89,14 @@ public partial class Unit : MonoBehaviour
 
         priority = Status[IDxUNIT.AGI] * isLukcy;
     }
-    private int Select_BattleAI()
+    public  int Status_CalcDamage(Unit hitter, SkillData hitSkill)
+    {
+        return hitSkill.Power + (hitter.status[IDxUNIT.DEX] >> 2) - status[IDxUNIT.CON];
+    } //데미지 계산이면 Mgr급으로 빠져도 될 것 같은데?
+
+
+    //## Select > Battle
+    private int Select_SetBattleAI()
     {
         //## Select Skill
         int idxGroup = IDxSkill.BASIC; //임의 설정
@@ -101,24 +109,18 @@ public partial class Unit : MonoBehaviour
         //## Update Last Select
         return (flagTarget << BIT.SHIFT_TARGET) | (idxGroup << BIT.SHIFT_MENU) | idxSkill;
     }
-    public void SaveSelect(int select)
+    public void Select_UpdateLastSelect(int select)
     {
         lastSelect = select;
     }
 
-    //## Move
-    public Vector3 MoveTo(Vector3 move)
-    {
-        return transform.position += move;
-    }
 
-
-    //## Call Action
+    //## Process(Proc)
     public void ProcBattle_Attack()
     {
         if (data.Group == IDxUNIT.ENEMY)
         {
-            lastSelect = Select_BattleAI();
+            lastSelect = Select_SetBattleAI();
         }
 
         //여기도 쪼까 쎄하네? 로직 정리 추가로 필요
@@ -133,6 +135,13 @@ public partial class Unit : MonoBehaviour
     public void ProcBattle_Hit(Unit hitter, SkillData skill)
     {
         coroutine.InitHit(hitter, skill);
+    }
+
+
+    //## Vector
+    public Vector3 Move(Vector3 move)
+    {
+        return transform.position += move;
     }
 
 
@@ -160,13 +169,6 @@ public partial class Unit : MonoBehaviour
     public void Render_SetOrder(int order)
     {
         render.sortingOrder = order;
-    }
-
-
-    //얘도 고민 좀. 데미지 계산이면 Mgr급으로 빠져도 될 것 같은데?
-    public int CalcDamage(Unit hitter, SkillData hitSkill)
-    {
-        return hitSkill.Power + (hitter.status[IDxUNIT.DEX] >> 2) - status[IDxUNIT.CON];
     }
 
 

@@ -149,7 +149,7 @@ public class UnitMgr
         {
             if (battle[i] != null)
             {
-                battle[i].Status_SetBattle();
+                battle[i].Status_SetInBattle();
             }
         }
 
@@ -367,7 +367,7 @@ public class UnitMgr
         }    
 
         Vector3 delta = new Vector3(mx, 0, mz) * IDxUNIT.SPEED_MOVE * Time.deltaTime;
-        CameraMgr.FollowPC(MyPC.MoveTo(delta));
+        CameraMgr.FollowPC(MyPC.Move(delta));
     }
 
 
