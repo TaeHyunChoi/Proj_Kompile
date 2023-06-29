@@ -5,40 +5,19 @@ using TMPro;
 using static UIBattle;
 using static BIT;
 
-public struct UISlot_Battle
-{
-    private GameObject go;
-    private Image icon;
-    private TextMeshProUGUI name;
 
-    public UISlot_Battle(GameObject _go)
-    {
-        go = _go;
-        icon = _go.transform.GetChild(0).GetComponent<Image>();
-        name = _go.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
-    }
-    public void Load(string slotName, string rcsCode)
-    {
-        name.text = slotName;
-        icon.sprite = ResourceMgr.SPIcon[rcsCode];
-        go.SetActive(true);
-    }
-    public void SetActive(bool on)
-    {
-        go.SetActive(on);
-    }
-}
 public class UIBattle : MonoBehaviour
 {
-    public static UIBattle Instance { get => instance; }
+    public  static UIBattle Instance { get => instance; }
     private static UIBattle instance;
 
-    private UIBattle_Menu uiMenu;
-    private UIBattle_Targeting uiTarget;
+    private UIBattle_Menu       uiMenu;
+    private UIBattle_Targeting  uiTarget;
 
     public static Unit NowUnit { get => UnitMgr.InBattle[GameMgr.NowOrder]; }
 
-    private int select; //[Targeting][Menu][Content]
+    //[Targeting][Menu][Content]
+    private int select;
 
     public static void Instantiate()
     {
@@ -67,21 +46,52 @@ public class UIBattle : MonoBehaviour
         //처리: 입력모드
         InputMgr.SetMode(type);
 
+        //처리: 기본 입력 처리 (마음에 안든다.)
+        select = NowUnit.LastSelect;
+        if (type == IDxSTATE.BATTLE_TARGET)
+        {
+            select = uiTarget.ProcInput(select, 0);
+        }
+
         //출력: UI
-        uiMenu.  Show(type == IDxSTATE.BATTLE_MENU   & isOn, NowUnit.LastSelect);
-        uiTarget.Show(type == IDxSTATE.BATTLE_TARGET & isOn, NowUnit.LastSelect);
+        uiMenu.  Show(type == IDxSTATE.BATTLE_MENU   & isOn, select);
+        uiTarget.Show(type == IDxSTATE.BATTLE_TARGET & isOn, select);
     }
     public void Input(byte type, int input)
     {
         switch (type)
         {
-            case 0: select = uiMenu.ProcInput(select, input);   break;
-            case 1: select = uiTarget.ProcInput(select, input);   break;
+            case IDxSTATE.BATTLE_MENU:   select = uiMenu.  ProcInput(select, input);    break;
+            case IDxSTATE.BATTLE_TARGET: select = uiTarget.ProcInput(select, input);    break;
         }
     }
 }
 public class UIBattle_Menu
 {
+    public struct UISlot_Battle
+    {
+        private GameObject go;
+        private Image icon;
+        private TextMeshProUGUI name;
+
+        public UISlot_Battle(GameObject _go)
+        {
+            go = _go;
+            icon = _go.transform.GetChild(0).GetComponent<Image>();
+            name = _go.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+        }
+        public void Load(string slotName, string rcsCode)
+        {
+            name.text = slotName;
+            icon.sprite = ResourceMgr.SPIcon[rcsCode];
+            go.SetActive(true);
+        }
+        public void SetActive(bool on)
+        {
+            go.SetActive(on);
+        }
+    }
+
     private GameObject obj;
 
     private RectTransform menuArrow;
@@ -113,8 +123,9 @@ public class UIBattle_Menu
         slots = new List<UISlot_Battle>();
         contentScroll = content.GetChild(2).GetChild(0).GetChild(0);
         for (int i = 0; i < contentScroll.childCount; ++i)
+        {
             slots.Add(new UISlot_Battle(contentScroll.GetChild(i).gameObject));
-
+        }
         contentTitleText = content.GetChild(1).GetComponentsInChildren<TextMeshProUGUI>();
 
         Show(false, 0);
@@ -128,7 +139,6 @@ public class UIBattle_Menu
 
         //처리
         select = SlotText_GetSlotInfo(select, out string[,] info);
-        InputMgr.SetMode(IDxSTATE.BATTLE_MENU);
 
         //출력
         UI_UpdatePanel(select, info);
@@ -560,7 +570,7 @@ public class UIBattle_Targeting
             return;
         }
 
-        select = ProcInput(select, 0);      //여기서는 기본 입력이 들어가야 하니 넣어야겠군;
+        //select = ProcInput(select, 0);
         NowUnit.LastSelect_Update(select);
     }
 }

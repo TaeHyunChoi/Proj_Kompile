@@ -116,11 +116,10 @@ public class Unit : MonoBehaviour
     {
         lastSelect = select;
 
-        int idxTarget  = (lastSelect & BIT.MASK_NOW_TARGET) >> BIT.SHIFT_TARGET;
-        int idxMenu    = (lastSelect & BIT.MASK_NOW_MENU) >> BIT.SHIFT_MENU;
-        int idxContent = (lastSelect & BIT.MASK_NOW_CONTENT);
-
-        Debug.Log($"[Update:{Data.Name}] {skill[idxMenu][idxContent].Name} => Target:{Convert.ToString(idxTarget, 2).PadLeft(7, '0')}");
+        //int idxTarget  = (lastSelect & BIT.MASK_NOW_TARGET) >> BIT.SHIFT_TARGET;
+        //int idxMenu    = (lastSelect & BIT.MASK_NOW_MENU) >> BIT.SHIFT_MENU;
+        //int idxContent = (lastSelect & BIT.MASK_NOW_CONTENT);
+        //Debug.Log($"[Update:{Data.Name}] {skill[idxMenu][idxContent].Name} => Target:{Convert.ToString(idxTarget, 2).PadLeft(7, '0')}");
     }
 
 

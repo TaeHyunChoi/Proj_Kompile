@@ -10,6 +10,9 @@ public class InputMgr
     private static int input = IDxSTATE.NONE;
     private static bool isComboPossible;
 
+    //이걸 델리게이트로 할 필요는 없을 듯?
+
+
     public static void SetMode(int type)
     {
         //기본 입력값
@@ -20,8 +23,8 @@ public class InputMgr
         switch (type)
         {
             case FIELD:            Update += Field;             break;
-            case BATTLE_MENU:      Update += BattleAction;      break;
-            case BATTLE_TARGET:   Update += BattleTargeting;   break;
+            case BATTLE_MENU:      Update += BattleMenu;        break;
+            case BATTLE_TARGET:    Update += BattleTargeting;   break;
             case BATTLE_COMBO:     Update += BattleCombo;       break;
             case CHEAT:            Update += Cheat;             break;
             default: break;
@@ -99,7 +102,7 @@ public class InputMgr
             Debug.Log("ENTER");
         }
     }
-    private static void BattleAction()
+    private static void BattleMenu()
     {
         if (input != 0)
         {
@@ -163,10 +166,12 @@ public class InputMgr
         }
     }
 
+
     public static void Set_IsCombo(bool isOn)
     {
         isComboPossible = isOn;
     }
+
 
     private static void Cheat()
     {

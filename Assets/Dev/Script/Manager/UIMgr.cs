@@ -28,11 +28,11 @@ public class UIMgr
     }
     public static void Battle_SelectMenu(int input)
     {
-        UIBattle.Instance.Input(type: 0, input);
+        UIBattle.Instance.Input(IDxSTATE.BATTLE_MENU, input);
     }
     public static void Battle_SelectTarget(int input)
     {
-        UIBattle.Instance.Input(type: 1, input);
+        UIBattle.Instance.Input(IDxSTATE.BATTLE_TARGET, input);
     }
 
     //UI 클래스 만들어서 where T: 식으로 하는게 좋았으려나?
