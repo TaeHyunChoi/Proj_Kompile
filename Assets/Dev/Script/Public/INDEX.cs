@@ -4,28 +4,45 @@ public static class IDxVALUE
 }
 public static class IDxSTATE
 {
-    public const byte NONE          =  0;
-    public const byte FIELD         =  1;
-    public const byte BATTLE_MENU   =  2;
-    public const byte BATTLE_TARGET =  3;
-    public const byte BATTLE_COMBO  =  4;
-    public const byte CHEAT         = 15;
+    //뭔가 전반적인 기획(프레임)이 흔들려서 코드도 흔들리는 기분인데 흠
+    //논리 순서는 [ 입력 > 상황 > 처리 > 출력 ] 인데
+    //처리 위계는 [ 상황 > 입력 > 처리 > 출력 ] 순이다.
+    //그러면 Ummmmm
+
+    public const short NONE  = 0;
+
+    public const short FIELD = 1;
+
+    public const short BATTLE_PLY_MENU   = 10;
+    public const short BATTLE_PLY_TARGET = 11;
+    public const short BATTLE_PLY_COMBO  = 12;
+    public const short BATTLE_ENM_ACTION = 13;
+
+    public const short EVENT_CUTSCENE    = 50;
+
+    public const short SYSTEM_INFO       = 100;
+    public const short SYSTEM_OPTION     = 101;
+    public const short SYSTEM_CHEAT      = 102;
 }
 public static class IDxINPUT
 {
-    public const byte NONE      = 0x00;
+    public const short NONE      = 0x00_00;
 
-    public const byte DIRECTION = 0xF0;
-    public const byte UP        = 0x80;
-    public const byte DOWN      = 0x40;
-    public const byte LEFT      = 0x20;
-    public const byte RIGHT     = 0x10;
+    public const short SYSTEM    = 0x0F_00;
+    public const short CHEAT     = 0x02_00;
+    public const short INFO      = 0x02_00;
+    public const short OPTION    = 0x01_00;
 
-    public const byte INTERACT  = 0x0F;
-    public const byte ENTER     = 0x08;
-    public const byte CANCEL    = 0x04;
-    public const byte OPTION    = 0x02;  // System Option
-    public const byte TRIGGER   = 0x01;  // joypad [LB] button 
+    public const short DIRECTION = 0x00_F0;
+    public const short UP        = 0x00_80;
+    public const short DOWN      = 0x00_40;
+    public const short LEFT      = 0x00_20;
+    public const short RIGHT     = 0x00_10;
+
+    public const short ACTION    = 0x00_0F;
+    public const short ENTER     = 0x00_04;
+    public const short CANCEL    = 0x00_02;
+    public const short TRIGGER   = 0x00_01;  // joypad [LB] button 
 }
 
 

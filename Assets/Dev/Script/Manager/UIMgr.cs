@@ -19,20 +19,20 @@ public class UIMgr
     {
         switch (type)
         {
-            case IDxSTATE.BATTLE_MENU: 
-            case IDxSTATE.BATTLE_TARGET: 
-            case IDxSTATE.BATTLE_COMBO:
+            case IDxSTATE.BATTLE_PLY_MENU: 
+            case IDxSTATE.BATTLE_PLY_TARGET: 
+            case IDxSTATE.BATTLE_PLY_COMBO:
                 UIBattle.Instance.Active(type, on);
                 break;
         }
     }
     public static void Battle_SelectMenu(int input)
     {
-        UIBattle.Instance.Input(IDxSTATE.BATTLE_MENU, input);
+        UIBattle.Instance.Input(IDxSTATE.BATTLE_PLY_MENU, input);
     }
     public static void Battle_SelectTarget(int input)
     {
-        UIBattle.Instance.Input(IDxSTATE.BATTLE_TARGET, input);
+        UIBattle.Instance.Input(IDxSTATE.BATTLE_PLY_TARGET, input);
     }
 
     //UI 클래스 만들어서 where T: 식으로 하는게 좋았으려나?

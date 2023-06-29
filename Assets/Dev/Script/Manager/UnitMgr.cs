@@ -233,11 +233,12 @@ public class UnitMgr
 
         if (battle[order].Data.Group == IDxUNIT.PARTY)
         {
-            UIMgr.Show(IDxSTATE.BATTLE_MENU, true);
+            GameMgr.State_Set(IDxSTATE.BATTLE_PLY_MENU);
+            UIMgr.Show(IDxSTATE.BATTLE_PLY_MENU, true);
         }
         else
         {
-            InputMgr.SetMode(IDxINPUT.NONE);
+            GameMgr.State_Set(IDxSTATE.NONE);
             battle[order].ProcBattle_Attack();
         }
     }

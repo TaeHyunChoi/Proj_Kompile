@@ -82,8 +82,7 @@ public class UnitCoroutine : MonoBehaviour
                 owner.Anime_Play(IDxUNIT.ANIME_IDLE);
                 if (owner != UnitMgr.MyPC)
                     break;
-
-                InputMgr.SetMode(IDxSTATE.NONE);
+                
                 UnitMgr.Anime_PlaySlow(slow: false, 1.1f);
                 break;
             case 3:

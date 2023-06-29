@@ -5,11 +5,10 @@ public class Main : MonoBehaviour
     public Main Instance { private get; set; }
     public ushort testMapCode;
 
-    public enum TestMode : byte
+    public enum TestMode : short
     { 
         Field   = IDxSTATE.FIELD,
-        Battle  = IDxSTATE.BATTLE_MENU,
-        Cheat   = IDxSTATE.CHEAT
+        Battle  = IDxSTATE.BATTLE_PLY_MENU,
     }
     public TestMode inputMode;
 
@@ -37,15 +36,13 @@ public class Main : MonoBehaviour
         //## Set GameData
         Player.Init();
 
-        //## Set Input Mode
-        InputMgr.SetMode(IDxSTATE.FIELD);
-
         //## Test
         TestSetting();
     }
 
     private void Update()
     {
+        //InputMgr.DUpdate();
         InputMgr.Update();
     }
 
@@ -53,6 +50,6 @@ public class Main : MonoBehaviour
     {
         Player.Test();
         GameMgr.ChangeMapData(testMapCode);
-        InputMgr.SetMode(/*IDxINPUT.MODE_CHEAT*/ (byte)inputMode);
+        GameMgr.Battle_Enter();
     }
 }

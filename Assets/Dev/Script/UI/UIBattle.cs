@@ -5,7 +5,6 @@ using TMPro;
 using static UIBattle;
 using static BIT;
 
-
 public class UIBattle : MonoBehaviour
 {
     public  static UIBattle Instance { get => instance; }
@@ -41,28 +40,28 @@ public class UIBattle : MonoBehaviour
 
     public void Active(int type, bool isOn)
     {
-        //입력: 매개변수
-
-        //처리: 입력모드
-        InputMgr.SetMode(type);
+        //입력: 게임 상태 설정 (=> 입력 모드)
+        GameMgr.State_Set(type);
 
         //처리: 기본 입력 처리 (마음에 안든다.)
+        //아하.. 지금 보니까 순서가 좀 꼬인거 같네... 다시 여기서부터 풀어가야겠구나
+        //(개인의견) 나름의 규칙을 세우니까 코드를 어찌 정리할지 + 어디서 꼬이는지 좀 더 잘보임.
         select = NowUnit.LastSelect;
-        if (type == IDxSTATE.BATTLE_TARGET)
+        if (type == IDxSTATE.BATTLE_PLY_TARGET)
         {
             select = uiTarget.ProcInput(select, 0);
         }
 
         //출력: UI
-        uiMenu.  Show(type == IDxSTATE.BATTLE_MENU   & isOn, select);
-        uiTarget.Show(type == IDxSTATE.BATTLE_TARGET & isOn, select);
+        uiMenu.  Show(type == IDxSTATE.BATTLE_PLY_MENU   & isOn, select);
+        uiTarget.Show(type == IDxSTATE.BATTLE_PLY_TARGET & isOn, select);
     }
-    public void Input(byte type, int input)
+    public void Input(short type, int input)
     {
         switch (type)
         {
-            case IDxSTATE.BATTLE_MENU:   select = uiMenu.  ProcInput(select, input);    break;
-            case IDxSTATE.BATTLE_TARGET: select = uiTarget.ProcInput(select, input);    break;
+            case IDxSTATE.BATTLE_PLY_MENU:   select = uiMenu.  ProcInput(select, input);    break;
+            case IDxSTATE.BATTLE_PLY_TARGET: select = uiTarget.ProcInput(select, input);    break;
         }
     }
 }
@@ -152,7 +151,7 @@ public class UIBattle_Menu
         int idxLast = (select & MASK_CNT_CONTENT) >> SHIFT_CNT_CONTENT;
 
         //## Update Select
-        switch (input & IDxINPUT.INTERACT)
+        switch (input & IDxINPUT.ACTION)
         {
             case IDxINPUT.ENTER:
                 NowUnit.LastSelect_Update(select);
@@ -160,12 +159,10 @@ public class UIBattle_Menu
                 {
                     case IDxUI.BATTLE_MODE: ProcChangeMode();                break;
                     case IDxUI.BATTLE_ITEM: ProcUseItem();                   break;
-                    default: Instance.Active(IDxSTATE.BATTLE_TARGET, true); break;
+                    default: Instance.Active(IDxSTATE.BATTLE_PLY_TARGET, true); break;
                 }
                 return select;
             case IDxINPUT.CANCEL:
-                return select;
-            case IDxINPUT.OPTION:
                 return select;
         }
         switch (input & IDxINPUT.DIRECTION)
@@ -444,16 +441,14 @@ public class UIBattle_Targeting
 
         //input & data => select
         Unit target;
-        switch (input & IDxINPUT.INTERACT)
+        switch (input & IDxINPUT.ACTION)
         {
             case IDxINPUT.ENTER:
                 NowUnit.LastSelect_Update(select);
                 NowUnit.ProcBattle_Attack();
                 return select;
             case IDxINPUT.CANCEL:
-                Instance.Active(IDxSTATE.BATTLE_MENU, true);
-                return select;
-            case IDxINPUT.OPTION:
+                Instance.Active(IDxSTATE.BATTLE_PLY_MENU, true);
                 return select;
         }
         switch (input & IDxINPUT.DIRECTION)

@@ -1,41 +1,63 @@
 using UnityEngine;
 using static IDxINPUT;
-using static IDxSTATE;
 
 public class InputMgr
 {
     public delegate void InputDelegate();
-    public static InputDelegate Update;
+    public static InputDelegate DUpdate;
 
-    private static int input = IDxSTATE.NONE;
+    private static int  input = NONE;
     private static bool isComboPossible;
 
-    //이걸 델리게이트로 할 필요는 없을 듯?
-
-
-    public static void SetMode(int type)
+    public static void Update()
     {
-        //기본 입력값
-        Update =  Base;
-        Update += Option;
+        input = 0;
 
-        //상황별 입력값 추가
-        switch (type)
+        //[입력1] System
+        GetButtonDown_System();
+        if (input != 0)
         {
-            case FIELD:            Update += Field;             break;
-            case BATTLE_MENU:      Update += BattleMenu;        break;
-            case BATTLE_TARGET:    Update += BattleTargeting;   break;
-            case BATTLE_COMBO:     Update += BattleCombo;       break;
-            case CHEAT:            Update += Cheat;             break;
-            default: break;
+            Debug.Log("Input System Key;");
+            return;
         }
 
-        //입력값 초기화
-        Update += delegate { input = 0; };
+        //[입력2-1] 공통
+        GetButtonDown_Direction();
+        GetButtonDown_Action();
+
+        //[입력2-2] 개별입력 => [처리] 상황별 호출
+        switch (GameMgr.State)
+        {
+            case IDxSTATE.FIELD:
+                GetButton_Direction();
+                if (input != 0)
+                {
+                    UnitMgr.Field_PlayerMoveTo(input);
+                }
+                break;
+            case IDxSTATE.BATTLE_PLY_MENU:
+                if (input != 0)
+                {
+                    UIMgr.Battle_SelectMenu(input);
+                }
+                break;
+            case IDxSTATE.BATTLE_PLY_TARGET:
+                if (input != 0)
+                {
+                    UIMgr.Battle_SelectTarget(input);
+                }
+                break;
+            case IDxSTATE.BATTLE_PLY_COMBO:
+                if (input != 0)
+                {
+                    BattleCombo();
+                }
+                break;
+        }
     }
 
-
-    private static void Base()
+    //## Common
+    private static void GetButtonDown_Direction()
     {
         if (Input.GetButtonDown("Up"))
         {
@@ -53,6 +75,9 @@ public class InputMgr
         {
             input |= RIGHT;
         }
+    }
+    private static void GetButtonDown_Action()
+    {
         if (Input.GetButtonDown("Enter"))
         {
             input |= ENTER;
@@ -61,20 +86,29 @@ public class InputMgr
         {
             input |= CANCEL;
         }
+        if (Input.GetButtonDown("Trigger"))
+        {
+            input |= TRIGGER;
+        }
+    }
+    private static void GetButtonDown_System()
+    {
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            input |= CHEAT;
+        }
+        if (Input.GetButtonDown("Info"))
+        {
+            input |= INFO;
+        }
         if (Input.GetButtonDown("Option"))
         {
             input |= OPTION;
         }
     }
-    private static void Option()
-    { 
-        
-    }
 
-
-    private static void Field()
+    private static void GetButton_Direction()
     {
-        //GetButton: 꾸욱 눌러도 입력되도록
         if (Input.GetButton("Up"))
         {
             input |= UP;
@@ -91,63 +125,34 @@ public class InputMgr
         {
             input |= RIGHT;
         }
-        if ((input & DIRECTION) != 0)
+    }
+
+    public static bool IsInput()
+    {
+        //case by case
+        switch (GameMgr.State)
         {
-            UnitMgr.Field_PlayerMoveTo(input);
+            case IDxSTATE.BATTLE_PLY_COMBO:
+                if (Input.GetButtonUp("Trigger"))
+                {
+                    isComboPossible = false;
+                }
+                if (isComboPossible & Input.GetButtonDown("Trigger"))
+                {
+                    UIMgr.Show(IDxSTATE.BATTLE_PLY_COMBO, true);
+                }
+                if (isComboPossible & Input.GetButton("Trigger"))
+                {
+                    input |= TRIGGER;
+                }
+                break;
         }
 
-        //npc, 아이템 등과의 상호작용 용도
-        if ((input & ENTER) != 0)
-        {
-            Debug.Log("ENTER");
-        }
+        return input != 0;
     }
-    private static void BattleMenu()
-    {
-        if (input != 0)
-        {
-            UIMgr.Battle_SelectMenu(input);
-        }
-    }
-    private static void BattleTargeting()
-    {
-        if (input != 0)
-        {
-            UIMgr.Battle_SelectTarget(input);    
-        }
-    }
+
     private static void BattleCombo()
     {
-        if (Input.GetButton("Up"))
-        {
-            input |= UP;
-        }
-        if (Input.GetButton("Down"))
-        {
-            input |= DOWN;
-        }
-        if (Input.GetButton("Left"))
-        {
-            input |= LEFT;
-        }
-        if (Input.GetButton("Right"))
-        {
-            input |= RIGHT;
-        }
-
-        if (isComboPossible & Input.GetButtonDown("Trigger"))
-        {
-            UIMgr.Show(IDxSTATE.BATTLE_COMBO, true);
-        }
-        if (isComboPossible & Input.GetButton("Trigger"))
-        {
-            input |= TRIGGER;
-        }
-        if (Input.GetButtonUp("Trigger"))
-        {
-            isComboPossible = false;
-        }
-
         if (!isComboPossible)
         {
             UIMgr.UpdateUI_BattleCombo(active: false);
@@ -160,24 +165,9 @@ public class InputMgr
             UIMgr.UpdateUI_BattleCombo(active: true);
             UnitMgr.Anime_PlaySlow(slow: true);
         }
-        if ((input & DIRECTION) != 0)
-        { 
-            
-        }
     }
-
-
     public static void Set_IsCombo(bool isOn)
     {
         isComboPossible = isOn;
-    }
-
-
-    private static void Cheat()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            GameMgr.Battle_Enter();
-        }
     }
 }

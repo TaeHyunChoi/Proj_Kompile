@@ -11,6 +11,9 @@ public class GameMgr
     public static int NowOrder { get => nowOrder; }
     private static int nowOrder;
 
+    public static int State { get => state; }
+    private static int state;
+
     public static void ChangeMapData(ushort mapCode)
     {
         LastMap = NowMap;
@@ -23,12 +26,17 @@ public class GameMgr
         nowOrder = order;
     }
 
+    public static void State_Set(int idxState)
+    {
+        state = idxState;
+    }
+
     public static void Battle_Enter()
     {
         //Phase 1
-        InputMgr.SetMode(IDxINPUT.NONE);
+        state = IDxSTATE.NONE;
         ChangeMapData(mapCode: NowMap.BattleMapCode);   //[입력] 전투 맵    
-        UnitMgr.Proc_EnterBattle(NowMap);               //[처리] 전투 유닛  
+        UnitMgr.Proc_EnterBattle(NowMap);               //[처리] 전투 유닛
         Battle_NextTurn();                              //[처리] 전투 진행
         CameraMgr.OnBattleCam(true);                    //[출력] 전투 카메라
     }
