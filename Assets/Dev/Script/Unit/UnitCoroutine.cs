@@ -89,7 +89,7 @@ public class UnitCoroutine : MonoBehaviour
                 endTime = Time.time + 0.5f;
                 break;
             default:
-                UnitMgr.Select_SetNextUnit();
+                GameMgr.Battle();
                 enabled = false;
                 Clear();
                 return;

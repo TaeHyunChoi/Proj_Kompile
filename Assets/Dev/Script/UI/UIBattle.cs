@@ -16,8 +16,7 @@ public class UIBattle : MonoBehaviour
 
     public static Unit NowUnit { get => UnitMgr.InBattle[GameMgr.NowOrder]; }
 
-    //[Targeting][Menu][Content]
-    private int select;
+    private int select;    //[Targeting][Menu][Content]
 
     public static void Instantiate()
     {
@@ -53,7 +52,7 @@ public class UIBattle : MonoBehaviour
         switch (state)
         {
             case IDxSTATE.BATTLE_PLY_MENU:   uiMenu.  UI_SetActive(false, select, null);   break;
-            case IDxSTATE.BATTLE_PLY_TARGET: uiTarget.UI_SetActive(false);                 break;
+            case IDxSTATE.BATTLE_PLY_TARGET: uiTarget.UI_SetActive(false, select);         break;
         }
     }
     public void UIProc_SetActive(int state)
@@ -82,7 +81,7 @@ public class UIBattle : MonoBehaviour
             }
 
             //[Ãâ·Â]
-            uiTarget.UI_SetActive(true);
+            uiTarget.UI_SetActive(true, select);
         }
     }
 }
@@ -457,6 +456,7 @@ public class UIBattle_Targeting
         switch (input & IDxINPUT.ACTION)
         {
             case IDxINPUT.ENTER:
+                Instance.UI_SetInactive(IDxSTATE.BATTLE_PLY_TARGET);
                 NowUnit.LastSelect_Update(select);
                 NowUnit.BattleProc_Attack();
                 return select;
@@ -504,9 +504,13 @@ public class UIBattle_Targeting
     }
 
 
-    public void UI_SetActive(bool isOn)
+    public void UI_SetActive(bool isOn, int select)
     {
         obj.SetActive(isOn);
+        if (isOn)
+        {
+            UI_UpdateArrow(select);
+        }
     }
     public void UI_UpdateArrow(int select)
     {

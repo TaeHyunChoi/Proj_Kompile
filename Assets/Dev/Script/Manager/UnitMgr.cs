@@ -65,12 +65,17 @@ public class UnitMgr
 
 
     //## Battle > Enter
-    public  static  void BattleProc_Enter(MapData map)
+    public static void BattleProc_Enter(MapData map)
+    {
+        BattleUnit_Init(map);
+        BattleUnit_SetQueue();
+    }
+    private static void BattleUnit_Init(MapData map)
     {
         //## Init
         List<Unit> temp = new List<Unit>();
-        Vector3    standard;
-        float      delta;
+        Vector3 standard;
+        float delta;
 
         //## Get Party Data => Add Battle List
         for (int i = 0; i < party.Length; ++i)
@@ -112,7 +117,7 @@ public class UnitMgr
         for (int i = 3; i < count + 3; ++i)
         {
             index = map.Mob[Random.Range(0, variety)];
-            battle[i] = UnitMgr.New(index, Vector3.zero);
+            battle[i] = New(index, Vector3.zero);
             temp.Add(battle[i]);
         }
 
@@ -152,8 +157,47 @@ public class UnitMgr
                 battle[i].Status_SetBattle();
             }
         }
+    }
+    public static int Battle_WhichGroupDefeat()
+    {
+        bool IsPartyAllFainted = true;
+        bool IsEnemyAllFainted = true;
 
-        //## Set Order
+        //[O(n)] 최대 7번이니까 더 효율적인 알고리즘은 사용 안해도 될 듯.
+        for (int i = 0; i < battle.Length; ++i)
+        {
+            if (battle[i] == null)
+            {
+                continue;
+            }
+
+            if (!battle[i].IsFaint)
+            {
+                if (IsPartyAllFainted && battle[i].Data.Group == IDxUNIT.PARTY)
+                {
+                    IsPartyAllFainted = false;
+                }
+                else if (IsEnemyAllFainted & battle[i].Data.Group == IDxUNIT.ENEMY)
+                {
+                    IsEnemyAllFainted = false;
+                }
+            }
+        }
+
+        if (IsPartyAllFainted)
+        {
+            return IDxUNIT.PARTY;
+        }
+        else if (IsEnemyAllFainted)
+        {
+            return IDxUNIT.ENEMY;
+        }
+
+        return -1;
+    }
+
+    private static void BattleUnit_SetQueue()
+    {
         int[] arr = new int[battle.Length];
         for (int i = 0; i < arr.Length; ++i)
         {
@@ -164,15 +208,12 @@ public class UnitMgr
         //## Enqueue Order In Battle
         for (int i = 0; i < arr.Length; ++i)
         {
-            if (battle[arr[i]] != null)
+            if (battle[arr[i]] != null && !battle[arr[i]].IsFaint)
             {
                 battleOrder.Enqueue(arr[i]);
                 //Debug.Log($"Pos[{arr[i]}] {battle[arr[i]].Data.Name}.Prior: {battle[arr[i]].Priority:F2}");
             }
         }
-
-        arr  = null;
-        temp = null;
     }
     private static  void Array_OrderByQuick(ref int[] arr, int start, int end)
     {
@@ -228,13 +269,19 @@ public class UnitMgr
         return unit.Priority;
     }
 
-
-    //## Battle > Select
+    //## Battle
     public static void Select_SetNextUnit()
     {
-        int order = battleOrder.Dequeue();
+        //[입력] Battle Order
+        int order;
+        if (battleOrder.Count == 0)
+        {
+            BattleUnit_SetQueue();
+        }
+        order = battleOrder.Dequeue();
         GameMgr.Order_Update(order);
 
+        //[처리]
         if (battle[order].Data.Group == IDxUNIT.PARTY)
         {
             GameMgr.State_Set(IDxSTATE.BATTLE_PLY_MENU);

@@ -40,4 +40,17 @@ public class GameMgr
         UnitMgr.Select_SetNextUnit();                   //[처리] 전투 진행
         CameraMgr.OnBattleCam(true);                    //[출력] 전투 카메라
     }
+    public static void Battle()
+    {
+        //[처리] 전투 종료 판단
+        int defeatedGroup = UnitMgr.Battle_WhichGroupDefeat();
+        if (defeatedGroup != -1)
+        {
+            Debug.Log($"End Battle(Lose Group : {defeatedGroup})");
+            return;
+        }
+
+        //[처리] 다음 턴 진행
+        UnitMgr.Select_SetNextUnit();
+    }
 }
