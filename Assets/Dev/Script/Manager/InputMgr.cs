@@ -32,31 +32,26 @@ public class InputMgr
                 GetButton_Direction();
                 if (input != 0)
                 {
-                    UnitMgr.Field_PlayerMoveTo(input);
+                    UnitMgr.FieldProc_MovePlayer(input);
                 }
                 break;
             case IDxSTATE.BATTLE_PLY_MENU:
-                if (input != 0)
-                {
-                    UIMgr.Battle_SelectMenu(input);
-                }
-                break;
             case IDxSTATE.BATTLE_PLY_TARGET:
                 if (input != 0)
                 {
-                    UIMgr.Battle_SelectTarget(input);
+                    UIMgr.Battle_Input(GameMgr.State, input);
                 }
                 break;
             case IDxSTATE.BATTLE_PLY_COMBO:
                 if (input != 0)
                 {
-                    BattleCombo();
+                    Battle_PlayCombo();
                 }
                 break;
         }
     }
 
-    //## Common
+
     private static void GetButtonDown_Direction()
     {
         if (Input.GetButtonDown("Up"))
@@ -107,6 +102,7 @@ public class InputMgr
         }
     }
 
+
     private static void GetButton_Direction()
     {
         if (Input.GetButton("Up"))
@@ -127,46 +123,23 @@ public class InputMgr
         }
     }
 
-    public static bool IsInput()
-    {
-        //case by case
-        switch (GameMgr.State)
-        {
-            case IDxSTATE.BATTLE_PLY_COMBO:
-                if (Input.GetButtonUp("Trigger"))
-                {
-                    isComboPossible = false;
-                }
-                if (isComboPossible & Input.GetButtonDown("Trigger"))
-                {
-                    UIMgr.Show(IDxSTATE.BATTLE_PLY_COMBO, true);
-                }
-                if (isComboPossible & Input.GetButton("Trigger"))
-                {
-                    input |= TRIGGER;
-                }
-                break;
-        }
 
-        return input != 0;
-    }
-
-    private static void BattleCombo()
+    private static void Battle_PlayCombo()
     {
         if (!isComboPossible)
         {
-            UIMgr.UpdateUI_BattleCombo(active: false);
+            UIMgr.Battle_UpdateUICombo(active: false);
             UnitMgr.Anime_PlaySlow(slow: false);
             return;
         }
 
         if ((input & TRIGGER) != 0)
         {
-            UIMgr.UpdateUI_BattleCombo(active: true);
+            UIMgr.Battle_UpdateUICombo(active: true);
             UnitMgr.Anime_PlaySlow(slow: true);
         }
     }
-    public static void Set_IsCombo(bool isOn)
+    public static void IsCombo_Set(bool isOn)
     {
         isComboPossible = isOn;
     }

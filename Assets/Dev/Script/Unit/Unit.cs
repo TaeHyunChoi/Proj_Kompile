@@ -11,7 +11,6 @@ public class Unit : MonoBehaviour
     private SpriteRenderer              render;
     private UnitCoroutine               coroutine; //custom coroutine
 
-    //뭔가 너저분하게 있어서 아쉬운걸;
     public  UnitData Data { get => data; }
     private UnitData data;
 
@@ -62,7 +61,7 @@ public class Unit : MonoBehaviour
 
 
     //## Status
-    public void Status_SetInBattle()
+    public void Status_SetBattle()
     {
         //## Mode => Status Weighted
         //추후 개발
@@ -107,7 +106,7 @@ public class Unit : MonoBehaviour
 
         //## Select Target
         int rnd = UnityEngine.Random.Range(0, 3);
-        int flagTarget = UnitMgr.GetFlag_Target(rnd, skill[idxGroup][idxSkill].TargetGroupType);
+        int flagTarget = UnitMgr.FlagTarget_Get(rnd, skill[idxGroup][idxSkill].TargetGroupType);
 
         //## Update Last Select
         return (flagTarget << BIT.SHIFT_TARGET) | (idxGroup << BIT.SHIFT_MENU) | idxSkill;
@@ -124,7 +123,7 @@ public class Unit : MonoBehaviour
 
 
     //## Process(Proc)
-    public void ProcBattle_Attack()
+    public void BattleProc_Attack()
     {
         if (data.Group == IDxUNIT.ENEMY)
         {
@@ -140,7 +139,7 @@ public class Unit : MonoBehaviour
 
         coroutine.InitAttack();
     }
-    public void ProcBattle_Hit(Unit hitter, SkillData skill)
+    public void BattleProc_Hit(Unit hitter, SkillData skill)
     {
         coroutine.InitHit(hitter, skill);
     }
@@ -183,7 +182,7 @@ public class Unit : MonoBehaviour
     //## Animation Tag
     public void OnAnime_ReadyToCombo()
     {
-        InputMgr.Set_IsCombo(true);
+        InputMgr.IsCombo_Set(true);
     }
     public void OnAnimeSkill_HitTarget()
     {

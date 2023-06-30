@@ -5,7 +5,8 @@ public class UIMgr
     public static Canvas Canvas_Main { get; private set; }
     public static Canvas Canvas_Battle { get; private set; }
 
-    private static Vector3 offset; //카메라 기울기로 인한 화면 상의 위치 각도 조절
+    //UIBattle.Instance로 받지 말고 계속 메모리로 들고 있으면 안되나?
+    //'UI는 모두 자주 사용한다'라고 가정한다면? 흐으으음
 
     public static void Init(Transform tf)
     {
@@ -15,28 +16,24 @@ public class UIMgr
         UIBattle.Instantiate();
         /*다른 Layer도 쭉쭉 생성하면 된다?*/
     }
-    public static void Show(int type, bool on)
+    public static void Show(int type)
     {
         switch (type)
         {
             case IDxSTATE.BATTLE_PLY_MENU: 
             case IDxSTATE.BATTLE_PLY_TARGET: 
             case IDxSTATE.BATTLE_PLY_COMBO:
-                UIBattle.Instance.Active(type, on);
+                UIBattle.Instance.UIProc_SetActive(type);
                 break;
         }
     }
-    public static void Battle_SelectMenu(int input)
+    
+    //얘도 전파하는 식으로 가능할 듯?
+    public static void Battle_Input(int state, int input)
     {
-        UIBattle.Instance.Input(IDxSTATE.BATTLE_PLY_MENU, input);
+        UIBattle.Instance.Input(state, input);
     }
-    public static void Battle_SelectTarget(int input)
-    {
-        UIBattle.Instance.Input(IDxSTATE.BATTLE_PLY_TARGET, input);
-    }
-
-    //UI 클래스 만들어서 where T: 식으로 하는게 좋았으려나?
-    public static bool UpdateUI_BattleCombo(bool active, float lerpWeight = 1)
+    public static bool Battle_UpdateUICombo(bool active, float lerpWeight = 1)
     {
         //return UIBattleCombo.Instance.UpdateUI(active, lerpWeight);
         return true;

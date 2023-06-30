@@ -14,14 +14,14 @@ public class GameMgr
     public static int State { get => state; }
     private static int state;
 
-    public static void ChangeMapData(ushort mapCode)
+    public static void MapData_Change(ushort mapCode)
     {
         LastMap = NowMap;
         lastFieldPos = UnitMgr.MyPC.Pos;
         NowMap = DataMgr.MapTBL.Find(map => map.Code == mapCode);
     }
 
-    public static void UpdateOrder(int order)
+    public static void Order_Update(int order)
     {
         nowOrder = order;
     }
@@ -31,17 +31,13 @@ public class GameMgr
         state = idxState;
     }
 
-    public static void Battle_Enter()
+    public static void BattleProc_Enter()
     {
         //Phase 1
         state = IDxSTATE.NONE;
-        ChangeMapData(mapCode: NowMap.BattleMapCode);   //[입력] 전투 맵    
-        UnitMgr.Proc_EnterBattle(NowMap);               //[처리] 전투 유닛
-        Battle_NextTurn();                              //[처리] 전투 진행
+        MapData_Change(mapCode: NowMap.BattleMapCode);   //[입력] 전투 맵    
+        UnitMgr.BattleProc_Enter(NowMap);               //[처리] 전투 유닛
+        UnitMgr.Select_SetNextUnit();                   //[처리] 전투 진행
         CameraMgr.OnBattleCam(true);                    //[출력] 전투 카메라
-    }
-    public static void Battle_NextTurn()
-    {
-        UnitMgr.Select_SetNextUnit();
     }
 }

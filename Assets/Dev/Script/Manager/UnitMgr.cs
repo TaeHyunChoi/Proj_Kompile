@@ -65,7 +65,7 @@ public class UnitMgr
 
 
     //## Battle > Enter
-    public static void Proc_EnterBattle(MapData map)
+    public  static  void BattleProc_Enter(MapData map)
     {
         //## Init
         List<Unit> temp = new List<Unit>();
@@ -149,7 +149,7 @@ public class UnitMgr
         {
             if (battle[i] != null)
             {
-                battle[i].Status_SetInBattle();
+                battle[i].Status_SetBattle();
             }
         }
 
@@ -159,7 +159,7 @@ public class UnitMgr
         {
             arr[i] = i;
         }
-        Sort_OrderByQuick(ref arr, 0, arr.Length - 1);
+        Array_OrderByQuick(ref arr, 0, arr.Length - 1);
 
         //## Enqueue Order In Battle
         for (int i = 0; i < arr.Length; ++i)
@@ -174,24 +174,24 @@ public class UnitMgr
         arr  = null;
         temp = null;
     }
-    private static void Sort_OrderByQuick(ref int[] arr, int start, int end)
+    private static  void Array_OrderByQuick(ref int[] arr, int start, int end)
     {
         int idxLeft = start;
         int idxRight = end;
-        float pivotPrior = Sort_GetPrior(arr[(idxLeft + idxRight) >> 1]);
+        float pivotPrior = Priority_Get(arr[(idxLeft + idxRight) >> 1]);
 
         //[내림차순] pivot 기준으로 왼쪽은 큰 수, 오른쪽은 작은 수로 정렬 (1 cycle)
         while (idxLeft < idxRight)
         {
-            while (Sort_GetPrior(arr[idxLeft]) > pivotPrior)
+            while (Priority_Get(arr[idxLeft]) > pivotPrior)
                 ++idxLeft;
-            while (Sort_GetPrior(arr[idxRight]) < pivotPrior)
+            while (Priority_Get(arr[idxRight]) < pivotPrior)
                 --idxRight;
 
             if (idxLeft > idxRight)
                 break;
 
-            if (Sort_GetPrior(arr[idxLeft]) != Sort_GetPrior(arr[idxRight]))
+            if (Priority_Get(arr[idxLeft]) != Priority_Get(arr[idxRight]))
             {
                 arr[idxLeft] ^= arr[idxRight];
                 arr[idxRight] ^= arr[idxLeft];
@@ -211,11 +211,15 @@ public class UnitMgr
         }
 
         if (start < idxLeft)
-            Sort_OrderByQuick(ref arr, start, idxLeft);
+        {
+            Array_OrderByQuick(ref arr, start, idxLeft);
+        }
         if (idxRight < end)
-            Sort_OrderByQuick(ref arr, idxRight, end);
+        {
+            Array_OrderByQuick(ref arr, idxRight, end);
+        }
     }
-    private static float Sort_GetPrior(int index)
+    private static float Priority_Get(int index)
     {
         Unit unit = battle[index];
         if (unit == null)
@@ -229,33 +233,33 @@ public class UnitMgr
     public static void Select_SetNextUnit()
     {
         int order = battleOrder.Dequeue();
-        GameMgr.UpdateOrder(order);
+        GameMgr.Order_Update(order);
 
         if (battle[order].Data.Group == IDxUNIT.PARTY)
         {
             GameMgr.State_Set(IDxSTATE.BATTLE_PLY_MENU);
-            UIMgr.Show(IDxSTATE.BATTLE_PLY_MENU, true);
+            UIMgr.Show(IDxSTATE.BATTLE_PLY_MENU);
         }
         else
         {
             GameMgr.State_Set(IDxSTATE.NONE);
-            battle[order].ProcBattle_Attack();
+            battle[order].BattleProc_Attack();
         }
     }
 
 
     //## Battle > Get Data
-    public  static int GetFlag_Target(int index, int group)
+    public  static int FlagTarget_Get(int index, int group)
     {
         switch (index)
         {
-            case 0:     return GetFlag_TargetHPHighest(group);
-            case 1:     return GetFlag_TargetHPLowest(group);
+            case 0:     return FlagTarget_GetHPHighest(group);
+            case 1:     return FlagTarget_GetHPLowest(group);
         }
 
         return -1;
     }
-    private static int GetFlag_TargetHPHighest(int target)
+    private static int FlagTarget_GetHPHighest(int target)
     {
         int flag = 0;
         int min = (target == IDxSkill.TARGET_ENEMY) ? 3 : 0;
@@ -281,7 +285,7 @@ public class UnitMgr
         flag |= (1 << saved);
         return flag;
     }
-    private static int GetFlag_TargetHPLowest(int target)
+    private static int FlagTarget_GetHPLowest(int target)
     {
         int flag = 0;
         int min = (target == IDxSkill.TARGET_ENEMY) ? 3 : 0;
@@ -318,9 +322,17 @@ public class UnitMgr
         {
             if ((flagTarget >> i) == 1)
             {
-                battle[i].ProcBattle_Hit(hitter, skill);
+                battle[i].BattleProc_Hit(hitter, skill);
             }
         }
+    }
+    public static void Anime_PlaySlow(bool slow, float lerpWeight = 1f)
+    {
+        float end = slow ? 0.1f : 1;
+        battle[GameMgr.NowOrder].Anime_SetSpeed(end, lerpWeight);
+
+        //for (int i = 0; i < NowActor.Targets.Count; ++i)
+        //    NowActor.Targets[i].SetAnimeSpeed(end, lerpWeight);
     }
     public static void Render_SetOrder(bool isTurn)
     {
@@ -331,19 +343,12 @@ public class UnitMgr
         //for (int i = 0; i < targets.Count; ++i)
         //    targets[i].SetRenderOrder(order);
     }
-    public static void Anime_PlaySlow(bool slow, float lerpWeight = 1f)
-    {
-        float end = slow ? 0.1f : 1;
-        battle[GameMgr.NowOrder].Anime_SetSpeed(end, lerpWeight);
-
-        //for (int i = 0; i < NowActor.Targets.Count; ++i)
-        //    NowActor.Targets[i].SetAnimeSpeed(end, lerpWeight);
-    }
 
 
     //## Field > Move
-    public static void Field_PlayerMoveTo(int input)
+    public static void FieldProc_MovePlayer(int input)
     {
+        //입력
         int mx = 0, mz = 0;
         if ((input & IDxINPUT.UP) != 0)
         {
@@ -361,24 +366,15 @@ public class UnitMgr
         {
             mx -= 1;
         }
-
         if (mx == 0 & mz == 0)
         {
             return;
         }    
 
+        //처리
         Vector3 delta = new Vector3(mx, 0, mz) * IDxUNIT.SPEED_MOVE * Time.deltaTime;
+
+        //출력
         CameraMgr.FollowPC(MyPC.Move(delta));
-    }
-
-
-    //## Free(memory)
-    public static void Clear()
-    {
-        for (int i = 0; i < unit.Length; ++i)
-        {
-            unit[i] = null;
-        }
-        battleOrder = null;
     }
 }

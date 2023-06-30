@@ -42,14 +42,13 @@ public class Main : MonoBehaviour
 
     private void Update()
     {
-        //InputMgr.DUpdate();
         InputMgr.Update();
     }
 
     private void TestSetting()
     {
         Player.Test();
-        GameMgr.ChangeMapData(testMapCode);
-        GameMgr.Battle_Enter();
+        GameMgr.MapData_Change(testMapCode);
+        GameMgr.BattleProc_Enter();
     }
 }

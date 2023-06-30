@@ -89,7 +89,7 @@ public class UnitCoroutine : MonoBehaviour
                 endTime = Time.time + 0.5f;
                 break;
             default:
-                GameMgr.Battle_NextTurn();
+                UnitMgr.Select_SetNextUnit();
                 enabled = false;
                 Clear();
                 return;
@@ -108,7 +108,7 @@ public class UnitCoroutine : MonoBehaviour
 
                 return state.normalizedTime >= 1;
             case 2:
-                return UIMgr.UpdateUI_BattleCombo(false, 1.1f);
+                return UIMgr.Battle_UpdateUICombo(false, 1.1f);
             case 3:
                 return endTime <= Time.time;
         }
