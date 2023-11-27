@@ -1,58 +1,67 @@
+using System;
 using UnityEngine;
 
 
 public class DGameManager : MonoBehaviour
 {
+    private GameState currentState;
     private static int input;
 
     private delegate void DeleInput(int input);
     private DeleInput DeleInputUpdate;
 
-    void Update()
+    private void Awake()
     {
-        //## 입력 : 입력은 이렇게만 처리한다는 마인드.
+        currentState = GameState.Title;
+        DeleInputUpdate = UpdateTitle;
+    }
+
+    private void Update()
+    {
+        //# 입력
         input = 0;
-
-        if (Input.GetButtonDown("DOWN")   || Input.GetButton("DOWN"))   { input |= 1 << DINDEX.DOWN;   }
-        if (Input.GetButtonDown("UP")     || Input.GetButton("UP"))     { input |= 1 << DINDEX.UP;     }
-        if (Input.GetButtonDown("LEFT")   || Input.GetButton("LEFT"))   { input |= 1 << DINDEX.LEFT;   }
-        if (Input.GetButtonDown("RIGHT")  || Input.GetButton("RIGHT"))  { input |= 1 << DINDEX.RIGHT;  }
-
-        if (Input.GetButtonDown("ENTER"))  { input |= 1 << DINDEX.ENTER;  }
-        if (Input.GetButtonDown("CANCEL"))
-        {
-            //Enter가 1이면 뒤집어야 하는데 + 이거 비트 연산으로 안되나?
-            input ^= 1 << DINDEX.ENTER; 
-        } 
-        if (Input.GetButtonDown("ESCAPE")) { input |= 1 << DINDEX.ESCAPE; }
-        if (Input.GetButtonDown("ACTION") || Input.GetButton("ACTION")) { input |= 1 << DINDEX.ACTION; }
-
-        //## 처리 : 각각의 레이어를 어떻게 처리할 것인가? 설계 필요;
+        
+        //Button Down
+        if (Input.GetButtonDown("DOWN"))   { input |= DIDxINPUT.DOWN; }
+        if (Input.GetButtonDown("UP"))     { input |= DIDxINPUT.UP; }
+        if (Input.GetButtonDown("LEFT"))   { input |= DIDxINPUT.LEFT; }
+        if (Input.GetButtonDown("RIGHT"))  { input |= DIDxINPUT.RIGHT; }
+        if (Input.GetButtonDown("ENTER"))  { input |= DIDxINPUT.ENTER; }
+        if (Input.GetButtonDown("CANCEL")) { input |= DIDxINPUT.CANCEL; }
+        if (Input.GetButtonDown("ESCAPE")) { input |= DIDxINPUT.ESCAPE; }
+        if (Input.GetButtonDown("ACTION")) { input |= DIDxINPUT.ACTION; }
+        
+        //Button Hold
+        if (Input.GetButton("DOWN"))   { input |= DIDxINPUT.DOWN_HOLD; }
+        if (Input.GetButton("UP"))     { input |= DIDxINPUT.UP_HOLD; }
+        if (Input.GetButton("LEFT"))   { input |= DIDxINPUT.LEFT_HOLD; }
+        if (Input.GetButton("RIGHT"))  { input |= DIDxINPUT.RIGHT_HOLD; }
+        if (Input.GetButton("ACTION")) { input |= DIDxINPUT.ACTION_HOLD; }
+        
+        //# 처리
         if (input != 0)
         {
             DeleInputUpdate(input);
         }
     }
-    void SetGameLayer(GameLayer layer)
-    {
-        switch (layer)
-        {
-            case GameLayer.UI:      DeleInputUpdate = InputUI;           break;
-            case GameLayer.Field:   DeleInputUpdate = InputField;        break;
-            case GameLayer.Battle:  DeleInputUpdate = InputBattle;       break;
-            default: Debug.LogError($"Wrong Game Layer Type : {layer}"); break;
-        }
-    }
 
-    private void InputUI(int input)
-    { 
-        //아니면 직접 UIMgr.Update()로 빠지는 방법도 있을테고?
+    //여기서 매니저급들을 나눠서 넘겨야할 것 같은데...
+    //클래스 간의 연결고리를 설계해야 함.
+    //Q. currentState를 누가, 어디서 바꾸니? A. SceneManager 이런 친구들이겠군!
+
+    private void UpdateTitle(int input)
+    {
+        Debug.Log(Convert.ToString(input, 2));
     }
-    private void InputField(int input)
+    private void UpdateOption(int input)
     { 
     
     }
-    private void InputBattle(int input)
+    private void UpdateBattle(int input)
+    { 
+        
+    }
+    private void UpdateFiled(int input)
     { 
         
     }
