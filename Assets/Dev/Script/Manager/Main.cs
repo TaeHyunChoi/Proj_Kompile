@@ -1,9 +1,9 @@
 using UnityEngine;
 
-public class Main : MonoBehaviour
+public class Main : MonoBehaviour//°©ÀÚ±â ¾ê°¡ ¾öÃ» ¸¶À½¿¡ ¾Èµå´Âµ¥? ¹¹¶ó°í °´Ã¼°¡ µÇ¾î¾ß ÇÏ³ª;
 {
-    public Main Instance { private get; set; }
-    public ushort testMapCode;
+    private Main instance;
+    public  int testMapCode;
 
     public enum TestMode : short
     { 
@@ -16,22 +16,18 @@ public class Main : MonoBehaviour
     private void Awake()
     {
         //## Instancing
-        if (Instance != null)
-        {
-            Destroy(this.gameObject);
+        if (instance != null)
             return;
-        }
-        Instance = this;
+
+        instance = this;
 
         //## Get RawData
         DataMgr.LoadCSVTable();
         ResourceMgr.LoadAssetFromRcs();
 
-        //## Init Managers : Find()·Î ÅüÃÆÀ½;
-        CameraMgr.Init(transform.Find("Camera"));
-        UIMgr.Init(transform.Find("UI"));
-        UnitMgr.Init(transform.Find("Unit"));
-
+        //CameraMgr.Init(transform.Find("Camera"));
+        //UIMgr.Init(transform.Find("UI"));
+        //UnitMgr.Init(transform.Find("Unit"));
 
         //## Set GameData
         Player.Init();
@@ -42,7 +38,7 @@ public class Main : MonoBehaviour
 
     private void Update()
     {
-        InputMgr.Update();
+        //InputMgr.Update();
     }
 
     private void TestSetting()

@@ -14,7 +14,7 @@ public class GameMgr
     public static int State { get => state; }
     private static int state;
 
-    public static void MapData_Change(ushort mapCode)
+    public static void MapData_Change(int mapCode)
     {
         LastMap = NowMap;
         lastFieldPos = UnitMgr.MyPC.Pos;
