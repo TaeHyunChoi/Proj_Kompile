@@ -21,7 +21,7 @@ public static class DIDxINPUT
 }
 
 //여기 Layer을 어떻게 나눌지 고민 필요하군. 이게 적절한가?
-public enum GameState
+public enum IngameState
 {
     None = 0,
     Title,

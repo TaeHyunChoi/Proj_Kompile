@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using Unity.Collections;
 
 public struct SkillData : Interface.IDataSetter
 {
@@ -121,12 +122,13 @@ public struct UnitData : Interface.IDataSetter
 public struct MapData : Interface.IDataSetter
 {
     private ushort code;
-    private string name;
     private ushort battleMapCode;
+    private ushort[] mapNearby;
     private byte minCount;
     private byte maxCount;
-    private ushort[] mapNearby;
     private byte[] mob;
+
+    private string name;
 
     public ushort Code { get => code; }
     public string Name { get => name; }
@@ -169,5 +171,13 @@ public struct MapData : Interface.IDataSetter
             sb.Remove(sb.Length - 1, 1);
         }
         mob = temp.ToArray();
+    }
+}
+
+public struct DSkillData : DInterface.IDataSetter
+{
+    public void Set(byte[] data, int index)
+    {
+
     }
 }

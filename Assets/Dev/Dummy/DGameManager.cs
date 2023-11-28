@@ -1,19 +1,27 @@
-using System;
+using System.Collections;
 using UnityEngine;
 
 
 public class DGameManager : MonoBehaviour
 {
-    private GameState currentState;
+    private IngameState currentState;
     private static int input;
 
-    private delegate void DeleInput(int input);
-    private DeleInput DeleInputUpdate;
+    //private delegate void DeleInput(int input);
+    //private DeleInput DeleInputUpdate;
+
+    private static DGameManager instance;
 
     private void Awake()
     {
-        currentState = GameState.Title;
-        DeleInputUpdate = UpdateTitle;
+        currentState = IngameState.None;
+        //this.enabled = false;
+        instance = this;
+    }
+
+    private void Start()
+    {
+        //DDataLoader.ParseCSVToData<DSkillData>("DSkillData");
     }
 
     private void Update()
@@ -32,37 +40,16 @@ public class DGameManager : MonoBehaviour
         if (Input.GetButtonDown("ACTION")) { input |= DIDxINPUT.ACTION; }
         
         //Button Hold
-        if (Input.GetButton("DOWN"))   { input |= DIDxINPUT.DOWN_HOLD; }
-        if (Input.GetButton("UP"))     { input |= DIDxINPUT.UP_HOLD; }
-        if (Input.GetButton("LEFT"))   { input |= DIDxINPUT.LEFT_HOLD; }
-        if (Input.GetButton("RIGHT"))  { input |= DIDxINPUT.RIGHT_HOLD; }
-        if (Input.GetButton("ACTION")) { input |= DIDxINPUT.ACTION_HOLD; }
+        if (Input.GetButton("DOWN"))       { input |= DIDxINPUT.DOWN_HOLD; }
+        if (Input.GetButton("UP"))         { input |= DIDxINPUT.UP_HOLD; }
+        if (Input.GetButton("LEFT"))       { input |= DIDxINPUT.LEFT_HOLD; }
+        if (Input.GetButton("RIGHT"))      { input |= DIDxINPUT.RIGHT_HOLD; }
+        if (Input.GetButton("ACTION"))     { input |= DIDxINPUT.ACTION_HOLD; }
         
         //# 처리
-        if (input != 0)
+        if (input != 0 && currentState != IngameState.None)
         {
-            DeleInputUpdate(input);
+            //DeleInputUpdate(input);
         }
-    }
-
-    //여기서 매니저급들을 나눠서 넘겨야할 것 같은데...
-    //클래스 간의 연결고리를 설계해야 함.
-    //Q. currentState를 누가, 어디서 바꾸니? A. SceneManager 이런 친구들이겠군!
-
-    private void UpdateTitle(int input)
-    {
-        Debug.Log(Convert.ToString(input, 2));
-    }
-    private void UpdateOption(int input)
-    { 
-    
-    }
-    private void UpdateBattle(int input)
-    { 
-        
-    }
-    private void UpdateFiled(int input)
-    { 
-        
     }
 }

@@ -14,11 +14,10 @@ public class DataMgr
     public static void LoadCSVTable()
     {
         SkillTBL = LoadTable<SkillData>(ReadCSVFile("SkillData"));
-        ItemTBL = LoadTable<ItemData>(ReadCSVFile("ItemData"));
-        UnitTBL = LoadTable<UnitData>(ReadCSVFile("UnitData"));
-        MapTBL = LoadTable<MapData>(ReadCSVFile("MapData"));
+        ItemTBL  = LoadTable<ItemData> (ReadCSVFile("ItemData"));
+        UnitTBL  = LoadTable<UnitData> (ReadCSVFile("UnitData"));
+        MapTBL   = LoadTable<MapData>  (ReadCSVFile("MapData"));
     }
-
 
     private static List<Dictionary<string, string>> ReadCSVFile(string fileName)
     {
@@ -29,7 +28,7 @@ public class DataMgr
 
         //Setting
         string[] columns;   //칼럼명
-        int index = -1;     //칼럼명[] 인덱스
+        int index;          //칼럼명[] 인덱스
         string line;        //각 줄
         char[] chars;       //각 줄을 char 형태로 쪼갬 (중간 ,를 발라내기 위함)
         bool isSplit;       //분류 여부 (대사 등 본문의 ,와 CSV 구분쉼표를 구분하기 위함)
