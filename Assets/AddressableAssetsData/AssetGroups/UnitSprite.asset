@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: UnitSprite
+  m_EditorClassIdentifier: 
+  m_GroupName: UnitSprite
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 75a80818128f028449c77b3dc70d2ad6
+  m_SerializeEntries:
+  - m_GUID: 6cdf7481830ec914ca8f8efe1941965a
+    m_Address: Assets/Rcs/Sprite/Unit/ataho.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+  - m_GUID: eb152cf3f698ab749ba4a1efec9b2268
+    m_Address: Assets/Rcs/Sprite/Unit/linxhang.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+  - m_GUID: c7d144b18bbb1e34a9f3676e0c2bf1f5
+    m_Address: Assets/Rcs/Sprite/Unit/redMonkey.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+  - m_GUID: 57c9261666ed6ab4b8c7e88e9c526109
+    m_Address: Assets/Rcs/Sprite/Unit/smashu.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 1e4adaee8ea246d48a479154ff58eb23, type: 2}
+    - {fileID: 11400000, guid: a8a0c93ab8f7cde41ae23cd204df00e1, type: 2}

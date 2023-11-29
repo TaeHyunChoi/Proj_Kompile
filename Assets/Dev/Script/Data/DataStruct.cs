@@ -34,7 +34,7 @@ public struct SkillData : Interface.IDataSetter
     public int Speed { get => speed; }
     public string RscCode { get => rscCode; }
 
-    public void SetData(Dictionary<string, string> data)
+    public void Set(Dictionary<string, string> data)
     {
         index = int.Parse(data["Index"]);
         name = data["Name"];
@@ -58,10 +58,6 @@ public struct SkillData : Interface.IDataSetter
         speed = int.Parse(data["Speed"]);
         rscCode = data["RscCode"];
     }
-    public void Debug()
-    {
-        UnityEngine.Debug.Log($"{name}");
-    }
 }
 [Serializable]
 public struct ItemData : Interface.IDataSetter
@@ -74,7 +70,7 @@ public struct ItemData : Interface.IDataSetter
     public Dictionary<short, short> Effect { get; private set; }
     public string RcsCode { get; private set; }
 
-    public void SetData(Dictionary<string, string> data)
+    public void Set(Dictionary<string, string> data)
     {
         Index = byte.Parse(data["Index"]);
         Name = data["Name"];
@@ -103,7 +99,7 @@ public struct UnitData : Interface.IDataSetter
     public int[] StatDefault { get => statDefault; }
     public string RcsCode { get => rcsCode; }
 
-    public void SetData(Dictionary<string, string> data)
+    public void Set(Dictionary<string, string> data)
     {
         code = byte.Parse(data["Code"]);
         name = data["Name"];
@@ -145,7 +141,7 @@ public struct MapData : Interface.IDataSetter
     public ushort[] MapNearby { get => mapNearby; }
     public byte[] Mob { get => mob; }
 
-    public void SetData(Dictionary<string, string> data)
+    public void Set(Dictionary<string, string> data)
     {
         code = ushort.Parse(data["Code"]);
         name = data["Name"];

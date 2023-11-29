@@ -1,10 +1,8 @@
-using System.Collections;
-using System.Threading;
 using System.IO;
-using Unity.Collections;
-using Unity.Jobs;
-using UnityEngine;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// [목표] CSV 데이터 불러오기 최적화 (속도 향상을 위하여 안정성은 상대적으로 낮춤)
@@ -13,57 +11,121 @@ using System.Collections.Generic;
 /// </summary>
 public class DDataLoader
 {
-    //테이블은 '단 하나'이다.
-    private static List<SkillData> SkillTBL;
+    //## DataTable
+    public static List<SkillData> SkillTBL { get; private set; }
+    public static List<ItemData> ItemTBL { get; private set; }
+    public static List<UnitData> UnitTBL { get; private set; }
+    public static List<MapData> MapTBL { get; private set; }
 
-    //public static List<T> ParseCSVToData<T>(string fileName) where T : DInterface.IDataSetter, new()
-    //{
-    //    List<T> table = new List<T>();
+    //.csv (기획자, 에디터에서 .bin 파일로 변환 필요)
+    public static void LoadCSVTable()
+    {
+        SkillTBL = LoadTable<SkillData>("SkillData");
+        ItemTBL = LoadTable<ItemData>("ItemData");
+        UnitTBL = LoadTable<UnitData>("UnitData");
+        MapTBL = LoadTable<MapData>("MapData");
+    }
+    private static List<T> LoadTable<T>(string fileName) where T : Interface.IDataSetter, new()
+    {
+        List<Dictionary<string, string>> table = new List<Dictionary<string, string>>();
+        TextAsset csv = Resources.Load<TextAsset>("CSV/" + fileName);
+        StringReader reader = new StringReader(csv.text);
+        StringBuilder sb = new StringBuilder();
 
-    //    //csv 파일을 전부 읽었고..
-    //    //bytes로 읽으니까 데이터 변환 쪽에서 이슈가 생기는구나. 확실히 빠른 것 같은데 흡...
-    //    //토큰만 잘 나누면 어떻게든 될 것 같다...?
-    //    //그런데 결국 text로 변환하여 다시 읽는거라 문제네. 데이터 자체가 텍스트 기반. 흠...
-    //    //구글 스프레드시트에서 .bytes로 저장하면 숫자단위로 저장해주려나?
+        //Setting
+        string[] columns;   //칼럼명
+        int index;          //칼럼명[] 인덱스
+        string line;        //각 줄
+        char[] chars;       //각 줄을 char 형태로 쪼갬 (중간 ,를 발라내기 위함)
+        bool isSplit;       //분류 여부 (대사 등 본문의 ,와 CSV 구분쉼표를 구분하기 위함)
 
-    //    string path = Application.dataPath + "/Resources/CSV/" + fileName + ".csv";
-    //    Debug.Log(path);
+        //Column Index
+        line = reader.ReadLine(); //첫줄 날리기
+        columns = line.Split(',');
 
-    //    byte[] raw = File.ReadAllBytes(path);
+        //Content
+        while (true)
+        {
+            line = reader.ReadLine();
+            if (line == null)
+                break;
 
-    //    int lastIndex, curIndex = 0;
+            Dictionary<string, string> data = new Dictionary<string, string>();
+            chars = line.ToCharArray();
+            isSplit = true;
+            index = -1;
 
-    //    while (raw[curIndex++] != (byte)'\n')
-    //    {
-    //        //Do Nothing; 첫 줄 라벨을 날린다.
-    //    }
-    //    lastIndex = curIndex;
+            for (int i = 0; i < chars.Length; ++i)
+            {
+                //데이터 중간의 ,로 나누지 않기 위해 판별 조건 추가
+                if (chars[i] == '\u0022') //큰따옴표(")의 유니코드
+                {
+                    isSplit = !isSplit;
+                    continue;
+                }
 
-    //    //T data;
-    //    string temp = string.Empty;
+                if (isSplit
+                    && chars[i] == '\u002C') //쉼표(,) 유니코드
+                {
+                    data.Add(columns[++index], sb.ToString());
+                    sb.Clear();
+                    continue;
+                }
 
-    //    while (curIndex < raw.Length)
-    //    {
-    //        if (raw[curIndex] == (byte)'\n') //한 줄씩 읽었고
-    //        {
-    //            for (int i = lastIndex; i < curIndex; ++i)
-    //            {
-    //                temp += raw[i];
-    //            }
-    //            Debug.Log($"{lastIndex} ~ {curIndex} : {temp}");
-    //            lastIndex = curIndex + 1;
-    //        }
+                sb.Append(chars[i]);
+            }
 
-    //        ++curIndex;
-    //    }
+            //마지막 데이터 추가 (,가 없어서 위에서 안걸림)
+            data.Add(columns[++index], sb.ToString());
+            table.Add(data);
+            sb.Clear();
+        }
 
-    //    temp = string.Empty;
-    //    for (int i = lastIndex; i < curIndex; ++i)
-    //    {
-    //        temp += (char)raw[i];
-    //    }
-    //    Debug.Log($"{lastIndex} ~ {curIndex} : {temp}");
+        List<T> list = new List<T>();
+        for (int i = 0; i < table.Count; ++i)
+        {
+            T tData = new T();
+            tData.Set(table[i]);
+            list.Add(tData);
+        }
 
-    //    return table;
-    //}
+        return list;
+    }
+
+    //.bin (프로그래머, .bin 파일로 데이터테이블 읽기)
+    public static void WriteBinaryFiles()
+    {
+        string path = Application.dataPath + "/Resources/bin/";
+
+        WriteBinary(path + "SkillData.bin", SkillTBL);
+        WriteBinary(path + "ItemData.bin", ItemTBL);
+        WriteBinary(path + "UnitData.bin", UnitTBL);
+        WriteBinary(path + "MapData.bin", MapTBL);
+    }
+    private static void WriteBinary<T>(string path, List<T> table) where T : struct, Interface.IDataSetter
+    {
+        BinaryFormatter formatter = new BinaryFormatter();
+        FileStream stream = new FileStream(path, FileMode.Create);
+        formatter.Serialize(stream, table);
+        stream.Close();
+    }
+
+    public static void LoadTable()
+    {
+        SkillTBL = ReadBinary<SkillData>("SkillData.bin");
+        ItemTBL = ReadBinary<ItemData>("ItemData.bin");
+        UnitTBL = ReadBinary<UnitData>("UnitData.bin");
+        MapTBL = ReadBinary<MapData>("MapData.bin");
+    }
+    public static List<T> ReadBinary<T>(string fileName) where T : struct, Interface.IDataSetter
+    {
+        string path = Application.dataPath + "/Resources/bin/" + fileName;
+
+        BinaryFormatter formatter = new BinaryFormatter();
+        FileStream stream = new FileStream(path, FileMode.Open);
+        List<T> table = (List<T>)formatter.Deserialize(stream);
+        stream.Close();
+
+        return table;
+    }
 }

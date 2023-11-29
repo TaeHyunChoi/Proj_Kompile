@@ -80,7 +80,7 @@ public class DataMgr
         for (int i = 0; i < table.Count; ++i)
         {
             T tData = new T();
-            tData.SetData(table[i]);
+            tData.Set(table[i]);
             list.Add(tData);
         }
 
@@ -90,10 +90,10 @@ public class DataMgr
     //.bin (프로그래머, .bin 파일로 데이터테이블 읽기)
     public static void LoadTable()
     {
-        ReadBinary<SkillData>("SkillData.bin");
-        ReadBinary<ItemData>("ItemData.bin");
-        ReadBinary<UnitData>("UnitData.bin");
-        ReadBinary<MapData>("MapData.bin");
+        SkillTBL = ReadBinary<SkillData>("SkillData.bin");
+        ItemTBL  = ReadBinary<ItemData>("ItemData.bin");
+        UnitTBL  = ReadBinary<UnitData>("UnitData.bin");
+        MapTBL   = ReadBinary<MapData>("MapData.bin");
     }
     public static void WriteBinaryFiles()
     {
@@ -111,7 +111,7 @@ public class DataMgr
         formatter.Serialize(stream, table);
         stream.Close();
     }
-    public static void ReadBinary<T>(string fileName) where T : struct, Interface.IDataSetter
+    public static List<T> ReadBinary<T>(string fileName) where T : struct, Interface.IDataSetter
     {
         string path = Application.dataPath + "/Resources/bin/" + fileName;
 
@@ -120,7 +120,6 @@ public class DataMgr
         List<T> table = (List<T>)formatter.Deserialize(stream);
         stream.Close();
 
-        foreach (var data in table)
-            data.Debug();
+        return table;
     }
 }

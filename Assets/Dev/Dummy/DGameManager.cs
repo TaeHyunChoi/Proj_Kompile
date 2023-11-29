@@ -1,6 +1,4 @@
-using System.Collections;
 using UnityEngine;
-
 
 public class DGameManager : MonoBehaviour
 {
@@ -10,18 +8,12 @@ public class DGameManager : MonoBehaviour
     //private delegate void DeleInput(int input);
     //private DeleInput DeleInputUpdate;
 
-    private static DGameManager instance;
-
     private void Awake()
     {
         currentState = IngameState.None;
-        //this.enabled = false;
-        instance = this;
-    }
+        DDataLoader.LoadTable();
 
-    private void Start()
-    {
-        //DDataLoader.ParseCSVToData<DSkillData>("DSkillData");
+        //this.enabled = false;
     }
 
     private void Update()
@@ -45,10 +37,20 @@ public class DGameManager : MonoBehaviour
         if (Input.GetButton("LEFT"))       { input |= DIDxINPUT.LEFT_HOLD; }
         if (Input.GetButton("RIGHT"))      { input |= DIDxINPUT.RIGHT_HOLD; }
         if (Input.GetButton("ACTION"))     { input |= DIDxINPUT.ACTION_HOLD; }
-        
+
+        //Cheat
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Debug.Log("Input Space");
+            DAssetManager.TestLoad();
+        }
+#endif
+
         //# Ã³¸®
         if (input != 0 && currentState != IngameState.None)
         {
+
             //DeleInputUpdate(input);
         }
     }
