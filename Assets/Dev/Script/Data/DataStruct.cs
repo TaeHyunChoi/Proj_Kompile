@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
-using Unity.Collections;
+using System.Collections.Generic;
 
+
+[Serializable]
 public struct SkillData : Interface.IDataSetter
 {
     private int index;
@@ -34,7 +34,7 @@ public struct SkillData : Interface.IDataSetter
     public int Speed { get => speed; }
     public string RscCode { get => rscCode; }
 
-    public void SetTable(Dictionary<string, string> data)
+    public void SetData(Dictionary<string, string> data)
     {
         index = int.Parse(data["Index"]);
         name = data["Name"];
@@ -58,7 +58,12 @@ public struct SkillData : Interface.IDataSetter
         speed = int.Parse(data["Speed"]);
         rscCode = data["RscCode"];
     }
+    public void Debug()
+    {
+        UnityEngine.Debug.Log($"{name}");
+    }
 }
+[Serializable]
 public struct ItemData : Interface.IDataSetter
 {
     public byte Index { get; private set; }
@@ -69,7 +74,7 @@ public struct ItemData : Interface.IDataSetter
     public Dictionary<short, short> Effect { get; private set; }
     public string RcsCode { get; private set; }
 
-    public void SetTable(Dictionary<string, string> data)
+    public void SetData(Dictionary<string, string> data)
     {
         Index = byte.Parse(data["Index"]);
         Name = data["Name"];
@@ -83,13 +88,14 @@ public struct ItemData : Interface.IDataSetter
         RcsCode = data["RcsCode"];
     }
 }
+[Serializable]
 public struct UnitData : Interface.IDataSetter
 {
-    private byte    code;
-    private byte    group;
-    private string  name;
-    private int[]   statDefault;
-    private string  rcsCode;
+    private byte code;
+    private byte group;
+    private string name;
+    private int[] statDefault;
+    private string rcsCode;
 
     public byte Index { get => code; }
     public byte Group { get => group; }
@@ -97,15 +103,15 @@ public struct UnitData : Interface.IDataSetter
     public int[] StatDefault { get => statDefault; }
     public string RcsCode { get => rcsCode; }
 
-    public void SetTable(Dictionary<string, string> data)
+    public void SetData(Dictionary<string, string> data)
     {
         code = byte.Parse(data["Code"]);
         name = data["Name"];
         group = byte.Parse(data["Group"]);
 
         statDefault = new int[IDxUNIT.STAT_CNT];
-        statDefault[IDxUNIT.HP]  = int.Parse(data["HP"]);
-        statDefault[IDxUNIT.MP]  = int.Parse(data["MP"]);
+        statDefault[IDxUNIT.HP] = int.Parse(data["HP"]);
+        statDefault[IDxUNIT.MP] = int.Parse(data["MP"]);
         statDefault[IDxUNIT.EXP] = 0;
         statDefault[IDxUNIT.STR] = int.Parse(data["STR"]);
         statDefault[IDxUNIT.CON] = int.Parse(data["CON"]);
@@ -119,6 +125,7 @@ public struct UnitData : Interface.IDataSetter
         rcsCode = data["RcsCode"];
     }
 }
+[Serializable]
 public struct MapData : Interface.IDataSetter
 {
     private ushort code;
@@ -138,7 +145,7 @@ public struct MapData : Interface.IDataSetter
     public ushort[] MapNearby { get => mapNearby; }
     public byte[] Mob { get => mob; }
 
-    public void SetTable(Dictionary<string, string> data)
+    public void SetData(Dictionary<string, string> data)
     {
         code = ushort.Parse(data["Code"]);
         name = data["Name"];
@@ -171,13 +178,5 @@ public struct MapData : Interface.IDataSetter
             sb.Remove(sb.Length - 1, 1);
         }
         mob = temp.ToArray();
-    }
-}
-
-public struct DSkillData : DInterface.IDataSetter
-{
-    public void Set(byte[] data, int index)
-    {
-
     }
 }

@@ -22,7 +22,8 @@ public class Main : MonoBehaviour//°©ÀÚ±â ¾ê°¡ ¾öÃ» ¸¶À½¿¡ ¾Èµå´Âµ¥? ¹¹¶ó°í °´Ã¼
         instance = this;
 
         //## Get RawData
-        DataMgr.LoadCSVTable();
+        //DataMgr.LoadCSVTable();
+        DataMgr.LoadTable();
         ResourceMgr.LoadAssetFromRcs();
 
         //CameraMgr.Init(transform.Find("Camera"));

@@ -1,6 +1,7 @@
-using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DataMgr
@@ -11,19 +12,19 @@ public class DataMgr
     public static List<UnitData> UnitTBL { get; private set; }
     public static List<MapData> MapTBL { get; private set; }
 
+    //.csv (기획자, 에디터에서 .bin 파일로 변환 필요)
     public static void LoadCSVTable()
     {
-        SkillTBL = LoadTable<SkillData>(ReadCSVFile("SkillData"));
-        ItemTBL  = LoadTable<ItemData> (ReadCSVFile("ItemData"));
-        UnitTBL  = LoadTable<UnitData> (ReadCSVFile("UnitData"));
-        MapTBL   = LoadTable<MapData>  (ReadCSVFile("MapData"));
+        SkillTBL = LoadTable<SkillData>("SkillData");
+        ItemTBL  = LoadTable<ItemData> ("ItemData");
+        UnitTBL  = LoadTable<UnitData> ("UnitData");
+        MapTBL   = LoadTable<MapData>  ("MapData");
     }
-
-    private static List<Dictionary<string, string>> ReadCSVFile(string fileName)
+    private static List<T> LoadTable<T>(string fileName) where T : Interface.IDataSetter, new()
     {
         List<Dictionary<string, string>> table = new List<Dictionary<string, string>>();
-        TextAsset     csv = Resources.Load<TextAsset>("CSV/" + fileName);
-        StringReader  reader = new StringReader(csv.text);
+        TextAsset csv = Resources.Load<TextAsset>("CSV/" + fileName);
+        StringReader reader = new StringReader(csv.text);
         StringBuilder sb = new StringBuilder();
 
         //Setting
@@ -75,18 +76,51 @@ public class DataMgr
             sb.Clear();
         }
 
-        return table;
-    }
-    private static List<T> LoadTable<T>(List<Dictionary<string, string>> table) where T : Interface.IDataSetter, new()
-    {
         List<T> list = new List<T>();
         for (int i = 0; i < table.Count; ++i)
         {
             T tData = new T();
-            tData.SetTable(table[i]);
+            tData.SetData(table[i]);
             list.Add(tData);
         }
 
         return list;
+    }
+
+    //.bin (프로그래머, .bin 파일로 데이터테이블 읽기)
+    public static void LoadTable()
+    {
+        ReadBinary<SkillData>("SkillData.bin");
+        ReadBinary<ItemData>("ItemData.bin");
+        ReadBinary<UnitData>("UnitData.bin");
+        ReadBinary<MapData>("MapData.bin");
+    }
+    public static void WriteBinaryFiles()
+    {
+        string path = Application.dataPath + "/Resources/bin/";
+
+        WriteBinary(path + "SkillData.bin", SkillTBL);
+        WriteBinary(path + "ItemData.bin",  ItemTBL);
+        WriteBinary(path + "UnitData.bin",  UnitTBL);
+        WriteBinary(path + "MapData.bin",   MapTBL);
+    }
+    private static void WriteBinary<T>(string path, List<T> table) where T: struct, Interface.IDataSetter
+    {
+        BinaryFormatter formatter = new BinaryFormatter();
+        FileStream stream = new FileStream(path, FileMode.Create);
+        formatter.Serialize(stream, table);
+        stream.Close();
+    }
+    public static void ReadBinary<T>(string fileName) where T : struct, Interface.IDataSetter
+    {
+        string path = Application.dataPath + "/Resources/bin/" + fileName;
+
+        BinaryFormatter formatter = new BinaryFormatter();
+        FileStream stream = new FileStream(path, FileMode.Open);
+        List<T> table = (List<T>)formatter.Deserialize(stream);
+        stream.Close();
+
+        foreach (var data in table)
+            data.Debug();
     }
 }
