@@ -18,97 +18,97 @@ MonoBehaviour:
   m_GUID: a00b46e57dbf6ef49bd181dab2b4a5cd
   m_SerializeEntries:
   - m_GUID: 6963e368ae9c010409014b7bda28de92
-    m_Address: Assets/Rcs/Animation/AOC/EVENT.anim
+    m_Address: EVENT
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: c6a779701f9c0664aa295717bf0dcb74
-    m_Address: Assets/Rcs/Animation/AOC/HIT.anim
+    m_Address: HIT
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 67bc47a3d1d8ee942a990b8aa01228bd
-    m_Address: Assets/Rcs/Animation/AOC/IDLE.anim
+    m_Address: IDLE
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 210ba075433cf6a44bd611af6b4fda5c
-    m_Address: Assets/Rcs/Animation/AOC/MOVE.anim
+    m_Address: MOVE
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: a1ad10a46d010cb4285ed5d155033405
-    m_Address: Assets/Rcs/Animation/AOC/SKILL.anim
+    m_Address: SKILL
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 6d3a14532ced77c4a8ac4d1bf40d057c
-    m_Address: Assets/Rcs/Animation/AOC/UnitAnimeCtrl.controller
+    m_Address: UnitAnimeCtrl
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 9373cb5cdd673164399ad13f142b428d
-    m_Address: Assets/Rcs/Animation/AOC/UnitAOC.overrideController
+    m_Address: UnitAOC
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 2466c4e372c648c43bfc48a108520ba6
-    m_Address: Assets/Rcs/Animation/Ataho/HIT.anim
+    m_Address: HIT
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 3c8c1d2ca36ac1740b355d0dc9e0e779
-    m_Address: Assets/Rcs/Animation/Ataho/IDLE.anim
+    m_Address: IDLE
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: e33ad4fd924256e4fa80e0494779f2a4
-    m_Address: Assets/Rcs/Animation/Ataho/SKILL.anim
+    m_Address: SKILL
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 8d7ddb40bbbbc3e4d8007f053f2a12c0
-    m_Address: Assets/Rcs/Animation/Linxhang/HIT.anim
+    m_Address: HIT
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 760fb59e5926117418d41983ed82bd9b
-    m_Address: Assets/Rcs/Animation/Linxhang/IDLE.anim
+    m_Address: IDLE
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 96c8b242cf0a6ff40ac66897083d5c16
-    m_Address: Assets/Rcs/Animation/Linxhang/SKILL.anim
+    m_Address: SKILL
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: da5d250bd2fa80d46ad7be8585950a4e
-    m_Address: Assets/Rcs/Animation/RedMonkey/HIT.anim
+    m_Address: HIT
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 14974bc8d67a1844cac2d481469e9065
-    m_Address: Assets/Rcs/Animation/RedMonkey/IDLE.anim
+    m_Address: IDLE
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 9a50e0574e391404db8ab56d2fe2c130
-    m_Address: Assets/Rcs/Animation/RedMonkey/SKILL.anim
+    m_Address: SKILL
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 8d1d821cb093f924795fa83b27ef95bf
-    m_Address: Assets/Rcs/Animation/Smashu/HIT.anim
+    m_Address: HIT
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 655527916bf013241b8bd6bcec40456a
-    m_Address: Assets/Rcs/Animation/Smashu/IDLE.anim
+    m_Address: IDLE
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 90ae7161a7c0b2441b81791ffe49f834
-    m_Address: Assets/Rcs/Animation/Smashu/SKILL.anim
+    m_Address: SKILL
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation

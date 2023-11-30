@@ -18,12 +18,12 @@ MonoBehaviour:
   m_GUID: 1d65d67df1f29b84985014df8920ec2b
   m_SerializeEntries:
   - m_GUID: ded9f80618747f2429f51a1cc4a829d9
-    m_Address: Prefab/UIBattle
+    m_Address: UIBattle
     m_ReadOnly: 0
     m_SerializedLabels:
     - prefab
   - m_GUID: 521d1b4efc84af74f9a61607db6928ed
-    m_Address: Prefab/UIBattle_MenuSlot
+    m_Address: UIBattle_MenuSlot
     m_ReadOnly: 0
     m_SerializedLabels:
     - prefab

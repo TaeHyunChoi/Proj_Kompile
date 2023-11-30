@@ -18,8 +18,8 @@ public class DCustomWindow : EditorWindow
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("[.csv] → [.bin]"))
         {
-            DDataLoader.LoadCSVTable();         //CSV 파일 읽어서
-            DDataLoader.WriteBinaryFiles();     //Binary 파일로 저장
+            DDataTable.LoadCSVTable();         //CSV 파일 읽어서
+            DDataTable.WriteBinaryFiles();     //Binary 파일로 저장
         }
         EditorGUILayout.EndHorizontal();
     }

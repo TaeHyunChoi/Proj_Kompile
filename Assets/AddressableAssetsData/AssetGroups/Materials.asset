@@ -18,7 +18,7 @@ MonoBehaviour:
   m_GUID: 6a35f84ebc30db249948466f7e9fd7a6
   m_SerializeEntries:
   - m_GUID: 896943f4adac8944b852787bdeaa8b86
-    m_Address: Assets/Rcs/Material/Test_BG.mat
+    m_Address: Test_BG
     m_ReadOnly: 0
     m_SerializedLabels:
     - Materials

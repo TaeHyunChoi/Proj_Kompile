@@ -2,9 +2,8 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 
-
 [Serializable]
-public struct SkillData : Interface.IDataSetter
+public struct SkillData : IDataSetter
 {
     private int index;
     private string name;
@@ -60,7 +59,7 @@ public struct SkillData : Interface.IDataSetter
     }
 }
 [Serializable]
-public struct ItemData : Interface.IDataSetter
+public struct ItemData : IDataSetter
 {
     public byte Index { get; private set; }
     public string Name { get; private set; }
@@ -85,7 +84,7 @@ public struct ItemData : Interface.IDataSetter
     }
 }
 [Serializable]
-public struct UnitData : Interface.IDataSetter
+public struct UnitData : IDataSetter
 {
     private byte code;
     private byte group;
@@ -122,7 +121,7 @@ public struct UnitData : Interface.IDataSetter
     }
 }
 [Serializable]
-public struct MapData : Interface.IDataSetter
+public struct MapData : IDataSetter
 {
     private ushort code;
     private ushort battleMapCode;

@@ -20,7 +20,7 @@ public class DataMgr
         UnitTBL  = LoadTable<UnitData> ("UnitData");
         MapTBL   = LoadTable<MapData>  ("MapData");
     }
-    private static List<T> LoadTable<T>(string fileName) where T : Interface.IDataSetter, new()
+    private static List<T> LoadTable<T>(string fileName) where T : IDataSetter, new()
     {
         List<Dictionary<string, string>> table = new List<Dictionary<string, string>>();
         TextAsset csv = Resources.Load<TextAsset>("CSV/" + fileName);
@@ -104,14 +104,14 @@ public class DataMgr
         WriteBinary(path + "UnitData.bin",  UnitTBL);
         WriteBinary(path + "MapData.bin",   MapTBL);
     }
-    private static void WriteBinary<T>(string path, List<T> table) where T: struct, Interface.IDataSetter
+    private static void WriteBinary<T>(string path, List<T> table) where T: struct, IDataSetter
     {
         BinaryFormatter formatter = new BinaryFormatter();
         FileStream stream = new FileStream(path, FileMode.Create);
         formatter.Serialize(stream, table);
         stream.Close();
     }
-    public static List<T> ReadBinary<T>(string fileName) where T : struct, Interface.IDataSetter
+    public static List<T> ReadBinary<T>(string fileName) where T : struct, IDataSetter
     {
         string path = Application.dataPath + "/Resources/bin/" + fileName;
 

@@ -17,7 +17,7 @@ MonoBehaviour:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000
   m_OptimizeCatalogSize: 0
-  m_BuildRemoteCatalog: 0
+  m_BuildRemoteCatalog: 1
   m_BundleLocalCatalog: 0
   m_CatalogRequestsTimeout: 0
   m_DisableCatalogUpdateOnStart: 0
@@ -34,9 +34,9 @@ MonoBehaviour:
   m_MonoScriptBundleNaming: 0
   m_MonoScriptBundleCustomNaming: 
   m_RemoteCatalogBuildPath:
-    m_Id: 
+    m_Id: 343297c12fb9a994ea8b62308ee626c2
   m_RemoteCatalogLoadPath:
-    m_Id: 
+    m_Id: a371374b3dcd52c4a94d5fa3e7658435
   m_ContentStateBuildPath: 
   m_BuildAddressablesWithPlayerBuild: 0
   m_overridePlayerVersion: 
@@ -48,6 +48,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 665b7e5d6cc74da42bdd1c30011ac046, type: 2}
   - {fileID: 11400000, guid: 252ef3ea854ccaf4c991b37a251cd8ac, type: 2}
   - {fileID: 11400000, guid: 545de1e87fdc44c4bacebacc5476aed7, type: 2}
+  - {fileID: 11400000, guid: 73221712e29e8f844bbd4b537324ed3d, type: 2}
   m_BuildSettings:
     m_CompileScriptsInVirtualMode: 0
     m_CleanupStreamingAssetsAfterBuilds: 1
@@ -93,6 +94,7 @@ MonoBehaviour:
     - Sprite
     - prefab
     - Materials
+    - External
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 0d418115f10642c4d81f37ea0df76de7, type: 2}

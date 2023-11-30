@@ -10,21 +10,26 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: BasePrefab
+  m_Name: Font
   m_EditorClassIdentifier: 
-  m_GroupName: BasePrefab
+  m_GroupName: Font
   m_Data:
     m_SerializedData: []
-  m_GUID: f10f484705f0f0c42b21dd525f1ad5cb
+  m_GUID: dc480f9a50872e5499496bd3dbbd97cf
   m_SerializeEntries:
-  - m_GUID: 65310418ef126ee49ba65e58ccdacfa2
-    m_Address: UnitBase
+  - m_GUID: 16c4fc8b318ca9342a5fd9cc2275a9e2
+    m_Address: NanumBarunGothic-YetHangul SDF
     m_ReadOnly: 0
     m_SerializedLabels:
-    - prefab
+    - External
+  - m_GUID: 4eaf7c80d69976242a3db1ed7da693af
+    m_Address: NanumBarunGothic-YetHangul
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - External
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: d1b18912dddacf140bf9def8e0043cab, type: 2}
-    - {fileID: 11400000, guid: 0e614057c37c51742a7e6f62712a00c3, type: 2}
+    - {fileID: 11400000, guid: 2580030a24424054a8d4ba8343a2c098, type: 2}
+    - {fileID: 11400000, guid: 608f2701b53a5a347a63e6e958322bb8, type: 2}

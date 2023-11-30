@@ -18,22 +18,22 @@ MonoBehaviour:
   m_GUID: 75a80818128f028449c77b3dc70d2ad6
   m_SerializeEntries:
   - m_GUID: 6cdf7481830ec914ca8f8efe1941965a
-    m_Address: Assets/Rcs/Sprite/Unit/ataho.png
+    m_Address: ataho
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
   - m_GUID: eb152cf3f698ab749ba4a1efec9b2268
-    m_Address: Assets/Rcs/Sprite/Unit/linxhang.png
+    m_Address: linxhang
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
   - m_GUID: c7d144b18bbb1e34a9f3676e0c2bf1f5
-    m_Address: Assets/Rcs/Sprite/Unit/redMonkey.png
+    m_Address: redMonkey
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
   - m_GUID: 57c9261666ed6ab4b8c7e88e9c526109
-    m_Address: Assets/Rcs/Sprite/Unit/smashu.png
+    m_Address: smashu
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite

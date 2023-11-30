@@ -1,4 +1,4 @@
-public static class DIDxINPUT
+public static class DIDx
 {
     public const int DOWN   = 1 << 0;
     public const int UP     = 1 << 1;
@@ -19,13 +19,14 @@ public static class DIDxINPUT
     public  const int ESCAPE_HOLD = 1 << (ESCAPE + BIT_HOLD);
     public  const int ACTION_HOLD = 1 << (ACTION + BIT_HOLD);
 }
-
-//여기 Layer을 어떻게 나눌지 고민 필요하군. 이게 적절한가?
-public enum IngameState
+public enum ContentType
 {
-    None = 0,
-    Title,
-    Option,
-    Battle,
+    Title = 0,
     Field,
+    Battle,
+    Count,
+}
+public enum UIType
+{ 
+    
 }

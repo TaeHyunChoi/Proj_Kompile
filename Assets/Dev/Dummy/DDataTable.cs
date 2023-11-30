@@ -9,23 +9,28 @@ using UnityEngine;
 /// [방법] (1)기존 string → byte[] 로 읽어오기 (2)Generic<T> 활용하여 코드 재사용성 높이기
 /// [비고] Job System을 사용하여 멀티 스레딩으로 CSV를 불러오려 했으나 'reference type은 Job struct에서 사용할 수 없다'는 제한이 있어 기각.
 /// </summary>
-public class DDataLoader
+public class DDataTable
 {
-    //## DataTable
-    public static List<SkillData> SkillTBL { get; private set; }
-    public static List<ItemData> ItemTBL { get; private set; }
-    public static List<UnitData> UnitTBL { get; private set; }
-    public static List<MapData> MapTBL { get; private set; }
+    private static List<SkillData> skillTable;
+    private static List<ItemData>  itemTable;
+    private static List<UnitData>  unitTalbe;
+    private static List<MapData>   mapTable;
+
+    public static List<SkillData> SkillTable { get => skillTable; }
+    public static List<ItemData>  ItemTable  { get => itemTable; }
+    public static List<UnitData>  UnitTable  { get => unitTalbe; }
+    public static List<MapData>   MapTable     { get => mapTable; }
 
     //.csv (기획자, 에디터에서 .bin 파일로 변환 필요)
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
     public static void LoadCSVTable()
     {
-        SkillTBL = LoadTable<SkillData>("SkillData");
-        ItemTBL = LoadTable<ItemData>("ItemData");
-        UnitTBL = LoadTable<UnitData>("UnitData");
-        MapTBL = LoadTable<MapData>("MapData");
+        skillTable = LoadTable<SkillData>("SkillData");
+        itemTable = LoadTable<ItemData>("ItemData");
+        unitTalbe = LoadTable<UnitData>("UnitData");
+        mapTable = LoadTable<MapData>("MapData");
     }
-    private static List<T> LoadTable<T>(string fileName) where T : Interface.IDataSetter, new()
+    private static List<T> LoadTable<T>(string fileName) where T : IDataSetter, new()
     {
         List<Dictionary<string, string>> table = new List<Dictionary<string, string>>();
         TextAsset csv = Resources.Load<TextAsset>("CSV/" + fileName);
@@ -92,32 +97,19 @@ public class DDataLoader
         return list;
     }
 
+#endif
+
     //.bin (프로그래머, .bin 파일로 데이터테이블 읽기)
-    public static void WriteBinaryFiles()
-    {
-        string path = Application.dataPath + "/Resources/bin/";
-
-        WriteBinary(path + "SkillData.bin", SkillTBL);
-        WriteBinary(path + "ItemData.bin", ItemTBL);
-        WriteBinary(path + "UnitData.bin", UnitTBL);
-        WriteBinary(path + "MapData.bin", MapTBL);
-    }
-    private static void WriteBinary<T>(string path, List<T> table) where T : struct, Interface.IDataSetter
-    {
-        BinaryFormatter formatter = new BinaryFormatter();
-        FileStream stream = new FileStream(path, FileMode.Create);
-        formatter.Serialize(stream, table);
-        stream.Close();
-    }
-
     public static void LoadTable()
     {
-        SkillTBL = ReadBinary<SkillData>("SkillData.bin");
-        ItemTBL = ReadBinary<ItemData>("ItemData.bin");
-        UnitTBL = ReadBinary<UnitData>("UnitData.bin");
-        MapTBL = ReadBinary<MapData>("MapData.bin");
+        skillTable = ReadBinary<SkillData>("SkillData.bin");
+        itemTable = ReadBinary<ItemData>("ItemData.bin");
+        unitTalbe = ReadBinary<UnitData>("UnitData.bin");
+        mapTable = ReadBinary<MapData>("MapData.bin");
     }
-    public static List<T> ReadBinary<T>(string fileName) where T : struct, Interface.IDataSetter
+
+    // 얘네는 Save Player Data 등에도 쓸 수 있을 듯?
+    public static List<T> ReadBinary<T>(string fileName) where T : struct, IDataSetter
     {
         string path = Application.dataPath + "/Resources/bin/" + fileName;
 
@@ -127,5 +119,21 @@ public class DDataLoader
         stream.Close();
 
         return table;
+    }
+    public static void WriteBinaryFiles()
+    {
+        string path = Application.dataPath + "/Resources/bin/";
+
+        WriteBinary(path + "SkillData.bin", SkillTable);
+        WriteBinary(path + "ItemData.bin", ItemTable);
+        WriteBinary(path + "UnitData.bin", UnitTable);
+        WriteBinary(path + "MapData.bin", MapTable);
+    }
+    private static void WriteBinary<T>(string path, List<T> table) where T : struct, IDataSetter
+    {
+        BinaryFormatter formatter = new BinaryFormatter();
+        FileStream stream = new FileStream(path, FileMode.Create);
+        formatter.Serialize(stream, table);
+        stream.Close();
     }
 }
