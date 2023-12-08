@@ -1,4 +1,4 @@
-﻿public class InField : IngameContent
+﻿public class InField : ContentBase
 {
     public override void Start()
     {

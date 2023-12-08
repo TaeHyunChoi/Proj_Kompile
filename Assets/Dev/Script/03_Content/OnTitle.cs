@@ -1,16 +1,18 @@
-﻿public class OnTitle : IngameContent
+﻿using UnityEngine;
+
+public class OnTitle : ContentBase
 {
     public override void Start()
     {
-        // Opening: Company Logo + GamePlay
-        // Title Logo + UIManager.Open(Title);
+        UIManager.Set(UIType.Title);
     }
     public override void Update(int input)
     {
         //입력 처리
         if (input != 0)
-        { 
+        {
             //개별 조작에 대하여 처리
+
         }
 
         //콘텐트 처리

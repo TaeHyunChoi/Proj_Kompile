@@ -5,7 +5,7 @@ public class Main : MonoBehaviour
     private static Main instance;
     public  static Main Instance { get => instance; }
 
-    private IngameContent[] ingame;
+    private ContentBase[] ingame;
     private UIManager ui;
 
     private int input;
@@ -28,11 +28,11 @@ public class Main : MonoBehaviour
         //(...)
 
         //Manager
-        ui = UIManager.Instance;
+        ui = new UIManager(transform.Find("UI"));
         //(...)
 
         //Set Content
-        ingame = new IngameContent[(int)ContentType.Count];
+        ingame = new ContentBase[(int)ContentType.Count];
         ingame[(int)ContentType.Title]  = new OnTitle();
         ingame[(int)ContentType.Field]  = new InField();
         ingame[(int)ContentType.Battle] = new InBattle();

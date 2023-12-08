@@ -1,4 +1,4 @@
-﻿public class InBattle : IngameContent
+﻿public class InBattle : ContentBase
 {
     public override void Start()
     {

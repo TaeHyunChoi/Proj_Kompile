@@ -1,4 +1,4 @@
-﻿public abstract class IngameContent
+﻿public abstract class ContentBase
 {
     public abstract void Start();
     public abstract void Update(int input);

@@ -43,5 +43,6 @@ public enum ContentType
 }
 public enum UIType
 { 
-    
+    Title,
+
 }
