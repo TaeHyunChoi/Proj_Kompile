@@ -18,6 +18,13 @@ public static class IDx
     public  const int CANCEL_HOLD = 1 << (CANCEL + BIT_HOLD);
     public  const int ESCAPE_HOLD = 1 << (ESCAPE + BIT_HOLD);
     public  const int ACTION_HOLD = 1 << (ACTION + BIT_HOLD);
+
+    public const int ALL = 0xFF;
+
+    public static bool IsMasked(int x, int y, int hold = 0)
+    {
+        return (x & y) == 1 || (x & hold) == 1;
+    }
 }
 public enum Stat
 { 
@@ -44,5 +51,4 @@ public enum ContentType
 public enum UIType
 { 
     Title,
-
 }

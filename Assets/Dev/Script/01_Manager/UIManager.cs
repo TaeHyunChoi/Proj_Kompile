@@ -4,83 +4,41 @@ using UnityEngine;
 
 public class UIManager
 {
-    private static UIManager instance;
+    private Transform transform;
 
-    private static Canvas canvas_overlay;
-    private static Canvas canvas_camera;
-
-    private static int[] opened;
-    private static int idxOpen;
-
-    public UIManager(Transform root)
+    public UIManager(Transform transform)
     {
-        if (instance != null)
-        {
-            return;
-        }
-        instance = this;
-
-        opened = new int[3];
-
-        canvas_overlay = root.GetChild(0).GetComponent<Canvas>();
-        canvas_camera  = root.GetChild(1).GetComponent<Canvas>();
+        this.transform = transform;
     }
 
-    public static async void Set(UIType type)
+    public Transform GetTransform()
     {
-        idxOpen = 0;
-        switch (type)
-        {
-            case UIType.Title:
-                System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-                watch.Start();
-
-                AssetManager.Instantiate("UnitBase", canvas_overlay.transform);
-                AssetManager.Instantiate("UIBattle", canvas_overlay.transform);
-                AssetManager.Instantiate("UIBattle_MenuSlot", canvas_overlay.transform);
-
-                await AssetManager.Wait();
-
-                watch.Stop();
-                Debug.Log("함수 실행 시간: " + watch.ElapsedMilliseconds + "ms");
-                break;
-        }
+        return transform;
     }
-    public void Open(UIType type, bool offPrev = true)
-    {
-        //시간 체크하고 싶다.
-        switch (type)
-        {
-            case UIType.Title:
-                Debug.Log("Open Title: ");
-                break;
-        }
+    
+    //public Canvas GetCanvas(int index)
+    //{
+    //    if (index == 0)
+    //    {
+    //        return canvas_overlay;
+    //    }
 
+    //    return canvas_camera;
+    //}
+    //public async void Set(ContentType type)
+    //{
+    //    switch (type)
+    //    {
+    //        case ContentType.Title:
+    //            //Asset.Instantiate() + Asset.Release() 방식
+    //            //await AssetManager.InstantiateUI(type, canvas_overlay.transform);
+    //            break;
+    //        case ContentType.Field:
+    //        case ContentType.Battle:
+    //            //최초에 생성하고 .SetActive(isOn) 방식
+    //            //=> 그냥 처음에 UI 관련 에셋 전부 생성해버리는게 좋겠는데? 어차피 비동기니께...?
+    //            break;
+    //    }
 
-        //this.code = code;
-        //obj = AssetManager.Instantiate(code, canvas.transform);
-        //id = obj.GetInstanceID();
-    }
-    public int Update(int input)
-    {
-        if ((input & IDx.ENTER) > 0)
-        {
-            System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-            stopwatch.Start();
-
-            Debug.Log($"Enter");
-            Open(UIType.Title, false);
-
-            stopwatch.Stop();
-            Debug.Log("함수 실행 시간: " + stopwatch.ElapsedMilliseconds + "ms");
-        }
-
-        string debug = string.Empty;
-        for (int i = 0; i < opened.Length; ++i)
-        {
-            debug += opened[i] + " / ";
-        }
-        Debug.Log(debug);
-        return input;
-    }
+    //}
 }

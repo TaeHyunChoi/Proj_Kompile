@@ -10,26 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: UIPrefab
+  m_Name: Base
   m_EditorClassIdentifier: 
-  m_GroupName: UIPrefab
+  m_GroupName: Base
   m_Data:
     m_SerializedData: []
-  m_GUID: 1d65d67df1f29b84985014df8920ec2b
-  m_SerializeEntries:
-  - m_GUID: ded9f80618747f2429f51a1cc4a829d9
-    m_Address: UIBattle
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - prefab
-  - m_GUID: 521d1b4efc84af74f9a61607db6928ed
-    m_Address: UIBattle_MenuSlot
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - prefab
+  m_GUID: f10f484705f0f0c42b21dd525f1ad5cb
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: 4b8be4757aca21f4398df441bb0fec0b, type: 2}
-    - {fileID: 11400000, guid: 9db2db3e6bc59c6498a186aba31dbe14, type: 2}
+    - {fileID: 11400000, guid: d1b18912dddacf140bf9def8e0043cab, type: 2}
+    - {fileID: 11400000, guid: 0e614057c37c51742a7e6f62712a00c3, type: 2}

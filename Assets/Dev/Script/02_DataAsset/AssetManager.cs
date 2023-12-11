@@ -3,55 +3,79 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-using System.Linq;
 using System.Threading.Tasks;
 
 public class AssetManager
 {
-    private static Dictionary<int, AsyncOperationHandle<GameObject>> handles = new Dictionary<int, AsyncOperationHandle<GameObject>>();
+    private static Dictionary<int, AsyncOperationHandle<GameObject>> Handlers = new Dictionary<int, AsyncOperationHandle<GameObject>>();
+    //private static List<Task> task = new List<Task>();
 
-    public static void Instantiate(string code, Transform canvas_tf)
+    public static async Task<GameObject> InstantiateAsync(string code, Transform canvas_tf)
     {
-        GameObject prefab = null;
+        var completionSource = new TaskCompletionSource<GameObject>();
+        AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(code);
 
-        Addressables.LoadAssetAsync<GameObject>(code).Completed 
-            += (AsyncOperationHandle<GameObject> handle) => 
-            {
-                prefab = Object.Instantiate(handle.Result, canvas_tf);
-                prefab.SetActive(false);
-                handles.Add(prefab.GetInstanceID(), handle);
-            };
-    }
-
-    public static async Task Wait(/* 매개변수 opened를 넘긴다면? */)
-    {
-        await Task.WhenAll(handles.Values.Select(handle => handle.Task));
-
-        string debug = string.Empty;
-        foreach(var key in handles.Keys)
+        handle.Completed += (handle) =>
         {
-            debug += (key + " / ");
-        }
+            GameObject prefab = Object.Instantiate(handle.Result, canvas_tf);
+            Handlers.Add(prefab.GetInstanceID(), handle);
+            prefab.SetActive(false);
+        };
 
-        Debug.Log(debug);
+        await handle.Task;
+        return await completionSource.Task;
     }
-    //public static bool TestLoad()
-    //{
-    //    if (isTest)
-    //    {
-    //        Addressables.LoadAssetAsync<GameObject>("Prefab/UnitBase").Completed
-    //            += ((AsyncOperationHandle<GameObject> obj) => 
-    //            { 
-    //                handle = obj;
-    //                prefab = GameObject.Instantiate(obj.Result);
-    //            });
-    //    }
-    //    else
-    //    {
-    //        Addressables.Release(handle);
-    //        GameObject.Destroy(prefab);
-    //    }
+    public static async Task<GameObject> InstantiateAsync<T>(string code, Transform canvas_tf)  where T:MonoBehaviour
+    {
+        var completionSource = new TaskCompletionSource<GameObject>();
+        AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(code);
 
-    //    return isTest = !isTest;
-    //}
+        handle.Completed += (handle) =>
+            {
+                GameObject prefab = Object.Instantiate(handle.Result, canvas_tf);
+                prefab.AddComponent<T>();
+                Handlers.Add(prefab.GetInstanceID(), handle);
+                prefab.SetActive(false);
+            };
+
+        await handle.Task;
+        return await completionSource.Task;
+    }
+
+    public static GameObject GetInstance(int id)
+    {
+        return Handlers[id].Result;
+    }
+
+    /*
+    public static async Task InstantiateUI(ContentType type, Transform parent)
+    {
+        System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+        watch.Start();
+
+        //이전 UI 삭제
+        foreach (var ui in Handlers.Values)
+        {
+            Addressables.Release(ui);
+            Object.Destroy(ui.Result);
+        }
+        Handlers.Clear();
+
+        //호출 UI 생성
+        switch (type)
+        {
+            case ContentType.Title:
+                {
+                    task.Add(InstantiateAsync<UIBattle>("UIBattle", parent));
+                    task.Add(InstantiateAsync<UIBattleSlot>("UIBattle_MenuSlot", parent));
+                }
+                break;
+        }
+        await Task.WhenAll(task);
+        task.Clear();
+
+        watch.Stop();
+        Debug.Log("AssetManager.InstantiateUI: " + watch.ElapsedMilliseconds + "ms");
+    }
+    //*/
 }
