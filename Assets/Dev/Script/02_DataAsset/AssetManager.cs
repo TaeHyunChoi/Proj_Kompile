@@ -8,43 +8,32 @@ using System.Threading.Tasks;
 public class AssetManager
 {
     private static Dictionary<int, AsyncOperationHandle<GameObject>> Handlers = new Dictionary<int, AsyncOperationHandle<GameObject>>();
-    //private static List<Task> task = new List<Task>();
 
-    public static async Task<GameObject> InstantiateAsync(string code, Transform canvas_tf)
+    public static async Task<GameObject> InstantiateAsync(string code, Transform canvas_tf, bool isActive = false)
     {
-        var completionSource = new TaskCompletionSource<GameObject>();
         AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(code);
 
         handle.Completed += (handle) =>
         {
             GameObject prefab = Object.Instantiate(handle.Result, canvas_tf);
             Handlers.Add(prefab.GetInstanceID(), handle);
-            prefab.SetActive(false);
+            prefab.SetActive(isActive);
         };
-
         await handle.Task;
-        return await completionSource.Task;
-    }
-    public static async Task<GameObject> InstantiateAsync<T>(string code, Transform canvas_tf)  where T:MonoBehaviour
-    {
-        var completionSource = new TaskCompletionSource<GameObject>();
-        AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(code);
 
-        handle.Completed += (handle) =>
-            {
-                GameObject prefab = Object.Instantiate(handle.Result, canvas_tf);
-                prefab.AddComponent<T>();
-                Handlers.Add(prefab.GetInstanceID(), handle);
-                prefab.SetActive(false);
-            };
+        if (handle.Status != AsyncOperationStatus.Succeeded)
+        {
+            Debug.LogError($"Failed to load asset with key: {code}");
+            return null;
+        }
 
-        await handle.Task;
-        return await completionSource.Task;
+        return handle.Result;
     }
 
-    public static GameObject GetInstance(int id)
+    public static bool ReleaseAsset(int instanceID)
     {
-        return Handlers[id].Result;
+        Addressables.Release<GameObject>(Handlers[instanceID]);
+        return Handlers.Remove(instanceID);
     }
 
     /*

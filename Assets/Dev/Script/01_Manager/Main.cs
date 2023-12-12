@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Threading.Tasks;
 
 public class Main : MonoBehaviour
 {
@@ -27,21 +28,27 @@ public class Main : MonoBehaviour
 
         //Init Manager
         uiMgr = new UIManager(transform.Find("UI"));
-        canvas_overlay = uiMgr.GetTransform().GetChild(0).GetComponent<Canvas>();
-        canvas_camera  = uiMgr.GetTransform().GetChild(1).GetComponent<Canvas>();
-
+        {
+            canvas_overlay = uiMgr.GetTransform().GetChild(0).GetComponent<Canvas>();
+            canvas_camera = uiMgr.GetTransform().GetChild(1).GetComponent<Canvas>();
+        }
         inputMgr = new InputManager();
-        //(...)
 
-        //Async Opening ?
+        //Play Opening
         OnOpening opening = new OnOpening();
-        opening.InitAsync(canvas_overlay.transform);
+        Task<bool> isOpen = opening.InitAsync(canvas_overlay.transform);
 
-        //Load Assets
-        DataTable.LoadTable();
-
-        //Load Player Data
-        //(...)
+        if (isOpen.Result)
+        {
+            DataTable.LoadTable();
+            //Load Player Data
+        }
+        else
+        {
+            Debug.LogError("$$ Fail to load Opening.$$ ");
+            Application.Quit();
+            return;
+        }
 
         //Init Content
         ingame = new ContentBase[(int)ContentType.Count];
@@ -52,13 +59,13 @@ public class Main : MonoBehaviour
     }
     private void Start()
     {
-        SetIngame(ContentType.Title);
+        Debug.Log("Start");
     }
-    private void Update()
-    {
-        inputMgr.Update();
-        ingame[curContent].Update();
-    }
+    //private void Update()
+    //{
+    //    inputMgr.Update();
+    //    ingame[curContent].Update();
+    //}
 
     public void SetIngame(ContentType contentType)
     {

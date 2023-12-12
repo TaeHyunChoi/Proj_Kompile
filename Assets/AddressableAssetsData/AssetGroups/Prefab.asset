@@ -33,7 +33,7 @@ MonoBehaviour:
     m_SerializedLabels:
     - prefab
   - m_GUID: 892a340a9aa1197448a637007b989c6b
-    m_Address: OpeningFade.prefab
+    m_Address: OpeningFade
     m_ReadOnly: 0
     m_SerializedLabels:
     - prefab

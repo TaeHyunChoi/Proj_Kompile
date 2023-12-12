@@ -106,9 +106,10 @@ public class DataTable
         itemTable = ReadBinary<ItemData>("ItemData.bin");
         unitTalbe = ReadBinary<UnitData>("UnitData.bin");
         mapTable = ReadBinary<MapData>("MapData.bin");
+
+        Debug.Log("Load Tables");
     }
 
-    // 얘네는 Save Player Data 등에도 쓸 수 있을 듯?
     public static List<T> ReadBinary<T>(string fileName) where T : struct, IDataSetter
     {
         string path = Application.dataPath + "/Resources/bin/" + fileName;
