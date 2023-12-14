@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections;
 using System.Threading.Tasks;
+using UnityEditor;
+using System.Threading;
 
 public class Main : MonoBehaviour
 {
@@ -34,21 +36,8 @@ public class Main : MonoBehaviour
         }
         inputMgr = new InputManager();
 
-        //Play Opening
-        OnOpening opening = new OnOpening();
-        Task<bool> isOpen = opening.InitAsync(canvas_overlay.transform);
-
-        if (isOpen.Result)
-        {
-            DataTable.LoadTable();
-            //Load Player Data
-        }
-        else
-        {
-            Debug.LogError("$$ Fail to load Opening.$$ ");
-            Application.Quit();
-            return;
-        }
+        DataTable.LoadTable();
+        //+ Load Player Data
 
         //Init Content
         ingame = new ContentBase[(int)ContentType.Count];
@@ -59,8 +48,21 @@ public class Main : MonoBehaviour
     }
     private void Start()
     {
-        Debug.Log("Start");
+        Debug.Log("Start() : " + Thread.CurrentThread.ManagedThreadId);
+        this.StartCoroutine(IEOpeningAsync());
     }
+    private IEnumerator IEOpeningAsync()
+    {
+        OnOpening opening = new OnOpening();
+        Task<bool> task = opening.InitAsync(canvas_overlay.transform);
+        while (!task.IsCompleted)
+        {
+            yield return null;
+        }
+
+        opening.Play();
+    }
+
     //private void Update()
     //{
     //    inputMgr.Update();

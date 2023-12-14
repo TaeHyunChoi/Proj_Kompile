@@ -106,8 +106,6 @@ public class DataTable
         itemTable = ReadBinary<ItemData>("ItemData.bin");
         unitTalbe = ReadBinary<UnitData>("UnitData.bin");
         mapTable = ReadBinary<MapData>("MapData.bin");
-
-        Debug.Log("Load Tables");
     }
 
     public static List<T> ReadBinary<T>(string fileName) where T : struct, IDataSetter
