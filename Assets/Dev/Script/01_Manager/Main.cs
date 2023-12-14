@@ -48,19 +48,13 @@ public class Main : MonoBehaviour
     }
     private void Start()
     {
-        Debug.Log("Start() : " + Thread.CurrentThread.ManagedThreadId);
         this.StartCoroutine(IEOpeningAsync());
     }
     private IEnumerator IEOpeningAsync()
     {
-        OnOpening opening = new OnOpening();
-        Task<bool> task = opening.InitAsync(canvas_overlay.transform);
-        while (!task.IsCompleted)
-        {
-            yield return null;
-        }
+        Task<bool> task = OnOpening.InitAsync(canvas_overlay.transform);
 
-        opening.Play();
+        yield return new WaitUntil(() => task.IsCompleted);
     }
 
     //private void Update()

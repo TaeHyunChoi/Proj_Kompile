@@ -9,26 +9,34 @@ public class AssetManager
 {
     private static Dictionary<int, AsyncOperationHandle<GameObject>> Handlers = new Dictionary<int, AsyncOperationHandle<GameObject>>();
 
-    public static async Task<GameObject> InstantiateAsync(string code, Transform canvas_tf, bool isActive = false)
+    public static async Task<GameObject> InstantiateAsync(string address, Transform parent = null)
     {
-        AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(code);
-
-        handle.Completed += (handle) =>
-        {
-            GameObject prefab = Object.Instantiate(handle.Result, canvas_tf);
-            Handlers.Add(prefab.GetInstanceID(), handle);
-            prefab.SetActive(isActive);
-        };
+        AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
         await handle.Task;
-
-        if (handle.Status != AsyncOperationStatus.Succeeded)
-        {
-            Debug.LogError($"Failed to load asset with key: {code}");
-            return null;
-        }
+        Handlers.Add(handle.Result.GetInstanceID(), handle);
 
         return handle.Result;
     }
+    //public static async Task<GameObject> InstantiateAsync(string code, Transform canvas_tf, bool isActive = false)
+    //{
+    //    AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(code);
+
+    //    handle.Completed += (handle) =>
+    //    {
+    //        GameObject prefab = Object.Instantiate(handle.Result, canvas_tf);
+    //        Handlers.Add(prefab.GetInstanceID(), handle);
+    //        prefab.SetActive(isActive);
+    //    };
+    //    await handle.Task;
+
+    //    if (handle.Status != AsyncOperationStatus.Succeeded)
+    //    {
+    //        Debug.LogError($"Failed to load asset with key: {code}");
+    //        return null;
+    //    }
+
+    //    return handle.Result;
+    //}
 
     public static bool ReleaseAsset(int instanceID)
     {

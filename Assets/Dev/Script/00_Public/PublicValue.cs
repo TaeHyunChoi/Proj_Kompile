@@ -1,3 +1,7 @@
+public static class Value
+{
+    public const float FADE_SPEED = 1.25f;
+}
 public static class IDx
 {
     public const int DOWN   = 1 << 0;
@@ -47,8 +51,4 @@ public enum ContentType
     Field,
     Battle,
     Count,
-}
-public enum UIType
-{ 
-    Title,
 }
