@@ -8,7 +8,6 @@ public class Main : MonoBehaviour
 {
     private static Main instance;
 
-    private ContentBase[] ingame;
     private UIManager     uiMgr;
     private InputManager  inputMgr;
 
@@ -40,10 +39,6 @@ public class Main : MonoBehaviour
         //+ Load Player Data
 
         //Init Content
-        ingame = new ContentBase[(int)ContentType.Count];
-        ingame[(int)ContentType.Title]   = new OnTitle();
-        ingame[(int)ContentType.Field]   = new InField();
-        ingame[(int)ContentType.Battle]  = new InBattle();
         prevContent = (int)ContentType.Title;
     }
     private void Start()
@@ -52,9 +47,14 @@ public class Main : MonoBehaviour
     }
     private IEnumerator IEOpeningAsync()
     {
-        Task<bool> task = OnOpening.InitAsync(canvas_overlay.transform);
+        //이거 생성 순서를 확정할 수 있니...?
+        Task<bool> taskOpening = OnOpening.InitAsync(canvas_overlay.transform);
+        Task<bool> taskTitle   = OnTitle.InitAsync(canvas_overlay.transform);
 
-        yield return new WaitUntil(() => task.IsCompleted);
+        while (taskOpening.IsCompleted || taskTitle.IsCompleted)
+        {
+            yield return null;
+        }
     }
 
     //private void Update()
@@ -62,17 +62,4 @@ public class Main : MonoBehaviour
     //    inputMgr.Update();
     //    ingame[curContent].Update();
     //}
-
-    public void SetIngame(ContentType contentType)
-    {
-        ingame[curContent].End();          //이전 콘텐트 종료
-
-        prevContent = curContent;          //현재 콘텐트 인덱스를 직전 콘텐트 인덱스로 저장
-        curContent = (int)contentType;     //콘텐트 번호 갱신
-
-        //uiMgr.Set(contentType); 
-        inputMgr.Set(ingame[curContent].InputEvent);
-
-        ingame[curContent].Start();        //신규 콘텐트 시작
-    }
 }

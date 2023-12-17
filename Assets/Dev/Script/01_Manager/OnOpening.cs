@@ -21,14 +21,15 @@ public class OnOpening : MonoBehaviour
         {
             enabled = false;
         }
-        public void Play(OnOpening opening)
+        public void Play()
         {
             waitTime = 1.5f;
-            MoveNext(status = 0);
+            status = 0;
+            MoveNext();
         }
-        public void MoveNext(int index)
+        public void MoveNext()
         {
-            switch (index)
+            switch (status)
             {
                 case 0:
                     logoFaded = transform.GetComponent<Image>();
@@ -46,23 +47,25 @@ public class OnOpening : MonoBehaviour
                     break;
                 case 3:
                     enabled = false;
-                    instance.MoveNext();
+                    OnOpening.instance.MoveNext();
+                    gameObject.SetActive(false);
                     break;
             }
             status += 1;
         }
+
         public void FadeIn()
         {
             float cValue = logoFaded.color.r + Time.deltaTime * Value.FADE_SPEED;
             logoFaded.color = new Color(cValue, cValue, cValue, 1f);
             if (cValue >= 1)
-                MoveNext(status);
+                MoveNext();
         }
         public void Wait()
         {
             if (endTime <= Time.time)
             {
-                MoveNext(status);
+                MoveNext();
             }
         }
         public void FadeOut()
@@ -70,7 +73,7 @@ public class OnOpening : MonoBehaviour
             float cValue = logoFaded.color.r - Time.deltaTime * Value.FADE_SPEED;
             logoFaded.color = new Color(cValue, cValue, cValue, 1f);
             if (cValue <= 0)
-                MoveNext(status);
+                MoveNext();
         }
 
 
@@ -81,30 +84,18 @@ public class OnOpening : MonoBehaviour
     }
     private class OpeningDemo : MonoBehaviour, ICoroutine
     {
+        private ICoroutine.MoveDele UpdateDemo;
+
         private void Awake()
         {
             enabled = false;
         }
-        public void MoveNext(int index)
+        public void Play()
         {
-
+            Debug.Log("Not yet Play Demo => OnOpening.MoveNext();");
+            OnOpening.instance.MoveNext();
         }
-        public void Play(OnOpening opening)
-        { 
-            
-        }
-    }
-    private class OpeningTitle : MonoBehaviour, ICoroutine
-    {
-        private void Awake()
-        {
-            enabled = false;
-        }
-        public void MoveNext(int index)
-        {
-
-        }
-        public void Play(OnOpening opening)
+        public void MoveNext()
         {
 
         }
@@ -112,13 +103,11 @@ public class OnOpening : MonoBehaviour
 
     private static OnOpening instance;
 
-    private OpeningLogo logo;
-    private OpeningDemo demo;
-    private OpeningTitle title;
+    private OpeningLogo  logo;
+    private OpeningDemo  demo;
 
     private int current = 0;
 
-    //static 개불편...
     public static async Task<bool> InitAsync(Transform canvas_ui)
     {
         try
@@ -138,7 +127,6 @@ public class OnOpening : MonoBehaviour
     {
         logo  = transform.GetChild(0).AddComponent<OpeningLogo>();
         demo  = transform.GetChild(1).AddComponent<OpeningDemo>();
-        title = transform.GetChild(2).AddComponent<OpeningTitle>();
     }
     private void Start()
     {
@@ -146,21 +134,23 @@ public class OnOpening : MonoBehaviour
     }
     private void MoveNext()
     {
-        switch (current)
+        switch (current++)
         {
             case 0: 
-                logo.Play(this); 
+                logo.Play(); 
                 break;
             case 1:
                 logo = null;
-                demo.Play(this); 
+                demo.Play();
                 break;
             case 2:
                 demo = null;
-                title.Play(this); 
+                Debug.Log("Call UITitle");
                 break;
         }
-
-        current += 1;
+    }
+    private void OnDestroy()
+    {
+        AssetManager.ReleaseAsset(gameObject.GetInstanceID());
     }
 }

@@ -9,5 +9,5 @@ public interface ICoroutine
 {
     public delegate void MoveDele();
 
-    public void MoveNext(int index);
+    public void MoveNext();
 }

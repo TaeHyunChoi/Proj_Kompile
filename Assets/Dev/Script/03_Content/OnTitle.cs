@@ -1,5 +1,25 @@
-﻿internal class OnTitle : ContentBase
+﻿using UnityEngine;
+using System.Threading.Tasks;
+using System;
+
+internal class OnTitle : ContentBase
 {
+    //코드 중복?
+    public static async Task<bool> InitAsync(Transform canvas_ui)
+    {
+        try
+        {
+            GameObject obj = await AssetManager.InstantiateAsync("UITitle", canvas_ui);
+            obj.AddComponent<OnTitle>();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("Error loading assets: " + ex.Message);
+            return false;
+        }
+
+        return true;
+    }
     public override void Start()
     {
 
