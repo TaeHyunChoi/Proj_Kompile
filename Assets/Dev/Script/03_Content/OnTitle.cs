@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System;
 
-internal class OnTitle : MonoBehaviour, IUpdateBySection
+internal class OnTitle : MonoBehaviour
 {
     //코드 중복?
     public static async Task<bool> InitAsync(Transform canvas_ui)
@@ -21,7 +21,6 @@ internal class OnTitle : MonoBehaviour, IUpdateBySection
 
         return true;
     }
-    private IUpdateBySection.UpdateDele updateTitle;
     private int current = 0;
 
     private void Awake()

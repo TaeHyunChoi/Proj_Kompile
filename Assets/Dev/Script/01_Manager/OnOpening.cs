@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
@@ -8,34 +9,31 @@ using UnityEngine.UI;
 
 public class OnOpening : MonoBehaviour
 {
-    private class OpeningLogo : MonoBehaviour, IUpdateBySection
+    private class OpeningLogo : Content
     {
-        private Image logoFaded;
-        private IUpdateBySection.UpdateDele updateFunc;
-        private IUpdateBySection updater;
-
-        private int   status;
+        private Image logo;
         private float endTime;
         private float waitTime;
 
         private void Awake()
         {
-            enabled  = false;
-            updater  = (IUpdateBySection)this;
+            enabled = false;
         }
-        public void Play()
+
+        //Inherit
+        public override void Play()
         {
             waitTime = 1.5f;
             status = 0;
-            updater.MoveNext();
+            MoveNext();
         }
-        void IUpdateBySection.MoveNext()
+        protected override void MoveNext()
         {
             switch (status)
             {
                 case 0:
-                    logoFaded = transform.GetComponent<Image>();
-                    logoFaded.color = Color.black;
+                    logo = transform.GetComponent<Image>();
+                    logo.color = Color.black;
                     updateFunc = FadeIn;
                     enabled = true;
                     break;
@@ -44,14 +42,14 @@ public class OnOpening : MonoBehaviour
                     updateFunc = Wait;
                     break;
                 case 2:
-                    logoFaded.color = Color.white;
+                    logo.color = Color.white;
                     updateFunc = FadeOut;
                     break;
                 case 3:
                     enabled = false;
                     gameObject.SetActive(false);
                     updateFunc = null;
-                    OnOpening.instance.MoveNext();
+                    opening.MoveNext();
                     break;
             }
             status += 1;
@@ -59,27 +57,27 @@ public class OnOpening : MonoBehaviour
 
         private void FadeIn()
         {
-            float cValue = logoFaded.color.r + Time.deltaTime * Value.FADE_SPEED;
-            logoFaded.color = new Color(cValue, cValue, cValue, 1f);
+            float cValue = logo.color.r + Time.deltaTime * Value.FADE_SPEED;
+            logo.color = new Color(cValue, cValue, cValue, 1f);
             if (cValue >= 1)
             {
-                updater.MoveNext();
+                MoveNext();
             }
         }
         private void Wait()
         {
             if (endTime < Time.time)
             {
-                updater.MoveNext();
+                MoveNext();
             }
         }
         private void FadeOut()
         {
-            float cValue = logoFaded.color.r - Time.deltaTime * Value.FADE_SPEED;
-            logoFaded.color = new Color(cValue, cValue, cValue, 1f);
+            float cValue = logo.color.r - Time.deltaTime * Value.FADE_SPEED;
+            logo.color = new Color(cValue, cValue, cValue, 1f);
             if (cValue <= 0)
             {
-                updater.MoveNext();
+                MoveNext();
             }
         }
 
@@ -88,30 +86,59 @@ public class OnOpening : MonoBehaviour
             updateFunc();
         }
     }
-    private class OpeningDemo : MonoBehaviour, IUpdateBySection
+    private class OpeningDemo : Content
     {
-        private IUpdateBySection.UpdateDele updater;
-
         private void Awake()
         {
             enabled = false;
+            gameObject.SetActive(false);
         }
-        public void Play()
+        public override void Play()
         {
             Debug.Log("Not yet Play Demo => OnOpening.MoveNext();");
-            gameObject.SetActive(false);
-            OnOpening.instance.MoveNext();
+            opening.MoveNext();
         }
-        public void MoveNext()
+        protected override void MoveNext()
         {
 
         }
     }
+    private class OpeningTitle : Content
+    {
+        private void Awake()
+        {
+            enabled = false;
+            status = 0;
+        }
 
-    private static OnOpening instance;
+        public override void Play()
+        {
 
+        }
+
+        protected override void MoveNext()
+        {
+            switch (status)
+            {
+                case 0:
+                    //타이틀 로고 : 위아래로
+                    break;
+                case 1:
+                    //번쩍 => 타이틀 진짜 로고
+                    break;
+                case 2:
+                    //Call Title UI => 이걸 opening.MoveNext()로 호출하는게 나을 듯
+                    opening.MoveNext();
+                    break;
+            }
+        }
+    }
+
+
+    private static OnOpening opening;
     private OpeningLogo  logo;
     private OpeningDemo  demo;
+    private OpeningTitle title;
 
     private int current = 0;
 
@@ -120,7 +147,7 @@ public class OnOpening : MonoBehaviour
         try
         {
             GameObject obj = await AssetManager.InstantiateAsync("OpeningFade", canvas_ui);
-            instance = obj.AddComponent<OnOpening>();
+            opening = obj.AddComponent<OnOpening>();
         }
         catch (Exception ex)
         {
@@ -152,9 +179,17 @@ public class OnOpening : MonoBehaviour
                 break;
             case 2:
                 demo = null;
-                Debug.Log("Call UITitle");
-                //gameObject.SetActive(false);
-                GameObject.Destroy(this.gameObject);
+                title.Play();
+                break;
+            case 3:
+                title = null;
+                Debug.Log("Call Title");
+                break;
+            case 4:
+                //Loading Curtain;
+                //Load Field
+                //기타 등등
+                Destroy(this.gameObject);
                 break;
         }
     }

@@ -132,6 +132,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
+  - m_GUID: 6321b1a3783c82f4cab1f3b635cef5c9
+    m_Address: Logo
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:
