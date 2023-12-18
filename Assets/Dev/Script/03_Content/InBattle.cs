@@ -1,19 +1,6 @@
-﻿internal class InBattle : ContentBase
+﻿using UnityEngine;
+
+internal class InBattle : MonoBehaviour
 {
-    public override void Start()
-    {
 
-    }
-    public override void Update()
-    {
-
-    }
-    public override void InputEvent(int input)
-    {
-
-    }
-    public override void End()
-    {
-
-    }
 }

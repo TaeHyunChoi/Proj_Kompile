@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System;
 
-internal class OnTitle : ContentBase
+internal class OnTitle : MonoBehaviour, IUpdateBySection
 {
     //코드 중복?
     public static async Task<bool> InitAsync(Transform canvas_ui)
@@ -11,6 +11,7 @@ internal class OnTitle : ContentBase
         {
             GameObject obj = await AssetManager.InstantiateAsync("UITitle", canvas_ui);
             obj.AddComponent<OnTitle>();
+            obj.SetActive(false);
         }
         catch (Exception ex)
         {
@@ -20,21 +21,28 @@ internal class OnTitle : ContentBase
 
         return true;
     }
-    public override void Start()
+    private IUpdateBySection.UpdateDele updateTitle;
+    private int current = 0;
+
+    private void Awake()
+    {
+        
+    }
+    private void Start()
     {
 
     }
-
-    public override void Update()
+    private void Update()
     {
-
+        
     }
-    public override void InputEvent(int input)
+    private void OnDestroy()
+    {
+        AssetManager.ReleaseAsset(gameObject.GetInstanceID());
+    }
+
+    public void MoveNext()
     {
 
-    }
-    public override void End()
-    {
-        //타이틀은 인게임 내에서 사용이 적으니 개체 비활성화가 아니라 해제가 좋겠다.
     }
 }

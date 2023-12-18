@@ -1,13 +1,13 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 public interface IDataSetter
 {
     public void Set(Dictionary<string, string> table);
 }
 
-public interface ICoroutine
+public interface IUpdateBySection
 {
-    public delegate void MoveDele();
-
+    public delegate void UpdateDele();
     public void MoveNext();
 }

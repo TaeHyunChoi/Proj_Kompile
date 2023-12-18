@@ -47,11 +47,10 @@ public class Main : MonoBehaviour
     }
     private IEnumerator IEOpeningAsync()
     {
-        //이거 생성 순서를 확정할 수 있니...?
         Task<bool> taskOpening = OnOpening.InitAsync(canvas_overlay.transform);
-        Task<bool> taskTitle   = OnTitle.InitAsync(canvas_overlay.transform);
+        Task<bool> taskTitle = OnTitle.InitAsync(canvas_overlay.transform);
 
-        while (taskOpening.IsCompleted || taskTitle.IsCompleted)
+        while (!taskOpening.IsCompleted || !taskTitle.IsCompleted)
         {
             yield return null;
         }

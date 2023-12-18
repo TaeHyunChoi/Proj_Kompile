@@ -8,10 +8,11 @@ using UnityEngine.UI;
 
 public class OnOpening : MonoBehaviour
 {
-    private class OpeningLogo : MonoBehaviour, ICoroutine
+    private class OpeningLogo : MonoBehaviour, IUpdateBySection
     {
-        private Image               logoFaded;
-        private ICoroutine.MoveDele UpdateLogo;
+        private Image logoFaded;
+        private IUpdateBySection.UpdateDele updateFunc;
+        private IUpdateBySection updater;
 
         private int   status;
         private float endTime;
@@ -19,72 +20,77 @@ public class OnOpening : MonoBehaviour
 
         private void Awake()
         {
-            enabled = false;
+            enabled  = false;
+            updater  = (IUpdateBySection)this;
         }
         public void Play()
         {
             waitTime = 1.5f;
             status = 0;
-            MoveNext();
+            updater.MoveNext();
         }
-        public void MoveNext()
+        void IUpdateBySection.MoveNext()
         {
             switch (status)
             {
                 case 0:
                     logoFaded = transform.GetComponent<Image>();
                     logoFaded.color = Color.black;
-                    UpdateLogo = FadeIn;
+                    updateFunc = FadeIn;
                     enabled = true;
                     break;
                 case 1:
                     endTime = Time.time + waitTime;
-                    UpdateLogo = Wait;
+                    updateFunc = Wait;
                     break;
                 case 2:
                     logoFaded.color = Color.white;
-                    UpdateLogo = FadeOut;
+                    updateFunc = FadeOut;
                     break;
                 case 3:
                     enabled = false;
-                    OnOpening.instance.MoveNext();
                     gameObject.SetActive(false);
+                    updateFunc = null;
+                    OnOpening.instance.MoveNext();
                     break;
             }
             status += 1;
         }
 
-        public void FadeIn()
+        private void FadeIn()
         {
             float cValue = logoFaded.color.r + Time.deltaTime * Value.FADE_SPEED;
             logoFaded.color = new Color(cValue, cValue, cValue, 1f);
             if (cValue >= 1)
-                MoveNext();
-        }
-        public void Wait()
-        {
-            if (endTime <= Time.time)
             {
-                MoveNext();
+                updater.MoveNext();
             }
         }
-        public void FadeOut()
+        private void Wait()
+        {
+            if (endTime < Time.time)
+            {
+                updater.MoveNext();
+            }
+        }
+        private void FadeOut()
         {
             float cValue = logoFaded.color.r - Time.deltaTime * Value.FADE_SPEED;
             logoFaded.color = new Color(cValue, cValue, cValue, 1f);
             if (cValue <= 0)
-                MoveNext();
+            {
+                updater.MoveNext();
+            }
         }
-
 
         private void Update()
         {
-            UpdateLogo();
+            updateFunc();
         }
     }
-    private class OpeningDemo : MonoBehaviour, ICoroutine
+    private class OpeningDemo : MonoBehaviour, IUpdateBySection
     {
-        private ICoroutine.MoveDele UpdateDemo;
+        private IUpdateBySection.UpdateDele updater;
 
         private void Awake()
         {
@@ -93,6 +99,7 @@ public class OnOpening : MonoBehaviour
         public void Play()
         {
             Debug.Log("Not yet Play Demo => OnOpening.MoveNext();");
+            gameObject.SetActive(false);
             OnOpening.instance.MoveNext();
         }
         public void MoveNext()
@@ -146,6 +153,8 @@ public class OnOpening : MonoBehaviour
             case 2:
                 demo = null;
                 Debug.Log("Call UITitle");
+                //gameObject.SetActive(false);
+                GameObject.Destroy(this.gameObject);
                 break;
         }
     }

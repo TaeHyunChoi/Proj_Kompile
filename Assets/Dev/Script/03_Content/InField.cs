@@ -1,19 +1,6 @@
-﻿internal class InField : ContentBase
+﻿using UnityEngine;
+
+internal class InField : MonoBehaviour
 {
-    public override void Start()
-    {
 
-    }
-    public override void Update()
-    {
-
-    }
-    public override void InputEvent(int input)
-    {
-
-    }
-    public override void End()
-    {
-
-    }
 }
