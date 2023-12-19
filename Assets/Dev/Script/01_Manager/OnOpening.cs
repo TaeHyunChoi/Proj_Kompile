@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -9,50 +7,51 @@ using UnityEngine.UI;
 
 public class OnOpening : MonoBehaviour
 {
-    private class OpeningLogo : Content
+    private class OpeningLogo : MonoBehaviour, ISequenceUpdate
     {
-        private Image logo;
-        private float endTime;
-        private float waitTime;
+        private Image   logo;
+        private ISequenceUpdate.SequenceDele sequence;
+        private int     status;
+        private float   endTime;
+        private float   waitTime;
 
         private void Awake()
         {
             enabled = false;
-        }
 
-        //Inherit
-        public override void Play()
-        {
-            waitTime = 1.5f;
             status = 0;
-            MoveNext();
+            waitTime = 1.5f;
+            logo = transform.GetComponent<Image>();
+            logo.color = Color.black;
         }
-        protected override void MoveNext()
+        public void GotoNext()
         {
-            switch (status)
+            switch (status++)
             {
                 case 0:
-                    logo = transform.GetComponent<Image>();
-                    logo.color = Color.black;
-                    updateFunc = FadeIn;
+                    sequence = FadeIn;
+
+                    gameObject.SetActive(true);
                     enabled = true;
                     break;
                 case 1:
                     endTime = Time.time + waitTime;
-                    updateFunc = Wait;
+                    sequence = Wait;
                     break;
                 case 2:
                     logo.color = Color.white;
-                    updateFunc = FadeOut;
+                    sequence = FadeOut;
                     break;
                 case 3:
                     enabled = false;
                     gameObject.SetActive(false);
-                    updateFunc = null;
-                    opening.MoveNext();
+
+                    opening.NextSequence();
+
+                    logo = null;
+                    sequence = null;
                     break;
             }
-            status += 1;
         }
 
         private void FadeIn()
@@ -61,14 +60,14 @@ public class OnOpening : MonoBehaviour
             logo.color = new Color(cValue, cValue, cValue, 1f);
             if (cValue >= 1)
             {
-                MoveNext();
+                GotoNext();
             }
         }
         private void Wait()
         {
             if (endTime < Time.time)
             {
-                MoveNext();
+                GotoNext();
             }
         }
         private void FadeOut()
@@ -77,60 +76,80 @@ public class OnOpening : MonoBehaviour
             logo.color = new Color(cValue, cValue, cValue, 1f);
             if (cValue <= 0)
             {
-                MoveNext();
+                GotoNext();
             }
         }
 
         private void Update()
         {
-            updateFunc();
+            sequence();
         }
     }
-    private class OpeningDemo : Content
+    private class OpeningDemo : MonoBehaviour, ISequenceUpdate
     {
+        private int status;
         private void Awake()
         {
             enabled = false;
             gameObject.SetActive(false);
-        }
-        public override void Play()
-        {
-            Debug.Log("Not yet Play Demo => OnOpening.MoveNext();");
-            opening.MoveNext();
-        }
-        protected override void MoveNext()
-        {
 
+            status = 0;
+        }
+        public void GotoNext()
+        {
+            switch (status++)
+            {
+                case 0:
+                    Debug.Log("Not yet Play Demo => OnOpening.MoveNext();");
+                    opening.NextSequence();
+                    break;
+            }
         }
     }
-    private class OpeningTitle : Content
+    private class OpeningTitle : MonoBehaviour, ISequenceUpdate
     {
+        private Image[] titleLogos;
+        private ISequenceUpdate.SequenceDele sequence;
+        private int status;
+
         private void Awake()
         {
             enabled = false;
+            gameObject.SetActive(false);
             status = 0;
+            titleLogos = new Image[2];
+            titleLogos[0] = transform.GetChild(0).GetComponent<Image>();
+            titleLogos[1] = transform.GetChild(1).GetComponent<Image>();
         }
 
-        public override void Play()
-        {
-
-        }
-
-        protected override void MoveNext()
+        public void GotoNext()
         {
             switch (status)
             {
                 case 0:
-                    //타이틀 로고 : 위아래로
+                    //타이틀 로고 : 위아래 자리 세팅
+                    enabled = true;
+                    gameObject.SetActive(true);
+
+                    //dele: 지정 좌표까지 이동
+                    sequence = MoveTitleLogo;
                     break;
                 case 1:
                     //번쩍 => 타이틀 진짜 로고
-                    break;
-                case 2:
-                    //Call Title UI => 이걸 opening.MoveNext()로 호출하는게 나을 듯
-                    opening.MoveNext();
+                    //번쩍 제일 밝아지면 UITitle 띄우자. => opening.MoveNext() 통해서 호출
+                    opening.NextSequence();
                     break;
             }
+        }
+
+        private void Update()
+        {
+            sequence();
+        }
+
+        private void MoveTitleLogo()
+        {
+
         }
     }
 
@@ -161,35 +180,38 @@ public class OnOpening : MonoBehaviour
     {
         logo  = transform.GetChild(0).AddComponent<OpeningLogo>();
         demo  = transform.GetChild(1).AddComponent<OpeningDemo>();
+        title = transform.GetChild(2).AddComponent<OpeningTitle>();
     }
     private void Start()
     {
-        MoveNext();
+        NextSequence();
     }
-    private void MoveNext()
+    private void NextSequence()
     {
+        //타고 타고 들어 가는 게 너무 많은 것 같다.
+        //코드 정리가 필요하닷..; 뭔가 진도가 되게 안나가네 흠...
         switch (current++)
         {
             case 0: 
-                logo.Play(); 
+                logo.GotoNext(); 
                 break;
             case 1:
                 logo = null;
-                demo.Play();
+                demo.GotoNext();
                 break;
             case 2:
                 demo = null;
-                title.Play();
+                title.GotoNext();
                 break;
             case 3:
                 title = null;
-                Debug.Log("Call Title");
                 break;
             case 4:
                 //Loading Curtain;
                 //Load Field
                 //기타 등등
-                Destroy(this.gameObject);
+
+                //Destroy(this.gameObject);
                 break;
         }
     }
