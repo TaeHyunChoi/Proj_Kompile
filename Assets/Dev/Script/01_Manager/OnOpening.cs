@@ -15,21 +15,17 @@ public class OnOpening : MonoBehaviour
         private float endTime;
         private float waitTime;
 
-        private void Awake()
-        {
-            enabled = false;
-        }
-
         //Inherit
         public override void Play()
         {
             waitTime = 1.5f;
             status = 0;
+            gameObject.SetActive(true);
             MoveNext();
         }
         protected override void MoveNext()
         {
-            switch (status)
+            switch (status++)
             {
                 case 0:
                     logo = transform.GetComponent<Image>();
@@ -52,7 +48,6 @@ public class OnOpening : MonoBehaviour
                     opening.MoveNext();
                     break;
             }
-            status += 1;
         }
 
         private void FadeIn()
@@ -105,42 +100,101 @@ public class OnOpening : MonoBehaviour
     }
     private class OpeningTitle : Content
     {
-        private void Awake()
-        {
-            enabled = false;
-            status = 0;
-        }
+        private Image[] images;
+        private float logoSpeed = 2500f;
+        private float passedtime = 0f;
+        private float movingTime = 1f;
+        private float flashSpeed = 5f;
 
         public override void Play()
         {
+            images = transform.GetComponentsInChildren<Image>();
 
+            Vector2 pos;
+            pos = images[1].transform.position;
+            images[1].transform.position = pos + Vector2.up * logoSpeed * movingTime;
+            pos = images[2].transform.position;
+            images[2].transform.position = pos + Vector2.down * logoSpeed * movingTime;
+            images[3].enabled = false;
+
+            MoveNext();
         }
 
         protected override void MoveNext()
         {
-            switch (status)
+            switch (status++)
             {
                 case 0:
-                    //타이틀 로고 : 위아래로
+                    gameObject.SetActive(true);
+                    enabled = true;
+                    passedtime = 0;
+                    updateFunc = MoveTitleLogo;
                     break;
                 case 1:
-                    //번쩍 => 타이틀 진짜 로고
+                    images[3].enabled = true;
+                    images[3].color = new Color(1, 1, 1, 0);
+                    updateFunc = FlashOut;
                     break;
                 case 2:
-                    //Call Title UI => 이걸 opening.MoveNext()로 호출하는게 나을 듯
+                    images[3].color = new Color(1, 1, 1, 1);
+                    updateFunc = FlashIn;
+                    break;
+                case 3:
+                    enabled = false;
+                    images[3].enabled = false;
                     opening.MoveNext();
                     break;
             }
         }
-    }
 
+        private void MoveTitleLogo()
+        {
+            Vector2 pos;
+            pos = images[1].transform.position;
+            images[1].transform.position = pos + Vector2.down * logoSpeed * Time.deltaTime;
+            pos = images[2].transform.position;
+            images[2].transform.position = pos + Vector2.up * logoSpeed * Time.deltaTime;
+
+            if (passedtime > movingTime)
+            {
+                MoveNext();
+            }
+            else
+            {
+                passedtime += Time.deltaTime;
+            }
+        }
+        private void FlashOut()
+        {
+            float alpha = images[3].color.a + Time.deltaTime * flashSpeed;
+            images[3].color = new Color(1, 1, 1, alpha);
+            if (alpha >= 1)
+            {
+                MoveNext();
+            }
+        }
+        private void FlashIn()
+        {
+            float alpha = images[3].color.a - Time.deltaTime * (flashSpeed * 0.6f);
+            images[3].color = new Color(1, 1, 1, alpha);
+            if (alpha <= 0)
+            {
+                MoveNext();
+            }
+        }
+
+        private void Update()
+        {
+            updateFunc();
+        }
+    }
 
     private static OnOpening opening;
     private OpeningLogo  logo;
     private OpeningDemo  demo;
     private OpeningTitle title;
 
-    private int current = 0;
+    private int status = 0;
 
     public static async Task<bool> InitAsync(Transform canvas_ui)
     {
@@ -161,6 +215,7 @@ public class OnOpening : MonoBehaviour
     {
         logo  = transform.GetChild(0).AddComponent<OpeningLogo>();
         demo  = transform.GetChild(1).AddComponent<OpeningDemo>();
+        title = transform.GetChild(2).AddComponent<OpeningTitle>();
     }
     private void Start()
     {
@@ -168,7 +223,7 @@ public class OnOpening : MonoBehaviour
     }
     private void MoveNext()
     {
-        switch (current++)
+        switch (status++)
         {
             case 0: 
                 logo.Play(); 
@@ -184,6 +239,7 @@ public class OnOpening : MonoBehaviour
             case 3:
                 title = null;
                 Debug.Log("Call Title");
+                //여기서부터 설계가 필요하군..
                 break;
             case 4:
                 //Loading Curtain;
