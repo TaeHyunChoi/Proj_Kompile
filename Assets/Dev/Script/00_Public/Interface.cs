@@ -7,8 +7,8 @@ public interface IDataSetter
 {
     public void Set(Dictionary<string, string> table);
 }
-public interface ISequenceUpdate
+public interface IUpdateSequence
 {
     public delegate void SequenceDele();
-    public void GotoNext();
+    public void Next();
 }

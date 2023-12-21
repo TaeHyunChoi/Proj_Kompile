@@ -54,6 +54,9 @@ public class Main : MonoBehaviour
         {
             yield return null;
         }
+
+        taskOpening.Dispose();
+        taskTitle.Dispose();
     }
 
     //private void Update()
