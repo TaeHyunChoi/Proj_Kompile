@@ -34,6 +34,7 @@ public class Main : MonoBehaviour
             canvas_camera = uiMgr.GetTransform().GetChild(1).GetComponent<Canvas>();
         }
         inputMgr = new InputManager();
+        inputMgr.Set(ContentType.Count);
 
         DataTable.LoadTable();
         //+ Load Player Data
@@ -45,17 +46,21 @@ public class Main : MonoBehaviour
     {
         this.StartCoroutine(IEOpeningAsync());
     }
+    private void Update()
+    {
+        inputMgr.Update();
+    }
     private IEnumerator IEOpeningAsync()
     {
+        //생성 순서를 확정하고자 동기화 느낌으로.
         Task<bool> taskOpening = OnOpening.InitAsync(canvas_overlay.transform);
-        Task<bool> taskTitle = OnTitle.InitAsync(canvas_overlay.transform);
-
-        while (!taskOpening.IsCompleted || !taskTitle.IsCompleted)
-        {
-            yield return null;
-        }
-
+        yield return new WaitUntil(() => taskOpening.IsCompleted);
         taskOpening.Dispose();
+
+        inputMgr.Set(ContentType.Title);
+
+        Task<bool> taskTitle = OnTitle.InitAsync(canvas_overlay.transform);
+        yield return new WaitUntil(() => taskTitle.IsCompleted);
         taskTitle.Dispose();
     }
 
