@@ -26,6 +26,10 @@ public static class IDx
 
     public const int ALL = 0xFF;
 
+    public static bool Compare(int input, int compare)
+    {
+        return (input & compare) != 0;
+    }
     public static bool AnyKeyHold(int input)
     {
         return (input & MASK_HOLD) > 0;

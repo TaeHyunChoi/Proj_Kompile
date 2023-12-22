@@ -5,7 +5,9 @@ using System;
 internal class OnTitle : MonoBehaviour
 {
     //코드 중복?
-    public static async Task<bool> InitAsync(Transform canvas_ui)
+    private static OnTitle instance;
+
+    public static async Task<OnTitle> InitAsync(Transform canvas_ui)
     {
         try
         {
@@ -16,10 +18,10 @@ internal class OnTitle : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogError("Error loading assets: " + ex.Message);
-            return false;
+            return null;
         }
 
-        return true;
+        return instance;
     }
     private int current = 0;
 

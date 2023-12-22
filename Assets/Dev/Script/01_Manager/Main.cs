@@ -6,7 +6,7 @@ using System.Threading;
 
 public class Main : MonoBehaviour
 {
-    private static Main instance;
+    private static Main main;
 
     private UIManager     uiMgr;
     private InputManager  inputMgr;
@@ -14,59 +14,52 @@ public class Main : MonoBehaviour
     private Canvas canvas_overlay;
     private Canvas canvas_camera;
 
-    private int curContent;    //현재 콘텐트 인덱스
-    private int prevContent;   //직전 콘텐트 인덱스
-
     private void Awake()
     {
         //Singleton
-        if (instance != null)
+        if (main != null)
         {
             Destroy(this.gameObject);
             return;
         }
-        instance = this;
+        main = this;
 
+        Init();
+        main.enabled = false;
+    }
+    private void Init()
+    {
         //Init Manager
         uiMgr = new UIManager(transform.Find("UI"));
-        {
-            canvas_overlay = uiMgr.GetTransform().GetChild(0).GetComponent<Canvas>();
-            canvas_camera = uiMgr.GetTransform().GetChild(1).GetComponent<Canvas>();
-        }
+        canvas_overlay = uiMgr.GetTransform().GetChild(0).GetComponent<Canvas>();
+        canvas_camera = uiMgr.GetTransform().GetChild(1).GetComponent<Canvas>();
+
         inputMgr = new InputManager();
-        inputMgr.Set(ContentType.Count);
+        inputMgr.Set(ContentType.Opening);
 
         DataTable.LoadTable();
         //+ Load Player Data
 
-        //Init Content
-        prevContent = (int)ContentType.Title;
-    }
-    private void Start()
-    {
         this.StartCoroutine(IEOpeningAsync());
-    }
-    private void Update()
-    {
-        inputMgr.Update();
     }
     private IEnumerator IEOpeningAsync()
     {
         //생성 순서를 확정하고자 동기화 느낌으로.
-        Task<bool> taskOpening = OnOpening.InitAsync(canvas_overlay.transform);
+        Task<OnOpening> taskOpening = OnOpening.InitAsync(canvas_overlay.transform);
         yield return new WaitUntil(() => taskOpening.IsCompleted);
-        taskOpening.Dispose();
 
-        inputMgr.Set(ContentType.Title);
-
-        Task<bool> taskTitle = OnTitle.InitAsync(canvas_overlay.transform);
+        Task<OnTitle> taskTitle = OnTitle.InitAsync(canvas_overlay.transform);
         yield return new WaitUntil(() => taskTitle.IsCompleted);
+
+        taskOpening.Dispose();
         taskTitle.Dispose();
+
+        inputMgr.Set(ContentType.Opening);
+        main.enabled = true;
     }
 
-    //private void Update()
-    //{
-    //    inputMgr.Update();
-    //    ingame[curContent].Update();
-    //}
+    private void Update()
+    {
+        inputMgr.Update();
+    }
 }
