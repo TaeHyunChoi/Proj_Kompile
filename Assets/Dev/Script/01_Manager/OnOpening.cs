@@ -7,20 +7,31 @@ using UnityEngine.UI;
 
 public abstract class ContentOpening : MonoBehaviour
 {
+    protected int state;
+    protected bool canSkip;
     public abstract void Play();
     public abstract void Next();
+    public void NextState()
+    {
+        if (canSkip)
+        {
+            ++state;
+            canSkip = false;
+        }
+    }
 }
 public class OnOpening : MonoBehaviour
 {
     private class OpeningLogo : ContentOpening
     {
         private Image   logoImage;
-        private int     state;
+
         private float   endTime;
         private float   waitTime;
 
         public override void Play()
         {
+            canSkip = true;
             enabled = false;
             gameObject.SetActive(false);
 
@@ -48,7 +59,7 @@ public class OnOpening : MonoBehaviour
                 case 3:
                     enabled = false;
                     gameObject.SetActive(false);
-                    opening.NextSequence();
+                    instance.NextSequence();
                     break;
             }
         }
@@ -83,9 +94,9 @@ public class OnOpening : MonoBehaviour
     }
     private class OpeningDemo : ContentOpening
     {
-        private int state;
         public override void Play()
         {
+            canSkip = true;
             enabled = false;
             gameObject.SetActive(false);
 
@@ -99,7 +110,7 @@ public class OnOpening : MonoBehaviour
             {
                 case 0:
                     Debug.Log("Not yet Play Demo => OnOpening.MoveNext();");
-                    opening.NextSequence();
+                    instance.NextSequence();
                     break;
             }
         }
@@ -111,7 +122,6 @@ public class OnOpening : MonoBehaviour
     private class OpeningTitle : ContentOpening
     {
         private Image[] images;
-        private int state;
 
         private float logoSpeed = 3000f;
         private float passedtime = 0f;
@@ -120,6 +130,7 @@ public class OnOpening : MonoBehaviour
 
         public override void Play()
         {
+            canSkip = false;
             enabled = false;
             gameObject.SetActive(false);
 
@@ -154,7 +165,7 @@ public class OnOpening : MonoBehaviour
                 case 3:
                     enabled = false;
                     images[3].enabled = false;
-                    opening.NextSequence();
+                    instance.NextSequence();
                     break;
             }
         }
@@ -201,24 +212,24 @@ public class OnOpening : MonoBehaviour
         }
     }
 
-    private static OnOpening opening;
+    private static OnOpening instance;
     private ContentOpening current;
     private int state = 0;
 
-    public static async Task<bool> InitAsync(Transform canvas_ui)
+    public static async Task<OnOpening> InitAsync(Transform canvas_ui)
     {
         try
         {
             GameObject obj = await AssetManager.InstantiateAsync("OpeningFade", canvas_ui);
-            opening = obj.AddComponent<OnOpening>();
+            instance = obj.AddComponent<OnOpening>();
         }
         catch (Exception ex)
         {
             Debug.LogError("Error loading assets: " + ex.Message);
-            return false;
+            return null;
         }
 
-        return true;
+        return instance;
     }
     private void Awake()
     {
@@ -263,19 +274,9 @@ public class OnOpening : MonoBehaviour
 
     public static void Input(int input)
     {
-        if (IDx.AnyKeyHold(input))
+        if (IDx.Compare(input, IDx.ENTER))
         {
-            Debug.Log("HOLD");
-            return;
+            instance.current.NextState();
         }
-
-        Debug.Log("해치웠나?");
-        //어떤 입력을 받아서 어떻게 처리할 것인가
-        //언제 입력이 가능한가(불가능한가)
-
-        //아 여러 번 호출되는 것도 막아야 하네? 흠
-        //HOLD는 안된다. 
-        //NextSequence()가 호출되기 전까지는 입력을 막아야 하네.
-        opening.current.Next();
     }
 }
