@@ -45,7 +45,7 @@ public class Main : MonoBehaviour
     private IEnumerator IEOpeningAsync()
     {
         //생성 순서를 확정하고자 동기화 느낌으로.
-        Task<OnOpening> taskOpening = OnOpening.InitAsync(canvas_overlay.transform);
+        Task<OnOpening> taskOpening = OnOpening.InitAsync(canvas_camera.transform);
         yield return new WaitUntil(() => taskOpening.IsCompleted);
 
         Task<OnTitle> taskTitle = OnTitle.InitAsync(canvas_overlay.transform);
