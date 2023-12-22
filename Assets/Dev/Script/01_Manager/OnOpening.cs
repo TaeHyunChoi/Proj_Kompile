@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -122,28 +121,36 @@ public class OnOpening : MonoBehaviour
     private class OpeningTitle : ContentOpening
     {
         private Image[] images;
+        private RectTransform[] rect;
+        private Vector2[] pos;
 
-        private float logoSpeed = 3000f;
+        private float logoSpeed  = 3000f;
         private float passedtime = 0f;
-        private float movingTime = 1f;
+        private float movingTime = 0.75f;
         private float flashSpeed = 5f;
+        private float dist;
 
         public override void Play()
         {
+            state = -1;
             canSkip = false;
             enabled = false;
             gameObject.SetActive(false);
 
-            state = -1;
             images = transform.GetComponentsInChildren<Image>();
-            
-            Vector2 pos;
-            pos = images[1].transform.position;
-            images[1].transform.position = pos + Vector2.up * logoSpeed * movingTime;
-            pos = images[2].transform.position;
-            images[2].transform.position = pos + Vector2.down * logoSpeed * movingTime;
-            images[3].enabled = false;
+            rect = new RectTransform[2];
+            pos = new Vector2[2];
+            dist = logoSpeed * movingTime;
 
+            rect[0] = images[1].GetComponent<RectTransform>();
+            rect[0].anchoredPosition = new Vector3(rect[0].anchoredPosition.x, rect[0].anchoredPosition.y + dist);
+            pos[0] = rect[0].anchoredPosition;
+
+            rect[1] = images[2].GetComponent<RectTransform>();
+            rect[1].anchoredPosition = new Vector3(rect[1].anchoredPosition.x, rect[1].anchoredPosition.y - dist);
+            pos[1] = rect[1].anchoredPosition;
+
+            images[3].enabled = false;
             Next();
         }
         public override void Next()
@@ -174,14 +181,15 @@ public class OnOpening : MonoBehaviour
             switch (state)
             {
                 case 0:
-                    Vector2 pos;
-                    pos = images[1].transform.position;
-                    images[1].transform.position = pos + Vector2.down * logoSpeed * Time.deltaTime;
-                    pos = images[2].transform.position;
-                    images[2].transform.position = pos + Vector2.up * logoSpeed * Time.deltaTime;
+                    float ratio = passedtime / movingTime;
+                    rect[0].anchoredPosition = new Vector3(pos[0].x, pos[0].y - dist * ratio);
+                    rect[1].anchoredPosition = new Vector3(pos[1].x, pos[1].y + dist * ratio);
 
                     if (passedtime > movingTime)
                     {
+                        rect = null; 
+                        pos = null;
+
                         Next();
                     }
                     else
@@ -259,7 +267,8 @@ public class OnOpening : MonoBehaviour
                 current.Play();
                 break;
             case 3:
-                /* call title ui */  
+                /* call title ui */
+                Debug.Log("Call Title UI");
                 break;
             case 4:
                 //Loading Curtain; Load Field; ...
