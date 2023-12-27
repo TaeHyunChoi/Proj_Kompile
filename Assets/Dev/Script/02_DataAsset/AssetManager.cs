@@ -9,11 +9,12 @@ public class AssetManager
 {
     private static Dictionary<int, AsyncOperationHandle<GameObject>> Handlers = new Dictionary<int, AsyncOperationHandle<GameObject>>();
 
-    public static async Task<GameObject> InstantiateAsync(string address, Transform parent = null)
+    public static async Task<GameObject> InstantiateAsync(string address, Transform parent, bool isActive)
     {
         AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
         await handle.Task;
         Handlers.Add(handle.Result.GetInstanceID(), handle);
+        handle.Result.SetActive(isActive);
 
         return handle.Result;
     }

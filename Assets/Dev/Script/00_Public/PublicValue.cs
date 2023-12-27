@@ -2,7 +2,7 @@ public static class Value
 {
     public const float FADE_SPEED = 1.25f;
 }
-public static class IDx
+public static class IDxInput
 {
     public const int DOWN   = 1 << 0;
     public const int UP     = 1 << 1;
@@ -35,6 +35,7 @@ public static class IDx
         return (input & MASK_HOLD) > 0;
     }
 }
+
 public enum Stat
 { 
     HP = 0,
@@ -50,11 +51,22 @@ public enum Stat
     LUK,
     CNT
 }
+
+//여기서 인덱스가 흩어지니까 별로인데?
+//흠....
 public enum ContentType
 {
-    Opening = 0,
+    None = 0,
+    Opening,
     Title,
     Field,
     Battle,
+    Count,
+}
+public enum UIType
+{ 
+    Option = 0,
+    Title,
+
     Count,
 }

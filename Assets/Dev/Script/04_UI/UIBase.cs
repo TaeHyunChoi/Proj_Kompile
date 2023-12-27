@@ -2,11 +2,7 @@ using UnityEngine;
 
 public abstract class UIBase : MonoBehaviour
 {
-    public abstract void Close();
+    public abstract void Open();
     public abstract void Input(int input);
-
-    public int GetID()
-    {
-        return gameObject.GetInstanceID();
-    }
+    public abstract void Close();
 }

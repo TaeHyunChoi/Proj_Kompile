@@ -1,44 +1,36 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class UIManager
 {
-    private Transform transform;
+    private Canvas canvas_overlay;
+    private Canvas canvas_camera;
+
+    private UIBase[] ui;
 
     public UIManager(Transform transform)
     {
-        this.transform = transform;
+        canvas_overlay = transform.GetChild(0).GetComponent<Canvas>();
+        canvas_camera  = transform.GetChild(1).GetComponent<Canvas>();
+        ui = new UIBase[(int)UIType.Count];
     }
 
-    public Transform GetTransform()
+    public void SetUI(UIType type, UIBase ui)
     {
-        return transform;
+        this.ui[(int)type] = ui;
     }
-    
-    //public Canvas GetCanvas(int index)
-    //{
-    //    if (index == 0)
-    //    {
-    //        return canvas_overlay;
-    //    }
+    public UIBase GetUI(UIType type)
+    {
+        return this.ui[(int)type];
+    }
 
-    //    return canvas_camera;
-    //}
-    //public async void Set(ContentType type)
-    //{
-    //    switch (type)
-    //    {
-    //        case ContentType.Title:
-    //            //Asset.Instantiate() + Asset.Release() 방식
-    //            //await AssetManager.InstantiateUI(type, canvas_overlay.transform);
-    //            break;
-    //        case ContentType.Field:
-    //        case ContentType.Battle:
-    //            //최초에 생성하고 .SetActive(isOn) 방식
-    //            //=> 그냥 처음에 UI 관련 에셋 전부 생성해버리는게 좋겠는데? 어차피 비동기니께...?
-    //            break;
-    //    }
-
-    //}
+    public Canvas GetOverlayCanvas()
+    {
+        return canvas_overlay;
+    }
+    public Canvas GetCameraCanvas()
+    {
+        return canvas_camera;
+    }
 }
