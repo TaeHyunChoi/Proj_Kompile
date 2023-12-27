@@ -9,6 +9,8 @@ public class Main : MonoBehaviour
     private static InputManager inputMgr;
     private static GameManager  gameMgr;
 
+    private static ContentType ingameContent;
+
     private void Awake()
     {
         if (instance != null)
@@ -27,17 +29,13 @@ public class Main : MonoBehaviour
     }
     private void Start()
     {
-        gameMgr.InitContent(ContentType.Opening);
+        gameMgr.InitContent(ingameContent = ContentType.Opening);
     }
     private void Update()
     {
         inputMgr.Update();
     }
 
-    public static Main GetInstance()
-    {
-        return instance;
-    }
     public static UIManager GetUIManager()
     {
         return uiMgr;
@@ -49,5 +47,9 @@ public class Main : MonoBehaviour
     public static GameManager GetGameManager()
     {
         return gameMgr;
+    }
+    public static void ReturnContentInput()
+    {
+        inputMgr.SetContentInput(ingameContent);
     }
 }

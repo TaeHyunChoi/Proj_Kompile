@@ -8,7 +8,7 @@ public class InputManager
 
     public InputManager()
     {
-        SetContentInput(ContentType.None);
+        inputFunc = Blocked;
     }
 
     public void Update()
@@ -44,6 +44,8 @@ public class InputManager
     }
     public void SetContentInput(ContentType content)
     {
+        //게임매니저의 마지막 content를 저장 시킨다?
+
         switch (content)
         {
             case ContentType.Opening: 

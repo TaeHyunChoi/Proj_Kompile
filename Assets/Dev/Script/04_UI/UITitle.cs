@@ -54,9 +54,6 @@ public class UITitle : UIBase
             {
                 case 0:
                     {
-                        //아하.. 처음부터여서 그냥 오프닝 이벤트부터 걸었구나?
-                        //ㅇㅋㅇㅋ...
-                        //이걸로 일단 필드 접근해야겠네.
                         Debug.Log("In game");
                     }
                     break;
@@ -113,6 +110,7 @@ public class UITitle : UIBase
 
      public override void Close()
     {
-
+        Main.ReturnContentInput(); //원래 콘텐츠로 입력 복귀...?
+        //이거 입력 단을 다시 한 번만 생각해보자.
     }
 }
