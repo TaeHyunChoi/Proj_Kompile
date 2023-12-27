@@ -12,11 +12,12 @@ public class AssetManager
     public static async Task<GameObject> InstantiateAsync(string address, Transform parent, bool isActive)
     {
         AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
-        await handle.Task;
-        Handlers.Add(handle.Result.GetInstanceID(), handle);
-        handle.Result.SetActive(isActive);
 
-        return handle.Result;
+        GameObject go = await handle.Task;
+        go.SetActive(isActive);
+        Handlers.Add(go.GetInstanceID(), handle);
+
+        return go;
     }
     public static bool ReleaseAsset(int instanceID)
     {

@@ -51,14 +51,10 @@ public enum Stat
     LUK,
     CNT
 }
-
-//여기서 인덱스가 흩어지니까 별로인데?
-//흠....
 public enum ContentType
 {
     None = 0,
     Opening,
-    Title,
     Field,
     Battle,
     Count,

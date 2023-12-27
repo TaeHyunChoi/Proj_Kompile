@@ -21,11 +21,13 @@ public class GameManager : MonoBehaviour
         UIManager uiMgr = Main.GetUIManager();
         Transform transfromCameraCanvas = uiMgr.GetCameraCanvas().transform;
 
-        Task<OnTitle> taskOpening = OnTitle.InitAsync(transfromCameraCanvas);
-        yield return new WaitUntil(() => taskOpening.IsCompleted);
-
+        Task<OnOpening> taskOpening = OnOpening.InitAsync(transfromCameraCanvas);
         Task<GameObject> taskUITitle = AssetManager.InstantiateAsync("UITitle", transfromCameraCanvas, false);
+
+        yield return new WaitUntil(() => taskOpening.IsCompleted);
         yield return new WaitUntil(() => taskUITitle.IsCompleted);
+
+        taskOpening.Result.Init();
         uiMgr.SetUI(UIType.Title, taskUITitle.Result.AddComponent<UITitle>());
 
         taskOpening.Dispose();

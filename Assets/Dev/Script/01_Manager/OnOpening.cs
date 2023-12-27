@@ -19,7 +19,7 @@ public abstract class ContentOpening : MonoBehaviour
         }
     }
 }
-public class OnTitle : MonoBehaviour
+public class OnOpening : MonoBehaviour
 {
     //Inherit: ContentOpening
     private class OpeningLogo : ContentOpening
@@ -222,17 +222,17 @@ public class OnTitle : MonoBehaviour
     }
     
 
-    private static OnTitle instance;
+    private static OnOpening instance;
     private ContentOpening current;
     private int state = 0;
 
 
-    public static async Task<OnTitle> InitAsync(Transform canvas_ui)
+    public static async Task<OnOpening> InitAsync(Transform canvas_ui)
     {
         try
         {
-            GameObject obj = await AssetManager.InstantiateAsync("OpeningFade", canvas_ui, true);
-            instance = obj.AddComponent<OnTitle>();
+            GameObject go = await AssetManager.InstantiateAsync("OpeningFade", canvas_ui, true);
+            instance = go.AddComponent<OnOpening>();
         }
         catch (Exception ex)
         {
@@ -246,9 +246,9 @@ public class OnTitle : MonoBehaviour
     {
         state = 0;
     }
-    private void Start()
+    public void Init()
     {
-        Main.GetInputManager().Set(ContentType.Title);
+        Main.GetInputManager().SetContentInput(ContentType.Opening);
         NextSequence();
     }
     private void NextSequence()

@@ -8,7 +8,7 @@ public class InputManager
 
     public InputManager()
     {
-        Set(ContentType.None);
+        SetContentInput(ContentType.None);
     }
 
     public void Update()
@@ -42,12 +42,23 @@ public class InputManager
     { 
         /* 입력을 막음 */
     }
-    public void Set(ContentType content)
+    public void SetContentInput(ContentType content)
     {
         switch (content)
         {
-            case ContentType.Title: inputFunc = OnTitle.Input; break;
-            default:                inputFunc = Blocked;       break;
+            case ContentType.Opening: 
+                inputFunc = OnOpening.Input; 
+                break;
+            case ContentType.Field:
+            case ContentType.Battle:
+                break;
+            default:
+                inputFunc = Blocked;
+                break;
         }
+    }
+    public void SetUIInput(UIType type)
+    {
+        inputFunc = Main.GetUIManager().GetUI(type).Input;
     }
 }
