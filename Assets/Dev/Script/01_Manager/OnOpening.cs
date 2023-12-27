@@ -21,6 +21,7 @@ public abstract class ContentOpening : MonoBehaviour
 }
 public class OnOpening : MonoBehaviour
 {
+    //Inherit: ContentOpening
     private class OpeningLogo : ContentOpening
     {
         private Image   logoImage;
@@ -219,17 +220,19 @@ public class OnOpening : MonoBehaviour
             }
         }
     }
+    
 
     private static OnOpening instance;
     private ContentOpening current;
     private int state = 0;
 
+
     public static async Task<OnOpening> InitAsync(Transform canvas_ui)
     {
         try
         {
-            GameObject obj = await AssetManager.InstantiateAsync("OpeningFade", canvas_ui);
-            instance = obj.AddComponent<OnOpening>();
+            GameObject go = await AssetManager.InstantiateAsync("OpeningFade", canvas_ui, true);
+            instance = go.AddComponent<OnOpening>();
         }
         catch (Exception ex)
         {
@@ -243,8 +246,9 @@ public class OnOpening : MonoBehaviour
     {
         state = 0;
     }
-    private void Start()
+    public void Init()
     {
+        Main.GetInputManager().SetContentInput(ContentType.Opening);
         NextSequence();
     }
     private void NextSequence()
@@ -252,23 +256,23 @@ public class OnOpening : MonoBehaviour
         switch (state++)
         {
             case 0:
-                OpeningLogo logo = transform.GetChild(0).AddComponent<OpeningLogo>();
-                current = logo.GetComponent<ContentOpening>();
+                OpeningLogo contentLogo = transform.GetChild(0).AddComponent<OpeningLogo>();
+                current = contentLogo.GetComponent<ContentOpening>();
                 current.Play();
                 break;
             case 1:
-                OpeningDemo demo = transform.GetChild(1).AddComponent<OpeningDemo>();
-                current = demo.GetComponent<ContentOpening>();
+                OpeningDemo contentDemo = transform.GetChild(1).AddComponent<OpeningDemo>();
+                current = contentDemo.GetComponent<ContentOpening>();
                 current.Play();         
                 break;
             case 2:
-                OpeningTitle title = transform.GetChild(2).AddComponent<OpeningTitle>();
-                current = title.GetComponent<ContentOpening>();
+                OpeningTitle contentTitle = transform.GetChild(2).AddComponent<OpeningTitle>();
+                current = contentTitle.GetComponent<ContentOpening>();
                 current.Play();
                 break;
             case 3:
-                /* call title ui */
-                Debug.Log("Call Title UI");
+                UIBase uiTitleMenu = Main.GetUIManager().GetUI(UIType.Title);
+                uiTitleMenu.Open();
                 break;
             case 4:
                 //Loading Curtain; Load Field; ...
@@ -283,7 +287,7 @@ public class OnOpening : MonoBehaviour
 
     public static void Input(int input)
     {
-        if (IDx.Compare(input, IDx.ENTER))
+        if (IDxInput.Compare(input, IDxInput.ENTER))
         {
             instance.current.NextState();
         }
