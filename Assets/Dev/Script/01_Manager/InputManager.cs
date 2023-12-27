@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class InputManager
 {
-    public delegate void InputDele(int input);
     private static InputDele inputFunc;
     private static int input;
 
@@ -42,25 +41,8 @@ public class InputManager
     { 
         /* 입력을 막음 */
     }
-    public void SetContentInput(ContentType content)
+    public void SetInputFunc(InputDele func)
     {
-        //게임매니저의 마지막 content를 저장 시킨다?
-
-        switch (content)
-        {
-            case ContentType.Opening: 
-                inputFunc = OnOpening.Input; 
-                break;
-            case ContentType.Field:
-            case ContentType.Battle:
-                break;
-            default:
-                inputFunc = Blocked;
-                break;
-        }
-    }
-    public void SetUIInput(UIType type)
-    {
-        inputFunc = Main.GetUIManager().GetUI(type).Input;
+        inputFunc = func;
     }
 }

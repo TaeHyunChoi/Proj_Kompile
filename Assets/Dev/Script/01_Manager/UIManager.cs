@@ -7,23 +7,55 @@ public class UIManager
     private Canvas canvas_overlay;
     private Canvas canvas_camera;
 
-    private UIBase[] ui;
+    private UIBase[] uiBucket;
+    private UIType currentUI;
 
     public UIManager(Transform transform)
     {
         canvas_overlay = transform.GetChild(0).GetComponent<Canvas>();
         canvas_camera  = transform.GetChild(1).GetComponent<Canvas>();
-        ui = new UIBase[(int)UIType.Count];
+        uiBucket = new UIBase[(int)UIType.Count];
     }
 
-    public void SetUI(UIType type, UIBase ui)
+    public async Task<T> InitAsync<T>(UIType type, Transform parent, bool isActive) where T : UIBase
     {
-        this.ui[(int)type] = ui;
+        T result;
+        string address = string.Empty;
+        switch (type)
+        {
+            case UIType.Title:      address = "UITitle";        break;
+        }
+
+        try
+        {
+            GameObject go = await AssetManager.InstantiateAsync(address, parent, false);
+            this.uiBucket[(int)type] = result = go.AddComponent<T>();
+            go.SetActive(isActive);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error loading assets: UIType.{type} ({ex.Message})");
+            return null;
+        }
+
+        return result;
     }
-    public UIBase GetUI(UIType type)
+    public void AddUIBucket(UIType type, UIBase ui)
     {
-        return this.ui[(int)type];
+        this.uiBucket[(int)type] = ui;
     }
+
+
+    public void OpenUI(UIType type)
+    {
+        this.uiBucket[(int)type].Open();
+    }
+    public void SetCurrentUI(UIType type, out InputDele func)
+    {
+        currentUI = type;
+        func = uiBucket[(int)type].Input;
+    }
+
 
     public Canvas GetOverlayCanvas()
     {

@@ -242,13 +242,9 @@ public class OnOpening : MonoBehaviour
 
         return instance;
     }
-    private void Awake()
+    public void Play()
     {
-        state = 0;
-    }
-    public void Init()
-    {
-        Main.GetInputManager().SetContentInput(ContentType.Opening);
+        Main.InputMgr.SetInputFunc(Input);
         NextSequence();
     }
     private void NextSequence()
@@ -271,8 +267,7 @@ public class OnOpening : MonoBehaviour
                 current.Play();
                 break;
             case 3:
-                UIBase uiTitleMenu = Main.GetUIManager().GetUI(UIType.Title);
-                uiTitleMenu.Open();
+                Main.UIMgr.OpenUI(UIType.Title);
                 break;
             case 4:
                 //Loading Curtain; Load Field; ...
@@ -287,7 +282,7 @@ public class OnOpening : MonoBehaviour
 
     public static void Input(int input)
     {
-        if (IDxInput.Compare(input, IDxInput.ENTER))
+        if (IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ACTION))
         {
             instance.current.NextState();
         }

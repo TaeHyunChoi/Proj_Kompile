@@ -25,11 +25,10 @@ public class UITitle : UIBase
     }
     public override void Open()
     {
-        gameObject.SetActive(true);
         transform.SetAsLastSibling();
-        Main.GetInputManager().SetUIInput(UIType.Title);
+        Main.SetCurrentUI(UIType.Title);
+        gameObject.SetActive(true);
     }
-
 
     public override void Input(int input)
     {
@@ -46,42 +45,35 @@ public class UITitle : UIBase
             select = (++select >= itemCount) ? 0 : select;
             SetItemColor(select, alphaMin);
         }
-        else if (Compare(input, ENTER) || Compare(input, ACTION) || Compare(input, RIGHT))
+        else if (Compare(input, ENTER, ACTION))
         {
             SetItemColor(select, alphaMax);
-            //call func
+
             switch (select)
             {
                 case 0:
-                    {
-                        Debug.Log("In game");
-                    }
+                    Debug.Log("In game");
+                    Main.GameMgr.InitContent(ContentType.Field);
                     break;
                 case 1:
-                    {
-                        //게임 저장 UI 호출
-                        Debug.Log("Saved Data List");
-                    }
+                    //게임 저장 UI 호출
+                    Debug.Log("Saved Data List");
                     break;
                 case 2:
-                    {
-                        //옵션창 호출
-                        Debug.Log("Option window");
-                    }
+                    //옵션창 호출
+                    Debug.Log("Option window");
                     break;
                 case 3:
-                    {
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-                        EditorApplication.isPlaying = false;
+                    EditorApplication.isPlaying = false;
 #else
                     Application.Quit();
 #endif
-                    }
                     break;
             }
             enabled = false;
         }
-        else if (Compare(input, CANCEL) || Compare(input, LEFT))
+        else if (Compare(input, CANCEL))
         {
             if (!enabled)  //메뉴가 비활성화 == 무언가를 Enter한 상태
             {
@@ -108,9 +100,9 @@ public class UITitle : UIBase
         item[select].color += new Color(0, 0, 0, delta * 0.75f);
     }
 
-     public override void Close()
+    public override void Close()
     {
-        Main.ReturnContentInput(); //원래 콘텐츠로 입력 복귀...?
-        //이거 입력 단을 다시 한 번만 생각해보자.
+        Destroy(this.gameObject);
+        AssetManager.ReleaseAsset(gameObject.GetInstanceID());
     }
 }

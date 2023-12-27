@@ -9,7 +9,10 @@ public class Main : MonoBehaviour
     private static InputManager inputMgr;
     private static GameManager  gameMgr;
 
-    private static ContentType ingameContent;
+    public static UIManager    UIMgr    { get => uiMgr; }
+    public static InputManager InputMgr { get => inputMgr; }
+    public static GameManager  GameMgr  { get => gameMgr; }
+
 
     private void Awake()
     {
@@ -23,33 +26,23 @@ public class Main : MonoBehaviour
         DataTable.LoadTable();
         //++Load Player Data
 
-        uiMgr     = new UIManager(transform.Find("UI"));
-        inputMgr  = new InputManager();
-        gameMgr = transform.GetComponentInChildren<GameManager>();
+        uiMgr    = new UIManager(transform.Find("UI"));
+        inputMgr = new InputManager();
+        gameMgr  = transform.GetComponentInChildren<GameManager>();
     }
     private void Start()
     {
-        gameMgr.InitContent(ingameContent = ContentType.Opening);
+        gameMgr.InitContent(ContentType.Opening);
     }
     private void Update()
     {
         inputMgr.Update();
     }
 
-    public static UIManager GetUIManager()
+
+    public static void SetCurrentUI(UIType type)
     {
-        return uiMgr;
-    }
-    public static InputManager GetInputManager()
-    {
-        return inputMgr;
-    }
-    public static GameManager GetGameManager()
-    {
-        return gameMgr;
-    }
-    public static void ReturnContentInput()
-    {
-        inputMgr.SetContentInput(ingameContent);
+        uiMgr.   SetCurrentUI(type, out InputDele func);
+        inputMgr.SetInputFunc(func);
     }
 }
