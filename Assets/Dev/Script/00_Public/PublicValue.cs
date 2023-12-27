@@ -30,11 +30,25 @@ public static class IDxInput
     {
         return (input & compare) != 0;
     }
+    public static bool Compare(int input, params int[] compares)
+    {
+        for (int i = 0; i < compares.Length; ++i)
+        {
+            if ((input & compares[i]) != 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     public static bool AnyKeyHold(int input)
     {
         return (input & MASK_HOLD) > 0;
     }
 }
+
+public delegate void InputDele(int input);
 
 public enum Stat
 { 
