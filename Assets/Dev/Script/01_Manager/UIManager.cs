@@ -40,15 +40,11 @@ public class UIManager
 
         return result;
     }
-    public void AddUIBucket(UIType type, UIBase ui)
-    {
-        this.uiBucket[(int)type] = ui;
-    }
-
 
     public void OpenUI(UIType type)
     {
         this.uiBucket[(int)type].Open();
+        Main.SetCurrentUI(type);
     }
     public void SetCurrentUI(UIType type, out InputDele func)
     {

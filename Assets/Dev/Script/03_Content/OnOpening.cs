@@ -19,7 +19,7 @@ public abstract class ContentOpening : MonoBehaviour
         }
     }
 }
-public class OnOpening : MonoBehaviour
+public class OnOpening : MonoBehaviour, IContentInput
 {
     //Inherit: ContentOpening
     private class OpeningLogo : ContentOpening
@@ -280,7 +280,7 @@ public class OnOpening : MonoBehaviour
         AssetManager.ReleaseAsset(gameObject.GetInstanceID());
     }
 
-    public static void Input(int input)
+    public void Input(int input)
     {
         if (IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ACTION))
         {

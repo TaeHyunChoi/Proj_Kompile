@@ -26,7 +26,6 @@ public class UITitle : UIBase
     public override void Open()
     {
         transform.SetAsLastSibling();
-        Main.SetCurrentUI(UIType.Title);
         gameObject.SetActive(true);
     }
 

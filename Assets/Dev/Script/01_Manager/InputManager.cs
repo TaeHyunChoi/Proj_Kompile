@@ -41,6 +41,10 @@ public class InputManager
     { 
         /* 입력을 막음 */
     }
+    public void BlockInput()
+    {
+        inputFunc = Blocked;
+    }
     public void SetInputFunc(InputDele func)
     {
         inputFunc = func;

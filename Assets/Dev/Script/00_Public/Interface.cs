@@ -7,3 +7,7 @@ public interface IDataSetter
 {
     public void Set(Dictionary<string, string> table);
 }
+public interface IContentInput
+{
+    public void Input(int input);
+}
