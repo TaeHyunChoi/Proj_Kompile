@@ -1,17 +1,22 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameManager
 {
     private Transform transform;
     private OnOpening opening;
-    private ContentType current;
-    private ISequenceUpdater sequence;
+    private ISequenceUpdater[] sequence;
+    private readonly int maxAcitvated = 2;
+    private int idxSequence;
 
     public GameManager(Transform transform)
     {
         this.transform = transform;
+        sequence = new ISequenceUpdater[maxAcitvated];
+        idxSequence = 0;
     }
 
     public void InitContent(ContentType type)
@@ -33,12 +38,13 @@ public class GameManager
 
         Task<OnOpening> openingTask = OnOpening.InitAsync(parentIsCameraCanvas);
         Task<UITitle> titleTask = uiMgr.InitAsync<UITitle>(UIType.Title, parentIsCameraCanvas, false);
+        Task<UISaveData> savedTask = uiMgr.InitAsync<UISaveData>(UIType.SaveData, parentIsCameraCanvas, false);
         yield return new WaitUntil(() => openingTask.IsCompletedSuccessfully);
 
         opening = openingTask.Result;
-        sequence = opening as ISequenceUpdater;
         opening.Start();
-        yield return new WaitUntil(() => titleTask.IsCompletedSuccessfully);
+        sequence[idxSequence++] = opening as ISequenceUpdater;
+        yield return new WaitUntil(() => titleTask.IsCompletedSuccessfully && savedTask.IsCompletedSuccessfully);
 
         openingTask.Dispose();
         titleTask.Dispose();
@@ -68,19 +74,20 @@ public class GameManager
         yield break;
     }
 
-    public void SetCurrent(ContentType type, out InputDele func)
-    {
-        current = type;
-        func = null;
-
-        switch (type)
-        {
-            case ContentType.Opening: func = opening.Input;  break;
-        }
-    }
 
     public void Update()
     {
-        sequence.Update();
+        for (int i = 0; i < idxSequence; ++i)
+        {
+            sequence[i].Update();
+        }
+    }
+    public void StopSequence()
+    {
+        for (int i = 0; i < idxSequence; ++i)
+        {
+            sequence[i] = null;
+        }
+        idxSequence = 0;
     }
 }
