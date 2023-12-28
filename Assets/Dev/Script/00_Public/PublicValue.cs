@@ -75,7 +75,8 @@ public enum ContentType
 }
 public enum UIType
 { 
-    Option = 0,
+    None   = -1,
+    Option =  0,
     Title,
 
     Count,

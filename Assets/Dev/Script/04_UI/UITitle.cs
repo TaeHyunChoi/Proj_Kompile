@@ -7,28 +7,35 @@ using static IDxInput;
 
 public class UITitle : UIBase
 {
-    private Image[] item;
+    private Image[]   items;
+
     private int select;
     private int itemCount;
     private float delta, alphaMax = 0.7f, alphaMin = 0.3f;
+    private bool enabled;
 
-    private void Awake()
+    public override void Init(GameObject go)
     {
+        this.transform = go.transform;
+        this.gameObject = go;
+
         Image[] images = transform.GetChild(0).GetComponentsInChildren<Image>(true);
-        item = new Image[images.Length - 1];
+        items = new Image[images.Length - 1];
         itemCount = images.Length - 1;
         for (int i = 1; i < images.Length; ++i)
         {
-            item[i - 1] = images[i];
+            items[i - 1] = images[i];
         }
-         select = 0;
+        select = 0;
     }
     public override void Open()
     {
         transform.SetAsLastSibling();
         gameObject.SetActive(true);
-    }
 
+        Main.OnEnable(index: 1, inputFunc: Input);
+        enabled = true; //아 이거 좀;
+    }
     public override void Input(int input)
     {
         // using static IDxInput;
@@ -74,7 +81,8 @@ public class UITitle : UIBase
         }
         else if (Compare(input, CANCEL))
         {
-            if (!enabled)  //메뉴가 비활성화 == 무언가를 Enter한 상태
+            //메뉴가 비활성화 == 무언가를 Enter한 상태
+            if (!enabled)  
             {
                 enabled = true;
             }
@@ -82,26 +90,25 @@ public class UITitle : UIBase
     }
     private void SetItemColor(int index, float alpha)
     {
-        Color target = item[index].color;
-        item[index].color = new Color(target.r, target.g, target.b, alpha);
+        Color target = items[index].color;
+        items[index].color = new Color(target.r, target.g, target.b, alpha);
     }
-    private void Update()
+    public override void Update()
     {
-        if (item[select].color.a <= alphaMin)
+        if (items[select].color.a <= alphaMin)
         {
             delta = Time.deltaTime;
         }
-        else if (item[select].color.a >= alphaMax)
+        else if (items[select].color.a >= alphaMax)
         {
             delta = -Time.deltaTime;
         }
 
-        item[select].color += new Color(0, 0, 0, delta * 0.75f);
+        items[select].color += new Color(0, 0, 0, delta * 0.75f);
     }
-
     public override void Close()
     {
-        Destroy(this.gameObject);
+        GameObject.Destroy(this.gameObject);
         AssetManager.ReleaseAsset(gameObject.GetInstanceID());
     }
 }

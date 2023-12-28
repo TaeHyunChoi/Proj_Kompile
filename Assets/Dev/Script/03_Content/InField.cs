@@ -1,8 +1,47 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Threading.Tasks;
+using UnityEngine;
 
-internal class InField : MonoBehaviour, IContentInput
+internal class InField : ISequenceUpdater
 {
-    public void Input(int input)
+    private static InField instance;
+    private GameObject gameObject;
+    private Transform transform;
+
+    public InField(GameObject go)
+    {
+        gameObject = go;
+        transform = go.transform;
+    }
+    public static async Task<InField> InitAsync(string address, Transform root)
+    {
+        if (instance != null)
+        {
+            return null;
+        }
+
+        try
+        {
+            GameObject go = await AssetManager.InstantiateAsync(address, root, true);
+            instance = new InField(go);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("Error loading assets: " + ex.Message);
+            return null;
+        }
+
+        return instance;
+    }
+    public void Start()
+    {
+        Main.InputMgr.SetInputDele(InputField);
+    }
+    public void Update()
+    {
+        //필드에서 업데이트 할 게... 있나...?
+    }
+    private void InputField(int input)
     {
 
     }

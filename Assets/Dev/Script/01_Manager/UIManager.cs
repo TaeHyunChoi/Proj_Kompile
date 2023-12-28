@@ -15,11 +15,11 @@ public class UIManager
         canvas_overlay = transform.GetChild(0).GetComponent<Canvas>();
         canvas_camera  = transform.GetChild(1).GetComponent<Canvas>();
         uiBucket = new UIBase[(int)UIType.Count];
+        currentUI = UIType.None;
     }
 
-    public async Task<T> InitAsync<T>(UIType type, Transform parent, bool isActive) where T : UIBase
+    public async Task<T> InitAsync<T>(UIType type, Transform parent, bool isActive) where T : UIBase, new()
     {
-        T result;
         string address = string.Empty;
         switch (type)
         {
@@ -29,7 +29,8 @@ public class UIManager
         try
         {
             GameObject go = await AssetManager.InstantiateAsync(address, parent, false);
-            this.uiBucket[(int)type] = result = go.AddComponent<T>();
+            this.uiBucket[(int)type] = new T() as UIBase;
+            this.uiBucket[(int)type].Init(go);
             go.SetActive(isActive);
         }
         catch (Exception ex)
@@ -38,18 +39,27 @@ public class UIManager
             return null;
         }
 
-        return result;
+        return this.uiBucket[(int)type] as T;
     }
 
     public void OpenUI(UIType type)
     {
         this.uiBucket[(int)type].Open();
-        Main.SetCurrentUI(type);
+        currentUI = type;
+        Main.InputMgr.SetInputDele(uiBucket[(int)type].Input);
     }
-    public void SetCurrentUI(UIType type, out InputDele func)
+    public void SetCurrent(UIType type, out InputDele func)
     {
         currentUI = type;
         func = uiBucket[(int)type].Input;
+    }
+
+    public void Update()
+    {
+        if (currentUI != UIType.None)
+        {
+            uiBucket[(int)currentUI].Update();
+        }
     }
 
 

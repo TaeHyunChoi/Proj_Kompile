@@ -1,38 +1,47 @@
 using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Assertions;
 
-public class GameManager : MonoBehaviour
+public class GameManager
 {
-    private ContentType currentContent;
+    private Transform transform;
+    private OnOpening opening;
+    private ContentType current;
+    private ISequenceUpdater sequence;
+
+    public GameManager(Transform transform)
+    {
+        this.transform = transform;
+    }
 
     public void InitContent(ContentType type)
     {
         IEnumerator coroutine;
         switch (type)
         {
-            case ContentType.Opening:   coroutine = IEInitOpeningAsync();     break;
-            case ContentType.Field:     coroutine = IEInitFieldAsync();     break;
-            default:                    /* Do Nothing. */               return;
+            case ContentType.Opening: coroutine = IEInitOpeningAsync(); break;
+            case ContentType.Field:   coroutine = IEInitFieldAsync();   break;
+            default: /* Do Nothing. */ return;
         }
 
-        currentContent = type;
-        StartCoroutine(coroutine);
+        Coroutiner.PlayCoroutine(coroutine);
     }
     private IEnumerator IEInitOpeningAsync()
     {
         UIManager uiMgr = Main.UIMgr;
-        Transform transformCameraCanvas = uiMgr.GetCameraCanvas().transform;
+        Transform parentIsCameraCanvas = uiMgr.GetCameraCanvas().transform;
 
-        Task<OnOpening> taskOpening = OnOpening.InitAsync(transformCameraCanvas);
-        Task<UITitle>   taskUITitle = uiMgr.InitAsync<UITitle>(UIType.Title, transformCameraCanvas, false);
-        yield return new WaitUntil(() => taskOpening.IsCompleted && taskUITitle.IsCompleted);
+        Task<OnOpening> openingTask = OnOpening.InitAsync(parentIsCameraCanvas);
+        Task<UITitle> titleTask = uiMgr.InitAsync<UITitle>(UIType.Title, parentIsCameraCanvas, false);
+        yield return new WaitUntil(() => openingTask.IsCompletedSuccessfully);
 
-        taskOpening.Result.Play();
+        opening = openingTask.Result;
+        sequence = opening as ISequenceUpdater;
+        opening.Start();
+        yield return new WaitUntil(() => titleTask.IsCompletedSuccessfully);
 
-        taskOpening.Dispose();
-        taskUITitle.Dispose();
+        openingTask.Dispose();
+        titleTask.Dispose();
     }
     private IEnumerator IEInitFieldAsync()
     {
@@ -57,5 +66,21 @@ public class GameManager : MonoBehaviour
         //UITitle.Close();
 
         yield break;
+    }
+
+    public void SetCurrent(ContentType type, out InputDele func)
+    {
+        current = type;
+        func = null;
+
+        switch (type)
+        {
+            case ContentType.Opening: func = opening.Input;  break;
+        }
+    }
+
+    public void Update()
+    {
+        sequence.Update();
     }
 }

@@ -45,7 +45,7 @@ public class InputManager
     {
         inputFunc = Blocked;
     }
-    public void SetInputFunc(InputDele func)
+    public void SetInputDele(InputDele func)
     {
         inputFunc = func;
     }

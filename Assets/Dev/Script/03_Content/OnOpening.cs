@@ -4,22 +4,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-public abstract class ContentOpening : MonoBehaviour
-{
-    protected int state;
-    protected bool canSkip;
-    public abstract void Play();
-    public abstract void Next();
-    public void NextState()
-    {
-        if (canSkip)
-        {
-            ++state;
-            canSkip = false;
-        }
-    }
-}
-public class OnOpening : MonoBehaviour, IContentInput
+public class OnOpening : ISequenceUpdater
 {
     //Inherit: ContentOpening
     private class OpeningLogo : ContentOpening
@@ -29,7 +14,7 @@ public class OnOpening : MonoBehaviour, IContentInput
         private float   endTime;
         private float   waitTime;
 
-        public override void Play()
+        public override void Begin()
         {
             canSkip = true;
             enabled = false;
@@ -63,7 +48,7 @@ public class OnOpening : MonoBehaviour, IContentInput
                     break;
             }
         }
-        private void Update()
+        public override void Playing()
         {
             switch (state)
             {
@@ -94,7 +79,7 @@ public class OnOpening : MonoBehaviour, IContentInput
     }
     private class OpeningDemo : ContentOpening
     {
-        public override void Play()
+        public override void Begin()
         {
             canSkip = true;
             enabled = false;
@@ -114,9 +99,9 @@ public class OnOpening : MonoBehaviour, IContentInput
                     break;
             }
         }
-        private void Update()
+        public override void Playing()
         {
-            
+
         }
     }
     private class OpeningTitle : ContentOpening
@@ -125,13 +110,13 @@ public class OnOpening : MonoBehaviour, IContentInput
         private RectTransform[] rect;
         private Vector2[] pos;
 
-        private float logoSpeed  = 3000f;
+        private float logoSpeed  = 4000f;
         private float passedtime = 0f;
         private float movingTime = 0.75f;
         private float flashSpeed = 5f;
         private float dist;
 
-        public override void Play()
+        public override void Begin()
         {
             state = -1;
             canSkip = false;
@@ -177,7 +162,7 @@ public class OnOpening : MonoBehaviour, IContentInput
                     break;
             }
         }
-        private void Update()
+        public override void Playing()
         {
             switch (state)
             {
@@ -188,7 +173,7 @@ public class OnOpening : MonoBehaviour, IContentInput
 
                     if (passedtime > movingTime)
                     {
-                        rect = null; 
+                        rect = null;
                         pos = null;
 
                         Next();
@@ -220,19 +205,26 @@ public class OnOpening : MonoBehaviour, IContentInput
             }
         }
     }
-    
 
     private static OnOpening instance;
-    private ContentOpening current;
-    private int state = 0;
 
+    private ContentOpening   current;
+    private GameObject       gameObject;
+    private Transform        transform;
+
+    private int state = 0;
 
     public static async Task<OnOpening> InitAsync(Transform canvas_ui)
     {
+        if (instance != null)
+        {
+            return null;
+        }
+
         try
         {
             GameObject go = await AssetManager.InstantiateAsync("OpeningFade", canvas_ui, true);
-            instance = go.AddComponent<OnOpening>();
+            instance = new OnOpening(go);
         }
         catch (Exception ex)
         {
@@ -242,49 +234,56 @@ public class OnOpening : MonoBehaviour, IContentInput
 
         return instance;
     }
-    public void Play()
+    public OnOpening(GameObject go)
     {
-        Main.InputMgr.SetInputFunc(Input);
-        NextSequence();
-    }
-    private void NextSequence()
-    {
-        switch (state++)
-        {
-            case 0:
-                OpeningLogo contentLogo = transform.GetChild(0).AddComponent<OpeningLogo>();
-                current = contentLogo.GetComponent<ContentOpening>();
-                current.Play();
-                break;
-            case 1:
-                OpeningDemo contentDemo = transform.GetChild(1).AddComponent<OpeningDemo>();
-                current = contentDemo.GetComponent<ContentOpening>();
-                current.Play();         
-                break;
-            case 2:
-                OpeningTitle contentTitle = transform.GetChild(2).AddComponent<OpeningTitle>();
-                current = contentTitle.GetComponent<ContentOpening>();
-                current.Play();
-                break;
-            case 3:
-                Main.UIMgr.OpenUI(UIType.Title);
-                break;
-            case 4:
-                //Loading Curtain; Load Field; ...
-                //Destroy(this.gameObject);
-                break;
-        }
-    }
-    private void OnDestroy()
-    {
-        AssetManager.ReleaseAsset(gameObject.GetInstanceID());
+        gameObject = go;
+        transform = go.transform;
     }
 
+    public void Start()
+    {
+        NextSequence();
+        Main.OnEnable(index: 2, inputFunc: Input);
+    }
+    public void Update()
+    {
+        current.Playing();
+    }
     public void Input(int input)
     {
         if (IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ACTION))
         {
             instance.current.NextState();
         }
+    }
+    private void NextSequence()
+    {
+        switch (state++)
+        {
+            case 0:
+                current = transform.GetChild(0).AddComponent<OpeningLogo>();
+                current.Begin();
+                break;
+            case 1:
+                current = transform.GetChild(1).AddComponent<OpeningDemo>();
+                current.Begin();         
+                break;
+            case 2:
+                current = transform.GetChild(2).AddComponent<OpeningTitle>();
+                current.Begin();
+                break;
+            case 3:
+                Main.UIMgr.OpenUI(UIType.Title);
+                break;
+            case 4:
+                //Loading Curtain; Load Field; ...
+                OnDestroy();
+                break;
+        }
+    }
+    private void OnDestroy()
+    {
+        GameObject.Destroy(gameObject);
+        AssetManager.ReleaseAsset(gameObject.GetInstanceID());
     }
 }
