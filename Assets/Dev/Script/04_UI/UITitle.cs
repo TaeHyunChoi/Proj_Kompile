@@ -12,6 +12,7 @@ public class UITitle : UIBase
     private int select;
     private int itemCount;
     private float delta, alphaMax = 0.7f, alphaMin = 0.3f;
+    private bool enabled;
 
     public override void Init(GameObject go)
     {

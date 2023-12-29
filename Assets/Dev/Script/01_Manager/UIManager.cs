@@ -7,17 +7,20 @@ public class UIManager
     private Canvas canvas_overlay;
     private Canvas canvas_camera;
 
-    private UIBase[] uiOn;
+    private UIBase[] uiBucket;
+    private UIType currentUI;
 
     public UIManager(Transform transform)
     {
         canvas_overlay = transform.GetChild(0).GetComponent<Canvas>();
         canvas_camera  = transform.GetChild(1).GetComponent<Canvas>();
+        uiBucket = new UIBase[2];
     }
 
     public async Task<T> InitAsync<T>(UIType type, Transform parent, bool isActive) where T : UIBase, new()
     {
         string address = string.Empty;
+        currentUI = type;
         T ui;
         switch (type)
         {
@@ -29,6 +32,7 @@ public class UIManager
         {
             GameObject go = await AssetManager.InstantiateAsync(address, parent, false);
             ui = new T();
+            this.uiBucket[(int)type] = ui;
             ui.Init(go);
             go.SetActive(isActive);
         }
@@ -43,8 +47,8 @@ public class UIManager
 
     public void OpenUI(UIType type)
     {
-        this.uiOn[(int)type].Open();
-        Main.InputMgr.SetInputDele(uiOn[(int)type].Input);
+        this.uiBucket[(int)type].Open();
+        Main.InputMgr.SetInputDele(uiBucket[(int)type].Input);
     }
 
     public void Update()

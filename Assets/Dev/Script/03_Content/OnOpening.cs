@@ -273,7 +273,6 @@ public class OnOpening : ISequenceUpdater
                 current.Begin();
                 break;
             case 3:
-                Main.GameMgr.StopSequence();
                 Main.UIMgr.OpenUI(UIType.Title);
                 break;
         }

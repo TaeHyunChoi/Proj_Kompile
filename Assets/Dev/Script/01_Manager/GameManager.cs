@@ -38,14 +38,13 @@ public class GameManager
 
         Task<OnOpening> openingTask = OnOpening.InitAsync(parentIsCameraCanvas);
         Task<UITitle> titleTask = uiMgr.InitAsync<UITitle>(UIType.Title, parentIsCameraCanvas, false);
-        Task<UISaveData> savedTask = uiMgr.InitAsync<UISaveData>(UIType.SaveData, parentIsCameraCanvas, false);
+        //Task<UISaveData> savedTask = uiMgr.InitAsync<UISaveData>(UIType.SaveData, parentIsCameraCanvas, false);
         yield return new WaitUntil(() => openingTask.IsCompletedSuccessfully);
 
         opening = openingTask.Result;
         sequence[pointer++] = opening as ISequenceUpdater;
         opening.Start();
-        sequence[idxSequence++] = opening as ISequenceUpdater;
-        yield return new WaitUntil(() => titleTask.IsCompletedSuccessfully && savedTask.IsCompletedSuccessfully);
+        yield return new WaitUntil(() => titleTask.IsCompletedSuccessfully && openingTask.IsCompletedSuccessfully);
 
         openingTask.Dispose();
         titleTask.Dispose();
