@@ -1,6 +1,7 @@
-public static class Value
+public static class Public
 {
     public const float FADE_SPEED = 1.25f;
+    public static void BlockInput(int input) {; }
 }
 public static class IDxInput
 {
@@ -67,8 +68,7 @@ public enum Stat
 }
 public enum ContentType
 {
-    None = 0,
-    Opening,
+    Opening = 0,
     Field,
     Battle,
     Count,
@@ -78,6 +78,7 @@ public enum UIType
     None   = -1,
     Option =  0,
     Title,
+    SaveData,
 
     Count,
 }

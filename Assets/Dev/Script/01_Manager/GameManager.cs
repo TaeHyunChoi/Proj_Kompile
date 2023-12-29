@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameManager
@@ -36,12 +38,14 @@ public class GameManager
 
         Task<OnOpening> openingTask = OnOpening.InitAsync(parentIsCameraCanvas);
         Task<UITitle> titleTask = uiMgr.InitAsync<UITitle>(UIType.Title, parentIsCameraCanvas, false);
+        Task<UISaveData> savedTask = uiMgr.InitAsync<UISaveData>(UIType.SaveData, parentIsCameraCanvas, false);
         yield return new WaitUntil(() => openingTask.IsCompletedSuccessfully);
 
         opening = openingTask.Result;
         sequence[pointer++] = opening as ISequenceUpdater;
         opening.Start();
-        yield return new WaitUntil(() => titleTask.IsCompletedSuccessfully);
+        sequence[idxSequence++] = opening as ISequenceUpdater;
+        yield return new WaitUntil(() => titleTask.IsCompletedSuccessfully && savedTask.IsCompletedSuccessfully);
 
         openingTask.Dispose();
         titleTask.Dispose();
@@ -66,16 +70,6 @@ public class GameManager
         yield break;
     }
 
-    public void SetCurrent(ContentType type, out InputDele func)
-    {
-        current = type;
-        func = null;
-
-        switch (type)
-        {
-            case ContentType.Opening: func = opening.Input;  break;
-        }
-    }
 
     public void Update()
     {
