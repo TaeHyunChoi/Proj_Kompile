@@ -242,8 +242,8 @@ public class OnOpening : ISequenceUpdater
 
     public void Start()
     {
+        Main.InputMgr.SetInputDele(Input);
         NextSequence();
-        Main.OnEnable(index: 2, inputFunc: Input);
     }
     public void Update()
     {
@@ -275,13 +275,9 @@ public class OnOpening : ISequenceUpdater
             case 3:
                 Main.UIMgr.OpenUI(UIType.Title);
                 break;
-            case 4:
-                //Loading Curtain; Load Field; ...
-                OnDestroy();
-                break;
         }
     }
-    private void OnDestroy()
+    public void Stop()
     {
         GameObject.Destroy(gameObject);
         AssetManager.ReleaseAsset(gameObject.GetInstanceID());

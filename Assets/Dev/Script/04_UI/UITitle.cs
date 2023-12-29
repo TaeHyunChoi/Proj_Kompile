@@ -33,8 +33,7 @@ public class UITitle : UIBase
         transform.SetAsLastSibling();
         gameObject.SetActive(true);
 
-        Main.OnEnable(index: 1, inputFunc: Input);
-        enabled = true; //아 이거 좀;
+        enabled = true;
     }
     public override void Input(int input)
     {
@@ -58,8 +57,8 @@ public class UITitle : UIBase
             switch (select)
             {
                 case 0:
-                    Debug.Log("In game");
-                    Main.GameMgr.InitContent(ContentType.Field);
+                    Debug.Log("New game");
+                    Main.GameMgr.NewGame();
                     break;
                 case 1:
                     //게임 저장 UI 호출
@@ -82,7 +81,7 @@ public class UITitle : UIBase
         else if (Compare(input, CANCEL))
         {
             //메뉴가 비활성화 == 무언가를 Enter한 상태
-            if (!enabled)  
+            if (!enabled)
             {
                 enabled = true;
             }
@@ -95,6 +94,11 @@ public class UITitle : UIBase
     }
     public override void Update()
     {
+        if (!enabled)
+        {
+            return;
+        }
+
         if (items[select].color.a <= alphaMin)
         {
             delta = Time.deltaTime;

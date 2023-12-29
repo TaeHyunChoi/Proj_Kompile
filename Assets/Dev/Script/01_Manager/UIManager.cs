@@ -56,10 +56,14 @@ public class UIManager
 
     public void Update()
     {
-        if (currentUI != UIType.None)
+        if (currentUI != UIType.None) //지금 이게 마음에 안 든다는거 아녀?
         {
             uiBucket[(int)currentUI].Update();
         }
+    }
+    public void CloseCurrentUI()
+    {
+        uiBucket[(int)currentUI].Close();
     }
 
 

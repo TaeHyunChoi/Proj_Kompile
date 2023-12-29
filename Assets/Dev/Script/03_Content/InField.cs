@@ -37,6 +37,12 @@ internal class InField : ISequenceUpdater
     {
         Main.InputMgr.SetInputDele(InputField);
     }
+
+    public void Stop()
+    {
+
+    }
+
     public void Update()
     {
         //필드에서 업데이트 할 게... 있나...?
@@ -45,4 +51,5 @@ internal class InField : ISequenceUpdater
     {
 
     }
+    
 }
