@@ -242,14 +242,14 @@ public class OnOpening : ISequenceUpdater
 
     public void Start()
     {
-        Main.InputMgr.SetInputDele(Input);
+        Main.InputMgr.Set(Input);
         NextSequence();
     }
     public void Update()
     {
         current.Playing();
     }
-    public void Input(int input)
+    public static void Input(int input)
     {
         if (IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ACTION))
         {

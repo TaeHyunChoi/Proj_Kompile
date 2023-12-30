@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 
 public class UIManager
@@ -13,43 +15,42 @@ public class UIManager
     public UIManager(Transform transform)
     {
         canvas_overlay = transform.GetChild(0).GetComponent<Canvas>();
-        canvas_camera  = transform.GetChild(1).GetComponent<Canvas>();
-        uiBucket = new UIBase[2];
+        canvas_camera = transform.GetChild(1).GetComponent<Canvas>();
+        uiBucket = new UIBase[(int)UIType.Count];
         currentType = UIType.None;
     }
 
-    public async Task<T> InitAsync<T>(UIType type, Transform parent, bool isActive) where T : UIBase, new()
+    public void Set(ContentType type)
     {
-        string address = string.Empty;
-        T ui;
+        IEnumerator coroutine;
         switch (type)
         {
-            case UIType.Title:      address = "UITitle";        break;
-            case UIType.SaveData:   address = "UISaveData";     break;
+            case ContentType.Opening:
+                coroutine = IEInitUIAsync<UITitle>((int)UIType.Title, "UITitle", canvas_camera.transform, true);
+                break;
+            default: /* Do Nothing. */ return;
         }
 
-        try
-        {
-            GameObject go = await AssetManager.InstantiateAsync(address, parent, false);
-            ui = new T();
-            this.uiBucket[(int)type] = ui;
-            ui.Init(go);
-            go.SetActive(isActive);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Error loading assets: UIType.{type} ({ex.Message})");
-            return null;
-        }
-
-        return ui;
+        Coroutiner.PlayCoroutine(coroutine);
     }
+    private IEnumerator IEInitUIAsync<T>(int typeIndex, string address, Transform parent, bool isOn) where T : UIBase, new()
+    {
+        Task<GameObject> task = AssetManager.InstantiateAsync(address, parent, false);
+        yield return new WaitUntil(() => task.IsCompletedSuccessfully);
 
+        GameObject go = task.Result;
+        T ui = new T();
+        ui.Init(go);
+        uiBucket[typeIndex] = ui;
+        go.SetActive(isOn);
+
+        task.Dispose();
+    }
     public void OpenUI(UIType type)
     {
         currentType = type;
         this.uiBucket[(int)currentType].Open();
-        Main.InputMgr.SetInputDele(uiBucket[(int)currentType].Input);
+        Main.InputMgr.Set(uiBucket[(int)currentType].Input);
     }
 
     public void Update()

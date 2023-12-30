@@ -12,6 +12,7 @@ public class Main : MonoBehaviour
     public static InputManager InputMgr { get => inputMgr; }
     public static GameManager  GameMgr  { get => gameMgr; }
 
+
     private void Awake()
     {
         if (instance != null)
@@ -26,17 +27,32 @@ public class Main : MonoBehaviour
         //++Load Player Data
 
         inputMgr = new InputManager();
-        gameMgr = new GameManager(transform.Find("Ingame"));
+        gameMgr  = new GameManager(transform.Find("Ingame"));
         uiMgr    = new UIManager(transform.Find("UI"));
     }
     private void Start()
     {
-        gameMgr.InitContent(ContentType.Opening);
+        SetContent(ContentType.Opening);
     }
     private void Update()
     {
         inputMgr.Update();
-        gameMgr .Update();
         uiMgr   .Update();
+        gameMgr .Update();
+    }
+    
+
+    private void SetContent(ContentType type)
+    {
+        DisposePrev();
+
+        //순서 엄수. (game -> ui -> input)
+        gameMgr. Set(type);
+        uiMgr.   Set(type);
+        inputMgr.Set(gameMgr.GetInputDele(type));
+    }
+    private void DisposePrev()
+    {
+        Debug.Log("Dispose Prev Content.");
     }
 }

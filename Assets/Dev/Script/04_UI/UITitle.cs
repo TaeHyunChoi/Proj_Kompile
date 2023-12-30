@@ -58,7 +58,6 @@ public class UITitle : UIBase
             {
                 case 0:
                     Debug.Log("New game");
-                    Main.GameMgr.NewGame();
                     break;
                 case 1:
                     //게임 저장 UI 호출

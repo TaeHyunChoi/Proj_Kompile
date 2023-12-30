@@ -35,7 +35,7 @@ internal class InField : ISequenceUpdater
     }
     public void Start()
     {
-        Main.InputMgr.SetInputDele(InputField);
+        Main.InputMgr.Set(InputField);
     }
 
     public void Stop()
