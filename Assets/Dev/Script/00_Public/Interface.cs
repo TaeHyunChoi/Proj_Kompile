@@ -7,7 +7,8 @@ public interface IDataSetter
 {
     public void Set(Dictionary<string, string> table);
 }
-public interface IContentInput
+public interface ISequenceUpdater
 {
-    public void Input(int input);
+    public void Update();
+    public void Stop();
 }

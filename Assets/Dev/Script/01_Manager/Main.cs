@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 
 public class Main : MonoBehaviour
 {
@@ -22,27 +21,38 @@ public class Main : MonoBehaviour
             return;
         }
         instance = this;
+        DontDestroyOnLoad(gameObject);
 
         DataTable.LoadTable();
         //++Load Player Data
 
-        uiMgr    = new UIManager(transform.Find("UI"));
         inputMgr = new InputManager();
-        gameMgr  = transform.GetComponentInChildren<GameManager>();
+        gameMgr  = new GameManager(transform.Find("Ingame"));
+        uiMgr    = new UIManager(transform.Find("UI"));
     }
     private void Start()
     {
-        gameMgr.InitContent(ContentType.Opening);
+        SetContent(ContentType.Opening);
     }
     private void Update()
     {
         inputMgr.Update();
+        uiMgr   .Update();
+        gameMgr .Update();
     }
+    
 
-
-    public static void SetCurrentUI(UIType type)
+    private void SetContent(ContentType type)
     {
-        uiMgr.   SetCurrentUI(type, out InputDele func);
-        inputMgr.SetInputFunc(func);
+        DisposePrev();
+
+        //순서 엄수. (game -> ui -> input)
+        gameMgr. Set(type);
+        uiMgr.   Set(type);
+        inputMgr.Set(gameMgr.GetInputDele(type));
+    }
+    private void DisposePrev()
+    {
+        Debug.Log("Dispose Prev Content.");
     }
 }
