@@ -8,19 +8,19 @@ public class UIManager
     private Canvas canvas_camera;
 
     private UIBase[] uiBucket;
-    private UIType currentUI;
+    private UIType currentType;
 
     public UIManager(Transform transform)
     {
         canvas_overlay = transform.GetChild(0).GetComponent<Canvas>();
         canvas_camera  = transform.GetChild(1).GetComponent<Canvas>();
         uiBucket = new UIBase[2];
+        currentType = UIType.None;
     }
 
     public async Task<T> InitAsync<T>(UIType type, Transform parent, bool isActive) where T : UIBase, new()
     {
         string address = string.Empty;
-        currentUI = type;
         T ui;
         switch (type)
         {
@@ -47,20 +47,21 @@ public class UIManager
 
     public void OpenUI(UIType type)
     {
-        this.uiBucket[(int)type].Open();
-        Main.InputMgr.SetInputDele(uiBucket[(int)type].Input);
+        currentType = type;
+        this.uiBucket[(int)currentType].Open();
+        Main.InputMgr.SetInputDele(uiBucket[(int)currentType].Input);
     }
 
     public void Update()
     {
-        if (currentUI != UIType.None) //지금 이게 마음에 안 든다는거 아녀?
+        if (currentType != UIType.None)
         {
-            uiBucket[(int)currentUI].Update();
+            uiBucket[(int)currentType].Update();
         }
     }
     public void CloseCurrentUI()
     {
-        uiBucket[(int)currentUI].Close();
+        uiBucket[(int)currentType].Close();
     }
     public Canvas GetOverlayCanvas()
     {

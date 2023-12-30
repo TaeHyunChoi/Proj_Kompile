@@ -52,6 +52,7 @@ public class UITitle : UIBase
         else if (Compare(input, ENTER, ACTION))
         {
             SetItemColor(select, alphaMax);
+            enabled = false;
 
             switch (select)
             {
@@ -62,15 +63,10 @@ public class UITitle : UIBase
                 case 1:
                     //게임 저장 UI 호출
                     Debug.Log("Saved Data List");
-                    //Main.UIMgr.UpdateSequenceIndex(1);
-                    //와.. 이게 안되네... 조졌네? 흠...
-                    //이러면 거의 설계 단부터 문제 많다는 뜻인데.
                     break;
                 case 2:
                     //옵션창 호출
                     Debug.Log("Option window");
-                    //옵션창을 꺼내야 하는디;
-                    //Main.UIMgr.UpdateSequenceIndex(1);
                     break;
                 case 3:
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
