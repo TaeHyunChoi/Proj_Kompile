@@ -1,17 +1,21 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Main : MonoBehaviour
 {
-    private static Main instance;
-
+    private static Main         instance;
     private static UIManager    uiMgr;
     private static InputManager inputMgr;
     private static GameManager  gameMgr;
+    private static LevelManager sceneMgr;
 
+    public static Main         Instance { get => instance; }
     public static UIManager    UIMgr    { get => uiMgr; }
     public static InputManager InputMgr { get => inputMgr; }
     public static GameManager  GameMgr  { get => gameMgr; }
+    public static LevelManager SceneMgr { get => sceneMgr; }
 
+    private ContentType current;
 
     private void Awake()
     {
@@ -29,6 +33,9 @@ public class Main : MonoBehaviour
         inputMgr = new InputManager();
         gameMgr  = new GameManager(transform.Find("Ingame"));
         uiMgr    = new UIManager(transform.Find("UI"));
+        sceneMgr = new LevelManager();
+
+        current = ContentType.None;
     }
     private void Start()
     {
@@ -40,19 +47,18 @@ public class Main : MonoBehaviour
         uiMgr   .Update();
         gameMgr .Update();
     }
-    
 
-    private void SetContent(ContentType type)
+    public void SetContent(ContentType type)
     {
-        DisposePrev();
-
-        //순서 엄수. (game -> ui -> input)
-        gameMgr. Set(type);
-        uiMgr.   Set(type);
-        inputMgr.Set(gameMgr.GetInputDele(type));
+        current = type;
+        gameMgr.Set(current);
+        uiMgr.Set(current);
+        inputMgr.Set(gameMgr.GetInputDele(current));
     }
-    private void DisposePrev()
+    public void Dispose()
     {
-        Debug.Log("Dispose Prev Content.");
+        gameMgr.Dispose(current);
+        uiMgr.Dispose(current);
+        inputMgr.Set(null);
     }
 }

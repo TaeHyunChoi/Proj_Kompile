@@ -277,7 +277,7 @@ public class OnOpening : ISequenceUpdater
                 break;
         }
     }
-    public void Stop()
+    public void Close()
     {
         GameObject.Destroy(gameObject);
         AssetManager.ReleaseAsset(gameObject.GetInstanceID());

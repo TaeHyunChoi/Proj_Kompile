@@ -10,5 +10,5 @@ public interface IDataSetter
 public interface ISequenceUpdater
 {
     public void Update();
-    public void Stop();
+    public void Close();
 }

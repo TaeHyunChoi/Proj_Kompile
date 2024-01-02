@@ -68,9 +68,11 @@ public enum Stat
 }
 public enum ContentType
 {
-    Opening = 0,
+    None    = -1,
+    Opening =  0,
     Field,
     Battle,
+    Event,
     Count,
 }
 public enum UIType

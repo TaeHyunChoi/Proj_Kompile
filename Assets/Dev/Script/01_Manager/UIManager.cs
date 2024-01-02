@@ -27,12 +27,28 @@ public class UIManager
         {
             case ContentType.Opening:
                 coroutine = IEInitUIAsync<UITitle>((int)UIType.Title, "UITitle", canvas_camera.transform, true);
+                Coroutiner.PlayCoroutine(coroutine);
+                break;
+            case ContentType.Field:
+                //이거 맞냐..? 흠..
+                //coroutine = IEInitUIAsync<UIHUD>();
+                //Coroutiner.PlayCoroutine(coroutine);
+
+                //coroutine = IEInitUIAsync<UIInteraction>();
+                //Coroutiner.PlayCoroutine(coroutine);
+
+                //coroutine = IEInitUIAsync<UITrade>();
+                //Coroutiner.PlayCoroutine(coroutine);
+
+                //coroutine = IEInitUIAsync<UIDialogue>();
+                //Coroutiner.PlayCoroutine(coroutine);
+
                 break;
             default: /* Do Nothing. */ return;
         }
-
-        Coroutiner.PlayCoroutine(coroutine);
     }
+
+    //여기서 제네릭<T>를 사용하지 않으면... 흠...
     private IEnumerator IEInitUIAsync<T>(int typeIndex, string address, Transform parent, bool isOn) where T : UIBase, new()
     {
         Task<GameObject> task = AssetManager.InstantiateAsync(address, parent, false);
@@ -60,10 +76,6 @@ public class UIManager
             uiBucket[(int)currentType].Update();
         }
     }
-    public void CloseCurrentUI()
-    {
-        uiBucket[(int)currentType].Close();
-    }
     public Canvas GetOverlayCanvas()
     {
         return canvas_overlay;
@@ -71,5 +83,18 @@ public class UIManager
     public Canvas GetCameraCanvas()
     {
         return canvas_camera;
+    }
+
+    public void Dispose(ContentType type)
+    { 
+        switch(type)
+        {
+            case ContentType.Opening:
+                uiBucket[(int)UIType.Title].Close();
+                uiBucket[(int)UIType.Title] = null;
+                break;
+        }
+
+        currentType = UIType.None;
     }
 }

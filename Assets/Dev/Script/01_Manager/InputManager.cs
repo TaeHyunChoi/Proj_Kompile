@@ -48,5 +48,9 @@ public class InputManager
     public void Set(InputDele func)
     {
         inputFunc = func;
+        if (inputFunc == null)
+        {
+            inputFunc = Blocked;
+        }
     }
 }
