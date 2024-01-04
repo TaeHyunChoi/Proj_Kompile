@@ -9,6 +9,7 @@ public interface IDataSetter
 }
 public interface ISequenceUpdater
 {
+    public void Start();
     public void Update();
     public void Close();
 }

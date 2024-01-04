@@ -275,7 +275,7 @@ GameObject:
   - component: {fileID: 4693710664529636516}
   - component: {fileID: 1612086536380089911}
   m_Layer: 0
-  m_Name: OpeningFade
+  m_Name: OpeningGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

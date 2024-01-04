@@ -223,7 +223,7 @@ public class OnOpening : ISequenceUpdater
 
         try
         {
-            GameObject go = await AssetManager.InstantiateAsync("OpeningFade", canvas_ui, true);
+            GameObject go = await AssetManager.InstantiateAsync("OpeningGame", canvas_ui, true);
             instance = new OnOpening(go);
         }
         catch (Exception ex)
@@ -242,7 +242,7 @@ public class OnOpening : ISequenceUpdater
 
     public void Start()
     {
-        Main.InputMgr.Set(Input);
+        Main.Instance.enabled = true;
         NextSequence();
     }
     public void Update()

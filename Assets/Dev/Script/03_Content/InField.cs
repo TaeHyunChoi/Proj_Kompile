@@ -13,43 +13,23 @@ internal class InField : ISequenceUpdater
         gameObject = go;
         transform = go.transform;
     }
-    public static async Task<InField> InitAsync(string address, Transform root)
-    {
-        if (instance != null)
-        {
-            return null;
-        }
-
-        try
-        {
-            GameObject go = await AssetManager.InstantiateAsync(address, root, true);
-            instance = new InField(go);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError("Error loading assets: " + ex.Message);
-            return null;
-        }
-
-        return instance;
-    }
     public void Start()
     {
         Main.InputMgr.Set(Input);
     }
-
+    public void Update()
+    {
+        //
+    }
     public void Close()
     {
 
     }
-
-    public void Update()
-    {
-        //필드에서 업데이트 할 게... 있나...?
-    }
     public static void Input(int input)
     {
-
-    }
-    
+        //이동 조작..
+        //잠만..
+        //UI는 어떻게 하기로 했더라
+        //아.. InputDele 바꾸는구나?
+    }    
 }

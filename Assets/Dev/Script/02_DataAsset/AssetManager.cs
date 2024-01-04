@@ -19,6 +19,20 @@ public class AssetManager
 
         return go;
     }
+
+    public static async Task<T> CreateUIAsync<T>(string address, Transform parent, bool isOn) where T: UIBase, new()
+    {
+        AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
+        GameObject go = await handle.Task;
+        go.SetActive(isOn);
+
+        T ui = new T();
+        ui.Init(go);
+
+        Handlers.Add(go.GetInstanceID(), handle);
+        return ui;
+    }
+
     public static bool ReleaseAsset(int instanceID)
     {
         Addressables.Release<GameObject>(Handlers[instanceID]);

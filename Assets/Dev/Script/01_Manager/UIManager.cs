@@ -22,53 +22,48 @@ public class UIManager
 
     public void Set(ContentType type)
     {
-        IEnumerator coroutine;
-        switch (type)
+        Coroutiner.PlayCoroutine(IEInitUIAsync(type));
+    }
+
+    private IEnumerator IEInitUIAsync(ContentType contentType)
+    {
+        switch (contentType)
         {
             case ContentType.Opening:
-                coroutine = IEInitUIAsync<UITitle>((int)UIType.Title, "UITitle", canvas_camera.transform, true);
-                Coroutiner.PlayCoroutine(coroutine);
+                {
+                    Task<UITitle> task_Title = AssetManager.CreateUIAsync<UITitle>("UITitle", canvas_camera.transform, false);
+                    yield return new WaitUntil(() => task_Title.IsCompletedSuccessfully);
+                    uiBucket[(int)UIType.Title] = task_Title.Result;
+                    task_Title.Dispose();
+                }
                 break;
             case ContentType.Field:
-                //이거 맞냐..? 흠..
-                //coroutine = IEInitUIAsync<UIHUD>();
-                //Coroutiner.PlayCoroutine(coroutine);
+                {
 
-                //coroutine = IEInitUIAsync<UIInteraction>();
-                //Coroutiner.PlayCoroutine(coroutine);
-
-                //coroutine = IEInitUIAsync<UITrade>();
-                //Coroutiner.PlayCoroutine(coroutine);
-
-                //coroutine = IEInitUIAsync<UIDialogue>();
-                //Coroutiner.PlayCoroutine(coroutine);
-
+                }
                 break;
-            default: /* Do Nothing. */ return;
         }
     }
+    //private IEnumerator IEInitUIAsync<T>(int typeIndex, string address, Transform parent, bool isOn) where T : UIBase, new()
+    //{
+        // Task<GameObject> task = AssetManager.InstantiateAsync(address, parent, false);
+        // yield return new WaitUntil(() => task.IsCompletedSuccessfully);
 
-    //여기서 제네릭<T>를 사용하지 않으면... 흠...
-    private IEnumerator IEInitUIAsync<T>(int typeIndex, string address, Transform parent, bool isOn) where T : UIBase, new()
-    {
-        Task<GameObject> task = AssetManager.InstantiateAsync(address, parent, false);
-        yield return new WaitUntil(() => task.IsCompletedSuccessfully);
+        // GameObject go = task.Result;
+        // T ui = new T();
+        // ui.Init(go);
+        // uiBucket[typeIndex] = ui;
+        // go.SetActive(isOn);
 
-        GameObject go = task.Result;
-        T ui = new T();
-        ui.Init(go);
-        uiBucket[typeIndex] = ui;
-        go.SetActive(isOn);
-
-        task.Dispose();
-    }
+        // task.Dispose();
+        //yield break;
+    //}
     public void OpenUI(UIType type)
     {
         currentType = type;
         this.uiBucket[(int)currentType].Open();
         Main.InputMgr.Set(uiBucket[(int)currentType].Input);
     }
-
     public void Update()
     {
         if (currentType != UIType.None)
@@ -85,6 +80,10 @@ public class UIManager
         return canvas_camera;
     }
 
+    public void SetBucket(int index, UIBase ui)
+    {
+        uiBucket[index] = ui;
+    }
     public void Dispose(ContentType type)
     { 
         switch(type)

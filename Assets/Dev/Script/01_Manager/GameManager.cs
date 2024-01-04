@@ -4,49 +4,19 @@ using UnityEngine;
 
 public class GameManager
 {
-    private ISequenceUpdater[] sequence;
-    private int sequenceCount;
-
-    private OnOpening opening;
-
-    public GameManager(Transform transform)
+    private ISequenceUpdater sequence;
+    public void SetSequence(ISequenceUpdater content)
     {
-        sequence = new ISequenceUpdater[2];
-        sequenceCount = 0;
+        sequence = content;
     }
-
-    public void Set(ContentType type)
+    public void Start()
     {
-        IEnumerator coroutine;
-        switch (type)
-        {
-            case ContentType.Opening: coroutine = IEInitOpeningAsync(); break;
-            default: /* Do Nothing. */ return;
-        }
-
-        Coroutiner.PlayCoroutine(coroutine);
-    }
-    private IEnumerator IEInitOpeningAsync()
-    {
-        UIManager uiMgr = Main.UIMgr;
-        Transform parentIsCameraCanvas = uiMgr.GetCameraCanvas().transform;
-        Task<OnOpening> openingTask = OnOpening.InitAsync(parentIsCameraCanvas);
-        yield return new WaitUntil(() => openingTask.IsCompletedSuccessfully);
-
-        opening = openingTask.Result;
-        sequence[sequenceCount++] = opening as ISequenceUpdater;
-        opening.Start();
-
-        openingTask.Dispose();
+        sequence.Start();
     }
     public void Update()
     {
-        for (int i = 0; i < sequenceCount; ++i)
-        {
-            sequence[i].Update();
-        }
+        sequence.Update();
     }
-
     public InputDele GetInputDele(ContentType type)
     {
         switch (type)
@@ -57,16 +27,11 @@ public class GameManager
 
         return null;
     }
-
-    public void Dispose(ContentType type)
+    public void Dispose()
     {
-        switch (type)
+        if(sequence != null)
         {
-            case ContentType.Opening:
-                opening.Close();
-                opening = null;
-                break;
-
+            sequence.Close();
         }
     }
 }

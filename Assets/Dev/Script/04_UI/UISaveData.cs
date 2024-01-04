@@ -11,7 +11,7 @@ public class UISaveData : UIBase
 
     public override void Init(GameObject go)
     {
-
+        
     }
 
     public override void Input(int input)

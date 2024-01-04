@@ -1,19 +1,20 @@
-using Unity.VisualScripting;
+using System.Collections;
 using UnityEngine;
+using System.Threading.Tasks;
 
 public class Main : MonoBehaviour
 {
     private static Main         instance;
-    private static UIManager    uiMgr;
-    private static InputManager inputMgr;
-    private static GameManager  gameMgr;
-    private static LevelManager sceneMgr;
+    private UIManager    uiMgr;
+    private InputManager inputMgr;
+    private GameManager  gameMgr;
+    private LevelManager levelMgr;
 
     public static Main         Instance { get => instance; }
-    public static UIManager    UIMgr    { get => uiMgr; }
-    public static InputManager InputMgr { get => inputMgr; }
-    public static GameManager  GameMgr  { get => gameMgr; }
-    public static LevelManager SceneMgr { get => sceneMgr; }
+    public static UIManager    UIMgr    { get => instance.uiMgr; }
+    public static InputManager InputMgr { get => instance.inputMgr; }
+    public static GameManager  GameMgr  { get => instance.gameMgr; }
+    public static LevelManager LevelMgr { get => instance.levelMgr; }
 
     private ContentType current;
 
@@ -31,15 +32,18 @@ public class Main : MonoBehaviour
         //++Load Player Data
 
         inputMgr = new InputManager();
-        gameMgr  = new GameManager(transform.Find("Ingame"));
+        gameMgr  = new GameManager();
         uiMgr    = new UIManager(transform.Find("UI"));
-        sceneMgr = new LevelManager();
+        
+        CanvasGroup loadingCurtain = uiMgr.GetOverlayCanvas().transform.GetChild(0).GetComponent<CanvasGroup>();
+        levelMgr = new LevelManager(loadingCurtain);
 
         current = ContentType.None;
     }
     private void Start()
     {
-        SetContent(ContentType.Opening);
+        levelMgr.LoadSceneAsync(ContentType.Opening, 0);
+        enabled = false;
     }
     private void Update()
     {
@@ -47,18 +51,56 @@ public class Main : MonoBehaviour
         uiMgr   .Update();
         gameMgr .Update();
     }
-
-    public void SetContent(ContentType type)
+    public Coroutine SetContent(ContentType type)
     {
         current = type;
-        gameMgr.Set(current);
-        uiMgr.Set(current);
+        IEnumerator ie;
+        
+        switch (type)
+        {
+            case ContentType.Opening:   ie = SetOpening();  break;
+            case ContentType.Field:     ie = SetField();    break;
+
+            default: return null;
+        }
+
+        return Coroutiner.PlayCoroutine(ie);
+    }
+    private IEnumerator SetOpening()
+    {
+        // task
+        Transform cameraCanvasTransform = uiMgr.GetCameraCanvas().transform;
+        Task<OnOpening> task_opening = OnOpening.InitAsync(cameraCanvasTransform);
+        Task<UITitle> task_title = AssetManager.CreateUIAsync<UITitle>("UITitle", cameraCanvasTransform, false);
+
+        // wait unil task.isDone
+        yield return new WaitUntil(() => task_opening.IsCompletedSuccessfully);
+        yield return new WaitUntil(() => task_title.IsCompletedSuccessfully);
+
+        // content
+        OnOpening opening = task_opening.Result;
+        gameMgr.SetSequence(opening);
+
+        // ui
+        uiMgr.SetBucket((int)UIType.Title, task_title.Result);
+
+        // dispose
+        task_opening.Dispose();
+        task_title.Dispose();
+    }
+    private IEnumerator SetField()
+    {
+        //MapData를 GameMgr이 들고 있다.
+        yield break;
+    }
+    public void StartContent()
+    {
+        gameMgr.Start();
         inputMgr.Set(gameMgr.GetInputDele(current));
     }
     public void Dispose()
     {
-        gameMgr.Dispose(current);
+        gameMgr.Dispose();
         uiMgr.Dispose(current);
-        inputMgr.Set(null);
     }
 }
