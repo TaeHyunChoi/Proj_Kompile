@@ -60,7 +60,7 @@ public class UITitle : UIBase
                 case 0:
                     Debug.Log("New game For Test (map code: 100)");
                     MapData map = DataTable.MapTable.Find(x => x.Code == 100);
-                    Main.LevelMgr.LoadSceneAsync(ContentType.Field, map.Code);
+                    Main.LevelMgr.LoadSceneAsync(ContentType.Field, map);
                     break;
                 case 1:
                     //게임 저장 UI 호출

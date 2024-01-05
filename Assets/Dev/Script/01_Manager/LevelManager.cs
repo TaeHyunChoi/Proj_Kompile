@@ -13,9 +13,14 @@ public class LevelManager
         loadingCurtain.alpha = 0;
         loadingCurtain.gameObject.SetActive(false);
     }
-    public void LoadSceneAsync(ContentType type, int mapCode)
+    public void LoadOpeningSceneAsync()
     {
-        Coroutiner.PlayCoroutine(IELoadSceneAsync(type, mapCode));
+        Coroutiner.PlayCoroutine(IELoadSceneAsync(ContentType.Opening, 0));
+    }    
+    public void LoadSceneAsync(ContentType type, MapData data)
+    {
+        Main.GameMgr.SetMap(data);
+        Coroutiner.PlayCoroutine(IELoadSceneAsync(type, data.Code));
     }
     private IEnumerator IELoadSceneAsync(ContentType type, int mapCode)
     {

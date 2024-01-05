@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Threading.Tasks;
-using UnityEditor;
 using UnityEngine;
 
 public class UIManager
@@ -44,20 +43,6 @@ public class UIManager
                 break;
         }
     }
-    //private IEnumerator IEInitUIAsync<T>(int typeIndex, string address, Transform parent, bool isOn) where T : UIBase, new()
-    //{
-        // Task<GameObject> task = AssetManager.InstantiateAsync(address, parent, false);
-        // yield return new WaitUntil(() => task.IsCompletedSuccessfully);
-
-        // GameObject go = task.Result;
-        // T ui = new T();
-        // ui.Init(go);
-        // uiBucket[typeIndex] = ui;
-        // go.SetActive(isOn);
-
-        // task.Dispose();
-        //yield break;
-    //}
     public void OpenUI(UIType type)
     {
         currentType = type;

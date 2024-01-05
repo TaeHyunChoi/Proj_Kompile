@@ -10,12 +10,12 @@ public class Main : MonoBehaviour
     private GameManager  gameMgr;
     private LevelManager levelMgr;
 
-    public static Main         Instance { get => instance; }
-    public static UIManager    UIMgr    { get => instance.uiMgr; }
-    public static InputManager InputMgr { get => instance.inputMgr; }
-    public static GameManager  GameMgr  { get => instance.gameMgr; }
-    public static LevelManager LevelMgr { get => instance.levelMgr; }
-
+    public static Main   Instance { get => instance; }
+    public static UIManager     UIMgr    { get => instance.uiMgr; }
+    public static InputManager  InputMgr { get => instance.inputMgr; }
+    public static GameManager   GameMgr  { get => instance.gameMgr; }
+    public static LevelManager  LevelMgr { get => instance.levelMgr; }
+    
     private ContentType current;
 
     private void Awake()
@@ -32,9 +32,8 @@ public class Main : MonoBehaviour
         //++Load Player Data
 
         inputMgr = new InputManager();
-        gameMgr  = new GameManager();
-        uiMgr    = new UIManager(transform.Find("UI"));
-        
+        gameMgr = new GameManager(transform.Find("Ingame"));
+        uiMgr = new UIManager(transform.Find("UI"));
         CanvasGroup loadingCurtain = uiMgr.GetOverlayCanvas().transform.GetChild(0).GetComponent<CanvasGroup>();
         levelMgr = new LevelManager(loadingCurtain);
 
@@ -42,7 +41,7 @@ public class Main : MonoBehaviour
     }
     private void Start()
     {
-        levelMgr.LoadSceneAsync(ContentType.Opening, 0);
+        levelMgr.LoadOpeningSceneAsync();
         enabled = false;
     }
     private void Update()
@@ -90,7 +89,14 @@ public class Main : MonoBehaviour
     }
     private IEnumerator SetField()
     {
-        //MapData를 GameMgr이 들고 있다.
+        // init content
+        GameObject mapObj = GameObject.FindWithTag("Field");
+        InField field = new InField(mapObj);
+        Task<bool> initField = field.InitMap();
+        yield return new WaitUntil(() => initField.IsCompletedSuccessfully);
+
+        gameMgr.SetSequence(field);
+
         yield break;
     }
     public void StartContent()
