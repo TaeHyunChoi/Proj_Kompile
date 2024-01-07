@@ -38,13 +38,16 @@ public class GameManager
     }
     public InputDele GetInputDele(ContentType type)
     {
+        InputDele dele = null;
         switch (type)
         {
-            case ContentType.Opening: return OnOpening.Input;
-            case ContentType.Field:   return InField.Input;
+            case ContentType.Opening:   return OnOpening.Input;
+            case ContentType.Field:     dele = InField  .Input;     break;
+            case ContentType.Battle:    dele = InBattle .Input;     break;
         }
 
-        return null;
+        //dele += SystemOption.Input;
+        return dele;
     }
     public void Dispose()
     {

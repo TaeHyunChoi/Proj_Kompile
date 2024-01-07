@@ -8,7 +8,7 @@ internal class InField : ISequenceUpdater
     private GameObject gameObject;
     private Transform transform;
 
-    private Unit player;
+    private static Unit player;
 
     public InField(GameObject obj)
     {
@@ -49,6 +49,32 @@ internal class InField : ISequenceUpdater
 
     public static void Input(int input)
     {
+        Vector3 dir = new Vector3();
+
+        //interact
+        if (IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ENTER_HOLD))
+        {
+
+        }
+
+        //move
+        if (IDxInput.Compare(input, IDxInput.UP, IDxInput.UP_HOLD))
+        {
+            dir += Vector3.forward;
+        }
+        if (IDxInput.Compare(input, IDxInput.DOWN, IDxInput.DOWN_HOLD))
+        {
+            dir += Vector3.back;
+        }
+        if (IDxInput.Compare(input, IDxInput.LEFT, IDxInput.LEFT_HOLD))
+        {
+            dir += Vector3.left;
+        }
+        if (IDxInput.Compare(input, IDxInput.RIGHT, IDxInput.RIGHT_HOLD))
+        {
+            dir += Vector3.right;
+        }
         
+        player.Move(dir.normalized);
     }    
 }

@@ -92,12 +92,12 @@ public class Main : MonoBehaviour
         // init content
         GameObject mapObj = GameObject.FindWithTag("Field");
         InField field = new InField(mapObj);
-        Task<bool> initField = field.InitMap();
-        yield return new WaitUntil(() => initField.IsCompletedSuccessfully);
+        Task<bool> taskInitField = field.InitMap();
+        yield return new WaitUntil(() => taskInitField.IsCompletedSuccessfully);
 
         gameMgr.SetSequence(field);
 
-        yield break;
+        taskInitField.Dispose();
     }
     public void StartContent()
     {
