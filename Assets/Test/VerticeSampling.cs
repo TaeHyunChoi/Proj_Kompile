@@ -5,6 +5,9 @@ using UnityEngine;
 public class VerticeSampling : MonoBehaviour
 {
     [SerializeField] private MeshFilter tester;
+
+    private Dictionary<int, Vector3Int> rv;
+    private List<int> radixes;
     private Transform objTransform;
     private int count;
     private bool isPlayer;
@@ -12,6 +15,8 @@ public class VerticeSampling : MonoBehaviour
     void Start()
     {
         Mesh mesh = tester.mesh;
+        radixes = new List<int>();
+        rv = new Dictionary<int, Vector3Int>();
         objTransform = tester.transform;
         isPlayer = tester.gameObject.CompareTag("Player");
 
@@ -36,13 +41,23 @@ public class VerticeSampling : MonoBehaviour
         float distance = Vector3.Distance(start, end);
         int numberOfSamples = Mathf.CeilToInt(distance / interval);
 
-        for (int i = 0; i <= numberOfSamples; i++)
+        Vector3 samplePoint;
+        byte x, y, z;
+        for (float i = 0; i <= numberOfSamples; i+=1)
         {
-            float t = i / (float)numberOfSamples;
-            Vector3 samplePoint = Vector3.Lerp(start, end, t);
+            float t = i / numberOfSamples;
+            samplePoint = Vector3.Lerp(start, end, t);
+            x = (byte)(samplePoint.x / interval);
+            y = (byte)(samplePoint.y / interval);
+            z = (byte)(samplePoint.z / interval);
+            int radix = (x << 16) | (y << 8) | (z << 0);
 
-            Debug.Log($"[{isPlayer}]Sampled Point: {samplePoint}");
-            count += 1;
+            if (!rv.ContainsKey(radix))
+            {
+                rv.Add(radix, new Vector3Int(x, y, z));
+                Debug.Log($"[{x},{y},{z}] Sampled Point: {samplePoint}");
+                count += 1;
+            }
         }
     }
 }
