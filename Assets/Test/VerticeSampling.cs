@@ -43,13 +43,14 @@ public class VerticeSampling : MonoBehaviour
 
         Vector3 samplePoint;
         byte x, y, z;
+        float size = 1 / interval;
         for (float i = 0; i <= numberOfSamples; i+=1)
         {
             float t = i / numberOfSamples;
             samplePoint = Vector3.Lerp(start, end, t);
-            x = (byte)(samplePoint.x / interval);
-            y = (byte)(samplePoint.y / interval);
-            z = (byte)(samplePoint.z / interval);
+            x = (byte)(samplePoint.x * size);
+            y = (byte)(samplePoint.y * size);
+            z = (byte)(samplePoint.z * size);
             int radix = (x << 16) | (y << 8) | (z << 0);
 
             if (!rv.ContainsKey(radix))
