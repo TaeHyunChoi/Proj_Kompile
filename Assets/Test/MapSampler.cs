@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 public class MapSampler : MonoBehaviour
@@ -69,11 +71,48 @@ public class MapSampler : MonoBehaviour
                     {
                         Vector3 samplingPoint = Vector3.Lerp(fromAB, toAC, (float)j / samplingCountABtoAC);
                         samplingData.Add(samplingPoint);
+                        
+                        //voxel key point
+                        float cx = Mathf.Floor(samplingPoint.x / voxelSize) * voxelSize;
+                        float cy = Mathf.Floor(samplingPoint.y / voxelSize) * voxelSize;
+                        float cz = Mathf.Floor(samplingPoint.z / voxelSize) * voxelSize;
+                        Vector3 clamped = new Vector3(cx, cy, cz);
 
-                        //여기서 radix로 잘 변경해야 하는데...
-                        //서브 복셀 단위로 clamp 하되 + voxel로 (x,y,z)가 나머지 없이 나뉘면 Key voxel 인건가?
-                        //나머지가 있다 => 서브 복셀 크기만큼을 빼면 Key voxel position이 나온다?
-                        //한 번 더 검토 필요
+                        byte bx = (byte)(cx / voxelSize);
+                        byte by = (byte)(cy / voxelSize);
+                        byte bz = (byte)(cz / voxelSize);
+                        int radix = (bx << 16) | (by << 8) | bz;
+
+                        //voxel sub point
+                        float halfVoxelSize = voxelSize * 0.5f;
+                        Vector3 diff = samplingPoint - clamped;
+                        byte d = 0, sub = 0; 
+
+                        if(diff.x > halfVoxelSize) { d |= 1 << 2; }
+                        if(diff.y > halfVoxelSize) { d |= 1 << 1; }
+                        if(diff.z > halfVoxelSize) { d |= 1 << 0; }
+
+                        switch(d)
+                        {
+                            case 0b_000: sub |= 1 << 0; break; //[-, -, -]
+                            case 0b_100: sub |= 1 << 1; break; //[+, -, -]
+                            case 0b_001: sub |= 1 << 2; break; //[-, -, +]
+                            case 0b_101: sub |= 1 << 3; break; //[+, -, +]
+                            case 0b_010: sub |= 1 << 4; break; //[-, +, -]
+                            case 0b_110: sub |= 1 << 5; break; //[+, +, -]
+                            case 0b_011: sub |= 1 << 6; break; //[-, +, +]
+                            case 0b_111: sub |= 1 << 7; break; //[+, +, +]
+                        }
+                        if(!data.ContainsKey(radix))
+                        {
+                            data.Add(radix, sub);                            
+                        }
+                        else
+                        {
+                            data[radix] |= sub;
+                        }
+                        
+                        Debug.Log($"{radix}");
                     }
                 }
             }
