@@ -4,19 +4,20 @@ using UnityEngine;
 
 public class MapSampler : MonoBehaviour
 {
-    [SerializeField] private float intervalUnit;
-    private float voxelSize;
     [SerializeField] private GameObject resource;
+    [SerializeField] private float voxelSize;
+
     private Dictionary<int, byte> data;
     MeshFilter[] filter;
 
-    private List<Vector3> tempData = new List<Vector3>();
+
+    private List<Vector3> samplingData = new List<Vector3>();
+    private List<Vector3> clampedData = new List<Vector3>();
     private bool canDraw;
 
     private void Awake()
     {
         data = new Dictionary<int, byte>();
-        voxelSize = 1 / intervalUnit;
         filter = resource.GetComponentsInChildren<MeshFilter>();
     }
     private void Update()
@@ -39,9 +40,7 @@ public class MapSampler : MonoBehaviour
             Vector3[] vertices = mesh.vertices;
             int[] triangles = mesh.triangles;
 
-            Vector3 A, B, C, AB, AC;
-            Vector3 dirAB, dirAC;
-            Vector3 samplingPoint;
+            Vector3 A, B, C;
 
             for (int t = 0; t < triangles.Length;)
             {
@@ -49,85 +48,60 @@ public class MapSampler : MonoBehaviour
                 B = targetTransform.TransformPoint(vertices[triangles[t++]]);
                 C = targetTransform.TransformPoint(vertices[triangles[t++]]);
 
-                AB = B - A;
-                dirAB = AB.normalized;
+                float distAC = Vector3.Distance(A, C);
+                int samplingCountAC = (int)(distAC / voxelSize) * 2;
 
-                AC = C - A;
-                dirAC = AC.normalized;
-
-                float distAB = AB.magnitude;
-                float deltaAB = 0;
-
-                while (deltaAB < distAB)
+                for (int ii = 0; ii < samplingCountAC; ++ii)
                 {
-                    Vector3 start = A + (dirAB * deltaAB);
+                    Vector3 fromAB = Vector3.Lerp(A, B, (float)ii / samplingCountAC);
+                    Vector3 toAC   = Vector3.Lerp(A, C, (float)ii / samplingCountAC);
 
-                    float distAC = (AC * (distAB - deltaAB) / distAB).magnitude;
-                    float deltaAC = 0;
+                    float distABtoAC = Vector3.Distance(fromAB, toAC);
 
-                    while (deltaAC < distAC)
+                    int samplingCount = (int)(distABtoAC / voxelSize) * 2;
+                    for (int jj = 0; jj <= samplingCount; ++jj)
                     {
-                        samplingPoint = start + (dirAC * deltaAC);
+                        Vector3 samplingPoint = Vector3.Lerp(fromAB, toAC, (float)jj / samplingCount);
+                        samplingData.Add(samplingPoint);
 
-                        float x, y, z;
-                        x = (int)(samplingPoint.x * intervalUnit) / intervalUnit;
-                        y = (int)(samplingPoint.y * intervalUnit) / intervalUnit;
-                        z = (int)(samplingPoint.z * intervalUnit) / intervalUnit;
-                        Vector3 voxelPoint = new Vector3(x, y, z);
+                        float multiple = 1 / voxelSize;
+                        float cx = (int)(samplingPoint.x * multiple) * voxelSize;
+                        float cy = (int)(samplingPoint.y * multiple) * voxelSize;
+                        float cz = (int)(samplingPoint.z * multiple) * voxelSize;
+                        Debug.Log($"sampling: {samplingPoint} => clamped: ({cx}, {cy}, {cz})");
 
-                        byte sub = 0;
-                        if (isObstacle)
-                        {
-                            //현재 복셀의 center 위치를 구한다
-                            Vector3 center = voxelPoint + Vector3.one * voxelSize * 0.5f;
-
-                            //(samplingPoint - center) 벡터를 구한다.
-                            Vector3 dir = samplingPoint - center;
-                            bool dx = dir.x >= 0;
-                            bool dy = dir.y >= 0;
-                            bool dz = dir.z >= 0;
-
-                            //x,y,z 각 방향을 따져서 어느 sub-voxel에 위치한지 확인한다.
-                            if (!dy)
-                            {
-                                if (!dx & !dz) { sub = 1 << 0; }
-                                else if (dx & !dz) { sub = 1 << 1; }
-                                else if (!dx & dz) { sub = 1 << 2; }
-                                else if (dx & dz) { sub = 1 << 3; }
-                            }
-                            else
-                            {
-                                if (!dx & !dz) { sub = 1 << 4; }
-                                else if (dx & !dz) { sub = 1 << 5; }
-                                else if (!dx & dz) { sub = 1 << 6; }
-                                else if (dx & dz) { sub = 1 << 7; }
-                            }
-                        }
-
-                        tempData.Add(samplingPoint);
-
-                        int radix = GetRadix(voxelPoint);
-                        if (!data.ContainsKey(radix))
-                        {
-                            data.Add(radix, 0);
-                        }
-                        data[radix] |= sub;
-
-                        deltaAC += voxelSize * 0.5f;
+                        clampedData.Add(new Vector3(cx, cy, cz));
                     }
-                    deltaAB += voxelSize * 0.5f;
                 }
             }
         }
         Debug.Log("Sampling Done.");
         canDraw = true;
     }
+    private bool IsPointInTriangle(Vector3 p, Vector3 v1, Vector3 v2, Vector3 v3)
+    {
+        float epsilon = voxelSize * 0.25f;
+        float denominator = (v2.y - v3.y) * (v1.x - v3.x) + (v3.x - v2.x) * (v1.y - v3.y);
 
+        return Mathf.Abs(denominator) < epsilon;
+
+        //if (Mathf.Abs(denominator) < epsilon)
+        //{
+        //    return false;
+        //}
+
+        //float a = ((v2.y - v3.y) * (p.x - v3.x) + (v3.x - v2.x) * (p.y - v3.y)) / denominator;
+        //float b = ((v3.y - v1.y) * (p.x - v3.x) + (v1.x - v3.x) * (p.y - v3.y)) / denominator;
+        //float c = 1 - a - b;
+
+        //return a >= epsilon && a <= 1 + epsilon && b >= epsilon && b <= 1 + epsilon && c >= epsilon && c <= 1 + epsilon;
+    }
     private int GetRadix(Vector3 v)
     {
-        byte bx = (byte)(v.x * intervalUnit);
-        byte by = (byte)(v.y * intervalUnit);
-        byte bz = (byte)(v.z * intervalUnit);
+        float multiple = 1 / voxelSize;
+        byte bx = (byte)(v.x * multiple);
+        byte by = (byte)(v.y * multiple);
+        byte bz = (byte)(v.z * multiple);
 
         int radix = (bx << 16) | (by << 8) | (bz << 0);
         return radix;
@@ -135,18 +109,20 @@ public class MapSampler : MonoBehaviour
     private void OnDrawGizmos()
     {
         if (!canDraw)
+        {
             return;
+        }
 
 
         // draw voxel grids
         Vector3 pos = Vector3.one * voxelSize * 0.5f;
-        for (int x = 0; x < 32; ++x)
+        for (int x = 0; x < 16; ++x)
         {
             for (int y = 0; y < 16; ++y)
             {
-                for (int z = 0; z < 32; ++z)
+                for (int z = 0; z < 16; ++z)
                 {
-                    Gizmos.color = new Color(0, 1, 0, 0.025f);
+                    Gizmos.color = new Color(1, 1, 1, 0.025f);
                     Gizmos.DrawWireCube(pos + new Vector3(x, y, z) * voxelSize, Vector3.one * voxelSize);
                 }
             }
@@ -154,15 +130,24 @@ public class MapSampler : MonoBehaviour
 
 
         //draw sampling coordinate
-        for (int i = 0; i < tempData.Count; ++i)
+        for (int i = 0; i < samplingData.Count; ++i)
         {
-            Vector3 center = tempData[i];
-            Gizmos.color = new Color(0, 0, 1, 1f);  //blue
+            Vector3 center = samplingData[i];
+            Gizmos.color = new Color(0, 0, 1f, 1f);
             Gizmos.DrawCube(center, Vector3.one * 0.025f);
             Gizmos.DrawWireCube(center, Vector3.one * 0.025f);
         }
 
+        //draw clamped coordinate
+        for (int i = 0; i < clampedData.Count; ++i)
+        {
+            Vector3 center = clampedData[i];
+            Gizmos.color = new Color(1f, 0, 0, 1f);
+            Gizmos.DrawCube(center, Vector3.one * 0.025f);
+            Gizmos.DrawWireCube(center, Vector3.one * 0.025f);
+        }
 
+        return;
         //draw voxel
         foreach (int radix in data.Keys)
         {
@@ -173,7 +158,6 @@ public class MapSampler : MonoBehaviour
             byte sub = data[radix];
             Vector3 center = new Vector3(x, y, z) * voxelSize + Vector3.one * voxelSize * 0.5f;
 
-            // 복셀 자체는 잘 잡았는데;;
             Gizmos.color = new Color(0, 0, 1, 0.1f);
             Gizmos.DrawCube(center, Vector3.one * voxelSize);
             Gizmos.DrawWireCube(center, Vector3.one * voxelSize);
@@ -182,14 +166,13 @@ public class MapSampler : MonoBehaviour
             Vector3 subCenter = center;
             for (int i = 0; i < 8; ++i)
             {
-                bool isObstacle = (sub & (1 << i)) == 1;
-                if (isObstacle)
+                if ((sub & (1 << i)) != 0)
                 {
-                    Gizmos.color = new Color(1, 0, 0, 0.5f); //red
+                    Gizmos.color = new Color(1, 0, 0, 0.25f); //red
                 }
                 else
                 {
-                    Gizmos.color = new Color(0f, 1, 0, 0); //???
+                    Gizmos.color = new Color(0, 1, 0, 0.25f); //???
                 }
 
                 float unit = voxelSize * 0.25f;
@@ -200,10 +183,10 @@ public class MapSampler : MonoBehaviour
                     case 2: subCenter = center + new Vector3(-unit, -unit,  unit); break;
                     case 3: subCenter = center + new Vector3( unit, -unit,  unit); break;
 
-                    //case 4: subCenter = center + new Vector3(-unit, unit, -unit); break;
-                    //case 5: subCenter = center + new Vector3(unit, unit, -unit); break;
-                    //case 6: subCenter = center + new Vector3(-unit, unit, unit); break;
-                    //case 7: subCenter = center + new Vector3(unit, unit, unit); break;
+                    case 4: subCenter = center + new Vector3(-unit, unit, -unit); break;
+                    case 5: subCenter = center + new Vector3(unit, unit, -unit); break;
+                    case 6: subCenter = center + new Vector3(-unit, unit, unit); break;
+                    case 7: subCenter = center + new Vector3(unit, unit, unit); break;
                 }
 
                 Gizmos.DrawCube(subCenter, Vector3.one * voxelSize * 0.5f);
