@@ -5,6 +5,9 @@ using UnityEngine;
 public class MapSampler : MonoBehaviour
 {
     [Header("Voxels")]
+    [SerializeField] private string fileName;
+
+    [Header("Voxels")]
     [SerializeField] private GameObject resource;
     [SerializeField] private float voxelSize;
     [SerializeField] private float samplingIntervalWeight;
@@ -21,6 +24,11 @@ public class MapSampler : MonoBehaviour
     {
         data = new Dictionary<int, byte>();
         filter = resource.GetComponentsInChildren<MeshFilter>();
+
+        if (fileName == string.Empty)
+        {
+            fileName = "map_sampling_" + System.DateTime.Now.ToString("yyMMdd");
+        }
     }
     private void Start()
     {
@@ -30,9 +38,18 @@ public class MapSampler : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F1))
         {
+            DataTable.WriteBinaryMapVoxel(data, fileName);
             Debug.Log("save");
         }
-
+        if (Input.GetKeyDown(KeyCode.Delete))
+        {
+            data.Clear();
+        }
+        if (Input.GetKeyDown(KeyCode.F2))
+        {
+            data = DataTable.LoadMapVoxel(fileName);
+            Sampling();
+        }
         if (Input.GetKeyDown(KeyCode.Space))
         {
             data.Clear();
@@ -42,7 +59,6 @@ public class MapSampler : MonoBehaviour
     }
 
     //주로 사용하는 게 Vector3 이므로 Job system  사용도 가능할 것 같은데?
-    //추후 개발로 ㄱㄱ
     private void Sampling()
     {
         float weight = voxelSize * (1/samplingIntervalWeight);

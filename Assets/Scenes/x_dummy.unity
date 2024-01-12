@@ -187,6 +187,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a51c909891e2d654693dd4bbbd92aa6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  fileName: 
   resource: {fileID: 260966023}
   voxelSize: 0.25
   samplingIntervalWeight: 8

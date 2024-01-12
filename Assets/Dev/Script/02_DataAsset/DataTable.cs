@@ -21,8 +21,9 @@ public class DataTable
     public static List<UnitData>  UnitTable  { get => unitTalbe; }
     public static List<MapData>   MapTable     { get => mapTable; }
 
-    //.csv (기획자, 에디터에서 .bin 파일로 변환 필요)
+
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+    //.csv (기획자, 에디터에서 .bin 파일로 변환 필요)
     public static void LoadCSVTable()
     {
         skillTable = LoadTable<SkillData>("SkillData");
@@ -95,6 +96,41 @@ public class DataTable
         }
 
         return list;
+    }
+
+
+    // map sampling
+    public static void WriteBinaryMapVoxel(Dictionary<int, byte> data, string fileName)
+    {
+        BinaryFormatter binaryFormatter = new BinaryFormatter();
+        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
+        FileStream fileStream = File.Create(filePath);
+
+        // Dictionary 직렬화
+        binaryFormatter.Serialize(fileStream, data);
+
+        fileStream.Close();
+    }
+    public static Dictionary<int, byte> LoadMapVoxel(string fileName)
+    {
+        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
+        if (File.Exists(filePath))
+        {
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
+            FileStream fileStream = File.Open(filePath, FileMode.Open);
+
+            // 파일에서 데이터를 역직렬화하여 Dictionary에 로드
+            Dictionary<int, byte> data = (Dictionary<int, byte>)binaryFormatter.Deserialize(fileStream);
+
+            fileStream.Close();
+            return data;
+        }
+        else
+        {
+            Debug.LogError("파일이 존재하지 않습니다.");
+        }
+
+        return null;
     }
 
 #endif
