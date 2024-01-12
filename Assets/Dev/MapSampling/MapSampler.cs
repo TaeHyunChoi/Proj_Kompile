@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class MapSampler : MonoBehaviour
 {
-    [Header("Voxels")]
+    [Header("File")]
     [SerializeField] private string fileName;
 
     [Header("Voxels")]
-    [SerializeField] private GameObject resource;
+    [SerializeField] private Transform resourceTransform;
     [SerializeField] private float voxelSize;
     [SerializeField] private float samplingIntervalWeight;
 
@@ -23,15 +23,16 @@ public class MapSampler : MonoBehaviour
     private void Awake()
     {
         data = new Dictionary<int, byte>();
-        filter = resource.GetComponentsInChildren<MeshFilter>();
-
-        if (fileName == string.Empty)
-        {
-            fileName = "map_sampling_" + System.DateTime.Now.ToString("yyMMdd");
-        }
+        filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
     }
     private void Start()
     {
+        if (fileName == string.Empty)
+        {
+            GameObject obj = resourceTransform.GetChild(0).gameObject;
+            fileName = obj.name;
+        }
+
         Sampling();
     }
     private void Update()
@@ -53,7 +54,7 @@ public class MapSampler : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             data.Clear();
-            filter = resource.GetComponentsInChildren<MeshFilter>();
+            filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
             Sampling();
         }
     }

@@ -43,6 +43,7 @@ public class LevelManager
             case 0: sceneName = "010_OpeningScene";     break;
             case 1: sceneName = "020_FieldTestScene";   break;
         }
+
         AsyncOperation loadAsync = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
         
         while (!loadAsync.isDone)

@@ -5,23 +5,14 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     private Vector3 lastDirection;
-    private bool isCollision;
 
-    public void Move(Vector3 dir)
+    public void Move(Dictionary<int, byte> voxel, Vector3 dir)
     {
-        if(isCollision)
+        Vector3 next = transform.position + dir * Public.MOVE_SPEED * Time.deltaTime;
+        if (Parser.IsMovePossible(voxel, next))
         {
-            Debug.Log("IsCollision");
-            //비비기 기능을 만들어야 한다...! 
-            //콜라이더 던져서 이동 가능/불가 만드는 것도 좀 짜치는데 흠;
-            return;
+            transform.position = next;
+            lastDirection = dir;
         }
-
-        transform.position += dir * Public.MOVE_SPEED * Time.deltaTime;
-        lastDirection = dir;
-    }
-    private void OnTriggerEnter(Collider other) 
-    {
-        isCollision = true;
     }
 }

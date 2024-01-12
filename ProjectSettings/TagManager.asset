@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Movable
   - Obstacle
+  - Field
   layers:
   - Default
   - TransparentFX

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -8,12 +9,15 @@ internal class InField : ISequenceUpdater
     private GameObject gameObject;
     private Transform transform;
 
+    private static Dictionary<int, byte> voxel;
     private static Unit player;
 
     public InField(GameObject obj)
     {
         gameObject = obj;
         transform  = obj.transform;
+
+        voxel = DataTable.LoadMapVoxel(obj.name);
     }
     public async Task<bool> InitMap()
     {
@@ -74,7 +78,10 @@ internal class InField : ISequenceUpdater
         {
             dir += Vector3.right;
         }
-        
-        player.Move(dir.normalized);
+
+        if (dir != Vector3.zero)
+        {
+            player.Move(voxel, dir.normalized);
+        }
     }    
 }
