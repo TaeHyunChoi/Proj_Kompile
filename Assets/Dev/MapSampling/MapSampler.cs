@@ -16,13 +16,12 @@ public class MapSampler : MonoBehaviour
     [SerializeField] private bool drawGrids;
     private bool canDraw;
 
-
-    private Dictionary<int, byte> data;
+    private Dictionary<int, int> data;
     private MeshFilter[] filter;
 
     private void Awake()
     {
-        data = new Dictionary<int, byte>();
+        data = new Dictionary<int, int>();
         filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
     }
     private void Start()
@@ -63,6 +62,8 @@ public class MapSampler : MonoBehaviour
     private void Sampling()
     {
         float weight = voxelSize * (1/samplingIntervalWeight);
+        VoxelType type = VoxelType.None;
+
         for (int f = 0; f < filter.Length; ++f)
         {
             Transform targetTransform = filter[f].transform;
@@ -72,6 +73,9 @@ public class MapSampler : MonoBehaviour
             Vector3 A, B, C;
             Vector3 epsilon = Vector3.one * 0.00001f;
 
+            if      (targetTransform.CompareTag("Movable"))  { type = VoxelType.Movable; }
+            else if (targetTransform.CompareTag("Obstacle")) { type = VoxelType.Obstacle; }
+            
             for (int t = 0; t < triangles.Length;)
             {
 
@@ -108,11 +112,15 @@ public class MapSampler : MonoBehaviour
 
                         //voxel sub point
                         byte sub = 0;
-                        if (targetTransform.CompareTag("Movable"))
+
+                        //Movable: 이동 가능하도록 sub-voxel을 처리x
+                        if (type == VoxelType.Movable)
                         {
-                            goto add_data;
+                            sub = 0x00;
+                            goto data_add;
                         }
 
+                        //Mesh 있는 곳만 체크하여 1로 bit-masking
                         float halfVoxelSize = voxelSize * 0.5f;
                         Vector3 diff = samplingPoint - clamped;
 
@@ -133,10 +141,11 @@ public class MapSampler : MonoBehaviour
                             case 0b_111: sub |= 1 << 7; break; //[+, +, +]
                         }
 
-                    add_data:
+                        data_add:
+                        int info = ((byte)type << 8) | sub;
                         if (!data.ContainsKey(radix))
                         {
-                            data.Add(radix, sub);                            
+                            data.Add(radix, info);                            
                         }
                         else
                         {
@@ -194,18 +203,21 @@ public class MapSampler : MonoBehaviour
             float y = (radix & 0xFF00) >> 8;
             float z = radix & 0xFF;
 
-            byte sub = data[radix];
+            int info = data[radix];
+            byte sub = (byte)(info & 0xFF);
+
             Vector3 center = new Vector3(x, y, z) * voxelSize + Vector3.one * voxelSize * 0.5f;
 
             for (int i = 0; i < 8; ++i)
             {
-                if ((sub & (1 << i)) != 0)
+                if ((sub & (1 << i)) == 0)
                 {
-                    Gizmos.color = new Color(1, 0, 0, 0.25f); //red
+                    Gizmos.color = new Color(0, 1, 0, 0.10f); //???
+
                 }
                 else
                 {
-                    Gizmos.color = new Color(0, 1, 0, 0.25f); //???
+                    Gizmos.color = new Color(1, 0, 0, 0.25f); //red
                 }
 
                 Vector3 subCenter = center;

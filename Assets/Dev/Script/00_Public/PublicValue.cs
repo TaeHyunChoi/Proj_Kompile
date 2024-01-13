@@ -90,3 +90,9 @@ public enum UIType
 
     Count,
 }
+public enum VoxelType : byte
+{
+    None = 0,
+    Movable,
+    Obstacle
+}

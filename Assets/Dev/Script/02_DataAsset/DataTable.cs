@@ -100,7 +100,7 @@ public class DataTable
 
 
     // map sampling
-    public static void WriteBinaryMapVoxel(Dictionary<int, byte> data, string fileName)
+    public static void WriteBinaryMapVoxel(Dictionary<int, int> data, string fileName)
     {
         BinaryFormatter binaryFormatter = new BinaryFormatter();
         string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
@@ -111,7 +111,7 @@ public class DataTable
 
         fileStream.Close();
     }
-    public static Dictionary<int, byte> LoadMapVoxel(string fileName)
+    public static Dictionary<int, int> LoadMapVoxel(string fileName)
     {
         string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
         if (File.Exists(filePath))
@@ -120,7 +120,7 @@ public class DataTable
             FileStream fileStream = File.Open(filePath, FileMode.Open);
 
             // 파일에서 데이터를 역직렬화하여 Dictionary에 로드
-            Dictionary<int, byte> data = (Dictionary<int, byte>)binaryFormatter.Deserialize(fileStream);
+            Dictionary<int, int> data = (Dictionary<int, int>)binaryFormatter.Deserialize(fileStream);
 
             fileStream.Close();
             return data;

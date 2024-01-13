@@ -9,7 +9,7 @@ internal class InField : ISequenceUpdater
     private GameObject gameObject;
     private Transform transform;
 
-    private static Dictionary<int, byte> voxel;
+    private static Dictionary<int, int> voxel;
     private static Unit player;
 
     public InField(GameObject obj)

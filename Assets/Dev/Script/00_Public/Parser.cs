@@ -5,8 +5,7 @@ using static Public;
 
 public static class Parser
 {
-    //함수가 길어 보이지만 참조가 없다 => stack memory로 조진다?!
-    public static bool IsMovePossible(Dictionary<int,byte> data, Vector3 pos)
+    public static bool IsMovePossible(Dictionary<int,int> data, Vector3 pos)
     {
         // Parse from position to Voxel
         float cx = Mathf.Floor(pos.x * VOXEL_SIZE_INVERT) * VOXEL_SIZE;
@@ -19,8 +18,7 @@ public static class Parser
 
         Vector3 voxelPoint = new Vector3(cx, cy, cz);
         int radix = (bx << 16) | (by << 8) | bz;
-        byte sub = data[radix];
-
+        byte sub = (byte)(data[radix] & 0xFF);
 
         // Check Move Possible (by sub-voxels)
         Vector3 diff = pos - voxelPoint;
