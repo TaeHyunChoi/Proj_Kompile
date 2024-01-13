@@ -18,7 +18,13 @@ public static class Parser
 
         Vector3 voxelPoint = new Vector3(cx, cy, cz);
         int radix = (bx << 16) | (by << 8) | bz;
-        byte sub = (byte)(data[radix] & 0xFF);
+
+        if(!data.ContainsKey(radix))
+        {
+            return false;
+        }
+
+        int sub = data[radix] & 0xFF;
 
         // Check Move Possible (by sub-voxels)
         Vector3 diff = pos - voxelPoint;
@@ -41,7 +47,7 @@ public static class Parser
             case 0b_111: shift = 7; break; //[+, +, +]
         }
 
-        sub &= (byte)(1 << shift);
+        sub &= 1 << shift;
         return sub == 0;
     }
 }
