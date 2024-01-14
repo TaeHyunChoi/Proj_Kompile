@@ -73,8 +73,14 @@ public class MapSampler : MonoBehaviour
             Vector3 A, B, C;
             Vector3 epsilon = Vector3.one * 0.00001f;
 
-            if      (targetTransform.CompareTag("Movable"))  { type = VoxelType.Movable; }
-            else if (targetTransform.CompareTag("Obstacle")) { type = VoxelType.Obstacle; }
+            if      (targetTransform.CompareTag("Movable"))  
+            { 
+                type = VoxelType.Movable; 
+            }
+            else if (targetTransform.CompareTag("Obstacle")) 
+            { 
+                type = VoxelType.Obstacle; 
+            }
             
             for (int t = 0; t < triangles.Length;)
             {
@@ -110,46 +116,62 @@ public class MapSampler : MonoBehaviour
                         byte bz = (byte)(cz / voxelSize);
                         int radix = (bx << 16) | (by << 8) | bz;
 
-                        //voxel sub point
-                        byte sub = 0;
-
-                        //Movable: 이동 가능하도록 sub-voxel을 처리x
-                        if (type == VoxelType.Movable)
+                        int type_i = (int)type << 8;
+                        if (!data.ContainsKey(radix))
                         {
-                            sub = 0x00;
-                            goto data_add;
+                            data.Add(radix, type_i);
+                        }
+                        else if((int)type > (data[radix] >> 8))
+                        {
+                            data[radix] &= 0xFF00;
+                            data[radix] |= type_i;
                         }
 
-                        //Mesh 있는 곳만 체크하여 1로 bit-masking
+                        //voxel sub point
                         float halfVoxelSize = voxelSize * 0.5f;
                         Vector3 diff = samplingPoint - clamped;
-
                         byte d = 0;
                         if (diff.x > halfVoxelSize) { d |= 1 << 2; }
                         if (diff.y > halfVoxelSize) { d |= 1 << 1; }
                         if (diff.z > halfVoxelSize) { d |= 1 << 0; }
 
-                        switch(d)
-                        {
-                            case 0b_000: sub |= 1 << 0; break; //[-, -, -]
-                            case 0b_100: sub |= 1 << 1; break; //[+, -, -]
-                            case 0b_001: sub |= 1 << 2; break; //[-, -, +]
-                            case 0b_101: sub |= 1 << 3; break; //[+, -, +]
-                            case 0b_010: sub |= 1 << 4; break; //[-, +, -]
-                            case 0b_110: sub |= 1 << 5; break; //[+, +, -]
-                            case 0b_011: sub |= 1 << 6; break; //[-, +, +]
-                            case 0b_111: sub |= 1 << 7; break; //[+, +, +]
-                        }
+                        //on/off 개념이 아니라 높은 숫자로 바꾼다! 개념으로 가는 게 맞으려나?
+                        //그렇다면.. none, move, obstacle, ... 등으로 사용 메모리를 늘려야 한다.
+                        //ㅇㅋ... 시도해보고...
+                        //해당 자리값이 이미 obstacle이면? 아랫 단계인 none, move는 불가하다! 라는 말이잖어?
+                        //말은 되는데 흠...
+                        //다음 복셀도 Obstacle이라면 forcedDir을 유지하는건 어떨랑가.
 
-                        data_add:
-                        int info = ((byte)type << 8) | sub;
-                        if (!data.ContainsKey(radix))
+                        if((data[radix] >> 8) == (int)VoxelType.Movable)
                         {
-                            data.Add(radix, info);                            
+                            switch(d)
+                            {
+                                case 0b_000: data[radix] |= 1 << 0; break; //[-, -, -]
+                                case 0b_100: data[radix] |= 1 << 1; break; //[+, -, -]
+                                case 0b_001: data[radix] |= 1 << 2; break; //[-, -, +]
+                                case 0b_101: data[radix] |= 1 << 3; break; //[+, -, +]
+                                case 0b_010: data[radix] |= 1 << 4; break; //[-, +, -]
+                                case 0b_110: data[radix] |= 1 << 5; break; //[+, +, -]
+                                case 0b_011: data[radix] |= 1 << 6; break; //[-, +, +]
+                                case 0b_111: data[radix] |= 1 << 7; break; //[+, +, +]
+                            }
                         }
-                        else
+                        else //Movable 외의 타입은 이동 불가(0)으로 비트 마스킹
                         {
-                            data[radix] |= sub;
+                            int compare = 0x00;
+                            switch(d)
+                            {
+                                case 0b_000: compare = 1 << 0; break; //[-, -, -]
+                                case 0b_100: compare = 1 << 1; break; //[+, -, -]
+                                case 0b_001: compare = 1 << 2; break; //[-, -, +]
+                                case 0b_101: compare = 1 << 3; break; //[+, -, +]
+                                case 0b_010: compare = 1 << 4; break; //[-, +, -]
+                                case 0b_110: compare = 1 << 5; break; //[+, +, -]
+                                case 0b_011: compare = 1 << 6; break; //[-, +, +]
+                                case 0b_111: compare = 1 << 7; break; //[+, +, +]
+                            }
+                            compare ^= 0x00;
+                            data[radix] &= compare;
                         }
                     }
                 }
@@ -210,14 +232,14 @@ public class MapSampler : MonoBehaviour
 
             for (int i = 0; i < 8; ++i)
             {
-                if ((sub & (1 << i)) == 0)
+                if ((sub & (1 << i)) != 0)
                 {
                     Gizmos.color = new Color(0, 1, 0, 0.10f); //???
 
                 }
                 else
                 {
-                    Gizmos.color = new Color(1, 0, 0, 0.25f); //red
+                    Gizmos.color = new Color(1, 0, 0, 0f); //null
                 }
 
                 Vector3 subCenter = center;
