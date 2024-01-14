@@ -73,7 +73,7 @@ public class MapSampler : MonoBehaviour
             Vector3 A, B, C;
             Vector3 epsilon = Vector3.one * 0.00001f;
 
-            if      (targetTransform.CompareTag("Movable"))  
+            if (targetTransform.CompareTag("Movable"))  
             { 
                 type = VoxelType.Movable; 
             }
@@ -106,72 +106,63 @@ public class MapSampler : MonoBehaviour
                         //voxel key point
                         Vector3 samplingPoint = Vector3.Lerp(fromAB, toAC, (float)j / samplingCountABtoAC);
 
-                        float cx = Mathf.Floor(samplingPoint.x / voxelSize) * voxelSize;
-                        float cy = Mathf.Floor(samplingPoint.y / voxelSize) * voxelSize;
-                        float cz = Mathf.Floor(samplingPoint.z / voxelSize) * voxelSize;
+                        float voxelSize_invert = 1f / voxelSize;
+                        float cx = Mathf.Floor(samplingPoint.x * voxelSize_invert) * voxelSize;
+                        float cy = Mathf.Floor(samplingPoint.y * voxelSize_invert) * voxelSize;
+                        float cz = Mathf.Floor(samplingPoint.z * voxelSize_invert) * voxelSize;
                         Vector3 clamped = new Vector3(cx, cy, cz);
 
-                        byte bx = (byte)(cx / voxelSize);
-                        byte by = (byte)(cy / voxelSize);
-                        byte bz = (byte)(cz / voxelSize);
+                        int bx = (int)(cx * voxelSize_invert);
+                        int by = (int)(cy * voxelSize_invert);
+                        int bz = (int)(cz * voxelSize_invert);
                         int radix = (bx << 16) | (by << 8) | bz;
-
                         int type_i = (int)type << 8;
+
+                        //register voxel
                         if (!data.ContainsKey(radix))
                         {
-                            data.Add(radix, type_i);
-                        }
-                        else if((int)type > (data[radix] >> 8))
-                        {
-                            data[radix] &= 0xFF00;
-                            data[radix] |= type_i;
+                            data.Add(radix, type_i | 0x0000);
                         }
 
-                        //voxel sub point
+                        //type: change voxel type to upper level
+                        else if(type_i > (data[radix] & 0xFF00))
+                        {
+                            data[radix] &= 0x00FF;
+                            data[radix] |= type_i;
+                        }
+                        
+                        //0:move, 1:not-move
+                        //not-move 상태이면 move로 바꿀 수 없다.
+                        //아래처럼 코드를 작성하면 '이동 가능한 y축을 제대로 입력하지 못한다'
+                        //흠...
+
+                        //move:
                         float halfVoxelSize = voxelSize * 0.5f;
                         Vector3 diff = samplingPoint - clamped;
-                        byte d = 0;
+                        int d = 0;
                         if (diff.x > halfVoxelSize) { d |= 1 << 2; }
                         if (diff.y > halfVoxelSize) { d |= 1 << 1; }
                         if (diff.z > halfVoxelSize) { d |= 1 << 0; }
 
-                        //on/off 개념이 아니라 높은 숫자로 바꾼다! 개념으로 가는 게 맞으려나?
-                        //그렇다면.. none, move, obstacle, ... 등으로 사용 메모리를 늘려야 한다.
-                        //ㅇㅋ... 시도해보고...
-                        //해당 자리값이 이미 obstacle이면? 아랫 단계인 none, move는 불가하다! 라는 말이잖어?
-                        //말은 되는데 흠...
-                        //다음 복셀도 Obstacle이라면 forcedDir을 유지하는건 어떨랑가.
+                        int shift = -1;
+                        if(type != VoxelType.Movable)
+                        {
+                            switch(d)
+                            {
+                                case 0b_000: shift = 0; break; //[-, -, -]
+                                case 0b_100: shift = 1; break; //[+, -, -]
+                                case 0b_001: shift = 2; break; //[-, -, +]
+                                case 0b_101: shift = 3; break; //[+, -, +]
+                                case 0b_010: shift = 4; break; //[-, +, -]
+                                case 0b_110: shift = 5; break; //[+, +, -]
+                                case 0b_011: shift = 6; break; //[-, +, +]
+                                case 0b_111: shift = 7; break; //[+, +, +]
+                            }
 
-                        if((data[radix] >> 8) == (int)VoxelType.Movable)
-                        {
-                            switch(d)
+                            if ((data[radix] & (1 << shift)) == 0 )
                             {
-                                case 0b_000: data[radix] |= 1 << 0; break; //[-, -, -]
-                                case 0b_100: data[radix] |= 1 << 1; break; //[+, -, -]
-                                case 0b_001: data[radix] |= 1 << 2; break; //[-, -, +]
-                                case 0b_101: data[radix] |= 1 << 3; break; //[+, -, +]
-                                case 0b_010: data[radix] |= 1 << 4; break; //[-, +, -]
-                                case 0b_110: data[radix] |= 1 << 5; break; //[+, +, -]
-                                case 0b_011: data[radix] |= 1 << 6; break; //[-, +, +]
-                                case 0b_111: data[radix] |= 1 << 7; break; //[+, +, +]
+                                data[radix] |= 1 << shift;
                             }
-                        }
-                        else //Movable 외의 타입은 이동 불가(0)으로 비트 마스킹
-                        {
-                            int compare = 0x00;
-                            switch(d)
-                            {
-                                case 0b_000: compare = 1 << 0; break; //[-, -, -]
-                                case 0b_100: compare = 1 << 1; break; //[+, -, -]
-                                case 0b_001: compare = 1 << 2; break; //[-, -, +]
-                                case 0b_101: compare = 1 << 3; break; //[+, -, +]
-                                case 0b_010: compare = 1 << 4; break; //[-, +, -]
-                                case 0b_110: compare = 1 << 5; break; //[+, +, -]
-                                case 0b_011: compare = 1 << 6; break; //[-, +, +]
-                                case 0b_111: compare = 1 << 7; break; //[+, +, +]
-                            }
-                            compare ^= 0x00;
-                            data[radix] &= compare;
                         }
                     }
                 }
@@ -187,7 +178,6 @@ public class MapSampler : MonoBehaviour
         {
             return;
         }
-
         if (drawGrids)
         {
             Vector3 subPos = Vector3.one * voxelSize * 0.25f;
@@ -232,14 +222,14 @@ public class MapSampler : MonoBehaviour
 
             for (int i = 0; i < 8; ++i)
             {
-                if ((sub & (1 << i)) != 0)
+                if ((sub & (1 << i)) == 0)
                 {
-                    Gizmos.color = new Color(0, 1, 0, 0.10f); //???
+                    Gizmos.color = new Color(0, 1, 0, 0.10f); //green
 
                 }
                 else
                 {
-                    Gizmos.color = new Color(1, 0, 0, 0f); //null
+                    Gizmos.color = new Color(1, 0, 0, 0.0f); //null
                 }
 
                 Vector3 subCenter = center;

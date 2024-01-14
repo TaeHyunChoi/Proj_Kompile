@@ -187,7 +187,7 @@ MonoBehaviour:
   fileName: 
   resourceTransform: {fileID: 260966024}
   voxelSize: 0.125
-  samplingIntervalWeight: 4
+  samplingIntervalWeight: 8
   drawGrids: 0
 --- !u!4 &464495206
 Transform:
