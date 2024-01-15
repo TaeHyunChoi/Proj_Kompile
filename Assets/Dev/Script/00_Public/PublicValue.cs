@@ -1,3 +1,5 @@
+using System.Numerics;
+
 public static class Public
 {
     //욕심 낸다면 이걸 에디터에서 실시간 조정하도록 만들고 싶은데...
@@ -90,9 +92,19 @@ public enum UIType
 
     Count,
 }
-public enum VoxelType : byte
+public enum VoxelType : int
 {
     None = 0,
     Movable,
     Obstacle
+}
+public struct Voxel_t
+{
+    public Voxel_t(VoxelType type, int sub)
+    {
+        data = (int)type << 16 | sub;
+    }
+    private int data;
+    public VoxelType Type { get => (VoxelType)(data >> 16); }
+    public int Sub  { get => data & 0xFFFF; }
 }

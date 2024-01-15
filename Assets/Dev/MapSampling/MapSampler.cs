@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class MapSampler : MonoBehaviour
@@ -16,12 +18,12 @@ public class MapSampler : MonoBehaviour
     [SerializeField] private bool drawGrids;
     private bool canDraw;
 
-    private Dictionary<int, int> data;
+    private Dictionary<int, Voxel_t> data;
     private MeshFilter[] filter;
 
     private void Awake()
     {
-        data = new Dictionary<int, int>();
+        data = new Dictionary<int, Voxel_t>();
         filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
     }
     private void Start()
@@ -38,8 +40,9 @@ public class MapSampler : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F1))
         {
-            DataTable.WriteBinaryMapVoxel(data, fileName);
-            Debug.Log("save");
+            // DataTable.WriteBinaryMapVoxel(data, fileName);
+            // Debug.Log("save");
+            Debug.Log("자료 구조 바꿔야 함");
         }
         if (Input.GetKeyDown(KeyCode.Delete))
         {
@@ -47,7 +50,8 @@ public class MapSampler : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.F2))
         {
-            data = DataTable.LoadMapVoxel(fileName);
+            // data = DataTable.LoadMapVoxel(fileName);
+            Debug.Log("자료 구조 바꿔야 함");
             Sampling();
         }
         if (Input.GetKeyDown(KeyCode.Space))
@@ -116,27 +120,21 @@ public class MapSampler : MonoBehaviour
                         int by = (int)(cy * voxelSize_invert);
                         int bz = (int)(cz * voxelSize_invert);
                         int radix = (bx << 16) | (by << 8) | bz;
-                        int type_i = (int)type << 8;
 
                         //register voxel
                         if (!data.ContainsKey(radix))
                         {
-                            data.Add(radix, type_i | 0x0000);
+                            Voxel_t voxel = new Voxel_t(type, 0x0000);
+                            data.Add(radix, voxel);
                         }
 
                         //type: change voxel type to upper level
-                        else if(type_i > (data[radix] & 0xFF00))
+                        else if(type > data[radix].Type)
                         {
-                            data[radix] &= 0x00FF;
-                            data[radix] |= type_i;
+                            data[radix] = new Voxel_t(type, data[radix].Sub);
                         }
-                        
-                        //0:move, 1:not-move
-                        //not-move 상태이면 move로 바꿀 수 없다.
-                        //아래처럼 코드를 작성하면 '이동 가능한 y축을 제대로 입력하지 못한다'
-                        //흠...
 
-                        //move:
+                        //sub:
                         float halfVoxelSize = voxelSize * 0.5f;
                         Vector3 diff = samplingPoint - clamped;
                         int d = 0;
@@ -144,25 +142,26 @@ public class MapSampler : MonoBehaviour
                         if (diff.y > halfVoxelSize) { d |= 1 << 1; }
                         if (diff.z > halfVoxelSize) { d |= 1 << 0; }
 
-                        int shift = -1;
-                        if(type != VoxelType.Movable)
+                        int shift;
+                        switch (d)
                         {
-                            switch(d)
-                            {
-                                case 0b_000: shift = 0; break; //[-, -, -]
-                                case 0b_100: shift = 1; break; //[+, -, -]
-                                case 0b_001: shift = 2; break; //[-, -, +]
-                                case 0b_101: shift = 3; break; //[+, -, +]
-                                case 0b_010: shift = 4; break; //[-, +, -]
-                                case 0b_110: shift = 5; break; //[+, +, -]
-                                case 0b_011: shift = 6; break; //[-, +, +]
-                                case 0b_111: shift = 7; break; //[+, +, +]
-                            }
+                            // case 0b_000: shift =  0; break; //[-, -, -]
+                            default:     shift =  0; break;
+                            case 0b_100: shift =  2; break; //[+, -, -]
+                            case 0b_001: shift =  4; break; //[-, -, +]
+                            case 0b_101: shift =  6; break; //[+, -, +]
+                            case 0b_010: shift =  8; break; //[-, +, -] 
+                            case 0b_110: shift = 10; break; //[+, +, -]
+                            case 0b_011: shift = 12; break; //[-, +, +]
+                            case 0b_111: shift = 14; break; //[+, +, +]
+                        }
 
-                            if ((data[radix] & (1 << shift)) == 0 )
-                            {
-                                data[radix] |= 1 << shift;
-                            }
+                        int sub = data[radix].Sub & ~(0b11 << shift);
+                        sub |= (int)type << shift;
+
+                        if(sub > data[radix].Sub)
+                        {
+                            data[radix] = new Voxel_t(type, sub);
                         }
                     }
                 }
@@ -178,6 +177,7 @@ public class MapSampler : MonoBehaviour
         {
             return;
         }
+
         if (drawGrids)
         {
             Vector3 subPos = Vector3.one * voxelSize * 0.25f;
@@ -214,24 +214,10 @@ public class MapSampler : MonoBehaviour
             float x = radix >> 16;
             float y = (radix & 0xFF00) >> 8;
             float z = radix & 0xFF;
-
-            int info = data[radix];
-            byte sub = (byte)(info & 0xFF);
-
+            
             Vector3 center = new Vector3(x, y, z) * voxelSize + Vector3.one * voxelSize * 0.5f;
-
             for (int i = 0; i < 8; ++i)
             {
-                if ((sub & (1 << i)) == 0)
-                {
-                    Gizmos.color = new Color(0, 1, 0, 0.10f); //green
-
-                }
-                else
-                {
-                    Gizmos.color = new Color(1, 0, 0, 0.0f); //null
-                }
-
                 Vector3 subCenter = center;
                 float unit = voxelSize * 0.25f;
                 switch (i)
@@ -240,13 +226,19 @@ public class MapSampler : MonoBehaviour
                     case 1: subCenter = center + new Vector3( unit, -unit, -unit); break;
                     case 2: subCenter = center + new Vector3(-unit, -unit,  unit); break;
                     case 3: subCenter = center + new Vector3( unit, -unit,  unit); break;
-
-                    case 4: subCenter = center + new Vector3(-unit, unit, -unit); break;
-                    case 5: subCenter = center + new Vector3( unit, unit, -unit); break;
-                    case 6: subCenter = center + new Vector3(-unit, unit,  unit); break;
-                    case 7: subCenter = center + new Vector3( unit, unit,  unit); break;
+                    case 4: subCenter = center + new Vector3(-unit,  unit, -unit); break;
+                    case 5: subCenter = center + new Vector3( unit,  unit, -unit); break;
+                    case 6: subCenter = center + new Vector3(-unit,  unit,  unit); break;
+                    case 7: subCenter = center + new Vector3( unit,  unit,  unit); break;
                 }
 
+                int sub_type = (data[radix].Sub & (0b11 << i * 2)) >> i * 2;
+                switch ((VoxelType)sub_type)
+                {
+                    case VoxelType.None:     Gizmos.color = new Color(0, 0, 0, 0);      break;
+                    case VoxelType.Movable:  Gizmos.color = new Color(0, 1, 0, 0.10f);  break;
+                    case VoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, 0.25f);  break;
+                }
                 Gizmos.DrawCube(subCenter, Vector3.one * voxelSize * 0.5f);
                 Gizmos.DrawWireCube(subCenter, Vector3.one * voxelSize * 0.5f);
             }
