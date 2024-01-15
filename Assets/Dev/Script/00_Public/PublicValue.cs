@@ -1,12 +1,11 @@
-using System.Numerics;
+using System;
 
 public static class Public
 {
     //욕심 낸다면 이걸 에디터에서 실시간 조정하도록 만들고 싶은데...
     public static float FADE_SPEED = 1.25f;
     public static float MOVE_SPEED = 4f;
-
-    public static float VOXEL_SIZE_INVERT = 4f;
+    public static float VOXEL_SIZE_INVERT = 1f / 0.25f;
     public static float VOXEL_SIZE = 0.25f;
 
     public static void BlockInput(int input) { ;}
@@ -98,6 +97,8 @@ public enum VoxelType : int
     Movable,
     Obstacle
 }
+
+[Serializable]
 public struct Voxel_t
 {
     public Voxel_t(VoxelType type, int sub)

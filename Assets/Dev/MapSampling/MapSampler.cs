@@ -1,7 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class MapSampler : MonoBehaviour
@@ -40,9 +37,8 @@ public class MapSampler : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F1))
         {
-            // DataTable.WriteBinaryMapVoxel(data, fileName);
-            // Debug.Log("save");
-            Debug.Log("자료 구조 바꿔야 함");
+            DataTable.WriteBinaryMapVoxel(data, fileName);
+            Debug.Log("save");
         }
         if (Input.GetKeyDown(KeyCode.Delete))
         {
@@ -50,8 +46,7 @@ public class MapSampler : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.F2))
         {
-            // data = DataTable.LoadMapVoxel(fileName);
-            Debug.Log("자료 구조 바꿔야 함");
+            data = DataTable.LoadMapVoxel(fileName);
             Sampling();
         }
         if (Input.GetKeyDown(KeyCode.Space))
@@ -77,6 +72,7 @@ public class MapSampler : MonoBehaviour
             Vector3 A, B, C;
             Vector3 epsilon = Vector3.one * 0.00001f;
 
+            type = VoxelType.None;
             if (targetTransform.CompareTag("Movable"))  
             { 
                 type = VoxelType.Movable; 

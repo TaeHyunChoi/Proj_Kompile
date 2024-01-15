@@ -9,7 +9,7 @@ internal class InField : ISequenceUpdater
     private GameObject gameObject;
     private Transform transform;
 
-    private static Dictionary<int, int> voxel;
+    private static Dictionary<int, Voxel_t> voxel;
     private static Unit player;
 
     public InField(GameObject obj)
@@ -25,6 +25,7 @@ internal class InField : ISequenceUpdater
         {
             GameObject obj = await AssetManager.InstantiateAsync("UnitBase", Main.GameMgr.GetTransform(), true);
             player = obj.AddComponent<Unit>();
+            player.transform.position = new Vector3(0.5f, 0, 0.5f);
 
             CameraFollow camFollow = Camera.main.GetComponent<CameraFollow>();
             camFollow.SetFollow(player.transform);
@@ -81,7 +82,7 @@ internal class InField : ISequenceUpdater
 
         if (dir != Vector3.zero)
         {
-            player.Move(voxel, dir.normalized);
+            player.Move(voxel, dir);
         }
     }    
 }
