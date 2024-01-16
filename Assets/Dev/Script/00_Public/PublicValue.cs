@@ -95,7 +95,7 @@ public enum VoxelType : int
 {
     None = 0,
     Movable,
-    Obstacle
+    Obstacle,
 }
 
 [Serializable]
