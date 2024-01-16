@@ -188,7 +188,7 @@ MonoBehaviour:
   resourceTransform: {fileID: 260966024}
   voxelSize: 0.25
   samplingIntervalWeight: 8
-  drawGrids: 0
+  drawGrids: 1
 --- !u!4 &464495206
 Transform:
   m_ObjectHideFlags: 0
@@ -613,6 +613,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 260966024}
     m_Modifications:
+    - target: {fileID: 649340057, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1549666830196046177, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1549666831473289859, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
       propertyPath: m_Name
       value: 020_FieldTest
@@ -660,6 +668,14 @@ PrefabInstance:
     - target: {fileID: 1549666831473289868, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1549666831525175438, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1549666832234820345, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
