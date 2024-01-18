@@ -111,46 +111,60 @@ public class MapSampler : MonoBehaviour
                         Vector3 clampPoint = new Vector3(cx, cy, cz) * voxelSize;
                         Vector3 center = clampPoint + Vector3.one * halfVoxelSize;
 
+                        Vector3 side;
+                        float radian, dist;
+
                         //set key-voxel data
                         if (!data.ContainsKey(radix))
                         {
-                            Vector3 side = samplingPoint - center;
-                            float radian = Mathf.Atan2(side.z, side.x);
-                            float dist = Mathf.Tan(radian) * halfVoxelSize;
+                            side = samplingPoint - center;
+                            radian = Mathf.Atan2(side.z, side.x);
+                            // dist = Mathf.Tan(radian) * halfVoxelSize;
+                            dist = halfVoxelSize / Mathf.Sin(radian);
 
                             //samplingPoint가 target voxel 안에 들어있다면 추가
+                            //여기에 문제가 있는 것 같다. 다시 체크해봐야 한다.
+                            //아마도 Mathf.Abs(dist)가 문제인 듯
                             if (new Vector3(side.x, 0f, side.z).magnitude <= Mathf.Abs(dist))
                             {
                                 data.Add(radix, new Voxel_t(type, 0x0000));
                             }
-
-                            //voxel 안에 없다면 neighbor voxel을 한 번 더 탐색
                             else
                             {
-                                if (radian >= 0 && radian > Mathf.PI * 0.5f)
-                                { samplingPoint += new Vector3(1, 0, 1) * halfVoxelSize; }
-
-                                else
-                                if (radian >= Mathf.PI * 0.5f && radian > Mathf.PI)
-                                { samplingPoint += new Vector3(-1, 0, 1) * halfVoxelSize; }
-
-                                else
-                                if (radian >= Mathf.PI && radian > Mathf.PI * 1.5f)
-                                { samplingPoint += new Vector3(-1, 0, -1) * halfVoxelSize; }
-
-                                else
-                                { samplingPoint += new Vector3(1, 0, -1) * halfVoxelSize; }
-
-                                cx = Mathf.FloorToInt(samplingPoint.x * voxel_invert);
-                                cy = Mathf.FloorToInt(samplingPoint.y * voxel_invert);
-                                cz = Mathf.FloorToInt(samplingPoint.z * voxel_invert);
-                                radix = cx << 16 | cy << 8 | cz;
-
-                                if (!data.ContainsKey(radix))
-                                {
-                                    data.Add(radix, new Voxel_t(type, 0x0000));
-                                }
+                                continue;
                             }
+
+                            //voxel 안에 없다면 neighbor voxel을 한 번 더 탐색
+                            //여기가 문제인건가? 어설프게 넘겨버렸나?
+                            // else
+                            // {
+                            //     if (radian >= 0 && radian < Mathf.PI * 0.5f)
+                            //     { samplingPoint += new Vector3(1, 0, 1) * halfVoxelSize; }
+
+                            //     else
+                            //     if (radian >= Mathf.PI * 0.5f && radian < Mathf.PI)
+                            //     { samplingPoint += new Vector3(-1, 0, 1) * halfVoxelSize; }
+
+                            //     else
+                            //     if (radian >= Mathf.PI && radian < Mathf.PI * 1.5f)
+                            //     { samplingPoint += new Vector3(-1, 0, -1) * halfVoxelSize; }
+
+                            //     else
+                            //     { samplingPoint += new Vector3(1, 0, -1) * halfVoxelSize; }
+
+                            //     cx = Mathf.FloorToInt(samplingPoint.x * voxel_invert);
+                            //     cy = Mathf.FloorToInt(samplingPoint.y * voxel_invert);
+                            //     cz = Mathf.FloorToInt(samplingPoint.z * voxel_invert);
+                            //     radix = cx << 16 | cy << 8 | cz;
+
+                            //     if (!data.ContainsKey(radix))
+                            //     {
+                            //         data.Add(radix, new Voxel_t(type, 0x0000));
+                            //     }
+
+                            //     clampPoint = new Vector3(cx, cy, cz) * voxelSize;
+                            //     center = clampPoint + Vector3.one * halfVoxelSize;
+                            // }
                         }
 
                         Voxel_t voxel = data[radix];
@@ -161,38 +175,27 @@ public class MapSampler : MonoBehaviour
                             data[radix] = new Voxel_t(type, voxel.Sub);
                         }
 
-                        // sub-voxel.Type
-                        //이게 너무 뜬금 없는데?뭐여 이게
-                        Vector3 voxelPoint = new Vector3(cx, cy, cz) * halfVoxelSize; 
-                        float p = voxelPoint.x - voxelPoint.z;  //z =  x - p
-                        float q = voxelPoint.x + voxelPoint.z;  //z = -x + q;
-
-                        //sub-voxel의 상대 좌표
-                        bool bx = samplingPoint.z >= samplingPoint.x - p;
-                        bool by = samplingPoint.y >= voxelPoint.y;
-                        bool bz = samplingPoint.z >= -samplingPoint.x + q;
+                        side = samplingPoint - center;
+                        radian = Mathf.Atan2(side.z, side.x);
 
                         int shift;
-                        if (by == false)
-                        {
-                            if (!bx & !bz) { shift = 0; }
-                            else if (bx & !bz) { shift = 1; }
-                            else if (bx & bz) { shift = 2; }
-                            else { shift = 3; }
-                        }
+                        if (radian >= 0 && radian < Mathf.PI * 0.5f) { shift = 0; }
                         else
+                        if (radian >= Mathf.PI * 0.5f && radian < Mathf.PI) { shift = 1; }
+                        else
+                        if (radian >= Mathf.PI && radian < Mathf.PI * 1.5f) { shift = 2; }
+                        else { shift = 3; }
+
+                        if (side.y > 0)
                         {
-                            if (!bx & !bz) { shift = 4; }
-                            else if (bx & !bz) { shift = 5; }
-                            else if (bx & bz) { shift = 6; }
-                            else { shift = 7; }
+                            shift += 4;
                         }
                         shift *= 2;
 
-                        int sub = (int)type << (shift);
-                        if (sub > voxel.Sub)
+                        int sub = (int)type << shift;
+                        int mask = ~(0b11 << shift);
+                        if (sub > (voxel.Sub & mask))
                         {
-                            int mask = ~(0b11 << shift);
                             int newSub = voxel.Sub & mask;
                             newSub |= sub;
                             data[radix] = new Voxel_t(type, newSub);
@@ -218,6 +221,23 @@ public class MapSampler : MonoBehaviour
         {
             float halfSize = voxelSize * 0.5f;
 
+            for (int i = 0; i < 10; ++i)
+            {
+                Gizmos.color = Color.cyan;
+                Vector3 start;
+                start = Vector3.right * voxelSize * i;
+                Gizmos.DrawLine(start, start + Vector3.forward * 30);
+                // start += Vector3.forward * halfSize;
+                // Gizmos.DrawLine(start, start + new Vector3(1, 0, -1) * Mathf.Abs(halfSize));
+                // Gizmos.DrawLine(start, start + new Vector3(1, 0, 1) * Mathf.Abs(halfSize));
+                // start += Vector3.right * voxelSize;
+                // Gizmos.DrawLine(start, start + new Vector3(-1, 0, -1) * Mathf.Abs(halfSize));
+                // Gizmos.DrawLine(start, start + new Vector3(-1, 0, 1) * Mathf.Abs(halfSize));
+
+                start = Vector3.forward * voxelSize * i;
+                Gizmos.DrawLine(start, start + Vector3.right * 30);
+            }
+
             //draw voxel
             foreach (int radix in data.Keys)
             {
@@ -225,39 +245,46 @@ public class MapSampler : MonoBehaviour
                 float y = (radix & 0xFF00) >> 8;
                 float z = radix & 0xFF;
 
-                Vector3 center = new Vector3(x, y, z) * voxelSize  + Vector3.one * halfSize;
+                Vector3 center = new Vector3(x, y, z) * voxelSize + Vector3.one * halfSize;
 
-                // Gizmos.color = Color.black;
-                // Gizmos.DrawCube(center, Vector3.one * 0.025f);
+                Gizmos.color = Color.black;
+                Gizmos.DrawCube(center, Vector3.one * 0.025f);
 
                 for (int i = 0; i < 8; ++i)
                 {
                     Vector3 dir = Vector3.zero;
+                    float quaterSize = halfSize * 0.5f;
                     switch (i)
                     {
-                        case 0: dir = new Vector3(-halfSize, -halfSize, -halfSize); break;
-                        case 1: dir = new Vector3( halfSize, -halfSize, -halfSize); break;
-                        case 2: dir = new Vector3( halfSize, -halfSize,  halfSize); break;
-                        case 3: dir = new Vector3(-halfSize, -halfSize,  halfSize); break;
-                        case 4: dir = new Vector3(-halfSize,  halfSize, -halfSize); break;
-                        case 5: dir = new Vector3( halfSize,  halfSize, -halfSize); break;
-                        case 6: dir = new Vector3( halfSize,  halfSize,  halfSize); break;
-                        case 7: dir = new Vector3(-halfSize,  halfSize,  halfSize); break;
+                        case 0: dir = new Vector3(quaterSize, -quaterSize, quaterSize); break;
+                        case 1: dir = new Vector3(-quaterSize, -quaterSize, quaterSize); break;
+                        case 2: dir = new Vector3(-quaterSize, -quaterSize, -quaterSize); break;
+                        case 3: dir = new Vector3(quaterSize, -quaterSize, -quaterSize); break;
+                        case 4: dir = new Vector3(quaterSize, quaterSize, quaterSize); break;
+                        case 5: dir = new Vector3(-quaterSize, quaterSize, quaterSize); break;
+                        case 6: dir = new Vector3(-quaterSize, quaterSize, -quaterSize); break;
+                        case 7: dir = new Vector3(quaterSize, quaterSize, -quaterSize); break;
                     }
 
                     Vector3 subCenter = center + dir;
                     int sub_type = (data[radix].Sub & (0b11 << i * 2)) >> i * 2;
                     switch ((VoxelType)sub_type)
                     {
-                        // case VoxelType.None: Gizmos.color = Color.white; break;
-                        case VoxelType.Movable:  Gizmos.color = Color.green;               break;
-                        case VoxelType.Obstacle: Gizmos.color = Color.red;                 break;
-                        default:                 Gizmos.color = new Color(1f, 1f, 1f, 0f); break;
+                        // case VoxelType.None: continue;
+                        case VoxelType.Movable:
+                            Gizmos.color = Color.green;
+                            Gizmos.DrawCube(subCenter, Vector3.one * 0.025f);
+                            break;
+                        case VoxelType.Obstacle:
+                            Gizmos.color = Color.red;
+                            Gizmos.DrawCube(subCenter, Vector3.one * 0.025f);
+                            break;
+                        case VoxelType.None:
+                            Gizmos.color = new Color(1, 1, 1, 0f);
+                            break;
                     }
-                    Gizmos.DrawCube(subCenter, Vector3.one * 0.025f);
-
-                    Gizmos.color = new Color(0f, 0f, 0f, 0.25f);
                     Gizmos.DrawLine(center, subCenter);
+
                 }
             }
         }
