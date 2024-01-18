@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using Unity.Burst.Intrinsics;
 using UnityEngine;
 
@@ -109,11 +110,11 @@ public class MapSampler : MonoBehaviour
 
                         Vector3 clampPoint = new Vector3(cx, cy, cz) * voxelSize;
                         Vector3 center = clampPoint + Vector3.one * halfVoxelSize;
-                        Vector3 side = samplingPoint - center;
 
                         //set key-voxel data
                         if (!data.ContainsKey(radix))
                         {
+                            Vector3 side = samplingPoint - center;
                             float radian = Mathf.Atan2(side.z, side.x);
                             float dist = Mathf.Tan(radian) * halfVoxelSize;
 
@@ -151,15 +152,18 @@ public class MapSampler : MonoBehaviour
                                 }
                             }
                         }
-                        
+
+                        Voxel_t voxel = data[radix];
+
                         // key-voxle.Type
-                        if (type > data[radix].Type)
+                        if (type > voxel.Type)
                         {
-                            data[radix] = new Voxel_t(type, data[radix].Sub);
+                            data[radix] = new Voxel_t(type, voxel.Sub);
                         }
 
                         // sub-voxel.Type
-                        Vector3 voxelPoint = new Vector3(cx, cy, cz) * halfVoxelSize;
+                        //이게 너무 뜬금 없는데?뭐여 이게
+                        Vector3 voxelPoint = new Vector3(cx, cy, cz) * halfVoxelSize; 
                         float p = voxelPoint.x - voxelPoint.z;  //z =  x - p
                         float q = voxelPoint.x + voxelPoint.z;  //z = -x + q;
 
@@ -186,10 +190,10 @@ public class MapSampler : MonoBehaviour
                         shift *= 2;
 
                         int sub = (int)type << (shift);
-                        if (sub > data[radix].Sub)
+                        if (sub > voxel.Sub)
                         {
                             int mask = ~(0b11 << shift);
-                            int newSub = data[radix].Sub & mask;
+                            int newSub = voxel.Sub & mask;
                             newSub |= sub;
                             data[radix] = new Voxel_t(type, newSub);
                         }
@@ -212,6 +216,8 @@ public class MapSampler : MonoBehaviour
 
         if (drawGrids)
         {
+            float halfSize = voxelSize * 0.5f;
+
             //draw voxel
             foreach (int radix in data.Keys)
             {
@@ -219,41 +225,39 @@ public class MapSampler : MonoBehaviour
                 float y = (radix & 0xFF00) >> 8;
                 float z = radix & 0xFF;
 
-                Vector3 center = new Vector3(x, y, z) * (voxelSize * 0.5f);
+                Vector3 center = new Vector3(x, y, z) * voxelSize  + Vector3.one * halfSize;
 
-                Gizmos.color = Color.black;
-                Gizmos.DrawCube(center, Vector3.one * 0.025f);
+                // Gizmos.color = Color.black;
+                // Gizmos.DrawCube(center, Vector3.one * 0.025f);
 
                 for (int i = 0; i < 8; ++i)
                 {
-                    Vector3 subCenter = center;
-                    float unit = voxelSize * 0.25f;
-
+                    Vector3 dir = Vector3.zero;
                     switch (i)
                     {
-                        case 0: subCenter = center + new Vector3(0f, -unit, -unit); break;
-                        case 1: subCenter = center + new Vector3(unit, -unit, 0f); break;
-                        case 2: subCenter = center + new Vector3(0f, -unit, unit); break;
-                        case 3: subCenter = center + new Vector3(-unit, -unit, 0f); break;
-                        case 4: subCenter = center + new Vector3(0f, unit, -unit); break;
-                        case 5: subCenter = center + new Vector3(unit, unit, 0f); break;
-                        case 6: subCenter = center + new Vector3(0f, unit, unit); break;
-                        case 7: subCenter = center + new Vector3(-unit, unit, 0f); break;
+                        case 0: dir = new Vector3(-halfSize, -halfSize, -halfSize); break;
+                        case 1: dir = new Vector3( halfSize, -halfSize, -halfSize); break;
+                        case 2: dir = new Vector3( halfSize, -halfSize,  halfSize); break;
+                        case 3: dir = new Vector3(-halfSize, -halfSize,  halfSize); break;
+                        case 4: dir = new Vector3(-halfSize,  halfSize, -halfSize); break;
+                        case 5: dir = new Vector3( halfSize,  halfSize, -halfSize); break;
+                        case 6: dir = new Vector3( halfSize,  halfSize,  halfSize); break;
+                        case 7: dir = new Vector3(-halfSize,  halfSize,  halfSize); break;
                     }
 
+                    Vector3 subCenter = center + dir;
                     int sub_type = (data[radix].Sub & (0b11 << i * 2)) >> i * 2;
-                    Vector3 to = center + (subCenter - center).normalized * voxelSize * 0.25f;
                     switch ((VoxelType)sub_type)
                     {
                         // case VoxelType.None: Gizmos.color = Color.white; break;
-                        case VoxelType.Movable: Gizmos.color = Color.green; break;
-                        case VoxelType.Obstacle: Gizmos.color = Color.red; break;
-                        default: Gizmos.color = new Color(1f, 1f, 1f, 0f); break;
+                        case VoxelType.Movable:  Gizmos.color = Color.green;               break;
+                        case VoxelType.Obstacle: Gizmos.color = Color.red;                 break;
+                        default:                 Gizmos.color = new Color(1f, 1f, 1f, 0f); break;
                     }
                     Gizmos.DrawCube(subCenter, Vector3.one * 0.025f);
 
-                    Gizmos.color = Color.black;
-                    Gizmos.DrawLine(center, to);
+                    Gizmos.color = new Color(0f, 0f, 0f, 0.25f);
+                    Gizmos.DrawLine(center, subCenter);
                 }
             }
         }
