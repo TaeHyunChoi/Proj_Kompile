@@ -25,7 +25,6 @@ public class MapSampler : MonoBehaviour
     private Dictionary<int, Voxel_t> data;
     private MeshFilter[] filter;
 
-
     private void Awake()
     {
         data = new Dictionary<int, Voxel_t>();
@@ -65,7 +64,6 @@ public class MapSampler : MonoBehaviour
         }
     }
 
-
     private void SamplingVoxels()
     {
         float weight = grid * (1 / samplingInterval);
@@ -84,7 +82,7 @@ public class MapSampler : MonoBehaviour
             Vector3[] vertices = mesh.vertices;
             int[] triangles = mesh.triangles;
 
-            if (targetTransform.CompareTag("Movable")) { type = VoxelType.Movable; }
+            if (targetTransform.CompareTag("Movable"))       { type = VoxelType.Movable; }
             else if (targetTransform.CompareTag("Obstacle")) { type = VoxelType.Obstacle; }
             else { type = VoxelType.None; }
 
@@ -108,15 +106,49 @@ public class MapSampler : MonoBehaviour
 
                     for (int j = 0; j < samplingCountABtoAC; ++j)
                     {
-                        //sampling point
                         Vector3 samplingPoint = Vector3.Lerp(fromAB, toAC, (float)j / samplingCountABtoAC);
 
-                        //find center point
-                        int radix = GetRadix(samplingPoint);
-
+                        //// Get Center Point -> Change to Radix : 연산 길어져서 함수로 뺐음
+                        Vector3 center = GetCenterPoint(samplingPoint); 
+                        int radix = (int)(center.x * halfGrid_invert) << 16
+                                    | (int)(center.y * halfGrid_invert) << 8
+                                    | (int)(center.z * halfGrid_invert) << 0;
                         if (!data.ContainsKey(radix))
                         {
-                            data.Add(radix, new Voxel_t(type, 0x0000));
+                            data.Add(radix, new Voxel_t(0x0000));
+                        }
+
+                        Vector3 diff = samplingPoint - center;
+                        float angle = Mathf.Atan2(diff.z, diff.x) * Mathf.Rad2Deg;
+                        angle = (angle + 360) % 360;
+                        //Debug.Log(angle.ToString("F3"));
+
+                        int shift;
+                        if (diff.y <= 0)
+                        {
+                            if (angle >= 0 && angle < 90)            { shift = 0; }
+                            else if (angle >=  90 && angle < 180)    { shift = 1; }
+                            else if (angle >= 180 && angle < 270)    { shift = 2; }
+                            else                                     { shift = 3; }
+                        }
+                        else
+                        {
+                            if (angle >= 0 && angle < 90)            { shift = 4; }
+                            else if (angle >=  90 && angle < 180)    { shift = 5; }
+                            else if (angle >= 180 && angle < 270)    { shift = 6; }
+                            else                                     { shift = 7; }
+                        }
+                        shift *= 2;
+
+                        int typeBits = (int)type << shift;
+                        int sub = data[radix].SubVoxel;
+                        int mask = (0b11 << shift); //뭐야 얘도 이상한데?
+
+                        if (typeBits > (sub & mask))
+                        {
+                            sub = data[radix].SubVoxel & ~mask;
+                            sub |= typeBits;
+                            data[radix] = new Voxel_t(sub);
                         }
                     }
                 }
@@ -126,40 +158,36 @@ public class MapSampler : MonoBehaviour
         Debug.Log("Sampling Done.");
         canDraw = true;
     }
-
-    private int GetRadix(Vector3 samplingPoint)
+    private Vector3 GetCenterPoint(Vector3 samplingPoint)
     {
         float cx = Mathf.Floor(samplingPoint.x * halfGrid_invert) * halfGrid;
-        float cy = (Mathf.Floor(samplingPoint.y * grid_invert) * 2 + 1) * halfGrid;
+        float cy = Mathf.Floor(samplingPoint.y * grid_invert) * 2f * halfGrid + 1* halfGrid;
         float cz = Mathf.Floor(samplingPoint.z * halfGrid_invert) * halfGrid;
 
         Vector3 center;
-        Vector3 comp1, comp2;
+        Vector3 p1, p2;
+
         if ((cz - cx) % grid == 0)
         {
-            comp1 = new Vector3(cx, cy, cz);                        // half-size clamp
-            comp2 = new Vector3(cx + halfGrid, cy, cz + halfGrid);  // half-size clamp + new Vector3(1,0,1);
+            p1 = new Vector3(cx, cy, cz);                        // half-size clamp
+            p2 = new Vector3(cx + halfGrid, cy, cz + halfGrid);  // half-size clamp + new Vector3(1,0,1);
         }
         else
         {
-            comp1 = new Vector3(cx + halfGrid, cy, cz);     // half-size clamp + Vector3.right
-            comp2 = new Vector3(cx, cy, cz + halfGrid);     // half-size clamp + Vector3.up
+            p1 = new Vector3(cx + halfGrid, cy, cz);     // half-size clamp + Vector3.right
+            p2 = new Vector3(cx, cy, cz + halfGrid);     // half-size clamp + Vector3.up
         }
 
-        if (Vector3.Distance(samplingPoint, comp1) <= Vector3.Distance(samplingPoint, comp2))
+        if (Vector3.Distance(samplingPoint, p1) <= Vector3.Distance(samplingPoint, p2))
         {
-            center = comp1;
+            center = p1;
         }
         else
         {
-            center = comp2;
+            center = p2;
         }
 
-        int radix =   (int)(center.x * halfGrid_invert) << 16
-                    | (int)(center.y * halfGrid_invert) << 8
-                    | (int)(center.z * halfGrid_invert) << 0;
-
-        return radix;
+        return center;
     }
 
     private void OnDrawGizmos()
@@ -172,7 +200,8 @@ public class MapSampler : MonoBehaviour
         if (drawGrids)
         {
             float halfGrid = grid * 0.5f;
-
+            float quaterGrid = grid * 0.25f;
+            #region draw grids
             Gizmos.color = new Color(0, 1, 0, 0.25f);
             Gizmos.DrawLine(Vector3.zero, Vector3.right * 100);
             Gizmos.DrawLine(Vector3.zero, Vector3.forward * 100);
@@ -196,6 +225,7 @@ public class MapSampler : MonoBehaviour
                     Gizmos.DrawLine(right, right + new Vector3(-1, 0, -1) * halfGrid);
                 }
             }
+            #endregion
 
             //draw voxel
             foreach (int radix in data.Keys)
@@ -209,42 +239,43 @@ public class MapSampler : MonoBehaviour
                 Gizmos.color = Color.black;
                 Gizmos.DrawCube(center, Vector3.one * 0.025f);
 
-                //for (int i = 0; i < 8; ++i)
-                //{
-                //    Vector3 dir = Vector3.zero;
-                //    float quaterSize = halfSize * 0.5f;
-                //    switch (i)
-                //    {
-                //        case 0: dir = new Vector3(quaterSize, -quaterSize, quaterSize); break;
-                //        case 1: dir = new Vector3(-quaterSize, -quaterSize, quaterSize); break;
-                //        case 2: dir = new Vector3(-quaterSize, -quaterSize, -quaterSize); break;
-                //        case 3: dir = new Vector3(quaterSize, -quaterSize, -quaterSize); break;
-                //        case 4: dir = new Vector3(quaterSize, quaterSize, quaterSize); break;
-                //        case 5: dir = new Vector3(-quaterSize, quaterSize, quaterSize); break;
-                //        case 6: dir = new Vector3(-quaterSize, quaterSize, -quaterSize); break;
-                //        case 7: dir = new Vector3(quaterSize, quaterSize, -quaterSize); break;
-                //    }
+                //*
+                Vector3 dir = Vector3.zero;
+                for (int i = 0; i < 8; ++i)
+                {
+                    switch (i)
+                    {
+                        case 0: dir = new Vector3(quaterGrid, -quaterGrid, quaterGrid); break;
+                        case 1: dir = new Vector3(-quaterGrid, -quaterGrid, quaterGrid); break;
+                        case 2: dir = new Vector3(-quaterGrid, -quaterGrid, -quaterGrid); break;
+                        case 3: dir = new Vector3(quaterGrid, -quaterGrid, -quaterGrid); break;
+                        case 4: dir = new Vector3(quaterGrid, quaterGrid, quaterGrid); break;
+                        case 5: dir = new Vector3(-quaterGrid, quaterGrid, quaterGrid); break;
+                        case 6: dir = new Vector3(-quaterGrid, quaterGrid, -quaterGrid); break;
+                        case 7: dir = new Vector3(quaterGrid, quaterGrid, -quaterGrid); break;
+                    }
 
-                //    Vector3 subCenter = center + dir;
-                //    int sub_type = (data[radix].Sub & (0b11 << i * 2)) >> i * 2;
-                //    switch ((VoxelType)sub_type)
-                //    {
-                //        // case VoxelType.None: continue;
-                //        case VoxelType.Movable:
-                //            Gizmos.color = Color.green;
-                //            Gizmos.DrawCube(subCenter, Vector3.one * 0.025f);
-                //            break;
-                //        case VoxelType.Obstacle:
-                //            Gizmos.color = Color.red;
-                //            Gizmos.DrawCube(subCenter, Vector3.one * 0.025f);
-                //            break;
-                //        case VoxelType.None:
-                //            Gizmos.color = new Color(1, 1, 1, 0f);
-                //            break;
-                //    }
-                //    Gizmos.DrawLine(center, subCenter);
-
-                //}
+                    int sub_type = (data[radix].SubVoxel & (0b11 << i * 2)) >> i * 2;
+                    switch ((VoxelType)sub_type)
+                    {
+                        // case VoxelType.None: continue;
+                        case VoxelType.Movable:
+                            Gizmos.color = Color.green;
+                            Gizmos.DrawCube(center + dir, Vector3.one * 0.025f);
+                            Gizmos.DrawLine(center, center + dir);
+                            break;
+                        case VoxelType.Obstacle:
+                            Gizmos.color = Color.red;
+                            Gizmos.DrawCube(center + dir, Vector3.one * 0.025f);
+                            Gizmos.DrawLine(center, center + dir);
+                            break;
+                        //default:
+                        //    Gizmos.color = Color.white;
+                        //    Gizmos.DrawCube(center + dir, Vector3.one * 0.025f);
+                        //    break;
+                    }
+                }
+                //*/
             }
         }
     }

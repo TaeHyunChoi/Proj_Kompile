@@ -41,7 +41,7 @@ public static class Parser
             case 0b_111: shift =  8; break; //[+, +, +]  14
         }
 
-        int sub = data[radix].Sub;
+        int sub = data[radix].SubVoxel;
         sub &= 0b11 << shift;
         return (sub >> shift) == (int)VoxelType.Movable;
     }
