@@ -13,6 +13,11 @@ public class MapSampler : MonoBehaviour
     [SerializeField] private float grid;
     [SerializeField] private float samplingInterval;
 
+    private float grid_invert;
+    private float halfGrid;
+    private float halfGrid_invert;
+
+
     [Header("Grids")]
     [SerializeField] private bool drawGrids;
     private bool canDraw;
@@ -67,9 +72,10 @@ public class MapSampler : MonoBehaviour
         VoxelType type;
         Vector3 epsilon = Vector3.one * 0.00001f;
         Vector3 A, B, C;
-        float grid_invert = 1 / grid;
-        float halfGrid = grid * 0.5f;
-        float halfGrid_invert = 1 / halfGrid;
+
+        grid_invert = 1 / grid;
+        halfGrid = grid * 0.5f;
+        halfGrid_invert = 1 / halfGrid;
 
         for (int f = 0; f < filter.Length; ++f)
         {
@@ -106,36 +112,7 @@ public class MapSampler : MonoBehaviour
                         Vector3 samplingPoint = Vector3.Lerp(fromAB, toAC, (float)j / samplingCountABtoAC);
 
                         //find center point
-                        float cx = Mathf.Floor(samplingPoint.x * halfGrid_invert) * halfGrid;
-                        float cy = Mathf.Floor(samplingPoint.y * grid_invert + 1) * halfGrid;
-                        float cz = Mathf.Floor(samplingPoint.z * halfGrid_invert) * halfGrid;
-
-                        Vector3 center;
-                        Vector3 comp1, comp2;
-                        if ((cz - cx) % grid == 0)
-                        {
-                            comp1 = new Vector3(cx,            cy, cz           ); // half-size clamp
-                            comp2 = new Vector3(cx + halfGrid, cy, cz + halfGrid); // half-size clamp + new Vector3(1,0,1);
-                        }
-                        else
-                        {
-                            comp1 = new Vector3(cx + halfGrid, cy, cz           ); // half-size clamp + Vector3.right
-                            comp2 = new Vector3(cx           , cy, cz + halfGrid); // half-size clamp + Vector3.up
-                        }
-
-                        if (Vector3.Distance(samplingPoint, comp1) <= Vector3.Distance(samplingPoint, comp2))
-                        {
-                            center = comp1;
-                        }
-                        else
-                        {
-                            center = comp2;
-                        }
-
-                        //get radix
-                        int radix = (int)(center.x * halfGrid_invert)   << 16
-                                    | (int)(center.y * halfGrid_invert) << 8
-                                    | (int)(center.z * halfGrid_invert) << 0;
+                        int radix = GetRadix(samplingPoint);
 
                         if (!data.ContainsKey(radix))
                         {
@@ -149,6 +126,42 @@ public class MapSampler : MonoBehaviour
         Debug.Log("Sampling Done.");
         canDraw = true;
     }
+
+    private int GetRadix(Vector3 samplingPoint)
+    {
+        float cx = Mathf.Floor(samplingPoint.x * halfGrid_invert) * halfGrid;
+        float cy = (Mathf.Floor(samplingPoint.y * grid_invert) * 2 + 1) * halfGrid;
+        float cz = Mathf.Floor(samplingPoint.z * halfGrid_invert) * halfGrid;
+
+        Vector3 center;
+        Vector3 comp1, comp2;
+        if ((cz - cx) % grid == 0)
+        {
+            comp1 = new Vector3(cx, cy, cz);                        // half-size clamp
+            comp2 = new Vector3(cx + halfGrid, cy, cz + halfGrid);  // half-size clamp + new Vector3(1,0,1);
+        }
+        else
+        {
+            comp1 = new Vector3(cx + halfGrid, cy, cz);     // half-size clamp + Vector3.right
+            comp2 = new Vector3(cx, cy, cz + halfGrid);     // half-size clamp + Vector3.up
+        }
+
+        if (Vector3.Distance(samplingPoint, comp1) <= Vector3.Distance(samplingPoint, comp2))
+        {
+            center = comp1;
+        }
+        else
+        {
+            center = comp2;
+        }
+
+        int radix =   (int)(center.x * halfGrid_invert) << 16
+                    | (int)(center.y * halfGrid_invert) << 8
+                    | (int)(center.z * halfGrid_invert) << 0;
+
+        return radix;
+    }
+
     private void OnDrawGizmos()
     {
         if (!canDraw)
@@ -167,6 +180,9 @@ public class MapSampler : MonoBehaviour
             Vector3 start;
             for (int i = 0; i < 100; ++i)
             {
+                Gizmos.DrawLine(Vector3.up * grid * i, Vector3.forward * 100);
+                Gizmos.DrawLine(Vector3.up * grid * i, Vector3.right * 100);
+
                 for (int j = 0; j < 100; ++j)
                 {
                     start = new Vector3(i, 0, j) * grid;
