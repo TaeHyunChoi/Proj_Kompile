@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Unity.Burst.Intrinsics;
 using UnityEngine;
+using static Public;
 
 public class MapSampler : MonoBehaviour
 {
@@ -12,11 +13,6 @@ public class MapSampler : MonoBehaviour
     [SerializeField] private Transform resourceTransform;
     [SerializeField] private float grid;
     [SerializeField] private float samplingInterval;
-
-    private float grid_invert;
-    private float halfGrid;
-    private float halfGrid_invert;
-
 
     [Header("Grids")]
     [SerializeField] private bool drawGrids;
@@ -71,10 +67,6 @@ public class MapSampler : MonoBehaviour
         Vector3 epsilon = Vector3.one * 0.00001f;
         Vector3 A, B, C;
 
-        grid_invert = 1 / grid;
-        halfGrid = grid * 0.5f;
-        halfGrid_invert = 1 / halfGrid;
-
         for (int f = 0; f < filter.Length; ++f)
         {
             Transform targetTransform = filter[f].transform;
@@ -108,11 +100,10 @@ public class MapSampler : MonoBehaviour
                     {
                         Vector3 samplingPoint = Vector3.Lerp(fromAB, toAC, (float)j / samplingCountABtoAC);
 
-                        //// Get Center Point -> Change to Radix : 연산 길어져서 함수로 뺐음
-                        Vector3 center = GetCenterPoint(samplingPoint); 
-                        int radix = (int)(center.x * halfGrid_invert) << 16
-                                    | (int)(center.y * halfGrid_invert) << 8
-                                    | (int)(center.z * halfGrid_invert) << 0;
+                        //// Get Center Point -> Change to Radix
+                        Vector3 center = Parser.GetCenterPoint(samplingPoint);
+                        int radix = Parser.GetVoxelRadix(center);
+
                         if (!data.ContainsKey(radix))
                         {
                             data.Add(radix, new Voxel_t(0x0000));
@@ -121,7 +112,6 @@ public class MapSampler : MonoBehaviour
                         Vector3 diff = samplingPoint - center;
                         float angle = Mathf.Atan2(diff.z, diff.x) * Mathf.Rad2Deg;
                         angle = (angle + 360) % 360;
-                        //Debug.Log(angle.ToString("F3"));
 
                         int shift;
                         if (diff.y <= 0)
@@ -142,7 +132,7 @@ public class MapSampler : MonoBehaviour
 
                         int typeBits = (int)type << shift;
                         int sub = data[radix].SubVoxel;
-                        int mask = (0b11 << shift); //뭐야 얘도 이상한데?
+                        int mask = (0b11 << shift);
 
                         if (typeBits > (sub & mask))
                         {
@@ -158,38 +148,7 @@ public class MapSampler : MonoBehaviour
         Debug.Log("Sampling Done.");
         canDraw = true;
     }
-    private Vector3 GetCenterPoint(Vector3 samplingPoint)
-    {
-        float cx = Mathf.Floor(samplingPoint.x * halfGrid_invert) * halfGrid;
-        float cy = Mathf.Floor(samplingPoint.y * grid_invert) * 2f * halfGrid + 1* halfGrid;
-        float cz = Mathf.Floor(samplingPoint.z * halfGrid_invert) * halfGrid;
-
-        Vector3 center;
-        Vector3 p1, p2;
-
-        if ((cz - cx) % grid == 0)
-        {
-            p1 = new Vector3(cx, cy, cz);                        // half-size clamp
-            p2 = new Vector3(cx + halfGrid, cy, cz + halfGrid);  // half-size clamp + new Vector3(1,0,1);
-        }
-        else
-        {
-            p1 = new Vector3(cx + halfGrid, cy, cz);     // half-size clamp + Vector3.right
-            p2 = new Vector3(cx, cy, cz + halfGrid);     // half-size clamp + Vector3.up
-        }
-
-        if (Vector3.Distance(samplingPoint, p1) <= Vector3.Distance(samplingPoint, p2))
-        {
-            center = p1;
-        }
-        else
-        {
-            center = p2;
-        }
-
-        return center;
-    }
-
+    
     private void OnDrawGizmos()
     {
         if (!canDraw)

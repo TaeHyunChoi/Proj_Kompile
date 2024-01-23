@@ -12,6 +12,7 @@ internal class InField : ISequenceUpdater
     private static Dictionary<int, Voxel_t> voxel;
     private static Unit player;
 
+
     public InField(GameObject obj)
     {
         gameObject = obj;
@@ -39,6 +40,7 @@ internal class InField : ISequenceUpdater
         return true;
     }
 
+
     public void Start()
     {
         
@@ -51,6 +53,7 @@ internal class InField : ISequenceUpdater
     {
 
     }
+
 
     public static void Input(int input)
     {

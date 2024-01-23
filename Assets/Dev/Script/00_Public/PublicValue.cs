@@ -5,8 +5,11 @@ public static class Public
     //욕심 낸다면 이걸 에디터에서 실시간 조정하도록 만들고 싶은데...
     public static float FADE_SPEED = 1.25f;
     public static float MOVE_SPEED = 4f;
-    public static float VOXEL_SIZE_INVERT = 1f / 0.25f;
-    public static float VOXEL_SIZE = 0.25f;
+
+    public static float GRID_SIZE_INVERT = 1f / 0.25f;
+    public static float GRID_SIZE = 0.25f;
+    public static float HALF_GRID_SIZE = 0.125f;
+    public static float HALF_GRID_SIZE_INVERT = 1f / 0.125f;
 
     public static void BlockInput(int input) { ;}
 }
@@ -107,4 +110,9 @@ public struct Voxel_t
     }
     private int sub;
     public int SubVoxel  { get => sub; }
+    public VoxelType GetSubType(int quadrant)
+    {
+        int typed = sub & (0b11 << quadrant * 2);
+        return (VoxelType)(typed >> (quadrant * 2));
+    }
 }
