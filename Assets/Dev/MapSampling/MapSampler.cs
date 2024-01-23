@@ -166,12 +166,12 @@ public class MapSampler : MonoBehaviour
             Gizmos.DrawLine(Vector3.zero, Vector3.forward * 100);
 
             Vector3 start;
-            for (int i = 0; i < 100; ++i)
+            for (int i = 0; i < 200; ++i)
             {
                 Gizmos.DrawLine(Vector3.up * grid * i, Vector3.forward * 100);
                 Gizmos.DrawLine(Vector3.up * grid * i, Vector3.right * 100);
 
-                for (int j = 0; j < 100; ++j)
+                for (int j = 0; j < 200; ++j)
                 {
                     start = new Vector3(i, 0, j) * grid;
 

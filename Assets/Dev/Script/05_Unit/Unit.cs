@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Collections;
 using Unity.Burst.Intrinsics;
 using static Public;
+using Unity.Mathematics;
 
 
 public class Unit : MonoBehaviour
 {
     private Vector3 lastDir;
+
 
     //Player로 떼어내야지 이거...
     public void Move(Dictionary<int, Voxel_t> voxel, Vector3 inputDir)
@@ -25,7 +27,7 @@ public class Unit : MonoBehaviour
         //// target voxel
         if (Parser.GetVoxelType(voxel[radix], next - center) == VoxelType.Movable)
         {
-            transform.position += (inputDir.normalized * MOVE_SPEED * Time.deltaTime);
+            transform.position += inputDir.normalized * MOVE_SPEED * Time.deltaTime;
 
             float x = (inputDir.x != 0) ? inputDir.x : lastDir.x;
             float z = (inputDir.z != 0) ? inputDir.z : lastDir.z;
@@ -35,53 +37,12 @@ public class Unit : MonoBehaviour
         }
 
         //// neighbor voxels
-        int start = GetCurrentDirection(inputDir);
-        int rotate;
+        int current   = GetDirectionIndex(inputDir);
+        bool isLeft   = CheckIsLeftDir(inputDir);
+        int interval  = GetSearchingDirection(current, isLeft);
+        int index     = GetSearchingPoint(current, -2 * interval);
 
-        if (inputDir.x != 0 && inputDir.z == 0)
-        {
-            if (lastDir.z > 0) { rotate = 1; }
-            else { rotate = -1; }
-        }
-        else if (inputDir.x == 0 & inputDir.z != 0)
-        {
-            if (lastDir.x > 0) { rotate = 1; }
-            else { rotate = -1; }
-        }
-        //inputDir.x 와 .z 모두 0이면 입력이 없으므로 ㄴㄴ
-        //최초라면 그대로 입력값을 사용
-        else
-        {
-            if (inputDir.x > 0 || inputDir.z > 0)
-            {
-                rotate = 1;
-            }
-            else
-            {
-                rotate = -1;
-            }
-        }
-
-        if (inputDir.z < 0)
-        {
-            rotate *= -1;
-        }
-        if (rotate == 1)
-        {
-            start = (start + 2) % 8;
-        }
-        else
-        {
-            start -= 2;
-            if (start < 0)
-            {
-                start += 8;
-            }
-        }
-
-        int index = start;
         int count = 0;
-
         while (++count <= 5)
         {
             switch (index)
@@ -97,9 +58,7 @@ public class Unit : MonoBehaviour
             }
 
             inputDir.Normalize();
-
-            //선구현 후정리 ㄱㄱ
-            next = transform.position + (inputDir.normalized * MOVE_SPEED * Time.deltaTime);
+            next = transform.position + (inputDir * MOVE_SPEED * Time.deltaTime);
             center = Parser.GetCenterPoint(next);
             radix = Parser.GetVoxelRadix(center);
 
@@ -107,28 +66,20 @@ public class Unit : MonoBehaviour
             if (voxel.ContainsKey(radix)
                 && Parser.GetVoxelType(voxel[radix], next - center) == VoxelType.Movable)
             {
-                transform.position += (inputDir.normalized * MOVE_SPEED * Time.deltaTime);
+                transform.position += inputDir.normalized * MOVE_SPEED * Time.deltaTime;
 
                 float x = (inputDir.x != 0) ? inputDir.x : lastDir.x;
                 float z = (inputDir.z != 0) ? inputDir.z : lastDir.z;
                 lastDir = new Vector3(x, 0, z);
 
-                Debug.Log($"[{start}->{index}] dir:{inputDir}");
                 return;
             }
 
-            index -= rotate;
-            if (index < 0)
-            {
-                index = 8 + index;
-            }
-            else
-            {
-                index %= 8;
-            }
+            //본인 방향을 한 번 더 체크한다. 흠..
+            index = GetSearchingPoint(index, interval);
         }
     }
-    private int GetCurrentDirection(Vector3 dir)
+    private int GetDirectionIndex(Vector3 dir)
     {
         // not normalized: x 또는 z 값이 -1, 0, 1 중에 하나로다.
         float x = dir.x;
@@ -136,7 +87,7 @@ public class Unit : MonoBehaviour
 
         //8방향 경우의 수
         int current = -1;
-        if (x == 0 && z > 0)    { current = 0; }
+        if (x == 0 && z > 0)         { current = 0; }
         else if (x > 0  && z > 0)    { current = 1; }
         else if (x > 0  && z == 0)   { current = 2; }
         else if (x > 0  && z < 0)    { current = 3; }
@@ -147,5 +98,46 @@ public class Unit : MonoBehaviour
 
         Debug.Assert(current != -1, "Can`t Find Direction;");
         return current;
+    }
+    private bool CheckIsLeftDir(Vector3 inputDir)
+    {
+        if(inputDir.x != 0)
+        {
+            return inputDir.x < 0;
+        }
+
+        return lastDir.x < 0;
+    }
+    private int GetSearchingDirection(int directionIndex, bool isLeft)
+    {
+        switch (directionIndex)
+        {
+            case 0:
+            case 1:
+            case 2:
+            case 6:
+            case 7:
+                    if (isLeft) { return 1; } //좌>우: +1
+                    else { return -1; } //우>좌:-1                
+
+            case 3:
+            case 4:
+            case 5:
+                if (isLeft) { return -1; } //좌>우: -1
+                else { return 1; } //우>좌: +1
+        }
+
+        Debug.Assert(false, "Can`t Find Searching Direction;");
+        return 0;
+    }
+    private int GetSearchingPoint(int index, int interval)
+    {
+        index += interval;
+        if(index < 0)
+        {
+            index += 8;
+        }
+
+        return index % 8;
     }
 }
