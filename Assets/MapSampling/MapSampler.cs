@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Net.Http.Headers;
 using Unity.Burst.Intrinsics;
 using UnityEngine;
 using static Public;
@@ -72,6 +74,7 @@ public class MapSampler : MonoBehaviour
             Transform targetTransform = filter[f].transform;
             Mesh mesh = filter[f].mesh;
             Vector3[] vertices = mesh.vertices;
+            Vector3[] normals = mesh.normals;
             int[] triangles = mesh.triangles;
 
             if (targetTransform.CompareTag("Movable"))       { type = VoxelType.Movable; }
@@ -132,8 +135,31 @@ public class MapSampler : MonoBehaviour
 
                         int typeBits = (int)type << shift;
                         int sub = data[radix].SubVoxel;
-                        int mask = (0b11 << shift);
+                        int mask = 0b11 << shift;
 
+                        //와.. 참조가 많아지니까 '체감될 정도로' 속도가 느려지는구나 ㄷㄷ;
+                        if(type == VoxelType.Obstacle)
+                        {
+                            Vector3 l1 = normals[triangles[t - 3]];
+                            Vector3 l2 = normals[triangles[t - 2]];
+                            Vector3 l3 = normals[triangles[t - 1]];
+
+                            //맵은 y축 회전 정도만 있을텐데 world 좌표 변환이 필요 없다.
+                            // Vector3 w1 = transform.TransformDirection(l1);
+                            // Vector3 w2 = transform.TransformDirection(l2);
+                            // Vector3 w3 = transform.TransformDirection(l3);
+
+                            if (l1.y > 0 && l2.y > 0 && l3.y > 0)
+                            // if (w1.y > 0 && w2.y > 0 && w3.y > 0)
+                            {
+                                typeBits = (int)VoxelType.Movable << shift;
+                                sub = data[radix].SubVoxel & ~mask;
+                                sub |= typeBits;
+                                data[radix] = new Voxel_t(sub);
+                                continue;
+                            }
+                        }
+                        
                         if (typeBits > (sub & mask))
                         {
                             sub = data[radix].SubVoxel & ~mask;
@@ -161,32 +187,6 @@ public class MapSampler : MonoBehaviour
             float halfGrid = grid * 0.5f;
             float quaterGrid = grid * 0.25f;
 
-            //#region draw grids
-            //Gizmos.color = new Color(0, 1, 0, 0.25f);
-            //Gizmos.DrawLine(Vector3.zero, Vector3.right * 100);
-            //Gizmos.DrawLine(Vector3.zero, Vector3.forward * 100);
-
-            //Vector3 start;
-            //for (int i = 0; i < 200; ++i)
-            //{
-            //    Gizmos.DrawLine(Vector3.up * grid * i, Vector3.forward * 100);
-            //    Gizmos.DrawLine(Vector3.up * grid * i, Vector3.right * 100);
-
-            //    for (int j = 0; j < 200; ++j)
-            //    {
-            //        start = new Vector3(i, 0, j) * grid;
-
-            //        Vector3 left = start + Vector3.forward * halfGrid;
-            //        Gizmos.DrawLine(left, left + new Vector3(1,0,1) * halfGrid);
-            //        Gizmos.DrawLine(left, left + new Vector3(1, 0, -1) * halfGrid);
-
-            //        Vector3 right = start + new Vector3(grid, 0, halfGrid);
-            //        Gizmos.DrawLine(right, right + new Vector3(-1, 0, 1) * halfGrid);
-            //        Gizmos.DrawLine(right, right + new Vector3(-1, 0, -1) * halfGrid);
-            //    }
-            //}
-            //#endregion
-
             //draw voxel
             foreach (int radix in data.Keys)
             {
@@ -201,7 +201,7 @@ public class MapSampler : MonoBehaviour
 
                 //*
                 Vector3 dir = Vector3.zero;
-                for (int i = 0; i < 4; ++i)
+                for (int i = 0; i < 8; ++i)
                 {
                     switch (i)
                     {
@@ -218,17 +218,12 @@ public class MapSampler : MonoBehaviour
                     int sub_type = (data[radix].SubVoxel & (0b11 << i * 2)) >> i * 2;
                     switch ((VoxelType)sub_type)
                     {
-                        case VoxelType.Movable:
-                            Gizmos.color = Color.green;
-                            Gizmos.DrawCube(center + dir, Vector3.one * 0.025f);
-                            Gizmos.DrawLine(center, center + dir);
-                            break;
-                        case VoxelType.Obstacle:
-                            Gizmos.color = Color.red;
-                            Gizmos.DrawCube(center + dir, Vector3.one * 0.025f);
-                            Gizmos.DrawLine(center, center + dir);
-                            break;
+                        case VoxelType.Movable:  Gizmos.color = Color.green;    break;
+                        case VoxelType.Obstacle: Gizmos.color = Color.red;      break;
+                        default: continue;
                     }
+                    Gizmos.DrawCube(center + dir, Vector3.one * 0.025f);
+                    Gizmos.DrawLine(center, center + dir);
                 }
                 //*/
             }
