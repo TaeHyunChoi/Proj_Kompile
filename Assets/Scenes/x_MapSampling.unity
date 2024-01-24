@@ -188,7 +188,7 @@ MonoBehaviour:
   resourceTransform: {fileID: 260966024}
   grid: 0.25
   samplingInterval: 4
-  drawGrids: 1
+  drawGrids: 0
 --- !u!4 &464495206
 Transform:
   m_ObjectHideFlags: 0
