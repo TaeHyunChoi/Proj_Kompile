@@ -1,6 +1,8 @@
 using System.Collections;
 using UnityEngine;
 using System.Threading.Tasks;
+using static Public;
+using System.Collections.Generic;
 
 public class Main : MonoBehaviour
 {

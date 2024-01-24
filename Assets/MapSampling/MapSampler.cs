@@ -160,31 +160,32 @@ public class MapSampler : MonoBehaviour
         {
             float halfGrid = grid * 0.5f;
             float quaterGrid = grid * 0.25f;
-            #region draw grids
-            Gizmos.color = new Color(0, 1, 0, 0.25f);
-            Gizmos.DrawLine(Vector3.zero, Vector3.right * 100);
-            Gizmos.DrawLine(Vector3.zero, Vector3.forward * 100);
 
-            Vector3 start;
-            for (int i = 0; i < 200; ++i)
-            {
-                Gizmos.DrawLine(Vector3.up * grid * i, Vector3.forward * 100);
-                Gizmos.DrawLine(Vector3.up * grid * i, Vector3.right * 100);
+            //#region draw grids
+            //Gizmos.color = new Color(0, 1, 0, 0.25f);
+            //Gizmos.DrawLine(Vector3.zero, Vector3.right * 100);
+            //Gizmos.DrawLine(Vector3.zero, Vector3.forward * 100);
 
-                for (int j = 0; j < 200; ++j)
-                {
-                    start = new Vector3(i, 0, j) * grid;
+            //Vector3 start;
+            //for (int i = 0; i < 200; ++i)
+            //{
+            //    Gizmos.DrawLine(Vector3.up * grid * i, Vector3.forward * 100);
+            //    Gizmos.DrawLine(Vector3.up * grid * i, Vector3.right * 100);
 
-                    Vector3 left = start + Vector3.forward * halfGrid;
-                    Gizmos.DrawLine(left, left + new Vector3(1,0,1) * halfGrid);
-                    Gizmos.DrawLine(left, left + new Vector3(1, 0, -1) * halfGrid);
+            //    for (int j = 0; j < 200; ++j)
+            //    {
+            //        start = new Vector3(i, 0, j) * grid;
 
-                    Vector3 right = start + new Vector3(grid, 0, halfGrid);
-                    Gizmos.DrawLine(right, right + new Vector3(-1, 0, 1) * halfGrid);
-                    Gizmos.DrawLine(right, right + new Vector3(-1, 0, -1) * halfGrid);
-                }
-            }
-            #endregion
+            //        Vector3 left = start + Vector3.forward * halfGrid;
+            //        Gizmos.DrawLine(left, left + new Vector3(1,0,1) * halfGrid);
+            //        Gizmos.DrawLine(left, left + new Vector3(1, 0, -1) * halfGrid);
+
+            //        Vector3 right = start + new Vector3(grid, 0, halfGrid);
+            //        Gizmos.DrawLine(right, right + new Vector3(-1, 0, 1) * halfGrid);
+            //        Gizmos.DrawLine(right, right + new Vector3(-1, 0, -1) * halfGrid);
+            //    }
+            //}
+            //#endregion
 
             //draw voxel
             foreach (int radix in data.Keys)
@@ -200,7 +201,7 @@ public class MapSampler : MonoBehaviour
 
                 //*
                 Vector3 dir = Vector3.zero;
-                for (int i = 0; i < 8; ++i)
+                for (int i = 0; i < 4; ++i)
                 {
                     switch (i)
                     {
@@ -217,7 +218,6 @@ public class MapSampler : MonoBehaviour
                     int sub_type = (data[radix].SubVoxel & (0b11 << i * 2)) >> i * 2;
                     switch ((VoxelType)sub_type)
                     {
-                        // case VoxelType.None: continue;
                         case VoxelType.Movable:
                             Gizmos.color = Color.green;
                             Gizmos.DrawCube(center + dir, Vector3.one * 0.025f);
@@ -228,10 +228,6 @@ public class MapSampler : MonoBehaviour
                             Gizmos.DrawCube(center + dir, Vector3.one * 0.025f);
                             Gizmos.DrawLine(center, center + dir);
                             break;
-                        //default:
-                        //    Gizmos.color = Color.white;
-                        //    Gizmos.DrawCube(center + dir, Vector3.one * 0.025f);
-                        //    break;
                     }
                 }
                 //*/

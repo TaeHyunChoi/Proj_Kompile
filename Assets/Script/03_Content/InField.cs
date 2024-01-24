@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Unity.VisualScripting;
 using UnityEngine;
 
 internal class InField : ISequenceUpdater
@@ -10,7 +9,7 @@ internal class InField : ISequenceUpdater
     private Transform transform;
 
     private static Dictionary<int, Voxel_t> voxel;
-    private static Unit player;
+    private static UnitPlayer player;
 
 
     public InField(GameObject obj)
@@ -25,7 +24,7 @@ internal class InField : ISequenceUpdater
         try
         {
             GameObject obj = await AssetManager.InstantiateAsync("UnitBase", Main.GameMgr.GetTransform(), true);
-            player = obj.AddComponent<Unit>();
+            player = obj.AddComponent<UnitPlayer>();
             player.transform.position = new Vector3(0.5f, 0, 0.5f);
 
             CameraFollow camFollow = Camera.main.GetComponent<CameraFollow>();
@@ -87,5 +86,5 @@ internal class InField : ISequenceUpdater
         {
             player.Move(voxel, dir);
         }
-    }    
+    }
 }

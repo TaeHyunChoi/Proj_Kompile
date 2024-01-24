@@ -51,26 +51,14 @@ public static class Parser
 
         int shift;
         if (angle >= 0 && angle < 90) { shift = 0; }
-        else if (angle >= 90 && angle < 180) { shift = 1; }
-        else if (angle >= 180 && angle < 270) { shift = 2; }
+
+        else 
+        if (angle >= 90 && angle < 180) { shift = 1; }
+
+        else 
+        if (angle >= 180 && angle < 270) { shift = 2; }
+
         else { shift = 3; }
-
-        //여기서 !Movable이 나오면 호출 함수로 돌아가 이웃 복셀을 검토한다.
-
-        //if (diff.y <= 0)
-        //{
-        //    if (angle >= 0 && angle < 90) { shift = 0; }
-        //    else if (angle >= 90 && angle < 180) { shift = 1; }
-        //    else if (angle >= 180 && angle < 270) { shift = 2; }
-        //    else { shift = 3; }
-        //}
-        //else
-        //{
-        //    if (angle >= 0 && angle < 90) { shift = 4; }
-        //    else if (angle >= 90 && angle < 180) { shift = 5; }
-        //    else if (angle >= 180 && angle < 270) { shift = 6; }
-        //    else { shift = 7; }
-        //}
 
         return data.GetSubType(shift);
     }
