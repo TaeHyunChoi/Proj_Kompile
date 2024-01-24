@@ -1137,7 +1137,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a4f5dced4062b9946a5998f4eb66f188, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 7
+      value: 6.67
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a4f5dced4062b9946a5998f4eb66f188, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1181,7 +1181,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: a4f5dced4062b9946a5998f4eb66f188, type: 3}
       propertyPath: m_TagString
-      value: Movable
+      value: Obstacle
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a4f5dced4062b9946a5998f4eb66f188, type: 3}
