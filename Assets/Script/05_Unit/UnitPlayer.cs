@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static Public;
@@ -6,13 +5,38 @@ using static Public;
 public class UnitPlayer : Unit
 {
     private Vector3 lastDir;
+    private bool lastIsLeft;
 
     public void Move(Dictionary<int, Voxel_t> voxel, Vector3 inputDir)
     {
+        Vector3 next;
+
         int current = GetDirectionIndex(inputDir);
         bool isLeft = CheckIsLeftDir(inputDir);
         int[] targets = GetTargetingIndexes(current, isLeft);
 
+        //1. 최초 입력 체크
+        inputDir.Normalize();
+        next = transform.position + inputDir * (HALF_GRID_SIZE + float.Epsilon);
+        if (IsMovable(voxel, next))
+        {
+            transform.position += inputDir * MOVE_SPEED * Time.deltaTime;
+            lastDir = inputDir;
+            lastIsLeft = inputDir.x < 0;
+            return;
+        }
+
+        //2. 마지막 입력 체크: 이게 튀는 경우가 있구나? 흠...
+        next = transform.position + lastDir * (HALF_GRID_SIZE + float.Epsilon);
+        if (IsMovable(voxel, next))
+        {
+            transform.position += lastDir * MOVE_SPEED * Time.deltaTime;
+            //lastDir = inputDir;
+            //lastIsLeft = inputDir.x < 0;
+            return;
+        }
+
+        //3. 주변 체크
         for (int i = 0; i < targets.Length; ++i)
         {
             switch (targets[i])
@@ -28,23 +52,30 @@ public class UnitPlayer : Unit
             }
 
             inputDir.Normalize();
-            Vector3 next = transform.position + inputDir * (HALF_GRID_SIZE + float.Epsilon);
-            Vector3 center = Parser.GetCenterPoint(next);
-            int radix = Parser.GetVoxelRadix(center);
-
-            if (voxel.ContainsKey(radix)
-                && Parser.GetVoxelType(voxel[radix], next - center) == VoxelType.Movable)
+            next = transform.position + inputDir * (HALF_GRID_SIZE + float.Epsilon);
+            if (IsMovable(voxel, next))
             {
                 transform.position += inputDir * MOVE_SPEED * Time.deltaTime;
-
-                float x = inputDir.x != 0 ? inputDir.x : lastDir.x;
-                float z = inputDir.z != 0 ? inputDir.z : lastDir.z;
-                lastDir = new Vector3(x, 0, z);
-
-                break;
+                lastDir = inputDir;
+                lastIsLeft = inputDir.x < 0;
+                return;
             }
         }
     }
+    private bool IsMovable(Dictionary<int, Voxel_t> voxel, Vector3 next)
+    {
+        Vector3 center = Parser.GetCenterPoint(next);
+        int radix = Parser.GetVoxelRadix(center);
+
+        if (voxel.ContainsKey(radix) 
+            && Parser.GetVoxelType(voxel[radix], next - center) == VoxelType.Movable)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     private int GetDirectionIndex(Vector3 dir)
     {
         // not normalized: x 또는 z 값이 -1, 0, 1 중에 하나로다.
@@ -72,17 +103,17 @@ public class UnitPlayer : Unit
             return inputDir.x < 0;
         }
 
-        return lastDir.x < 0;
+        return lastIsLeft;
     }
     private int[] GetTargetingIndexes(int directionIndex, bool isLeft)
     {
-        int[] result = new int[5] { directionIndex, -1, -1, -1, -1 };
+        int[] result = new int[4] { -1, -1, -1, -1 };
         int interval = GetDirectionInterval(directionIndex, isLeft);
 
-        result[1] = GetDirectionTargetIndex(directionIndex, interval);
-        result[2] = GetDirectionTargetIndex(directionIndex, -interval);
-        result[3] = GetDirectionTargetIndex(directionIndex, interval * 2);
-        result[4] = GetDirectionTargetIndex(directionIndex, -interval * 2);
+        result[0] = GetDirectionTargetIndex(directionIndex, interval);
+        result[1] = GetDirectionTargetIndex(directionIndex, -interval);
+        result[2] = GetDirectionTargetIndex(directionIndex, interval * 2);
+        result[3] = GetDirectionTargetIndex(directionIndex, -interval * 2);
 
         return result;
     }
