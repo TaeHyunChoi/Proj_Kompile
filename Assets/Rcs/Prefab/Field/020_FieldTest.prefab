@@ -485,7 +485,7 @@ GameObject:
   - component: {fileID: 154888195219182075}
   - component: {fileID: 441547404900399948}
   m_Layer: 0
-  m_Name: Sphere
+  m_Name: SphereTrigger
   m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1012,6 +1012,8 @@ GameObject:
   - component: {fileID: 675496474923919571}
   - component: {fileID: 7182180433095392064}
   - component: {fileID: 7206468838393901465}
+  - component: {fileID: 1591396504677799868}
+  - component: {fileID: 2630657786001637912}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Obstacle
@@ -1085,6 +1087,32 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!135 &1591396504677799868
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7264773818063774033}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 1.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2630657786001637912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7264773818063774033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54f7dc6951e6cbe498d9f30b2307887f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  type: 2
 --- !u!1 &7550464012400827532
 GameObject:
   m_ObjectHideFlags: 0

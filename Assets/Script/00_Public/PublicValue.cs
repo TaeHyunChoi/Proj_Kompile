@@ -60,6 +60,7 @@ public static class IDxInput
 
 public delegate void InputDele(int input);
 
+// enum
 public enum Stat
 { 
     HP = 0,
@@ -86,12 +87,18 @@ public enum ContentType
 }
 public enum UIType
 { 
-    None   = -1,
-    Option =  0,
+    None   = 0,
+    Option,
     Title,
     SaveData,
 
     Count,
+}
+public enum InteractType
+{ 
+    None = 0,
+    Door,
+    Talk,
 }
 public enum VoxelType : int
 {
@@ -100,6 +107,9 @@ public enum VoxelType : int
     Obstacle,
 }
 
+
+
+// struct
 [Serializable]
 public struct Voxel_t
 {
