@@ -4,6 +4,8 @@ using static Public;
 
 public class UnitPlayer : Unit
 {
+    //이거 유닛 반지름 필요한 거 같은데?
+
     private Vector3 lastDir;
     private bool lastIsLeft;
 
@@ -17,7 +19,7 @@ public class UnitPlayer : Unit
 
         //1. 최초 입력 체크
         inputDir.Normalize();
-        next = transform.position + inputDir * (HALF_GRID_SIZE + float.Epsilon);
+        next = transform.position + inputDir * (base.radius + float.Epsilon);
         if (IsMovable(voxel, next))
         {
             transform.position += inputDir * MOVE_SPEED * Time.deltaTime;
@@ -26,8 +28,8 @@ public class UnitPlayer : Unit
             return;
         }
 
-        //2. 마지막 입력 체크: 이게 튀는 경우가 있구나? 흠...
-        next = transform.position + lastDir * (HALF_GRID_SIZE + float.Epsilon);
+        //2. 마지막 입력 체크
+        next = transform.position + lastDir * (base.radius + float.Epsilon);
         if (IsMovable(voxel, next))
         {
             transform.position += lastDir * MOVE_SPEED * Time.deltaTime;
@@ -37,27 +39,32 @@ public class UnitPlayer : Unit
         }
 
         //3. 주변 체크
+        Vector3 dir = inputDir;
         for (int i = 0; i < targets.Length; ++i)
         {
             switch (targets[i])
             {
-                case 0: inputDir = new Vector3(0f, 0f, 1f); break; // up
-                case 1: inputDir = new Vector3(1f, 0f, 1f); break; // right up
-                case 2: inputDir = new Vector3(1f, 0f, 0f); break; // right
-                case 3: inputDir = new Vector3(1f, 0f, -1f); break; // right down
-                case 4: inputDir = new Vector3(0f, 0f, -1f); break; // down
-                case 5: inputDir = new Vector3(-1f, 0f, -1f); break; // left down
-                case 6: inputDir = new Vector3(-1f, 0f, 0f); break; // left
-                case 7: inputDir = new Vector3(-1f, 0f, 1f); break; // left up
+                case 0: dir = new Vector3(0f, 0f, 1f); break; // up
+                case 1: dir = new Vector3(1f, 0f, 1f); break; // right up
+                case 2: dir = new Vector3(1f, 0f, 0f); break; // right
+                case 3: dir = new Vector3(1f, 0f, -1f); break; // right down
+                case 4: dir = new Vector3(0f, 0f, -1f); break; // down
+                case 5: dir = new Vector3(-1f, 0f, -1f); break; // left down
+                case 6: dir = new Vector3(-1f, 0f, 0f); break; // left
+                case 7: dir = new Vector3(-1f, 0f, 1f); break; // left up
             }
 
-            inputDir.Normalize();
-            next = transform.position + inputDir * (HALF_GRID_SIZE + float.Epsilon);
+            dir.Normalize();
+            next = transform.position + dir * (base.radius + float.Epsilon);
             if (IsMovable(voxel, next))
             {
-                transform.position += inputDir * MOVE_SPEED * Time.deltaTime;
-                lastDir = inputDir;
-                lastIsLeft = inputDir.x < 0;
+                transform.position += dir * MOVE_SPEED * Time.deltaTime;
+                lastDir = dir;
+
+                if (inputDir.x != 0)
+                {
+                    lastIsLeft = inputDir.x < 0;
+                }
                 return;
             }
         }
