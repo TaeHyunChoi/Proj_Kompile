@@ -9,7 +9,8 @@ public class UnitPlayer : Unit
 
     public void Move(Dictionary<int, Voxel_t> voxel, Vector3 inputDir)
     {
-        Vector3 next;
+        //Vector3 next;
+        Vector3 position = transform.position;
 
         int current = GetDirectionIndex(inputDir);
         bool isLeft = CheckIsLeftDir(inputDir);
@@ -17,8 +18,8 @@ public class UnitPlayer : Unit
 
         //1. 최초 입력 체크
         inputDir.Normalize();
-        next = transform.position + inputDir * (base.radius + float.Epsilon);
-        if (IsMovable(voxel, next))
+        //next = transform.position + inputDir * (base.radius + float.Epsilon);
+        if (IsMovable(voxel, position, inputDir * (base.radius + float.Epsilon)))
         {
             transform.position += inputDir * MOVE_SPEED * Time.deltaTime;
             lastDir = inputDir;
@@ -26,9 +27,12 @@ public class UnitPlayer : Unit
             return;
         }
 
+        //y를 어찌 처리?
+
+
         //2. 마지막 입력 체크
-        next = transform.position + lastDir * (base.radius + float.Epsilon);
-        if (IsMovable(voxel, next))
+        //next = transform.position + lastDir * (base.radius + float.Epsilon);
+        if (IsMovable(voxel, position, lastDir * (base.radius + float.Epsilon)))
         {
             transform.position += lastDir * MOVE_SPEED * Time.deltaTime;
             //lastDir = inputDir;
@@ -53,8 +57,8 @@ public class UnitPlayer : Unit
             }
 
             dir.Normalize();
-            next = transform.position + dir * (base.radius + float.Epsilon);
-            if (IsMovable(voxel, next))
+            //next = transform.position + dir * (base.radius + float.Epsilon);
+            if (IsMovable(voxel, position, dir * (base.radius + float.Epsilon)))
             {
                 transform.position += dir * MOVE_SPEED * Time.deltaTime;
                 lastDir = dir;
@@ -67,8 +71,9 @@ public class UnitPlayer : Unit
             }
         }
     }
-    private bool IsMovable(Dictionary<int, Voxel_t> voxel, Vector3 next)
+    private bool IsMovable(Dictionary<int, Voxel_t> voxel,Vector3 pos, Vector3 delta)
     {
+        Vector3 next = pos + delta;
         Vector3 center = Parser.GetCenterPoint(next);
         int radix = Parser.GetVoxelRadix(center);
 

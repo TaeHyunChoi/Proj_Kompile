@@ -15,6 +15,7 @@ public class MapSampler : MonoBehaviour
     [Header("Grids")]
     [SerializeField] private bool drawGrids;
     private bool canDraw;
+    [SerializeField] private float[] alpha;
 
     private static MapSampler instance;
     public static Dictionary<int, Voxel_t> Data { get => instance.data; }
@@ -185,7 +186,6 @@ public class MapSampler : MonoBehaviour
         {
             float halfGrid = grid * 0.5f;
             float quaterGrid = grid * 0.25f;
-            float octoGrid = grid * 0.125f;
 
             //draw voxel
             foreach (int radix in data.Keys)
@@ -197,23 +197,14 @@ public class MapSampler : MonoBehaviour
                 Vector3 center = new Vector3(x, y, z) * halfGrid;
 
                 Gizmos.color = Color.black;
-                Gizmos.DrawCube(center, Vector3.one * 0.025f);
-                Vector3 lower = center + Vector3.down * halfGrid;
-                Gizmos.DrawLine(lower + Vector3.right * halfGrid, lower + Vector3.forward * halfGrid);
-                Gizmos.DrawLine(lower + Vector3.forward * halfGrid, lower + Vector3.left * halfGrid);
-                Gizmos.DrawLine(lower + Vector3.left * halfGrid, lower + Vector3.back * halfGrid);
-                Gizmos.DrawLine(lower + Vector3.back * halfGrid, lower + Vector3.right * halfGrid);
-
-                Vector3 upper = center + Vector3.up * halfGrid;
-                Gizmos.DrawLine(upper + Vector3.right * halfGrid, upper + Vector3.forward * halfGrid);
-                Gizmos.DrawLine(upper + Vector3.forward * halfGrid, upper + Vector3.left * halfGrid);
-                Gizmos.DrawLine(upper + Vector3.left * halfGrid, upper + Vector3.back * halfGrid);
-                Gizmos.DrawLine(upper + Vector3.back * halfGrid, upper + Vector3.right * halfGrid);
-
+                //Gizmos.DrawCube(center, Vector3.one * 0.025f);
+                //Gizmos.DrawLine(center, center + Vector3.up   * halfGrid);
+                //Gizmos.DrawLine(center, center + Vector3.down * halfGrid);
 
                 Vector3 dir = Vector3.zero;
                 float offset = Mathf.Sqrt(2) * 0.5f * halfGrid;
 
+                bool lowerIsDrawed = false, upperIsDrawed = false;
                 for (int i = 0; i < 8; ++i)
                 {
                     switch (i)
@@ -231,9 +222,28 @@ public class MapSampler : MonoBehaviour
                     int sub_type = (data[radix].SubVoxel & (0b11 << i * 2)) >> i * 2;
                     switch ((VoxelType)sub_type)
                     {
-                        case VoxelType.Movable:  Gizmos.color = new Color(0, 1, 0, 0.5f); break;
-                        case VoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, 0.5f); break;
+                        case VoxelType.Movable:  Gizmos.color = new Color(0, 1, 0, alpha[0]); break;
+                        case VoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, alpha[1]); break;
                         default: continue;
+                    }
+
+                    if (!lowerIsDrawed && i < 4)
+                    {
+                        Vector3 lower = center + Vector3.down * halfGrid;
+                        Gizmos.DrawLine(lower + Vector3.right * halfGrid, lower + Vector3.forward * halfGrid);
+                        Gizmos.DrawLine(lower + Vector3.forward * halfGrid, lower + Vector3.left * halfGrid);
+                        Gizmos.DrawLine(lower + Vector3.left * halfGrid, lower + Vector3.back * halfGrid);
+                        Gizmos.DrawLine(lower + Vector3.back * halfGrid, lower + Vector3.right * halfGrid);
+                        lowerIsDrawed = true;
+                    }
+                    else if(!upperIsDrawed)
+                    {
+                        Vector3 upper = center + Vector3.up * halfGrid;
+                        Gizmos.DrawLine(upper + Vector3.right * halfGrid, upper + Vector3.forward * halfGrid);
+                        Gizmos.DrawLine(upper + Vector3.forward * halfGrid, upper + Vector3.left * halfGrid);
+                        Gizmos.DrawLine(upper + Vector3.left * halfGrid, upper + Vector3.back * halfGrid);
+                        Gizmos.DrawLine(upper + Vector3.back * halfGrid, upper + Vector3.right * halfGrid);
+                        upperIsDrawed = true;
                     }
 
                     Matrix4x4 rotationMatrix = Matrix4x4.TRS(center + dir, Quaternion.Euler(0, 45, 0), new Vector3(offset, halfGrid, offset));
