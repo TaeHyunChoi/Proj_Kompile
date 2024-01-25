@@ -4,8 +4,6 @@ using static Public;
 
 public class UnitPlayer : Unit
 {
-    //이거 유닛 반지름 필요한 거 같은데?
-
     private Vector3 lastDir;
     private bool lastIsLeft;
 

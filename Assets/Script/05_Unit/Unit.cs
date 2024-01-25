@@ -2,5 +2,5 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
-    protected float radius = 0.3f;
+    protected float radius = Public.GRID_SIZE + 0.5f;
 }
