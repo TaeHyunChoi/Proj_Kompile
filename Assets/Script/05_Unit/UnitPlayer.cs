@@ -12,14 +12,14 @@ public class UnitPlayer : Unit
         //Vector3 next;
         Vector3 position = transform.position;
 
-        int current = GetDirectionIndex(inputDir);
-        bool isLeft = CheckIsLeftDir(inputDir);
+        int   current = GetDirectionIndex(inputDir);
+        bool  isLeft  = CheckIsLeftDir(inputDir);
         int[] targets = GetTargetingIndexes(current, isLeft);
 
         //1. 최초 입력 체크
         inputDir.Normalize();
         //next = transform.position + inputDir * (base.radius + float.Epsilon);
-        if (IsMovable(voxel, position, inputDir * (base.radius + float.Epsilon)))
+        if (IsMovable(voxel, position, inputDir))
         {
             transform.position += inputDir * MOVE_SPEED * Time.deltaTime;
             lastDir = inputDir;
@@ -32,7 +32,7 @@ public class UnitPlayer : Unit
 
         //2. 마지막 입력 체크
         //next = transform.position + lastDir * (base.radius + float.Epsilon);
-        if (IsMovable(voxel, position, lastDir * (base.radius + float.Epsilon)))
+        if (IsMovable(voxel, position, lastDir))
         {
             transform.position += lastDir * MOVE_SPEED * Time.deltaTime;
             //lastDir = inputDir;
@@ -78,7 +78,7 @@ public class UnitPlayer : Unit
         int radix = Parser.GetVoxelRadix(center);
 
         if (voxel.ContainsKey(radix) 
-            && Parser.GetVoxelType(voxel[radix], next - center) == VoxelType.Movable)
+            && Parser.GetVoxelType(voxel[radix], next - center) == VoxelType.Plain)
         {
             return true;
         }

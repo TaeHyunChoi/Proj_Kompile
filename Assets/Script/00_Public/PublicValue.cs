@@ -103,13 +103,26 @@ public enum InteractType
 public enum VoxelType : int
 {
     None = 0,
-    Movable,
+    Plain,
     Obstacle,
+    Slope,
 }
 
 
 
 // struct
+[Serializable]
+public struct Voxel_t2
+{
+    private int data;    //voxel state, slope angle, .... 등을 비트 패킹으로?
+    public int Data { get => data; }
+    public VoxelState State { get => (VoxelState)data; }
+
+    public Voxel_t2(int data)
+    {
+        this.data = data;
+    }
+}
 [Serializable]
 public struct Voxel_t
 {
@@ -118,7 +131,7 @@ public struct Voxel_t
         this.sub = sub;
     }
     private int sub;
-    public int SubVoxel  { get => sub; }
+    public int SubVoxel { get => sub; }
     public VoxelType GetSubType(int quadrant)
     {
         int typed = sub & (0b11 << quadrant * 2);

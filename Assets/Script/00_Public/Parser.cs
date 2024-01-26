@@ -52,10 +52,10 @@ public static class Parser
         int shift;
         if (angle >= 0 && angle < 90) { shift = 0; }
 
-        else 
+        else
         if (angle >= 90 && angle < 180) { shift = 1; }
 
-        else 
+        else
         if (angle >= 180 && angle < 270) { shift = 2; }
 
         else { shift = 3; }

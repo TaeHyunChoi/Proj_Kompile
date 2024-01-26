@@ -64,7 +64,7 @@ public class MapSampler : MonoBehaviour
 
     private void SamplingVoxels()
     {
-        float weight = grid * (1 / samplingInterval);
+        float weight = grid / samplingInterval;
         VoxelType type;
         Vector3 epsilon = Vector3.one * 0.00001f;
         Vector3 A, B, C;
@@ -77,12 +77,19 @@ public class MapSampler : MonoBehaviour
             Vector3[] normals = mesh.normals;
             int[] triangles = mesh.triangles;
 
-            if (targetTransform.CompareTag("Movable"))       { type = VoxelType.Movable; }
-            else if (targetTransform.CompareTag("Obstacle")) { type = VoxelType.Obstacle; }
-            else { type = VoxelType.None; }
+            //법선으로 처리하면 tag가 많을 필요 없다.
+            //if (targetTransform.CompareTag("Movable"))       { type = VoxelType.Plain; }
+            //else if (targetTransform.CompareTag("Obstacle")) { type = VoxelType.Obstacle; }
+            //else { type = VoxelType.None; }
 
             for (int t = 0; t < triangles.Length;)
             {
+                // get status
+                Vector3 normal1 = normals[triangles[t]];
+                Vector3 normal2 = normals[triangles[t + 1]];
+                Vector3 normal3 = normals[triangles[t + 2]];
+                type = GetVoxelState(normal1, normal2, normal3);
+
                 A = targetTransform.TransformPoint(vertices[triangles[t++]]) + epsilon;
                 B = targetTransform.TransformPoint(vertices[triangles[t++]]) + epsilon;
                 C = targetTransform.TransformPoint(vertices[triangles[t++]]) + epsilon;
@@ -97,7 +104,7 @@ public class MapSampler : MonoBehaviour
                     Vector3 toAC = Vector3.Lerp(A, C, ratio);
 
                     float distABtoAC = Vector3.Distance(fromAB, toAC);
-                    int samplingCountABtoAC = (int)(distABtoAC / (grid * multiple));
+                    int samplingCountABtoAC = (int)(distABtoAC / (grid * multiple)); //얘 계산 왜 이러냐... 그냥 multiple만 써도 되는거 아닌가?
 
                     for (int j = 0; j < samplingCountABtoAC; ++j)
                     {
@@ -137,29 +144,6 @@ public class MapSampler : MonoBehaviour
                         int sub = data[radix].SubVoxel;
                         int mask = 0b11 << shift;
 
-                        //와.. 참조가 많아지니까 '체감될 정도로' 속도가 느려지는구나 ㄷㄷ;
-                        if(type == VoxelType.Obstacle)
-                        {
-                            Vector3 l1 = normals[triangles[t - 3]];
-                            Vector3 l2 = normals[triangles[t - 2]];
-                            Vector3 l3 = normals[triangles[t - 1]];
-
-                            //맵은 y축 회전 정도만 있을텐데 world 좌표 변환이 필요 없다.
-                            // Vector3 w1 = transform.TransformDirection(l1);
-                            // Vector3 w2 = transform.TransformDirection(l2);
-                            // Vector3 w3 = transform.TransformDirection(l3);
-
-                            if (l1.y > 0 && l2.y > 0 && l3.y > 0)
-                            // if (w1.y > 0 && w2.y > 0 && w3.y > 0)
-                            {
-                                typeBits = (int)VoxelType.Movable << shift;
-                                sub = data[radix].SubVoxel & ~mask;
-                                sub |= typeBits;
-                                data[radix] = new Voxel_t(sub);
-                                continue;
-                            }
-                        }
-                        
                         if (typeBits > (sub & mask))
                         {
                             sub = data[radix].SubVoxel & ~mask;
@@ -171,10 +155,38 @@ public class MapSampler : MonoBehaviour
             }
         }
 
-        Debug.Log("Sampling Done.");
+        Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
         canDraw = true;
     }
-    
+    private VoxelType GetVoxelState(Vector3 n1, Vector3 n2, Vector3 n3)
+    {
+        VoxelType type = VoxelType.None;
+
+        float a1 = Mathf.Acos(Vector3.Dot(Vector3.up, n1)) * Mathf.Rad2Deg;
+        float a2 = Mathf.Acos(Vector3.Dot(Vector3.up, n1)) * Mathf.Rad2Deg;
+        float a3 = Mathf.Acos(Vector3.Dot(Vector3.up, n1)) * Mathf.Rad2Deg;
+        Debug.Log($"normal angle? {a1}, {a2}, {a3}");
+
+        //이걸로 계산하는게 차라리 좋을 듯?
+
+        if ((0 < n1.y && n1.y < 0.8f)
+            || (0 < n2.y && n2.y < 0.8f)
+            || (0 < n3.y && n3.y < 0.8f))
+        {
+            type = VoxelType.Slope;
+        }
+        if (n1.y < 0 || n2.y < 0 || n3.y < 0)
+        {
+            type = VoxelType.Obstacle;
+        }
+        if (n1.y == 1 && n2.y == 1 & n3.y == 1)
+        {
+            type = VoxelType.Plain;
+        }
+
+        return type;
+    }
+
     private void OnDrawGizmos()
     {
         if (!canDraw)
@@ -222,8 +234,9 @@ public class MapSampler : MonoBehaviour
                     int sub_type = (data[radix].SubVoxel & (0b11 << i * 2)) >> i * 2;
                     switch ((VoxelType)sub_type)
                     {
-                        case VoxelType.Movable:  Gizmos.color = new Color(0, 1, 0, alpha[0]); break;
-                        case VoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, alpha[1]); break;
+                        case VoxelType.Plain:  Gizmos.color = new Color(0, 1, 0, alpha[0]); break;
+                        case VoxelType.Slope: Gizmos.color = new Color(0, 0, 1, alpha[1]); break;
+                        case VoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, alpha[2]); break;
                         default: continue;
                     }
 
