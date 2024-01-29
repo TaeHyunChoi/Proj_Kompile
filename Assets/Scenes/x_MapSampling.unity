@@ -357,7 +357,7 @@ MonoBehaviour:
   grid: 0.25
   samplingInterval: 4
   gizmoMesh: {fileID: 5924159088411371066, guid: a4f5dced4062b9946a5998f4eb66f188, type: 3}
-  drawGrids: 0
+  drawGrids: 1
   alpha:
   - 0.2
   - 0.2

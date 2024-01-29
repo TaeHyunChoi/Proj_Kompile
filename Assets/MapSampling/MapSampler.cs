@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEditor;
 using UnityEngine;
 
@@ -148,6 +149,40 @@ public class MapSampler : MonoBehaviour
                             sub |= typeBits;
                             data[radix] = new Voxel_t(sub);
                         }
+
+                        if(type == VoxelType.Obstacle)
+                        {
+                            Vector3 blockPoint;
+
+                            // normal1 = targetTransform.TransformDirection(normal1) * grid * 0.5f;
+                            blockPoint = samplingPoint + normal1;
+                            Debug.Log($"[1] {blockPoint} = {samplingPoint} + {normal1}");
+
+                            // normal2 = targetTransform.TransformDirection(normal2) * grid * 0.5f;
+                            blockPoint = samplingPoint + normal2;
+                            Debug.Log($"[2] {blockPoint} = {samplingPoint} + {normal2}");
+
+                            // normal3 = targetTransform.TransformDirection(normal3) * grid * 0.5f;
+                            blockPoint = samplingPoint + normal3;
+                            Debug.Log($"[3] {blockPoint} = {samplingPoint} + {normal3}");
+
+                            // radix = Parser.GetVoxelRadix(samplingPoint);
+
+                            // if (!data.ContainsKey(radix))
+                            // {
+                            //     data.Add(radix, new Voxel_t((int)type << shift));
+                            // }
+                            // typeBits = (int)type << shift;
+                            // sub = data[radix].SubVoxel;
+                            // mask = 0b11 << shift;
+
+                            // if (typeBits > (sub & mask))
+                            // {
+                            //     sub = data[radix].SubVoxel & ~mask;
+                            //     sub |= typeBits;
+                            //     data[radix] = new Voxel_t(sub);
+                            // }
+                        }
                     }
                 }
             }
@@ -158,8 +193,8 @@ public class MapSampler : MonoBehaviour
     }
     private VoxelType GetVoxelType(float n1, float n2, float n3)
     {
-        bool plain = (n1 == 1 && n2 == 1 && n3 == 1);
-        bool obstacle = (n1 <= float.Epsilon || n2 <= float.Epsilon || n3 <= float.Epsilon);
+        bool plain = n1 == 1 && n2 == 1 && n3 == 1;
+        bool obstacle = n1 <= float.Epsilon || n2 <= float.Epsilon || n3 <= float.Epsilon;
         bool slope = Mathf.Approximately(Mathf.Acos(n1) * Mathf.Rad2Deg, 45);
 
         VoxelType type = VoxelType.None;
