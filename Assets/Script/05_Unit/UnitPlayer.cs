@@ -4,12 +4,12 @@ using static Public;
 
 public class UnitPlayer : Unit
 {
-    private Vector3 lastDir;
+    private Vector3 lastDelta;
     private bool lastIsLeft;
 
     public void Move(Dictionary<int, Voxel_t> voxel, Vector3 inputDir)
     {
-        //Vector3 next;
+        Vector3 delta;
         Vector3 position = transform.position;
 
         int   current = GetDirectionIndex(inputDir);
@@ -18,50 +18,46 @@ public class UnitPlayer : Unit
 
         //1. 최초 입력 체크
         inputDir.Normalize();
-        //next = transform.position + inputDir * (base.radius + float.Epsilon);
-        if (IsMovable(voxel, position, inputDir))
+        delta = inputDir * MOVE_SPEED * Time.deltaTime;
+        if (IsMovable(voxel, position, delta))
         {
-            transform.position += inputDir * MOVE_SPEED * Time.deltaTime;
-            lastDir = inputDir;
+            transform.position += delta;
+            lastDelta = delta;
             lastIsLeft = inputDir.x < 0;
             return;
         }
 
-        //y를 어찌 처리?
-
-
         //2. 마지막 입력 체크
-        //next = transform.position + lastDir * (base.radius + float.Epsilon);
-        if (IsMovable(voxel, position, lastDir))
+        delta = lastDelta;
+        if (IsMovable(voxel, position, delta))
         {
-            transform.position += lastDir * MOVE_SPEED * Time.deltaTime;
+            transform.position += delta;
             //lastDir = inputDir;
             //lastIsLeft = inputDir.x < 0;
             return;
         }
 
         //3. 주변 체크
-        Vector3 dir = inputDir;
+        delta = inputDir;
         for (int i = 0; i < targets.Length; ++i)
         {
             switch (targets[i])
             {
-                case 0: dir = new Vector3(0f, 0f, 1f); break; // up
-                case 1: dir = new Vector3(1f, 0f, 1f); break; // right up
-                case 2: dir = new Vector3(1f, 0f, 0f); break; // right
-                case 3: dir = new Vector3(1f, 0f, -1f); break; // right down
-                case 4: dir = new Vector3(0f, 0f, -1f); break; // down
-                case 5: dir = new Vector3(-1f, 0f, -1f); break; // left down
-                case 6: dir = new Vector3(-1f, 0f, 0f); break; // left
-                case 7: dir = new Vector3(-1f, 0f, 1f); break; // left up
+                case 0: delta = new Vector3(0f, 0f, 1f); break; // up
+                case 1: delta = new Vector3(1f, 0f, 1f); break; // right up
+                case 2: delta = new Vector3(1f, 0f, 0f); break; // right
+                case 3: delta = new Vector3(1f, 0f, -1f); break; // right down
+                case 4: delta = new Vector3(0f, 0f, -1f); break; // down
+                case 5: delta = new Vector3(-1f, 0f, -1f); break; // left down
+                case 6: delta = new Vector3(-1f, 0f, 0f); break; // left
+                case 7: delta = new Vector3(-1f, 0f, 1f); break; // left up
             }
 
-            dir.Normalize();
-            //next = transform.position + dir * (base.radius + float.Epsilon);
-            if (IsMovable(voxel, position, dir * (base.radius + float.Epsilon)))
+            delta *= MOVE_SPEED * Time.deltaTime;
+            if (IsMovable(voxel, position, delta))
             {
-                transform.position += dir * MOVE_SPEED * Time.deltaTime;
-                lastDir = dir;
+                transform.position += delta;
+                lastDelta = delta;
 
                 if (inputDir.x != 0)
                 {

@@ -190,8 +190,8 @@ public class MapSampler : MonoBehaviour
                 float z = radix & 0xFF;
 
                 Vector3 center = new Vector3(x, y, z) * halfGrid;
-                Gizmos.color = Color.black;
-                Gizmos.DrawCube(center, Vector3.one * 0.025f);
+                //Gizmos.color = Color.black;
+                //Gizmos.DrawCube(center, Vector3.one * 0.025f);
 
                 bool IsContoured = false;
                 for (int i = 0; i < 8; ++i)
@@ -232,7 +232,8 @@ public class MapSampler : MonoBehaviour
                     Gizmos.DrawMesh(gizmoMesh, Vector3.zero, Quaternion.identity);
                     Gizmos.matrix = Matrix4x4.identity;
 
-                    Gizmos.color = Color.yellow;
+                    Gizmos.color = new Color(1f, 0.922f, 0.016f, 0.10f);
+
                     if (!IsContoured)
                     {
                         Gizmos.DrawLine(center + Vector3.right * halfGrid, center + Vector3.back * halfGrid);
