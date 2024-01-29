@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using static Public;
 
@@ -8,7 +6,7 @@ public static class Parser
     public static Vector3 GetCenterPoint(Vector3 point)
     {
         float cx = Mathf.Floor(point.x * HALF_GRID_SIZE_INVERT) * HALF_GRID_SIZE;
-        float cy = Mathf.Floor(point.y * GRID_SIZE_INVERT) * 2f * HALF_GRID_SIZE + 1 * HALF_GRID_SIZE;
+        float cy = Mathf.Floor(point.y * GRID_SIZE_INVERT) * 2f * HALF_GRID_SIZE + (1 * HALF_GRID_SIZE);
         float cz = Mathf.Floor(point.z * HALF_GRID_SIZE_INVERT) * HALF_GRID_SIZE;
 
         Vector3 center;
