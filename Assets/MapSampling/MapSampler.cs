@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEditor;
 using UnityEngine;
 
@@ -161,7 +162,6 @@ public class MapSampler : MonoBehaviour
                     for (int j = 0; j < samplingCountABtoAC; ++j) 
                     {
                         Vector3 samplingPoint = Vector3.Lerp(AB, AC, (float)j / samplingCountABtoAC);
-
                         SetVoxel(samplingPoint, type);
                         SetVoxel(samplingPoint + normal1 * offset, type);
                         SetVoxel(samplingPoint + normal2 * offset, type);
@@ -186,7 +186,7 @@ public class MapSampler : MonoBehaviour
         bool slope = Mathf.Approximately(Mathf.Acos(n1) * Mathf.Rad2Deg, 45)
                     || Mathf.Approximately(Mathf.Acos(n2) * Mathf.Rad2Deg, 45)
                     || Mathf.Approximately(Mathf.Acos(n3) * Mathf.Rad2Deg, 45);
-
+                    
         VoxelType type = VoxelType.None;
         if (plain)    { type = VoxelType.Plain; }
         if (obstacle) { type = VoxelType.Obstacle; }
