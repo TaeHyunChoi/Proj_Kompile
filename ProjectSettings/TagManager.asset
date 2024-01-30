@@ -4,10 +4,9 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Movable
-  - Obstacle
   - Field
-  - MapObject
+  - Slope
+  - Obstacle
   layers:
   - Default
   - TransparentFX

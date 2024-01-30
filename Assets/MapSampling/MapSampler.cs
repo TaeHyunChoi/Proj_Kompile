@@ -65,10 +65,9 @@ public class MapSampler : MonoBehaviour
 
     private void SamplingVoxels()
     {
-        float weight = grid / samplingInterval;
         VoxelType type;
-        Vector3 epsilon = Vector3.one * 0.00001f;
         Vector3 A, B, C;
+        Vector3 elipson = Vector3.one * -0.0001f;
 
         for (int f = 0; f < filter.Length; ++f)
         {
@@ -77,90 +76,116 @@ public class MapSampler : MonoBehaviour
             Vector3[] vertices = mesh.vertices;
             Vector3[] normals = mesh.normals;
             int[] triangles = mesh.triangles;
+            float offset;
 
             for (int t = 0; t < triangles.Length; t += 3)
             {
                 // get status
                 Quaternion rot = targetTransform.rotation;
                 Vector3 normal1 = rot * normals[triangles[t]];
+                        normal1.Normalize();
                 Vector3 normal2 = rot * normals[triangles[t + 1]];
+                        normal2.Normalize();
                 Vector3 normal3 = rot * normals[triangles[t + 2]];
+                        normal3.Normalize();
                 type = GetVoxelType(normal1.y, normal2.y, normal3.y);
 
-                A = targetTransform.TransformPoint(vertices[triangles[t]]) + epsilon;
-                B = targetTransform.TransformPoint(vertices[triangles[t + 1]]) + epsilon;
-                C = targetTransform.TransformPoint(vertices[triangles[t + 2]]) + epsilon;
+                A = targetTransform.TransformPoint(vertices[triangles[t]]);
+                B = targetTransform.TransformPoint(vertices[triangles[t + 1]]);
+                C = targetTransform.TransformPoint(vertices[triangles[t + 2]]);
+
+                //범위 산정을 이유로 sampling 범위에서 벗어남 => 추가로 처리
+                //그냥 vertex의 01234를 모두 obstacle로 만들면 되는거 아녀...?
+                //맨 아랫층만 건드린다.. 이런걸로 가야 하나...
+                if (type == VoxelType.Obstacle
+                    && !targetTransform.gameObject.CompareTag("Slope"))
+                {
+                    int ra = Parser.GetVoxelRadix(Parser.GetCenterPoint(A));
+                    int rb = Parser.GetVoxelRadix(Parser.GetCenterPoint(B));
+                    int rc = Parser.GetVoxelRadix(Parser.GetCenterPoint(C));
+
+                    if (!data.ContainsKey(ra)) { data.Add(ra, new Voxel_t(0x0000)); }
+                    if (!data.ContainsKey(rb)) { data.Add(rb, new Voxel_t(0x0000)); }
+                    if (!data.ContainsKey(rc)) { data.Add(rc, new Voxel_t(0x0000)); }
+
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        int typeBits = (int)type << (i * 2);
+
+                        if (type > data[ra].GetSubType(i))
+                        {
+                            int sub = data[ra].SubVoxel;
+                            int mask = 0b11 << (i * 2);
+
+                            sub &= ~mask;
+                            sub |= typeBits;
+                            data[ra] = new Voxel_t(sub);
+                        }
+
+                        if (type > data[rb].GetSubType(i))
+                        {
+                            int sub = data[rb].SubVoxel;
+                            int mask = 0b11 << (i * 2);
+
+                            sub &= ~mask;
+                            sub |= typeBits;
+                            data[rb] = new Voxel_t(sub);
+                        }
+
+                        if (type > data[rc].GetSubType(i))
+                        {
+                            int sub = data[rc].SubVoxel;
+                            int mask = 0b11 << (i * 2);
+
+                            sub &= ~mask;
+                            sub |= typeBits;
+                            data[rc] = new Voxel_t(sub);
+                        }
+                    }
+                }
 
                 float distAB = Vector3.Distance(A, B);
-                float multiple = (distAB < grid) ? weight * 0.25f : weight;
-                int samplingCountAB = (int)(distAB / (grid * multiple));
+                float interval = (grid > distAB) ? samplingInterval * 4f : samplingInterval;
+                int samplingCountAB = (int)(distAB / grid * interval);
+                offset = grid * 0.25f;
 
                 for (int i = 0; i < samplingCountAB; ++i)
                 {
-                    float   ratio  = (float)i / samplingCountAB;
-                    Vector3 fromAB = Vector3.Lerp(A, B, ratio);
-                    Vector3 toAC   = Vector3.Lerp(A, C, ratio);
+                    float ratio = (float)i / samplingCountAB;
+                    Vector3 AB = Vector3.Lerp(A, B, ratio);
+                    Vector3 AC = Vector3.Lerp(A, C, ratio);
 
-                    float distABtoAC = Vector3.Distance(fromAB, toAC);
-                    int samplingCountABtoAC = (int)(distABtoAC / (grid * multiple)); //얘 계산 왜 이러냐... 그냥 multiple만 써도 되는거 아닌가?
+                    float distABtoAC = Vector3.Distance(AB, AC);
+                    int samplingCountABtoAC = (int)(distABtoAC / grid * interval);
 
-                    for (int j = 1; j < samplingCountABtoAC - 1; ++j) //변 위의 점은 포함x
+                    for (int j = 0; j < samplingCountABtoAC; ++j) 
                     {
-                        Vector3 samplingPoint = Vector3.Lerp(fromAB, toAC, (float)j / samplingCountABtoAC);
+                        Vector3 samplingPoint = Vector3.Lerp(AB, AC, (float)j / samplingCountABtoAC);
 
-                        //// Get Center Point -> Change to Radix
-                        Vector3 center = Parser.GetCenterPoint(samplingPoint);
-                        int radix = Parser.GetVoxelRadix(center);
-
-                        if (!data.ContainsKey(radix))
-                        {
-                            data.Add(radix, new Voxel_t(0x0000));
-                        }
-
-                        Vector3 diff = samplingPoint - center;
-                        float angle = Mathf.Atan2(diff.z, diff.x) * Mathf.Rad2Deg;
-                        angle = (angle + 360) % 360;
-
-                        int shift;
-                        if (diff.y <= 0)
-                        {
-                            if      (angle >= 0 && angle < 90)       { shift = 0; }
-                            else if (angle >=  90 && angle < 180)    { shift = 1; }
-                            else if (angle >= 180 && angle < 270)    { shift = 2; }
-                            else                                     { shift = 3; }
-                        }
-                        else
-                        {
-                            if      (angle >= 0 && angle < 90)       { shift = 4; }
-                            else if (angle >=  90 && angle < 180)    { shift = 5; }
-                            else if (angle >= 180 && angle < 270)    { shift = 6; }
-                            else                                     { shift = 7; }
-                        }
-                        shift *= 2;
-
-                        int typeBits = (int)type << shift;
-                        int sub = data[radix].SubVoxel;
-                        int mask = 0b11 << shift;
-
-                        if (typeBits > (sub & mask))
-                        {
-                            sub = data[radix].SubVoxel & ~mask;
-                            sub |= typeBits;
-                            data[radix] = new Voxel_t(sub);
-                        }
+                        SetVoxel(samplingPoint, type);
+                        SetVoxel(samplingPoint + normal1 * offset, type);
+                        SetVoxel(samplingPoint + normal2 * offset, type);
+                        SetVoxel(samplingPoint + normal3 * offset, type);
                     }
                 }
             }
         }
 
+        resourceTransform.gameObject.SetActive(false);
         Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
         canDraw = true;
     }
     private VoxelType GetVoxelType(float n1, float n2, float n3)
     {
         bool plain = (n1 == 1 && n2 == 1 && n3 == 1);
-        bool obstacle = (n1 <= float.Epsilon || n2 <= float.Epsilon || n3 <= float.Epsilon);
-        bool slope = Mathf.Approximately(Mathf.Acos(n1) * Mathf.Rad2Deg, 45);
+
+        bool obstacle = n1 <= float.Epsilon
+                        || n2 <= float.Epsilon
+                        || n3 <= float.Epsilon;
+
+        bool slope = Mathf.Approximately(Mathf.Acos(n1) * Mathf.Rad2Deg, 45)
+                    || Mathf.Approximately(Mathf.Acos(n2) * Mathf.Rad2Deg, 45)
+                    || Mathf.Approximately(Mathf.Acos(n3) * Mathf.Rad2Deg, 45);
 
         VoxelType type = VoxelType.None;
         if (plain)    { type = VoxelType.Plain; }
@@ -168,6 +193,54 @@ public class MapSampler : MonoBehaviour
         if (slope)    { type = VoxelType.Slope; }
 
         return type;
+    }
+    private int GetBitShift(Vector3 diff)
+    {
+        int shift;
+
+        float angle = Mathf.Atan2(diff.z, diff.x) * Mathf.Rad2Deg;
+        angle = (angle + 360) % 360;
+
+        if (diff.y <= 0)
+        {
+            if      (angle >= 0 && angle < 90)    { shift = 0; }
+            else if (angle >= 90 && angle < 180)  { shift = 1; }
+            else if (angle >= 180 && angle < 270) { shift = 2; }
+            else                                  { shift = 3; }
+        }
+        else
+        {
+            if      (angle >= 0 && angle < 90)    { shift = 4; }
+            else if (angle >= 90 && angle < 180)  { shift = 5; }
+            else if (angle >= 180 && angle < 270) { shift = 6; }
+            else                                  { shift = 7; }
+        }
+
+        return shift;
+    }
+    private void SetVoxel(Vector3 point, VoxelType type)
+    {
+        Vector3 center = Parser.GetCenterPoint(point);
+        int radix = Parser.GetVoxelRadix(center);
+
+        Vector3 diff = point - center;
+        int quarant = GetBitShift(diff);
+        int typeBits = (int)type << (quarant * 2);
+
+        if (!data.ContainsKey(radix))
+        {
+            data.Add(radix, new Voxel_t(typeBits));
+        }
+
+        if (type > data[radix].GetSubType(quarant))
+        {
+            int sub = data[radix].SubVoxel;
+            int mask = 0b11 << (quarant * 2);
+
+            sub &= ~mask;
+            sub |= typeBits;
+            data[radix] = new Voxel_t(sub);
+        }
     }
 
     private void OnDrawGizmos()
@@ -190,11 +263,12 @@ public class MapSampler : MonoBehaviour
                 float z = radix & 0xFF;
 
                 Vector3 center = new Vector3(x, y, z) * halfGrid;
-                //Gizmos.color = Color.black;
-                //Gizmos.DrawCube(center, Vector3.one * 0.025f);
+
+                if (center.y < grid * 1.25f)
+                    continue;
 
                 bool IsContoured = false;
-                for (int i = 0; i < 8; ++i)
+                for (int i = 0; i < 4; ++i)
                 {
                     int sub_type = (data[radix].SubVoxel & (0b11 << i * 2)) >> i * 2;
                     switch ((VoxelType)sub_type)
@@ -226,6 +300,7 @@ public class MapSampler : MonoBehaviour
                         case 7:
                             c += new Vector3(1, 0, -1) * quaterGrid;
                             break;
+                        default: continue;
                     }
 
                     Gizmos.matrix = Matrix4x4.TRS(c, rot, new Vector3(quaterGrid, quaterGrid, quaterGrid));

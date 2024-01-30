@@ -32,7 +32,11 @@ public static class Parser
             center = p2;
         }
 
-        return center;
+        cx = (center.x < 0f) ? 0f : center.x;
+        cy = (center.y < 0f) ? HALF_GRID_SIZE : center.y;
+        cz = (center.z < 0f) ? 0f : center.z;
+
+        return new Vector3(cx, cy, cz);
     }
     public static int GetVoxelRadix(Vector3 center)
     {
