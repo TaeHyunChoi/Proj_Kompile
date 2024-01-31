@@ -78,6 +78,12 @@ public class MapSampler2nd : MonoBehaviour
             int[] triangles = mesh.triangles;
             Quaternion rot = targetTransform.rotation;
 
+            //VoxelType objType;
+            //if (targetTransform.CompareTag("Obstacle"))   { objType = VoxelType.Obstacle; }
+            //else if (targetTransform.CompareTag("Slope")) { objType = VoxelType.Slope; }
+            //else if (targetTransform.CompareTag("Plain")) { objType = VoxelType.Plain; }
+            //else { objType = VoxelType.None; }
+
             for (int t = 0; t < triangles.Length; t += 3)
             {
                 Vector3 normal1 = rot * normals[triangles[t]];
@@ -86,17 +92,18 @@ public class MapSampler2nd : MonoBehaviour
                 normal2.Normalize();
                 Vector3 normal3 = rot * normals[triangles[t + 2]];
                 normal3.Normalize();
-                type = GetVoxelType(normal1.y, normal2.y, normal3.y);
+                type = GetType(normal1.y, normal2.y, normal3.y);
+
+                if (type == VoxelType.None)
+                    continue;
 
                 A = targetTransform.TransformPoint(vertices[triangles[t]]);
                 B = targetTransform.TransformPoint(vertices[triangles[t + 1]]);
                 C = targetTransform.TransformPoint(vertices[triangles[t + 2]]);
 
-                Debug.Log($"{normal1:F2}, {normal2:F2}, {normal3:F2}");
-
                 float distAB = Vector3.Distance(A, B);
                 float interval = (GRID_SIZE > distAB) ? samplingInterval * 4f : samplingInterval;
-                int samplingCountAB = (int)(distAB / GRID_SIZE * interval);
+                int samplingCountAB = Mathf.FloorToInt(distAB / GRID_SIZE * interval);
 
                 for (int i = 0; i < samplingCountAB; ++i)
                 {
@@ -105,7 +112,7 @@ public class MapSampler2nd : MonoBehaviour
                     Vector3 AC = Vector3.Lerp(A, C, ratio);
 
                     float distABtoAC = Vector3.Distance(AB, AC);
-                    int samplingCountABtoAC = (int)(distABtoAC / GRID_SIZE * interval);
+                    int samplingCountABtoAC = Mathf.FloorToInt(distABtoAC / GRID_SIZE * interval);
 
                     for (int j = 0; j < samplingCountABtoAC; ++j)
                     {
@@ -120,26 +127,37 @@ public class MapSampler2nd : MonoBehaviour
                 }
             }
         }
+
+        Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
     }
-    private VoxelType GetVoxelType(float n1, float n2, float n3)
+    private VoxelType GetType(float y1, float y2, float y3)
     {
-        bool isPlain = (n1 == 1 && n2 == 1 && n3 == 1);
+        float[] y = new float[] { y1, y2, y3 };
+        for (int i = 0; i < 3 - 1; ++i)
+        {
+            for (int j = 0; j < 3 - i - 1; ++j)
+            {
+                if (y[j] > y[j + 1])
+                {
+                    float temp = y[j];
+                    y[j] = y[j + 1];
+                    y[j + 1] = temp;
+                }
+            }
+        }
 
-        bool isObstacle = n1 <= float.Epsilon
-                        || n2 <= float.Epsilon
-                        || n3 <= float.Epsilon;
+        int min = Mathf.FloorToInt(y[0] * 1000f);
 
-        bool isSlope = Mathf.Approximately(Mathf.Acos(n1) * Mathf.Rad2Deg, 45)
-                    || Mathf.Approximately(Mathf.Acos(n2) * Mathf.Rad2Deg, 45)
-                    || Mathf.Approximately(Mathf.Acos(n3) * Mathf.Rad2Deg, 45);
+        VoxelType type;
+        if      (min == -1000)          { type = VoxelType.Obstacle; }
+        else if (min ==  1000)          { type = VoxelType.Plain; }
+        else if (0 < min && min < 1000) { type = VoxelType.Slope; }
+        else                            { type = VoxelType.None; }
 
-        VoxelType type = VoxelType.None;
-        if (isObstacle) { type = VoxelType.Obstacle; }
-        if (isSlope)    { type = VoxelType.Slope; }
-        if (isPlain)    { type = VoxelType.Plain; }
-
+        //Debug.Log($"[{type}] {min} ({y[0]:F10})");
         return type;
     }
+
     private void SetVoxel(int x1000, int y1000, int z1000, VoxelType type)
     {
         Vector3 point1000 = new Vector3(x1000, y1000, z1000);
@@ -151,50 +169,52 @@ public class MapSampler2nd : MonoBehaviour
             data.Add(radix, new Voxel_t(0x0000));
         }
 
-        int[] quarant = GetBitShift((point1000 * 0.001f) - center);
-        for (int i = 0; i < quarant.Length; ++i)
+        int quarant = GetBitShift((point1000 * 0.001f) - center);
+        if (quarant == -1)
         {
-            int typeBits = (int)type << (quarant[i] * 2);
-            if (type > data[radix].GetSubType(quarant[i]))
-            {
-                int sub = data[radix].SubVoxel;
-                int mask = 0b11 << (quarant[i] * 2);
+            return;
+        }
 
-                sub &= ~mask;
-                sub |= typeBits;
-                data[radix] = new Voxel_t(sub);
-            }
+        int typeBits = (int)type << (quarant * 2);
+        if (type > data[radix].GetSubType(quarant))
+        {
+            int sub = data[radix].SubVoxel;
+            int mask = 0b11 << (quarant * 2);
+
+            sub &= ~mask;
+            sub |= typeBits;
+            data[radix] = new Voxel_t(sub);
         }
     }
-    private int[] GetBitShift(Vector3 diff)
+    private int GetBitShift(Vector3 diff)
     {
-        List<int> shift = new List<int>();
-
         float angle = Mathf.Atan2(diff.z, diff.x) * Mathf.Rad2Deg;
         angle = (angle + 360) % 360;
 
-        if (angle == 360 || angle == 0) { shift.Add(0); shift.Add(3); }
-        if (0 < angle && angle < 90)    { shift.Add(0); }
+        //애매하게 경계선 걸려서 sub-voxel 다 등록할바엔 그냥 안한다. (샘플링 간격이 충분이 좁다.) ...?
+        //아이씨.. 이렇게 하면 안 튀었는데 뭐지...
+        //if (angle == 0) { shift.Add(0); shift.Add(3); }
+        //if (angle == 90)                { shift.Add(0); shift.Add(1); }
+        //if (angle == 180)               { shift.Add(1); shift.Add(2); }
+        //if (angle == 270)               { shift.Add(2); shift.Add(3); }
 
-        if (angle == 90)                { shift.Add(0); shift.Add(1); }
-        if (90 < angle && angle < 180)  { shift.Add(1); }
+        int shift = -1;
+        if (0 < angle && angle < 90) { shift = 0; }
+        if (90 < angle && angle < 180) { shift = 1; }
+        if (180 < angle && angle < 270) { shift = 2; }
+        if (270 < angle && angle < 360) { shift = 3; }
 
-        if (angle == 180)               { shift.Add(1); shift.Add(2); }
-        if (180 < angle && angle < 270) { shift.Add(2); }
-
-        if (angle == 270)               { shift.Add(2); shift.Add(3); }
-        if (270 < angle && angle < 360)  { shift.Add(3); }
-        
-
-        if (diff.y > 0)
+        float dy = Mathf.FloorToInt(diff.y * 1000);
+        if (dy == 0)
         {
-            for (int i = 0; i < shift.Count; ++i)
-            {
-                shift[i] += 4;
-            }
+            return shift; //== -1;
+        }
+        else if (dy > 0)
+        {
+            shift += 4;
         }
 
-        return shift.ToArray();
+        return shift;
     }
     public static Vector3 GetCenterPoint(Vector3 point)
     {
@@ -236,6 +256,15 @@ public class MapSampler2nd : MonoBehaviour
         cz = (center.z < 0f) ? 0f : center.z;
 
         return new Vector3(cx, cy, cz) * 0.001f;
+    }
+
+
+    //PostSampling
+    private void PostSampling()
+    { 
+        //그.. 뭐.. 어찌 해야 하더라
+        //일단 윗선만 쳐내면 되나?
+        //장애물에 대하여 + 
     }
 
     private void OnDrawGizmos()

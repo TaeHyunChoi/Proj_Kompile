@@ -102,9 +102,9 @@ public enum InteractType
 }
 public enum VoxelType : int
 {
-    None = 0,
-    Plain,
+    None,
     Obstacle,
+    Plain,
     Slope,
 }
 
