@@ -112,18 +112,6 @@ public enum VoxelType : int
 
 // struct
 [Serializable]
-public struct Voxel_t2
-{
-    private int data;    //voxel state, slope angle, .... 등을 비트 패킹으로?
-    public int Data { get => data; }
-    public VoxelState State { get => (VoxelState)data; }
-
-    public Voxel_t2(int data)
-    {
-        this.data = data;
-    }
-}
-[Serializable]
 public struct Voxel_t
 {
     public Voxel_t(int sub)

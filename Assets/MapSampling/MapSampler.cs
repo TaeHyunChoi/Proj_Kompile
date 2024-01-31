@@ -95,55 +95,56 @@ public class MapSampler : MonoBehaviour
                 B = targetTransform.TransformPoint(vertices[triangles[t + 1]]);
                 C = targetTransform.TransformPoint(vertices[triangles[t + 2]]);
 
-                //범위 산정을 이유로 sampling 범위에서 벗어남 => 추가로 처리
-                //그냥 vertex의 01234를 모두 obstacle로 만들면 되는거 아녀...?
-                //맨 아랫층만 건드린다.. 이런걸로 가야 하나...
-                if (type == VoxelType.Obstacle
-                    && !targetTransform.gameObject.CompareTag("Slope"))
-                {
-                    int ra = Parser.GetVoxelRadix(Parser.GetCenterPoint(A));
-                    int rb = Parser.GetVoxelRadix(Parser.GetCenterPoint(B));
-                    int rc = Parser.GetVoxelRadix(Parser.GetCenterPoint(C));
+                #region 주석 처리
+                /*
+if (type == VoxelType.Obstacle
+    && !targetTransform.gameObject.CompareTag("Slope"))
+{
+    int ra = Parser.GetVoxelRadix(Parser.GetCenterPoint(A));
+    int rb = Parser.GetVoxelRadix(Parser.GetCenterPoint(B));
+    int rc = Parser.GetVoxelRadix(Parser.GetCenterPoint(C));
 
-                    if (!data.ContainsKey(ra)) { data.Add(ra, new Voxel_t(0x0000)); }
-                    if (!data.ContainsKey(rb)) { data.Add(rb, new Voxel_t(0x0000)); }
-                    if (!data.ContainsKey(rc)) { data.Add(rc, new Voxel_t(0x0000)); }
+    if (!data.ContainsKey(ra)) { data.Add(ra, new Voxel_t(0x0000)); }
+    if (!data.ContainsKey(rb)) { data.Add(rb, new Voxel_t(0x0000)); }
+    if (!data.ContainsKey(rc)) { data.Add(rc, new Voxel_t(0x0000)); }
 
-                    for (int i = 0; i < 4; ++i)
-                    {
-                        int typeBits = (int)type << (i * 2);
+    for (int i = 0; i < 4; ++i)
+    {
+        int typeBits = (int)type << (i * 2);
 
-                        if (type > data[ra].GetSubType(i))
-                        {
-                            int sub = data[ra].SubVoxel;
-                            int mask = 0b11 << (i * 2);
+        if (type > data[ra].GetSubType(i))
+        {
+            int sub = data[ra].SubVoxel;
+            int mask = 0b11 << (i * 2);
 
-                            sub &= ~mask;
-                            sub |= typeBits;
-                            data[ra] = new Voxel_t(sub);
-                        }
+            sub &= ~mask;
+            sub |= typeBits;
+            data[ra] = new Voxel_t(sub);
+        }
 
-                        if (type > data[rb].GetSubType(i))
-                        {
-                            int sub = data[rb].SubVoxel;
-                            int mask = 0b11 << (i * 2);
+        if (type > data[rb].GetSubType(i))
+        {
+            int sub = data[rb].SubVoxel;
+            int mask = 0b11 << (i * 2);
 
-                            sub &= ~mask;
-                            sub |= typeBits;
-                            data[rb] = new Voxel_t(sub);
-                        }
+            sub &= ~mask;
+            sub |= typeBits;
+            data[rb] = new Voxel_t(sub);
+        }
 
-                        if (type > data[rc].GetSubType(i))
-                        {
-                            int sub = data[rc].SubVoxel;
-                            int mask = 0b11 << (i * 2);
+        if (type > data[rc].GetSubType(i))
+        {
+            int sub = data[rc].SubVoxel;
+            int mask = 0b11 << (i * 2);
 
-                            sub &= ~mask;
-                            sub |= typeBits;
-                            data[rc] = new Voxel_t(sub);
-                        }
-                    }
-                }
+            sub &= ~mask;
+            sub |= typeBits;
+            data[rc] = new Voxel_t(sub);
+        }
+    }
+}
+//*/
+                #endregion
 
                 float distAB = Vector3.Distance(A, B);
                 float interval = (grid > distAB) ? samplingInterval * 4f : samplingInterval;
