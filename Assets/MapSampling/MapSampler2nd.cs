@@ -19,7 +19,7 @@ public class MapSampler2nd : MonoBehaviour
     [Header("Grids")]
     [SerializeField] private float[] alpha;
 
-    private List<Vector3> sampled = new List<Vector3>();
+    private List<Vector3> forDebug = new List<Vector3>();
 
     private void Awake()
     {
@@ -116,7 +116,8 @@ public class MapSampler2nd : MonoBehaviour
                     float distABtoAC = Vector3.Distance(AB, AC);
                     int samplingCountABtoAC = Mathf.FloorToInt(distABtoAC / GRID_SIZE * interval);
 
-                    for (int j = 1; j < samplingCountABtoAC; ++j)
+                    int start = (type != VoxelType.Obstacle) ? 1 : 0;
+                    for (int j = start; j < samplingCountABtoAC; ++j)
                     {
                         Vector3 samplingPoint = Vector3.Lerp(AB, AC, (float)j / samplingCountABtoAC);
 
@@ -124,18 +125,20 @@ public class MapSampler2nd : MonoBehaviour
                         int x = Mathf.CeilToInt(samplingPoint.x * 1000f);
                         int y = Mathf.CeilToInt(samplingPoint.y * 1000f);
                         int z = Mathf.CeilToInt(samplingPoint.z * 1000f);
-                        Vector3 point1000 = new Vector3(x, y, z);
+                        Vector3 samplePoint1000 = new Vector3(x, y, z);
 
-                        SetVoxel(point1000, type);
+                        SetVoxel(samplePoint1000, type);
 
                         //장애물 offset 설정
                         if (type == VoxelType.Obstacle)
                         {
-                            for (int o = 0; o < 4; ++o)
+                            for (int o = 0; o < 8; ++o)
                             {
-                                Vector3 offset = GetObstacleOffset(o);
-                                SetVoxel(point1000 + offset, type);
+                                Vector3 offset1000 = GetObstacleOffset(o);
+                                SetVoxel(samplePoint1000 + offset1000, type, isForced: true);
                             }
+
+                            //복셀 샘플링에 잡히지 않는 것들이 있다..?
                         }
                     }
                 }
@@ -163,10 +166,10 @@ public class MapSampler2nd : MonoBehaviour
         int min = Mathf.FloorToInt(y[0] * 1000f);
 
         VoxelType type;
-        if      (min == -1000)          { type = VoxelType.Obstacle; }
-        else if (min ==  1000)          { type = VoxelType.Plain; }
+        if (min == -1000) { type = VoxelType.Obstacle; }
+        else if (min == 1000) { type = VoxelType.Plain; }
         else if (0 < min && min < 1000) { type = VoxelType.Slope; }
-        else                            { type = VoxelType.None; }
+        else { type = VoxelType.None; }
 
         //Debug.Log($"[{type}] {min} ({y[0]:F10})");
         return type;
@@ -175,15 +178,29 @@ public class MapSampler2nd : MonoBehaviour
     private Vector3 GetObstacleOffset(int quarant)
     {
         Vector3 dir = Vector3.zero;
+
         switch (quarant)
         {
-            case 0: dir = new Vector3( 1,  0,  1); break;
-            case 1: dir = new Vector3(-1,  0,  1); break;
-            case 2: dir = new Vector3(-1,  0, -1); break;
-            case 3: dir = new Vector3( 1,  0, -1); break;
+            case 0: dir = new Vector3( 1,  0,  1);  break;
+            case 1: dir = new Vector3(-1,  0,  1);  break;
+            case 2: dir = new Vector3(-1,  0, -1);  break;
+            case 3: dir = new Vector3( 1,  0, -1);  break;
+
+            case 4: dir = new Vector3( 1,  0,  0);  break;
+            case 5: dir = new Vector3(-1,  0,  0);  break;
+            case 6: dir = new Vector3( 0,  0, -1);  break;
+            case 7: dir = new Vector3( 0,  0,  1);  break;
         }
         dir.Normalize();
-        dir *= HALF_GRID_SIZE / Mathf.Sqrt(2) * 1000f;
+        //dir *= HALF_GRID_SIZE / Mathf.Sqrt(2) * 1000f;
+        if (quarant < 4)
+        {
+            dir *= GRID_SIZE * 0.25f * 1000f;
+        }
+        else
+        {
+            dir *= GRID_SIZE * 0.5f * 1000f;
+        }
 
         int ox = Mathf.FloorToInt(dir.x);
         int oy = Mathf.FloorToInt(dir.y);
@@ -192,15 +209,13 @@ public class MapSampler2nd : MonoBehaviour
         return new Vector3(ox, oy, oz);
     }
 
-    private void SetVoxel(Vector3 point1000, VoxelType type)
+    private void SetVoxel(Vector3 point1000, VoxelType type, bool isForced = false)
     {
         Vector3 center = GetCenterPoint(point1000);
-
         int radix = Parser.GetVoxelRadix(center);
         if (!data.ContainsKey(radix))
         {
             data.Add(radix, new Voxel_t(0x0000));
-            sampled.Add(point1000 * 0.001f);
         }
 
         int quarant = GetBitShift((point1000 * 0.001f) - center);
@@ -210,15 +225,20 @@ public class MapSampler2nd : MonoBehaviour
         }
 
         int typeBits = (int)type << (quarant * 2);
-        if (type > data[radix].GetSubType(quarant))
-        {
-            int sub = data[radix].SubVoxel;
-            int mask = 0b11 << (quarant * 2);
+        int sub = data[radix].SubVoxel;
+        int mask = 0b11 << (quarant * 2);
 
+        if (isForced)
+        {
             sub &= ~mask;
             sub |= typeBits;
             data[radix] = new Voxel_t(sub);
-            sampled.Add(point1000 * 0.001f);
+        }
+        else if (type > data[radix].GetSubType(quarant))
+        {
+            sub &= ~mask;
+            sub |= typeBits;
+            data[radix] = new Voxel_t(sub);
         }
     }
     private int GetBitShift(Vector3 diff)
@@ -299,6 +319,12 @@ public class MapSampler2nd : MonoBehaviour
 
         float halfGrid = GRID_SIZE * 0.5f;
         float quaterGrid = GRID_SIZE * 0.25f;
+
+        //Gizmos.color = Color.yellow;
+        //for (int i = 0; i < forDebug.Count; ++i)
+        //{
+        //    Gizmos.DrawCube(forDebug[i] * 0.001f, Vector3.one * 0.025f);
+        //}
 
         //draw voxel
         foreach (int radix in data.Keys)
