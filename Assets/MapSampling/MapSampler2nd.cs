@@ -19,6 +19,8 @@ public class MapSampler2nd : MonoBehaviour
     [Header("Grids")]
     [SerializeField] private float[] alpha;
 
+    private List<Vector3> sampled = new List<Vector3>();
+
     private void Awake()
     {
         filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
@@ -114,7 +116,7 @@ public class MapSampler2nd : MonoBehaviour
                     float distABtoAC = Vector3.Distance(AB, AC);
                     int samplingCountABtoAC = Mathf.FloorToInt(distABtoAC / GRID_SIZE * interval);
 
-                    for (int j = 0; j < samplingCountABtoAC; ++j)
+                    for (int j = 1; j < samplingCountABtoAC; ++j)
                     {
                         Vector3 samplingPoint = Vector3.Lerp(AB, AC, (float)j / samplingCountABtoAC);
 
@@ -167,6 +169,7 @@ public class MapSampler2nd : MonoBehaviour
         if (!data.ContainsKey(radix))
         {
             data.Add(radix, new Voxel_t(0x0000));
+            sampled.Add(point1000 * 0.001f);
         }
 
         int quarant = GetBitShift((point1000 * 0.001f) - center);
@@ -184,6 +187,7 @@ public class MapSampler2nd : MonoBehaviour
             sub &= ~mask;
             sub |= typeBits;
             data[radix] = new Voxel_t(sub);
+            sampled.Add(point1000 * 0.001f);
         }
     }
     private int GetBitShift(Vector3 diff)
@@ -192,7 +196,6 @@ public class MapSampler2nd : MonoBehaviour
         angle = (angle + 360) % 360;
 
         //애매하게 경계선 걸려서 sub-voxel 다 등록할바엔 그냥 안한다. (샘플링 간격이 충분이 좁다.) ...?
-        //아이씨.. 이렇게 하면 안 튀었는데 뭐지...
         //if (angle == 0) { shift.Add(0); shift.Add(3); }
         //if (angle == 90)                { shift.Add(0); shift.Add(1); }
         //if (angle == 180)               { shift.Add(1); shift.Add(2); }
@@ -205,11 +208,7 @@ public class MapSampler2nd : MonoBehaviour
         if (270 < angle && angle < 360) { shift = 3; }
 
         float dy = Mathf.FloorToInt(diff.y * 1000);
-        if (dy == 0)
-        {
-            return shift; //== -1;
-        }
-        else if (dy > 0)
+        if (dy > 1f)
         {
             shift += 4;
         }
