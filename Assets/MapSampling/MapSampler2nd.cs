@@ -120,11 +120,23 @@ public class MapSampler2nd : MonoBehaviour
                     {
                         Vector3 samplingPoint = Vector3.Lerp(AB, AC, (float)j / samplingCountABtoAC);
 
-                        //부동소수점 > *1000하여 판단 (소수점 3자리까지만)
+                        //부동소수점 : *1000하여 판단 (소수점 3자리까지만)
                         int x = Mathf.CeilToInt(samplingPoint.x * 1000f);
                         int y = Mathf.CeilToInt(samplingPoint.y * 1000f);
                         int z = Mathf.CeilToInt(samplingPoint.z * 1000f);
-                        SetVoxel(x, y, z, type);
+                        Vector3 point1000 = new Vector3(x, y, z);
+
+                        SetVoxel(point1000, type);
+
+                        //장애물 offset 설정
+                        if (type == VoxelType.Obstacle)
+                        {
+                            for (int o = 0; o < 4; ++o)
+                            {
+                                Vector3 offset = GetObstacleOffset(o);
+                                SetVoxel(point1000 + offset, type);
+                            }
+                        }
                     }
                 }
             }
@@ -160,9 +172,28 @@ public class MapSampler2nd : MonoBehaviour
         return type;
     }
 
-    private void SetVoxel(int x1000, int y1000, int z1000, VoxelType type)
+    private Vector3 GetObstacleOffset(int quarant)
     {
-        Vector3 point1000 = new Vector3(x1000, y1000, z1000);
+        Vector3 dir = Vector3.zero;
+        switch (quarant)
+        {
+            case 0: dir = new Vector3( 1,  0,  1); break;
+            case 1: dir = new Vector3(-1,  0,  1); break;
+            case 2: dir = new Vector3(-1,  0, -1); break;
+            case 3: dir = new Vector3( 1,  0, -1); break;
+        }
+        dir.Normalize();
+        dir *= HALF_GRID_SIZE / Mathf.Sqrt(2) * 1000f;
+
+        int ox = Mathf.FloorToInt(dir.x);
+        int oy = Mathf.FloorToInt(dir.y);
+        int oz = Mathf.FloorToInt(dir.z);
+
+        return new Vector3(ox, oy, oz);
+    }
+
+    private void SetVoxel(Vector3 point1000, VoxelType type)
+    {
         Vector3 center = GetCenterPoint(point1000);
 
         int radix = Parser.GetVoxelRadix(center);
@@ -194,12 +225,6 @@ public class MapSampler2nd : MonoBehaviour
     {
         float angle = Mathf.Atan2(diff.z, diff.x) * Mathf.Rad2Deg;
         angle = (angle + 360) % 360;
-
-        //애매하게 경계선 걸려서 sub-voxel 다 등록할바엔 그냥 안한다. (샘플링 간격이 충분이 좁다.) ...?
-        //if (angle == 0) { shift.Add(0); shift.Add(3); }
-        //if (angle == 90)                { shift.Add(0); shift.Add(1); }
-        //if (angle == 180)               { shift.Add(1); shift.Add(2); }
-        //if (angle == 270)               { shift.Add(2); shift.Add(3); }
 
         int shift = -1;
         if (0 < angle && angle < 90) { shift = 0; }
@@ -260,10 +285,9 @@ public class MapSampler2nd : MonoBehaviour
 
     //PostSampling
     private void PostSampling()
-    { 
-        //그.. 뭐.. 어찌 해야 하더라
-        //일단 윗선만 쳐내면 되나?
-        //장애물에 대하여 + 
+    {
+        //후처리1: obstacle + offset; 엇 얘는 그냥 넣어도 되나
+
     }
 
     private void OnDrawGizmos()
