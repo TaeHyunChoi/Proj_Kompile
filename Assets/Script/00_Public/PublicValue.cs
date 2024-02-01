@@ -2,13 +2,13 @@ using System;
 
 public static class Public
 {
-    //욕심 낸다면 이걸 에디터에서 실시간 조정하도록 만들고 싶은데...
+    //나중에 config 파일이라도 만들어서 쓸까봐
     public static readonly float FADE_SPEED = 1.25f;
     public static readonly float MOVE_SPEED = 4f;
-    public static readonly float GRID_SIZE = 0.25f;
-    public static readonly float GRID_SIZE_INVERT = 1f / 0.25f;
-    public static readonly float HALF_GRID_SIZE = 0.25f * 0.5f;
-    public static readonly float HALF_GRID_SIZE_INVERT = 1f / (0.25f * 0.5f);
+    public static readonly float GRID_SIZE = 0.5f;
+    public static readonly float GRID_SIZE_INVERT = 1f / 0.5f;
+    public static readonly float HALF_GRID_SIZE = 0.5f * 0.5f;
+    public static readonly float HALF_GRID_SIZE_INVERT = 1f / (0.5f * 0.5f);
 
     public static void BlockInput(int input) { ;}
 }
@@ -103,8 +103,9 @@ public enum InteractType
 public enum VoxelType : int
 {
     None,
-    Obstacle,
+    //Obstacle,
     Plain,
+    Obstacle,
     Slope,
 }
 

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -94,6 +95,8 @@ public class MapSampler2nd : MonoBehaviour
                 normal2.Normalize();
                 Vector3 normal3 = rot * normals[triangles[t + 2]];
                 normal3.Normalize();
+
+
                 type = GetType(normal1.y, normal2.y, normal3.y);
 
                 if (type == VoxelType.None)
@@ -129,16 +132,13 @@ public class MapSampler2nd : MonoBehaviour
 
                         SetVoxel(samplePoint1000, type);
 
-                        //장애물 offset 설정
                         if (type == VoxelType.Obstacle)
                         {
-                            for (int o = 0; o < 8; ++o)
+                            for (int q = 0; q < 8; ++q)
                             {
-                                Vector3 offset1000 = GetObstacleOffset(o);
+                                Vector3 offset1000 = GetObstacleOffset(q);
                                 SetVoxel(samplePoint1000 + offset1000, type, isForced: true);
                             }
-
-                            //복셀 샘플링에 잡히지 않는 것들이 있다..?
                         }
                     }
                 }
@@ -175,31 +175,30 @@ public class MapSampler2nd : MonoBehaviour
         return type;
     }
 
-    private Vector3 GetObstacleOffset(int quarant)
+    private Vector3 GetObstacleOffset(int direction)
     {
         Vector3 dir = Vector3.zero;
 
-        switch (quarant)
+        switch (direction)
         {
-            case 0: dir = new Vector3( 1,  0,  1);  break;
-            case 1: dir = new Vector3(-1,  0,  1);  break;
-            case 2: dir = new Vector3(-1,  0, -1);  break;
-            case 3: dir = new Vector3( 1,  0, -1);  break;
-
-            case 4: dir = new Vector3( 1,  0,  0);  break;
-            case 5: dir = new Vector3(-1,  0,  0);  break;
-            case 6: dir = new Vector3( 0,  0, -1);  break;
-            case 7: dir = new Vector3( 0,  0,  1);  break;
+            case 0: dir = new Vector3( 1,  0,  1); break;
+            case 1: dir = new Vector3(-1,  0,  1); break;
+            case 2: dir = new Vector3(-1,  0, -1); break;
+            case 3: dir = new Vector3( 1,  0, -1); break;
+            case 4: dir = new Vector3( 1,  0,  0); break;
+            case 5: dir = new Vector3(-1,  0,  0); break;
+            case 6: dir = new Vector3( 0,  0, -1); break;
+            case 7: dir = new Vector3( 0,  0,  1); break;
         }
         dir.Normalize();
-        //dir *= HALF_GRID_SIZE / Mathf.Sqrt(2) * 1000f;
-        if (quarant < 4)
+
+        if (direction < 4)
         {
             dir *= GRID_SIZE * 0.25f * 1000f;
         }
         else
         {
-            dir *= GRID_SIZE * 0.5f * 1000f;
+            dir *= HALF_GRID_SIZE * 1000f;
         }
 
         int ox = Mathf.FloorToInt(dir.x);
@@ -207,6 +206,46 @@ public class MapSampler2nd : MonoBehaviour
         int oz = Mathf.FloorToInt(dir.z);
 
         return new Vector3(ox, oy, oz);
+    }
+    private bool HaveNoneNeighbor(Vector3 centerPoint1000, int direction)
+    {
+        Vector3 dir1000 = Vector3.zero;
+        switch (direction)
+        {
+            case 0: dir1000 = new Vector3(1, 0, 1); break;
+            case 1: dir1000 = new Vector3(-1, 0, 1); break;
+            case 2: dir1000 = new Vector3(-1, 0, -1); break;
+            case 3: dir1000 = new Vector3(1, 0, -1); break;
+            case 4: dir1000 = new Vector3(1, 0, 0); break;
+            case 5: dir1000 = new Vector3(-1, 0, 0); break;
+            case 6: dir1000 = new Vector3(0, 0, -1); break;
+            case 7: dir1000 = new Vector3(0, 0, 1); break;
+        }
+        dir1000.Normalize();
+        int ox = Mathf.FloorToInt(dir1000.x);
+        int oy = Mathf.FloorToInt(dir1000.y);
+        int oz = Mathf.FloorToInt(dir1000.z);
+        dir1000 = new Vector3(ox, oy, oz);
+
+        if (direction < 4)
+        {
+            dir1000 *= GRID_SIZE * 0.25f * 1000f;
+        }
+        else
+        {
+            dir1000 *= HALF_GRID_SIZE * 1000f;
+        }
+
+        Vector3 center = GetCenterPoint(centerPoint1000 + dir1000);
+        int radix = Parser.GetVoxelRadix(center);
+
+        if (!data.ContainsKey(radix)
+            || data[radix].GetSubType(direction) != VoxelType.None)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void SetVoxel(Vector3 point1000, VoxelType type, bool isForced = false)
@@ -221,25 +260,26 @@ public class MapSampler2nd : MonoBehaviour
         int quarant = GetBitShift((point1000 * 0.001f) - center);
         if (quarant == -1)
         {
-            return;
+            return ;
         }
 
         int typeBits = (int)type << (quarant * 2);
         int sub = data[radix].SubVoxel;
         int mask = 0b11 << (quarant * 2);
 
-        if (isForced)
+        if (isForced
+            || type > data[radix].GetSubType(quarant))
         {
             sub &= ~mask;
             sub |= typeBits;
             data[radix] = new Voxel_t(sub);
         }
-        else if (type > data[radix].GetSubType(quarant))
-        {
-            sub &= ~mask;
-            sub |= typeBits;
-            data[radix] = new Voxel_t(sub);
-        }
+        //else if (type > data[radix].GetSubType(quarant))
+        //{
+        //    sub &= ~mask;
+        //    sub |= typeBits;
+        //    data[radix] = new Voxel_t(sub);
+        //}
     }
     private int GetBitShift(Vector3 diff)
     {
@@ -302,14 +342,6 @@ public class MapSampler2nd : MonoBehaviour
         return new Vector3(cx, cy, cz) * 0.001f;
     }
 
-
-    //PostSampling
-    private void PostSampling()
-    {
-        //후처리1: obstacle + offset; 엇 얘는 그냥 넣어도 되나
-
-    }
-
     private void OnDrawGizmos()
     {
         if (data == null)
@@ -320,12 +352,6 @@ public class MapSampler2nd : MonoBehaviour
         float halfGrid = GRID_SIZE * 0.5f;
         float quaterGrid = GRID_SIZE * 0.25f;
 
-        //Gizmos.color = Color.yellow;
-        //for (int i = 0; i < forDebug.Count; ++i)
-        //{
-        //    Gizmos.DrawCube(forDebug[i] * 0.001f, Vector3.one * 0.025f);
-        //}
-
         //draw voxel
         foreach (int radix in data.Keys)
         {
@@ -335,8 +361,8 @@ public class MapSampler2nd : MonoBehaviour
 
             Vector3 center = new Vector3(x, y, z) * halfGrid;
 
-            //if (center.y > GRID_SIZE)
-            //    continue;
+            if (center.y < GRID_SIZE)
+                continue;
 
             bool IsContoured = false;
             for (int i = 0; i < 8; ++i)
