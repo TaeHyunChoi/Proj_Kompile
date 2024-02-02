@@ -46,7 +46,17 @@ public static class Parser
 
         return radix;
     }
-    public static VoxelType GetVoxelType(Voxel_t data, Vector3 diff)
+    public static int GetVoxelIndex(Vector3 center)
+    {
+        int index =   (int)(center.x * VOXEL_HALF_INVERT) << 16
+                    | (int)(center.y * VOXEL_HALF_INVERT) << 8
+                    | (int)(center.z * VOXEL_HALF_INVERT) << 0;
+
+        return index;
+
+    }
+
+    public static SubVoxelType GetVoxelType(Voxel_t data, Vector3 diff)
     {
         float angle = Mathf.Atan2(diff.z, diff.x) * Mathf.Rad2Deg;
         angle = (angle + 360) % 360;

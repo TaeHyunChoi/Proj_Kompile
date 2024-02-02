@@ -66,7 +66,7 @@ public class MapSampler : MonoBehaviour
 
     private void SamplingVoxels()
     {
-        VoxelType type;
+        SubVoxelType type;
         Vector3 A, B, C;
         Vector3 elipson = Vector3.one * -0.0001f;
 
@@ -176,7 +176,7 @@ if (type == VoxelType.Obstacle
         Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
         canDraw = true;
     }
-    private VoxelType GetVoxelType(float n1, float n2, float n3)
+    private SubVoxelType GetVoxelType(float n1, float n2, float n3)
     {
         bool plain = (n1 == 1 && n2 == 1 && n3 == 1);
 
@@ -188,10 +188,10 @@ if (type == VoxelType.Obstacle
                     || Mathf.Approximately(Mathf.Acos(n2) * Mathf.Rad2Deg, 45)
                     || Mathf.Approximately(Mathf.Acos(n3) * Mathf.Rad2Deg, 45);
                     
-        VoxelType type = VoxelType.None;
-        if (plain)    { type = VoxelType.Plain; }
-        if (obstacle) { type = VoxelType.Obstacle; }
-        if (slope)    { type = VoxelType.Slope; }
+        SubVoxelType type = SubVoxelType.None;
+        if (plain)    { type = SubVoxelType.Plain; }
+        if (obstacle) { type = SubVoxelType.Obstacle; }
+        if (slope)    { type = SubVoxelType.Slope45; }
 
         return type;
     }
@@ -219,7 +219,7 @@ if (type == VoxelType.Obstacle
 
         return shift;
     }
-    private void SetVoxel(Vector3 point, VoxelType type)
+    private void SetVoxel(Vector3 point, SubVoxelType type)
     {
         Vector3 center = Parser.GetCenterPoint(point);
         int radix = Parser.GetVoxelRadix(center);
@@ -272,11 +272,11 @@ if (type == VoxelType.Obstacle
                 for (int i = 0; i < 4; ++i)
                 {
                     int sub_type = (data[radix].SubVoxel & (0b11 << i * 2)) >> i * 2;
-                    switch ((VoxelType)sub_type)
+                    switch ((SubVoxelType)sub_type)
                     {
-                        case VoxelType.Plain:    Gizmos.color = new Color(0, 1, 0, alpha[0]); break;
-                        case VoxelType.Slope:    Gizmos.color = new Color(0, 0, 1, alpha[1]); break;
-                        case VoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, alpha[2]); break;
+                        case SubVoxelType.Plain:    Gizmos.color = new Color(0, 1, 0, alpha[0]); break;
+                        case SubVoxelType.Slope45:    Gizmos.color = new Color(0, 0, 1, alpha[1]); break;
+                        case SubVoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, alpha[2]); break;
                         default: continue;
                     }
 

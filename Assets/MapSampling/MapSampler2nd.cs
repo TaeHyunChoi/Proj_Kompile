@@ -17,10 +17,7 @@ public class MapSampler2nd : MonoBehaviour
     private Dictionary<int, Voxel_t> data;
     private MeshFilter[] filter;
 
-    [Header("Grids")]
-    [SerializeField] private float[] alpha;
-
-    private List<Vector3> forDebug = new List<Vector3>();
+    [SerializeField] private float[] gizmoAlpha;
 
     private void Awake()
     {
@@ -69,7 +66,7 @@ public class MapSampler2nd : MonoBehaviour
     {
         data = new Dictionary<int, Voxel_t>();
 
-        VoxelType type;
+        SubVoxelType type;
         Vector3 A, B, C;
 
         for (int f = 0; f < filter.Length; ++f)
@@ -99,7 +96,7 @@ public class MapSampler2nd : MonoBehaviour
 
                 type = GetType(normal1.y, normal2.y, normal3.y);
 
-                if (type == VoxelType.None)
+                if (type == SubVoxelType.None)
                     continue;
 
                 A = targetTransform.TransformPoint(vertices[triangles[t]]);
@@ -119,7 +116,7 @@ public class MapSampler2nd : MonoBehaviour
                     float distABtoAC = Vector3.Distance(AB, AC);
                     int samplingCountABtoAC = Mathf.FloorToInt(distABtoAC / GRID_SIZE * interval);
 
-                    int start = (type != VoxelType.Obstacle) ? 1 : 0;
+                    int start = (type != SubVoxelType.Obstacle) ? 1 : 0;
                     for (int j = start; j < samplingCountABtoAC; ++j)
                     {
                         Vector3 samplingPoint = Vector3.Lerp(AB, AC, (float)j / samplingCountABtoAC);
@@ -132,7 +129,7 @@ public class MapSampler2nd : MonoBehaviour
 
                         SetVoxel(samplePoint1000, type);
 
-                        if (type == VoxelType.Obstacle)
+                        if (type == SubVoxelType.Obstacle)
                         {
                             for (int q = 0; q < 8; ++q)
                             {
@@ -147,7 +144,7 @@ public class MapSampler2nd : MonoBehaviour
 
         Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
     }
-    private VoxelType GetType(float y1, float y2, float y3)
+    private SubVoxelType GetType(float y1, float y2, float y3)
     {
         float[] y = new float[] { y1, y2, y3 };
         for (int i = 0; i < 3 - 1; ++i)
@@ -165,11 +162,11 @@ public class MapSampler2nd : MonoBehaviour
 
         int min = Mathf.FloorToInt(y[0] * 1000f);
 
-        VoxelType type;
-        if (min == -1000) { type = VoxelType.Obstacle; }
-        else if (min == 1000) { type = VoxelType.Plain; }
-        else if (0 < min && min < 1000) { type = VoxelType.Slope; }
-        else { type = VoxelType.None; }
+        SubVoxelType type;
+        if (min == -1000) { type = SubVoxelType.Obstacle; }
+        else if (min == 1000) { type = SubVoxelType.Plain; }
+        else if (0 < min && min < 1000) { type = SubVoxelType.Slope45; }
+        else { type = SubVoxelType.None; }
 
         //Debug.Log($"[{type}] {min} ({y[0]:F10})");
         return type;
@@ -240,7 +237,7 @@ public class MapSampler2nd : MonoBehaviour
         int radix = Parser.GetVoxelRadix(center);
 
         if (!data.ContainsKey(radix)
-            || data[radix].GetSubType(direction) != VoxelType.None)
+            || data[radix].GetSubType(direction) != SubVoxelType.None)
         {
             return false;
         }
@@ -248,7 +245,7 @@ public class MapSampler2nd : MonoBehaviour
         return true;
     }
 
-    private void SetVoxel(Vector3 point1000, VoxelType type, bool isForced = false)
+    private void SetVoxel(Vector3 point1000, SubVoxelType type, bool isForced = false)
     {
         Vector3 center = GetCenterPoint(point1000);
         int radix = Parser.GetVoxelRadix(center);
@@ -361,18 +358,18 @@ public class MapSampler2nd : MonoBehaviour
 
             Vector3 center = new Vector3(x, y, z) * halfGrid;
 
-            if (center.y < GRID_SIZE)
-                continue;
+            //if (center.y < GRID_SIZE)
+            //    continue;
 
             bool IsContoured = false;
             for (int i = 0; i < 8; ++i)
             {
                 int sub_type = (data[radix].SubVoxel & (0b11 << i * 2)) >> i * 2;
-                switch ((VoxelType)sub_type)
+                switch ((SubVoxelType)sub_type)
                 {
-                    case VoxelType.Plain: Gizmos.color = new Color(0, 1, 0, alpha[0]); break;
-                    case VoxelType.Slope: Gizmos.color = new Color(0, 0, 1, alpha[1]); break;
-                    case VoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, alpha[2]); break;
+                    case SubVoxelType.Plain: Gizmos.color = new Color(0, 1, 0, gizmoAlpha[0]); break;
+                    case SubVoxelType.Slope45: Gizmos.color = new Color(0, 0, 1, gizmoAlpha[1]); break;
+                    case SubVoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, gizmoAlpha[2]); break;
                     default: continue;
                 }
 
@@ -404,7 +401,7 @@ public class MapSampler2nd : MonoBehaviour
                 Gizmos.DrawMesh(gizmoMesh, Vector3.zero, Quaternion.identity);
                 Gizmos.matrix = Matrix4x4.identity;
 
-                Gizmos.color = new Color(1f, 0.922f, 0.016f, 0.10f);
+                Gizmos.color = new Color(1f, 0.922f, 0.016f, 1f);
 
                 if (!IsContoured)
                 {

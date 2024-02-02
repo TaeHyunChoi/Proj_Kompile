@@ -74,7 +74,7 @@ public class UnitPlayer : Unit
         int radix = Parser.GetVoxelRadix(center);
 
         if (voxel.ContainsKey(radix) 
-            && Parser.GetVoxelType(voxel[radix], next - center) == VoxelType.Plain)
+            && Parser.GetVoxelType(voxel[radix], next - center) == SubVoxelType.Plain)
         {
             return true;
         }
