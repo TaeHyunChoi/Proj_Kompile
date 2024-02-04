@@ -144,10 +144,7 @@ namespace PublicValue
 
         private int data;
 
-        public bool IsMovable(int idxSub)
-        {
-            return (data & (1 << idxSub)) != 0;
-        }
+        public int Data { get => data; }
         public int Incline
         {
             get
@@ -183,6 +180,16 @@ namespace PublicValue
             }
         }
 
+
+        public bool IsMovable(int idxSub)
+        {
+            return (data & (1 << idxSub)) != 0;
+        }
+
+        public Voxel_t2(int data)
+        {
+            this.data = data;
+        }
         public Voxel_t2(VoxelType objType, int incline, int move)
         {
             data = (int)objType << BITSHIFT_OBJECT | incline << BITSHIFT_INCLINE | move;

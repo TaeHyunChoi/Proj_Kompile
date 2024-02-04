@@ -5,6 +5,7 @@ using UnityEngine;
 using static Public;
 using PublicValue;
 using CMathf;
+using System.Xml;
 
 public class MapSampler3rd : MonoBehaviour
 {
@@ -138,7 +139,73 @@ public class MapSampler3rd : MonoBehaviour
             yield return null;
         }
 
+        //yield return Coroutiner.PlayCoroutine(PostSampling());
+        PostSampling();
+
         Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
+    }
+    private void PostSampling()
+    {
+        Debug.Log($"Start Post-Sampling...");
+
+        List<int> keys = new List<int>(data.Keys);
+        List<int> done = new List<int>();
+
+        for(int i = 0; i < keys.Count; ++i)
+        //foreach (var index in post.Keys)
+        {
+            int index = keys[i];
+            Voxel_t2 voxel = data[index];
+
+            //후처리1. obstacle 윗면
+            if (voxel.ObjectType == VoxelType.Obstacle)
+            {
+                int moveMask = 0;
+
+                //has 'none' neighbor;
+                if (voxel.Move == 0xFF)
+                {
+                    int halfInt = (int)VOXEL_HALF_INVERT;
+
+                    //float x = index >> 16;
+                    //float y = (index & 0xFF00) >> 8;
+                    //float z = index & 0xFF;
+                    //Vector3 center = new Vector3(x, y, z) * VOXEL_HALF_SIZE;
+
+                    //left: sub[2][3][4][5] to zero (not movable)
+                    if (!data.ContainsKey(index - (halfInt << 16)))
+                    {
+                        moveMask |= 0b00111100;
+                    }
+                    //right: sub[6][7][0][1] to zero (not movable)
+                    if (!data.ContainsKey(index + (halfInt << 16)))
+                    {
+                        moveMask |= 0b11000011;
+                    }
+                    //up: sub[4][5][6][7] to zero (not movable)
+                    if (!data.ContainsKey(index + halfInt))
+                    {
+                        moveMask |= 0b00001111;
+                    }
+                    //down: sub[0][1][2][3] to zero (not movable)
+                    if (!data.ContainsKey(index - halfInt))
+                    {
+                        moveMask |= 0b11110000;
+                    }
+
+
+                    moveMask = voxel.Data & ~(moveMask);
+                    data[index] = new Voxel_t2(moveMask);
+                }
+
+                //has movable sub voxel;
+                else if (voxel.Move != 0x00)
+                {
+                    moveMask    = voxel.Data & ~(0xFF);
+                    data[index] = new Voxel_t2(moveMask);
+                }
+            }
+        }
     }
 
     private VoxelType GetSubVoxelType(float y1, float y2, float y3)
