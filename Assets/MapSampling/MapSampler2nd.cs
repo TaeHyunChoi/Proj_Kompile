@@ -66,7 +66,7 @@ public class MapSampler2nd : MonoBehaviour
     {
         data = new Dictionary<int, Voxel_t>();
 
-        SubVoxelType type;
+        VoxelType type;
         Vector3 A, B, C;
 
         for (int f = 0; f < filter.Length; ++f)
@@ -96,7 +96,7 @@ public class MapSampler2nd : MonoBehaviour
 
                 type = GetType(normal1.y, normal2.y, normal3.y);
 
-                if (type == SubVoxelType.None)
+                if (type == VoxelType.None)
                     continue;
 
                 A = targetTransform.TransformPoint(vertices[triangles[t]]);
@@ -116,12 +116,12 @@ public class MapSampler2nd : MonoBehaviour
                     float distABtoAC = Vector3.Distance(AB, AC);
                     int samplingCountABtoAC = Mathf.FloorToInt(distABtoAC / GRID_SIZE * interval);
 
-                    int start = (type != SubVoxelType.Obstacle) ? 1 : 0;
+                    int start = (type != VoxelType.Obstacle) ? 1 : 0;
                     for (int j = start; j < samplingCountABtoAC; ++j)
                     {
                         Vector3 samplingPoint = Vector3.Lerp(AB, AC, (float)j / samplingCountABtoAC);
 
-                        //ºÎµ¿¼Ò¼öÁ¡ : *1000ÇÏ¿© ÆÇ´Ü (¼Ò¼öÁ¡ 3ÀÚ¸®±îÁö¸¸)
+                        //ï¿½Îµï¿½ï¿½Ò¼ï¿½ï¿½ï¿½ : *1000ï¿½Ï¿ï¿½ ï¿½Ç´ï¿½ (ï¿½Ò¼ï¿½ï¿½ï¿½ 3ï¿½Ú¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
                         int x = Mathf.CeilToInt(samplingPoint.x * 1000f);
                         int y = Mathf.CeilToInt(samplingPoint.y * 1000f);
                         int z = Mathf.CeilToInt(samplingPoint.z * 1000f);
@@ -129,7 +129,7 @@ public class MapSampler2nd : MonoBehaviour
 
                         SetVoxel(samplePoint1000, type);
 
-                        if (type == SubVoxelType.Obstacle)
+                        if (type == VoxelType.Obstacle)
                         {
                             for (int q = 0; q < 8; ++q)
                             {
@@ -144,7 +144,7 @@ public class MapSampler2nd : MonoBehaviour
 
         Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
     }
-    private SubVoxelType GetType(float y1, float y2, float y3)
+    private VoxelType GetType(float y1, float y2, float y3)
     {
         float[] y = new float[] { y1, y2, y3 };
         for (int i = 0; i < 3 - 1; ++i)
@@ -162,11 +162,11 @@ public class MapSampler2nd : MonoBehaviour
 
         int min = Mathf.FloorToInt(y[0] * 1000f);
 
-        SubVoxelType type;
-        if (min == -1000) { type = SubVoxelType.Obstacle; }
-        else if (min == 1000) { type = SubVoxelType.Plain; }
-        else if (0 < min && min < 1000) { type = SubVoxelType.Slope45; }
-        else { type = SubVoxelType.None; }
+        VoxelType type;
+        if (min == -1000) { type = VoxelType.Obstacle; }
+        else if (min == 1000) { type = VoxelType.Plain; }
+        else if (0 < min && min < 1000) { type = VoxelType.Slope45; }
+        else { type = VoxelType.None; }
 
         //Debug.Log($"[{type}] {min} ({y[0]:F10})");
         return type;
@@ -237,7 +237,7 @@ public class MapSampler2nd : MonoBehaviour
         int radix = Parser.GetVoxelRadix(center);
 
         if (!data.ContainsKey(radix)
-            || data[radix].GetSubType(direction) != SubVoxelType.None)
+            || data[radix].GetSubType(direction) != VoxelType.None)
         {
             return false;
         }
@@ -245,7 +245,7 @@ public class MapSampler2nd : MonoBehaviour
         return true;
     }
 
-    private void SetVoxel(Vector3 point1000, SubVoxelType type, bool isForced = false)
+    private void SetVoxel(Vector3 point1000, VoxelType type, bool isForced = false)
     {
         Vector3 center = GetCenterPoint(point1000);
         int radix = Parser.GetVoxelRadix(center);
@@ -365,11 +365,11 @@ public class MapSampler2nd : MonoBehaviour
             for (int i = 0; i < 8; ++i)
             {
                 int sub_type = (data[radix].SubVoxel & (0b11 << i * 2)) >> i * 2;
-                switch ((SubVoxelType)sub_type)
+                switch ((VoxelType)sub_type)
                 {
-                    case SubVoxelType.Plain: Gizmos.color = new Color(0, 1, 0, gizmoAlpha[0]); break;
-                    case SubVoxelType.Slope45: Gizmos.color = new Color(0, 0, 1, gizmoAlpha[1]); break;
-                    case SubVoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, gizmoAlpha[2]); break;
+                    case VoxelType.Plain: Gizmos.color = new Color(0, 1, 0, gizmoAlpha[0]); break;
+                    case VoxelType.Slope45: Gizmos.color = new Color(0, 0, 1, gizmoAlpha[1]); break;
+                    case VoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, gizmoAlpha[2]); break;
                     default: continue;
                 }
 

@@ -2,7 +2,7 @@ using System;
 
 public static class Public
 {
-    //나중에 config 파일이라도 만들어서 쓸까봐
+    //save to config?
     public static readonly float FADE_SPEED = 1.25f;
     public static readonly float MOVE_SPEED = 4f;
     public static readonly float GRID_SIZE = 1f;
@@ -10,7 +10,7 @@ public static class Public
     public static readonly float HALF_GRID_SIZE = 1f * 0.5f;
     public static readonly float HALF_GRID_SIZE_INVERT = 1f / (1f * 0.5f);
 
-    //테스트 (Sampler 3rd)
+    //For test Sampler 3rd)
     public const float VOXEL_SIZE          = 1f;
     public const float VOXEL_INVERT        = 1f;
     public const float VOXEL_HALF_SIZE     = 0.5f;
@@ -106,12 +106,12 @@ public enum InteractType
     Door,
     Talk,
 }
-public enum SubVoxelType : int
+public enum VoxelType : int
 {
-    None,
+    None = 0,
 
     Plain,
-    Slope45, //얘도 없애는 게 맞긴 해~
+    Slope45,
     Obstacle,
 }
 
@@ -128,10 +128,10 @@ public struct Voxel_t
     }
     private int sub;
     public int SubVoxel { get => sub; }
-    public SubVoxelType GetSubType(int quadrant)
+    public VoxelType GetSubType(int quadrant)
     {
         int typed = sub & (0b11 << quadrant * 2);
-        return (SubVoxelType)(typed >> (quadrant * 2));
+        return (VoxelType)(typed >> (quadrant * 2));
     }
 }
 
@@ -139,9 +139,8 @@ namespace PublicValue
 {
     public struct Voxel_t2
     {
-        //private const int BITSHIFT_MOVABLE =   0;  //이동 가능 여부 8 bits (이전 sub-voxel 느낌)
-        private const int BITSHIFT_INCLINE = 4 * 2;  //경사 각도 2 bits (0,30,45,90)
-        private const int BITSHIFT_OBJECT = 4 * 3;  // 오브젝트 타입 (None, Plain, Obstacle, Trigger?)
+        private const int BITSHIFT_INCLINE = 4 * 2;  //use 2 bits (0,30,45,90)
+        private const int BITSHIFT_OBJECT = 4 * 3;   // normal.y (None, Plain, Obstacle, Trigger?)
 
         private int data;
 
@@ -166,14 +165,14 @@ namespace PublicValue
                 return 0;
             }
         }
-        public SubVoxelType ObjectType
+        public VoxelType ObjectType
         {
             get
             {
                 int type = data & (0b11 << BITSHIFT_OBJECT);
                 type >>= BITSHIFT_OBJECT;
 
-                return (SubVoxelType)type;
+                return (VoxelType)type;
             }
         }
         public int Move
@@ -184,7 +183,7 @@ namespace PublicValue
             }
         }
 
-        public Voxel_t2(int objType, int incline, int move)
+        public Voxel_t2(VoxelType objType, int incline, int move)
         {
             data = (int)objType << BITSHIFT_OBJECT | incline << BITSHIFT_INCLINE | move;
         }

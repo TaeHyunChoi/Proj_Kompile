@@ -56,7 +56,7 @@ public static class Parser
 
     }
 
-    public static SubVoxelType GetVoxelType(Voxel_t data, Vector3 diff)
+    public static VoxelType GetVoxelType(Voxel_t data, Vector3 diff)
     {
         float angle = Mathf.Atan2(diff.z, diff.x) * Mathf.Rad2Deg;
         angle = (angle + 360) % 360;

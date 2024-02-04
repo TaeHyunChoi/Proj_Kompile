@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using static Public;
-using PublicValue; //√≥¿Ω∫Œ≈Õ ¿Ã∑∏∞‘ «“ ∞…!
+using PublicValue;
+using CMathf;
 
 public class MapSampler3rd : MonoBehaviour
 {
@@ -75,7 +76,7 @@ public class MapSampler3rd : MonoBehaviour
     {
         data = new Dictionary<int, Voxel_t2>();
 
-        SubVoxelType subVoxelType;
+        VoxelType subVoxelType;
         Vector3 A, B, C;
 
         for (int f = 0; f < filter.Length; ++f)
@@ -88,11 +89,11 @@ public class MapSampler3rd : MonoBehaviour
             Vector3[] normals = mesh.normals;
             int[] triangles = mesh.triangles;
 
-            int objType;
-            if      (targetTransform.CompareTag("Plain"))       { objType = 1; }
-            else if (targetTransform.CompareTag("Obstacle"))    { objType = 2; }
-            else if (targetTransform.CompareTag("Slope"))       { objType = 3; }
-            else    { objType = 0; }
+            VoxelType objType; //obj != voxel. ÌÉÄÏûÖ Î∂ÑÎ•ò Ïû¨Ï†ïÏùò ÌïÑÏöî.
+            if      (targetTransform.CompareTag("Plain"))       { objType = VoxelType.Plain; }
+            else if (targetTransform.CompareTag("Slope"))       { objType = VoxelType.Slope45; }
+            else if (targetTransform.CompareTag("Obstacle"))    { objType = VoxelType.Obstacle; }
+            else    { objType = VoxelType.None; }
 
             for (int t = 0; t < triangles.Length; t += 3)
             {
@@ -104,7 +105,7 @@ public class MapSampler3rd : MonoBehaviour
                 normal3.Normalize();
 
                 subVoxelType = GetSubVoxelType(normal1.y, normal2.y, normal3.y);
-                if (subVoxelType == SubVoxelType.None)
+                if (subVoxelType == VoxelType.None)
                     continue;
 
                 A = targetTransform.TransformPoint(vertices[triangles[t]]);
@@ -115,18 +116,19 @@ public class MapSampler3rd : MonoBehaviour
                 float interval = (VOXEL_SIZE > distAB) ? samplingInterval * 4f : samplingInterval;
                 int samplingCountAB = Mathf.FloorToInt(distAB / VOXEL_HALF_SIZE * interval);
 
-                for (int i = 0; i < samplingCountAB; ++i)
+                for (int i = 1; i < samplingCountAB-1; ++i)
                 {
-                    float ratio = (float)i / samplingCountAB;
+                    float ratio = CMath.FloorToInt1000((float)i / samplingCountAB);
                     Vector3 AB = Vector3.Lerp(A, B, ratio);
                     Vector3 AC = Vector3.Lerp(A, C, ratio);
 
                     float distABtoAC = Vector3.Distance(AB, AC);
-                    int samplingCountABtoAC = Mathf.FloorToInt(distABtoAC / VOXEL_HALF_SIZE * interval) - 1;
+                    int samplingCountABtoAC = Mathf.FloorToInt(distABtoAC / VOXEL_HALF_SIZE * interval);
 
-                    for (int j = 0; j < samplingCountABtoAC; ++j)
+                    for (int j = 1; j < samplingCountABtoAC - 1; ++j)
                     {
-                        Vector3 samplingPoint = Vector3.Lerp(AB, AC, (float)j / samplingCountABtoAC);
+                        ratio = CMath.FloorToInt1000((float)j / samplingCountABtoAC);
+                        Vector3 samplingPoint = Vector3.Lerp(AB, AC, ratio);
                         SetVoxel(samplingPoint, objType, subVoxelType);
                     }
                 }
@@ -139,11 +141,10 @@ public class MapSampler3rd : MonoBehaviour
         Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
     }
 
-    private SubVoxelType GetSubVoxelType(float y1, float y2, float y3)
+    private VoxelType GetSubVoxelType(float y1, float y2, float y3)
     {
         float[] y = new float[] { y1, y2, y3 };
 
-        //∞°¿Â ¿€¿∫ y(normal.y)∏¶ √£±‚
         for (int i = 0; i < 3 - 1; ++i)
         {
             for (int j = 0; j < 3 - i - 1; ++j)
@@ -157,22 +158,21 @@ public class MapSampler3rd : MonoBehaviour
             }
         }
 
-        //y √÷º“∞™ø° µ˚∂Û ≈∏¿‘ ∫–∑˘
         int min = Mathf.FloorToInt(y[0] * 1000f);
-        SubVoxelType type;
-        if      (min == -1000)          { type = SubVoxelType.Obstacle; }
-        else if (min == 1000)           { type = SubVoxelType.Plain; }
-        else if (0 < min && min < 1000) { type = SubVoxelType.Slope45; }
-        else                            { type = SubVoxelType.None; }
+        VoxelType type;
+        if      (min == -1000)          { type = VoxelType.Obstacle; }
+        else if (min == 1000)           { type = VoxelType.Plain; }
+        else if (0 < min && min < 1000) { type = VoxelType.Slope45; }
+        else                            { type = VoxelType.None; }
 
         return type;
     }
-    private void SetVoxel(Vector3 point, int objectType, SubVoxelType subVoxelType)
+    private void SetVoxel(Vector3 point, VoxelType objectType, VoxelType targetType)
     {
-        //∫Œµøº“ºˆ¡° πÆ¡¶∏¶ «««œ∞Ì¿⁄ º“ºˆ¡° 3¿⁄∏Æ±Ó¡ˆ∏∏
-        float x = Mathf.CeilToInt(point.x * 1000f) * 0.001f;
-        float y = Mathf.CeilToInt(point.y * 1000f) * 0.001f;
-        float z = Mathf.CeilToInt(point.z * 1000f) * 0.001f;
+        float x = CMath.CeilToInt1000(point.x);
+        float y = CMath.CeilToInt1000(point.y);
+        float z = CMath.CeilToInt1000(point.z);
+
         point = new Vector3(x, y, z);
 
         Vector3 center = GetCenter(point);
@@ -181,42 +181,33 @@ public class MapSampler3rd : MonoBehaviour
         int shift = GetMovableIndex(point - center);
         if (shift == -1)
         {
-            //∞Ê∞Ëº±¿∫ æ÷∏≈«œ¥œ √º≈©«œ¡ˆ æ ¥¬¥Ÿ.
             return;
         }
 
         int movable = 0;
-        switch (subVoxelType)
+        switch (targetType)
         {
-            case SubVoxelType.Plain:     movable = 1 << shift;  break;
-            case SubVoxelType.Obstacle:  movable = 0;  break;
-            case SubVoxelType.Slope45:   movable = 1 << shift;  break;
+            case VoxelType.Plain:       movable = 1 << shift;  break;
+            case VoxelType.Slope45:     movable = 1 << shift; break;
+            case VoxelType.Obstacle:    movable = 0;  break;
         }
 
         if (!data.TryGetValue(index, out Voxel_t2 voxel))
         {
-            data.Add(index, new Voxel_t2(objectType, (int)subVoxelType, movable));
+            data.Add(index, new Voxel_t2(objectType, (int)targetType, movable));
             return;
         }
 
-        if (objectType >= (int)voxel.ObjectType)
+        if (targetType == VoxelType.Obstacle)
         {
-            if (subVoxelType == SubVoxelType.Obstacle)
-            {
-                movable = voxel.Move & ~(1 << shift);
-            }
-            else
-            {
-                movable = voxel.Move | (1 << shift);
-            }
-
-            if (subVoxelType != SubVoxelType.Plain)
-            {
-                Debug.Log($"[{subVoxelType}] {System.Convert.ToString(voxel.Move, 2)} << {shift}");
-            }
-
-            data[index] = new Voxel_t2(objectType, (int)subVoxelType, movable);
+            movable = voxel.Move & ~(1 << shift);
         }
+        else
+        {
+            movable = voxel.Move | (1 << shift);
+        }
+
+        data[index] = new Voxel_t2(objectType, (int)targetType, movable);
     }
     private Vector3 GetCenter(Vector3 point)
     {
@@ -302,7 +293,7 @@ public class MapSampler3rd : MonoBehaviour
 
                 Quaternion gizmoRot = Quaternion.identity;
                 float voxelQuater = VOXEL_HALF_SIZE * 0.5f;
-                Vector3 gizmoPos = center + Vector3.up * 0.125f; //∞¸ªÛøÎ¿∏∑Œ up
+                Vector3 gizmoPos = center + Vector3.up * 0.125f; // size 1/8 up
                 switch (i)
                 {
                     case 0:

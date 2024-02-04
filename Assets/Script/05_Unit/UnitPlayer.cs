@@ -16,7 +16,7 @@ public class UnitPlayer : Unit
         bool  isLeft  = CheckIsLeftDir(inputDir);
         int[] targets = GetTargetingIndexes(current, isLeft);
 
-        //1. ÃÖÃÊ ÀÔ·Â Ã¼Å©
+        //1. ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ Ã¼Å©
         inputDir.Normalize();
         delta = inputDir * MOVE_SPEED * Time.deltaTime;
         if (IsMovable(voxel, position, delta))
@@ -27,7 +27,7 @@ public class UnitPlayer : Unit
             return;
         }
 
-        //2. ¸¶Áö¸· ÀÔ·Â Ã¼Å©
+        //2. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ Ã¼Å©
         delta = lastDelta;
         if (IsMovable(voxel, position, delta))
         {
@@ -37,7 +37,7 @@ public class UnitPlayer : Unit
             return;
         }
 
-        //3. ÁÖº¯ Ã¼Å©
+        //3. ï¿½Öºï¿½ Ã¼Å©
         delta = inputDir;
         for (int i = 0; i < targets.Length; ++i)
         {
@@ -74,7 +74,7 @@ public class UnitPlayer : Unit
         int radix = Parser.GetVoxelRadix(center);
 
         if (voxel.ContainsKey(radix) 
-            && Parser.GetVoxelType(voxel[radix], next - center) == SubVoxelType.Plain)
+            && Parser.GetVoxelType(voxel[radix], next - center) == VoxelType.Plain)
         {
             return true;
         }
@@ -84,11 +84,11 @@ public class UnitPlayer : Unit
 
     private int GetDirectionIndex(Vector3 dir)
     {
-        // not normalized: x ¶Ç´Â z °ªÀÌ -1, 0, 1 Áß¿¡ ÇÏ³ª·Î´Ù.
+        // not normalized: x ï¿½Ç´ï¿½ z ï¿½ï¿½ï¿½ï¿½ -1, 0, 1 ï¿½ß¿ï¿½ ï¿½Ï³ï¿½ï¿½Î´ï¿½.
         float x = dir.x;
         float z = dir.z;
 
-        //8¹æÇâ °æ¿ìÀÇ ¼ö
+        //8ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
         int current = -1;
         if (x == 0 && z > 0) { current = 0; }
         else if (x > 0 && z > 0) { current = 1; }
