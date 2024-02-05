@@ -137,14 +137,13 @@ public class MapSampler3rd : MonoBehaviour
                 }
             }
 
-            //Debug.Log($"Now Sampling ({f + 1}/{filter.Length})");
+            Debug.Log($"Now Sampling ({f + 1}/{filter.Length})");
             yield return null;
         }
 
         List<int> keys = new List<int>(data.Keys);
 
         PostProcessObstacle(keys);
-        //PostSampling();
         Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
     }
     private void PostProcessObstacle(List<int> keys)
@@ -168,7 +167,6 @@ public class MapSampler3rd : MonoBehaviour
                     //left
                     idxNeighbor = index - (halfInt << 16);
                     if (!data.TryGetValue(idxNeighbor, out Voxel_t2 neighbor)
-                        //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
                         || (neighbor.Move & 0b_1000_0001) == 0)
                     {
                         erase |= 0b_0011_1100;
@@ -176,8 +174,7 @@ public class MapSampler3rd : MonoBehaviour
 
                     //right
                     idxNeighbor = index + (halfInt << 16);
-                    if (!data.TryGetValue(idxNeighbor, out neighbor) 
-                        //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
+                    if (!data.TryGetValue(idxNeighbor, out neighbor)
                         || (neighbor.Move & 0b_0001_1000) == 0)
                     {
                         erase |= 0b_1100_0011;
@@ -186,7 +183,6 @@ public class MapSampler3rd : MonoBehaviour
                     //up
                     idxNeighbor = index + halfInt;
                     if (!data.TryGetValue(idxNeighbor, out neighbor)
-                        //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
                         || (neighbor.Move & 0b_0110_0000) == 0)
                     {
                         erase |= 0b_0000_1111;
@@ -195,7 +191,6 @@ public class MapSampler3rd : MonoBehaviour
                     //down
                     idxNeighbor = index - halfInt;
                     if (!data.TryGetValue(idxNeighbor, out neighbor)
-                        //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
                         || (neighbor.Move & 0b_0000_0110) == 0)
                     {
                         erase |= 0b_1111_0000;
@@ -229,91 +224,10 @@ public class MapSampler3rd : MonoBehaviour
                 data[index] = new Voxel_t2(voxel.Data & ~(0xFF));
             }
         }
-
-        //3.
     }
-
-
-    private void PostSampling()
-    {
-        List<int> keys = new List<int>(data.Keys);
-
-        for(int i = 0; i < keys.Count; ++i)
-        {
-            int index = keys[i];
-            Voxel_t2 voxel = data[index];
-
-            if (voxel.ObjectType == VoxelType.Obstacle)
-            {
-                int erase = 0;
-
-                //There are no neighbors, or the part that touches the neighbors is none or All can`t move.
-                if (voxel.Move == 0xFF)
-                {
-                    int halfInt = (int)VOXEL_HALF_INVERT;
-                    int idxNeighbor;
-
-                    //left
-                    idxNeighbor = index - (halfInt << 16);
-                    if (!data.ContainsKey(idxNeighbor)
-                        || (data[idxNeighbor].Move == 0 && valid[idxNeighbor] == 0xFF)
-                        || (valid[idxNeighbor] & 0b_1000_0001) == 0)
-                    {
-                        erase |= 0b00111100;
-                    }
-
-                    //right
-                    idxNeighbor = index + (halfInt << 16);
-                    if (!data.ContainsKey(idxNeighbor)
-                        || (data[idxNeighbor].Move == 0 && valid[idxNeighbor] == 0xFF)
-                        || (valid[idxNeighbor] & 0b_0001_1000) == 0)
-                    {
-                        erase |= 0b11000011;
-                    }
-
-                    //up
-                    idxNeighbor = index + halfInt;
-                    if (!data.ContainsKey(idxNeighbor)
-                        || (data[idxNeighbor].Move == 0 && valid[idxNeighbor] == 0xFF)
-                        || (valid[idxNeighbor] & 0b_0110_0000) == 0)
-                    {
-                        erase |= 0b00001111;
-                    }
-
-                    //down
-                    idxNeighbor = index - halfInt;
-                    if (!data.ContainsKey(idxNeighbor)
-                        || (data[idxNeighbor].Move == 0 && valid[idxNeighbor] == 0xFF)
-                        || (valid[idxNeighbor] & 0b_0000_0110) == 0)
-                    {
-                        erase |= 0b11110000;
-                    }
-
-                    if (erase != 0x00)
-                    {
-                        erase = voxel.Data & ~(erase);
-                        data[index] = new Voxel_t2(erase);
-                    }
-                }
-
-                //has movable sub voxel;
-                else if (voxel.Move != 0x00)
-                {
-                    erase    = voxel.Data & ~(0xFF);
-                    data[index] = new Voxel_t2(erase);
-                }
-
-
-            }
-        }
-    }
-
-    private Vector3 TempGetPoint(int index)
-    {
-        float x = index >> 16;
-        float y = (index & 0xFF00) >> 8;
-        float z = index & 0xFF;
-        return new Vector3(x, y, z) * VOXEL_HALF_SIZE;
+    private void PostProcessSlope()
+    { 
+        
     }
 
     private VoxelType GetSubVoxelType(float y1, float y2, float y3)
