@@ -137,7 +137,7 @@ public class MapSampler3rd : MonoBehaviour
                 }
             }
 
-            Debug.Log($"Now Sampling ({f + 1}/{filter.Length})");
+            //Debug.Log($"Now Sampling ({f + 1}/{filter.Length})");
             yield return null;
         }
 
@@ -169,7 +169,7 @@ public class MapSampler3rd : MonoBehaviour
                     idxNeighbor = index - (halfInt << 16);
                     if (!data.TryGetValue(idxNeighbor, out Voxel_t2 neighbor)
                         //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
-                        || (neighbor.Move & 0b_1100_0011) == 0)
+                        || (neighbor.Move & 0b_1000_0001) == 0)
                     {
                         erase |= 0b_0011_1100;
                     }
@@ -178,7 +178,7 @@ public class MapSampler3rd : MonoBehaviour
                     idxNeighbor = index + (halfInt << 16);
                     if (!data.TryGetValue(idxNeighbor, out neighbor) 
                         //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
-                        || (neighbor.Move & 0b_0011_1100) == 0)
+                        || (neighbor.Move & 0b_0001_1000) == 0)
                     {
                         erase |= 0b_1100_0011;
                     }
@@ -187,7 +187,7 @@ public class MapSampler3rd : MonoBehaviour
                     idxNeighbor = index + halfInt;
                     if (!data.TryGetValue(idxNeighbor, out neighbor)
                         //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
-                        || (neighbor.Move & 0b_1111_0000) == 0)
+                        || (neighbor.Move & 0b_0110_0000) == 0)
                     {
                         erase |= 0b_0000_1111;
                     }
@@ -196,7 +196,7 @@ public class MapSampler3rd : MonoBehaviour
                     idxNeighbor = index - halfInt;
                     if (!data.TryGetValue(idxNeighbor, out neighbor)
                         //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
-                        || (neighbor.Move & 0b_0000_1111) == 0)
+                        || (neighbor.Move & 0b_0000_0110) == 0)
                     {
                         erase |= 0b_1111_0000;
                     }
@@ -306,6 +306,14 @@ public class MapSampler3rd : MonoBehaviour
 
             }
         }
+    }
+
+    private Vector3 TempGetPoint(int index)
+    {
+        float x = index >> 16;
+        float y = (index & 0xFF00) >> 8;
+        float z = index & 0xFF;
+        return new Vector3(x, y, z) * VOXEL_HALF_SIZE;
     }
 
     private VoxelType GetSubVoxelType(float y1, float y2, float y3)
