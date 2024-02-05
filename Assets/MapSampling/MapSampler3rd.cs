@@ -22,6 +22,8 @@ public class MapSampler3rd : MonoBehaviour
     [SerializeField] private float[] gizmoAlpha;
 
     private Dictionary<int, Voxel_t2> data;
+    private Dictionary<int, byte> valid = new Dictionary<int, byte>();
+
     private MeshFilter[] filter;
 
     private readonly float voxelDegree = 45f;
@@ -139,71 +141,169 @@ public class MapSampler3rd : MonoBehaviour
             yield return null;
         }
 
-        //yield return Coroutiner.PlayCoroutine(PostSampling());
-        PostSampling();
+        List<int> keys = new List<int>(data.Keys);
 
+        PostProcessObstacle(keys);
+        //PostSampling();
         Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
     }
+    private void PostProcessObstacle(List<int> keys)
+    {
+        List<int> notyet = new List<int>();
+        
+        //1.
+        for (int i = 0; i < keys.Count; ++i)
+        {
+            int index = keys[i];
+            Voxel_t2 voxel = data[index];
+            int erase = 0;
+
+            if (voxel.ObjectType == VoxelType.Obstacle)
+            {
+                if (voxel.Move == 0xFF)
+                {
+                    int halfInt = (int)VOXEL_HALF_INVERT;
+                    int idxNeighbor;
+
+                    //left
+                    idxNeighbor = index - (halfInt << 16);
+                    if (!data.TryGetValue(idxNeighbor, out Voxel_t2 neighbor)
+                        //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
+                        || (neighbor.Move & 0b_1100_0011) == 0)
+                    {
+                        erase |= 0b_0011_1100;
+                    }
+
+                    //right
+                    idxNeighbor = index + (halfInt << 16);
+                    if (!data.TryGetValue(idxNeighbor, out neighbor) 
+                        //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
+                        || (neighbor.Move & 0b_0011_1100) == 0)
+                    {
+                        erase |= 0b_1100_0011;
+                    }
+
+                    //up
+                    idxNeighbor = index + halfInt;
+                    if (!data.TryGetValue(idxNeighbor, out neighbor)
+                        //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
+                        || (neighbor.Move & 0b_1111_0000) == 0)
+                    {
+                        erase |= 0b_0000_1111;
+                    }
+
+                    //down
+                    idxNeighbor = index - halfInt;
+                    if (!data.TryGetValue(idxNeighbor, out neighbor)
+                        //|| (neighbor.Move == 0 && valid[idxNeighbor] != 0xFF)
+                        || (neighbor.Move & 0b_0000_1111) == 0)
+                    {
+                        erase |= 0b_1111_0000;
+                    }
+
+                    if (erase != 0x00)
+                    {
+                        erase = voxel.Data & ~(erase);
+                        data[index] = new Voxel_t2(erase);
+                    }
+                    else
+                    {
+                        notyet.Add(index);
+                    }
+                }
+                else
+                {
+                    notyet.Add(index);
+                }
+            }
+        }
+
+        //2.
+        for (int i = 0; i < notyet.Count; ++i)
+        {
+            int index = notyet[i];
+            Voxel_t2 voxel = data[index];
+
+            if (voxel.Move != 0x00 && voxel.Move != 0xFF)
+            {
+                data[index] = new Voxel_t2(voxel.Data & ~(0xFF));
+            }
+        }
+
+        //3.
+    }
+
+
     private void PostSampling()
     {
-        Debug.Log($"Start Post-Sampling...");
-
         List<int> keys = new List<int>(data.Keys);
-        List<int> done = new List<int>();
 
         for(int i = 0; i < keys.Count; ++i)
-        //foreach (var index in post.Keys)
         {
             int index = keys[i];
             Voxel_t2 voxel = data[index];
 
-            //후처리1. obstacle 윗면
             if (voxel.ObjectType == VoxelType.Obstacle)
             {
-                int moveMask = 0;
+                int erase = 0;
 
-                //has 'none' neighbor;
+                //There are no neighbors, or the part that touches the neighbors is none or All can`t move.
                 if (voxel.Move == 0xFF)
                 {
                     int halfInt = (int)VOXEL_HALF_INVERT;
+                    int idxNeighbor;
 
-                    //float x = index >> 16;
-                    //float y = (index & 0xFF00) >> 8;
-                    //float z = index & 0xFF;
-                    //Vector3 center = new Vector3(x, y, z) * VOXEL_HALF_SIZE;
-
-                    //left: sub[2][3][4][5] to zero (not movable)
-                    if (!data.ContainsKey(index - (halfInt << 16)))
+                    //left
+                    idxNeighbor = index - (halfInt << 16);
+                    if (!data.ContainsKey(idxNeighbor)
+                        || (data[idxNeighbor].Move == 0 && valid[idxNeighbor] == 0xFF)
+                        || (valid[idxNeighbor] & 0b_1000_0001) == 0)
                     {
-                        moveMask |= 0b00111100;
-                    }
-                    //right: sub[6][7][0][1] to zero (not movable)
-                    if (!data.ContainsKey(index + (halfInt << 16)))
-                    {
-                        moveMask |= 0b11000011;
-                    }
-                    //up: sub[4][5][6][7] to zero (not movable)
-                    if (!data.ContainsKey(index + halfInt))
-                    {
-                        moveMask |= 0b00001111;
-                    }
-                    //down: sub[0][1][2][3] to zero (not movable)
-                    if (!data.ContainsKey(index - halfInt))
-                    {
-                        moveMask |= 0b11110000;
+                        erase |= 0b00111100;
                     }
 
+                    //right
+                    idxNeighbor = index + (halfInt << 16);
+                    if (!data.ContainsKey(idxNeighbor)
+                        || (data[idxNeighbor].Move == 0 && valid[idxNeighbor] == 0xFF)
+                        || (valid[idxNeighbor] & 0b_0001_1000) == 0)
+                    {
+                        erase |= 0b11000011;
+                    }
 
-                    moveMask = voxel.Data & ~(moveMask);
-                    data[index] = new Voxel_t2(moveMask);
+                    //up
+                    idxNeighbor = index + halfInt;
+                    if (!data.ContainsKey(idxNeighbor)
+                        || (data[idxNeighbor].Move == 0 && valid[idxNeighbor] == 0xFF)
+                        || (valid[idxNeighbor] & 0b_0110_0000) == 0)
+                    {
+                        erase |= 0b00001111;
+                    }
+
+                    //down
+                    idxNeighbor = index - halfInt;
+                    if (!data.ContainsKey(idxNeighbor)
+                        || (data[idxNeighbor].Move == 0 && valid[idxNeighbor] == 0xFF)
+                        || (valid[idxNeighbor] & 0b_0000_0110) == 0)
+                    {
+                        erase |= 0b11110000;
+                    }
+
+                    if (erase != 0x00)
+                    {
+                        erase = voxel.Data & ~(erase);
+                        data[index] = new Voxel_t2(erase);
+                    }
                 }
 
                 //has movable sub voxel;
                 else if (voxel.Move != 0x00)
                 {
-                    moveMask    = voxel.Data & ~(0xFF);
-                    data[index] = new Voxel_t2(moveMask);
+                    erase    = voxel.Data & ~(0xFF);
+                    data[index] = new Voxel_t2(erase);
                 }
+
+
             }
         }
     }
@@ -275,6 +375,15 @@ public class MapSampler3rd : MonoBehaviour
         }
 
         data[index] = new Voxel_t2(objectType, (int)targetType, movable);
+
+        if (!valid.ContainsKey(index))
+        {
+            valid.Add(index, (byte)(1 << shift));
+        }
+        else
+        {
+            valid[index] |= (byte)(1 << shift);
+        }
     }
     private Vector3 GetCenter(Vector3 point)
     {
@@ -332,9 +441,18 @@ public class MapSampler3rd : MonoBehaviour
             return;
         }
 
-        float gizmoSize = VOXEL_HALF_SIZE * 0.5f / Mathf.Sqrt(2);
+        Gizmos.color = Color.black;
+        foreach (var vIndex in valid.Keys)
+        {
+            float vx = vIndex >> 16;
+            float vy = (vIndex & 0xFF00) >> 8;
+            float vz = vIndex & 0xFF;
+
+            Gizmos.DrawCube(new Vector3(vx, vy, vz) * VOXEL_HALF_SIZE, Vector3.one * 0.025f);
+        }
 
         //draw voxel
+        float gizmoSize = VOXEL_HALF_SIZE * 0.5f / Mathf.Sqrt(2);
         foreach (int index in data.Keys)
         {
             float x = index >> 16;
