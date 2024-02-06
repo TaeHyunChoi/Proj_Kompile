@@ -219,7 +219,7 @@ MonoBehaviour:
   samplingInterval: 8
   gizmoMesh: {fileID: 5924159088411371066, guid: a4f5dced4062b9946a5998f4eb66f188, type: 3}
   drawHeightLow: 0
-  drawHeightHigh: 0
+  drawHeightHigh: 1
   gizmoAlpha:
   - 0.5
   - 0.5

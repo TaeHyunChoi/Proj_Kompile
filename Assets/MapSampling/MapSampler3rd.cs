@@ -154,19 +154,7 @@ public class MapSampler3rd : MonoBehaviour
         //sampling 중에 object type이 바뀔 수도 있어서 sampling 후에 분류했다.
         foreach (int index in data.Keys)
         {
-            if (data[index].ObjectType == VoxelType.None)
-            {
-                float x = index >> 16;
-                float y = (index & 0xFF00) >> 8;
-                float z = index & 0xFF;
-                Debug.Log($"{x}, {y}, {z}");
-
-                targets[(int)VoxelType.Plain - 1].Add(index);
-            }
-            else
-            {
-                targets[(int)data[index].ObjectType - 1].Add(index);
-            }
+            targets[(int)data[index].ObjectType - 1].Add(index);
         }
 
         //처리 우선순위가 정해져 있음
@@ -254,7 +242,7 @@ public class MapSampler3rd : MonoBehaviour
     }
     private void PostProcessSlope(List<int> keys)
     {
-
+        //얘는 어찌 만들더라...
     }
     private void PostProcessPlain(List<int> keys)
     {
@@ -338,10 +326,6 @@ public class MapSampler3rd : MonoBehaviour
 
         if (!data.TryGetValue(index, out Voxel_t2 voxel))
         {
-            if (objectType == VoxelType.None)
-            {
-                Debug.Log("add None?" + point);
-            }
             data.Add(index, new Voxel_t2(objectType, (int)targetType, movable));
             return;
         }
@@ -357,11 +341,6 @@ public class MapSampler3rd : MonoBehaviour
 
         objectType = data[index].ObjectType > objectType ? data[index].ObjectType : objectType;
         data[index] = new Voxel_t2(objectType, (int)targetType, movable);
-
-        if (data[index].ObjectType == VoxelType.None)
-        {
-            Debug.Log("update None?" + point);
-        }
     }
     private Vector3 GetCenter(Vector3 point)
     {
