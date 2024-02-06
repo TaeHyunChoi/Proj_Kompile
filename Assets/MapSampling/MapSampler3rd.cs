@@ -96,6 +96,11 @@ public class MapSampler3rd : MonoBehaviour
             else if (targetTransform.CompareTag("Obstacle"))    { objType = VoxelType.Obstacle; }
             else    { objType = VoxelType.None; }
 
+            if (objType == VoxelType.None)
+            {
+                Debug.Log("init None?" + targetTransform.gameObject.name);
+            }
+
             for (int t = 0; t < triangles.Length; t += 3)
             {
                 Vector3 normal1 = rotation * normals[triangles[t]];
@@ -151,6 +156,11 @@ public class MapSampler3rd : MonoBehaviour
         {
             if (data[index].ObjectType == VoxelType.None)
             {
+                float x = index >> 16;
+                float y = (index & 0xFF00) >> 8;
+                float z = index & 0xFF;
+                Debug.Log($"{x}, {y}, {z}");
+
                 targets[(int)VoxelType.Plain - 1].Add(index);
             }
             else
@@ -161,7 +171,7 @@ public class MapSampler3rd : MonoBehaviour
 
         //처리 우선순위가 정해져 있음
         PostProcessObstacle(targets[(int)VoxelType.Obstacle - 1]);
-        //PostProcessSlope(targets[(int)VoxelType.Slope45 - 1]);
+        PostProcessSlope(targets[(int)VoxelType.Slope45 - 1]);
         PostProcessPlain(targets[(int)VoxelType.Plain - 1]);
 
         Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
@@ -170,6 +180,8 @@ public class MapSampler3rd : MonoBehaviour
 
     private void PostProcessObstacle(List<int> keys)
     {
+        List<int> notyet = new List<int>();
+
         for (int i = 0; i < keys.Count; ++i)
         {
             int index = keys[i];
@@ -220,14 +232,23 @@ public class MapSampler3rd : MonoBehaviour
                 }
                 else
                 {
-                    goto BLOCK;
+                    notyet.Add(index);
                 }
             }
+            else
+            {
+                notyet.Add(index);
+            }
+        }
 
-            BLOCK:
+        for (int i = 0; i < notyet.Count; ++i)
+        {
+            int index = notyet[i];
+            Voxel_t2 voxel = data[index];
+
             if (voxel.Move != 0x00 && voxel.Move != 0xFF)
             {
-                data[index] = new Voxel_t2(voxel.Data & 0x00);
+                data[index] = new Voxel_t2(voxel.Data & ~(0xFF));
             }
         }
     }
@@ -317,6 +338,10 @@ public class MapSampler3rd : MonoBehaviour
 
         if (!data.TryGetValue(index, out Voxel_t2 voxel))
         {
+            if (objectType == VoxelType.None)
+            {
+                Debug.Log("add None?" + point);
+            }
             data.Add(index, new Voxel_t2(objectType, (int)targetType, movable));
             return;
         }
@@ -332,6 +357,11 @@ public class MapSampler3rd : MonoBehaviour
 
         objectType = data[index].ObjectType > objectType ? data[index].ObjectType : objectType;
         data[index] = new Voxel_t2(objectType, (int)targetType, movable);
+
+        if (data[index].ObjectType == VoxelType.None)
+        {
+            Debug.Log("update None?" + point);
+        }
     }
     private Vector3 GetCenter(Vector3 point)
     {
