@@ -5,7 +5,6 @@ using UnityEngine;
 using static Public;
 using PublicValue;
 using CMathf;
-using System.Xml;
 
 public class MapSampler3rd : MonoBehaviour
 {
@@ -22,7 +21,6 @@ public class MapSampler3rd : MonoBehaviour
     [SerializeField] private float[] gizmoAlpha;
 
     private Dictionary<int, Voxel_t2> data;
-    private Dictionary<int, byte> valid = new Dictionary<int, byte>();
 
     private MeshFilter[] filter;
 
@@ -141,93 +139,129 @@ public class MapSampler3rd : MonoBehaviour
             yield return null;
         }
 
-        List<int> keys = new List<int>(data.Keys);
 
-        PostProcessObstacle(keys);
+        //post-process
+        List<int>[] targets = new List<int>[3];
+        targets[0] = new List<int>();
+        targets[1] = new List<int>();
+        targets[2] = new List<int>();
+
+        //sampling 중에 object type이 바뀔 수도 있어서 sampling 후에 분류했다.
+        foreach (int index in data.Keys)
+        {
+            if (data[index].ObjectType == VoxelType.None)
+            {
+                targets[(int)VoxelType.Plain - 1].Add(index);
+            }
+            else
+            {
+                targets[(int)data[index].ObjectType - 1].Add(index);
+            }
+        }
+
+        //처리 우선순위가 정해져 있음
+        PostProcessObstacle(targets[(int)VoxelType.Obstacle - 1]);
+        //PostProcessSlope(targets[(int)VoxelType.Slope45 - 1]);
+        PostProcessPlain(targets[(int)VoxelType.Plain - 1]);
+
         Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
     }
+
+
     private void PostProcessObstacle(List<int> keys)
     {
-        List<int> notyet = new List<int>();
-        
-        //1.
         for (int i = 0; i < keys.Count; ++i)
         {
             int index = keys[i];
             Voxel_t2 voxel = data[index];
             int erase = 0;
 
-            if (voxel.ObjectType == VoxelType.Obstacle)
+            if (voxel.Move == 0xFF)
             {
-                if (voxel.Move == 0xFF)
+                int halfInt = (int)VOXEL_HALF_INVERT;
+                int idxNeighbor;
+
+                //left
+                idxNeighbor = index - (halfInt << 16);
+                if (!data.TryGetValue(idxNeighbor, out Voxel_t2 neighbor)
+                    || (neighbor.Move & 0b_1000_0001) == 0)
                 {
-                    int halfInt = (int)VOXEL_HALF_INVERT;
-                    int idxNeighbor;
+                    erase |= 0b_0011_1100;
+                }
 
-                    //left
-                    idxNeighbor = index - (halfInt << 16);
-                    if (!data.TryGetValue(idxNeighbor, out Voxel_t2 neighbor)
-                        || (neighbor.Move & 0b_1000_0001) == 0)
-                    {
-                        erase |= 0b_0011_1100;
-                    }
+                //right
+                idxNeighbor = index + (halfInt << 16);
+                if (!data.TryGetValue(idxNeighbor, out neighbor)
+                    || (neighbor.Move & 0b_0001_1000) == 0)
+                {
+                    erase |= 0b_1100_0011;
+                }
 
-                    //right
-                    idxNeighbor = index + (halfInt << 16);
-                    if (!data.TryGetValue(idxNeighbor, out neighbor)
-                        || (neighbor.Move & 0b_0001_1000) == 0)
-                    {
-                        erase |= 0b_1100_0011;
-                    }
+                //up
+                idxNeighbor = index + halfInt;
+                if (!data.TryGetValue(idxNeighbor, out neighbor)
+                    || (neighbor.Move & 0b_0110_0000) == 0)
+                {
+                    erase |= 0b_0000_1111;
+                }
 
-                    //up
-                    idxNeighbor = index + halfInt;
-                    if (!data.TryGetValue(idxNeighbor, out neighbor)
-                        || (neighbor.Move & 0b_0110_0000) == 0)
-                    {
-                        erase |= 0b_0000_1111;
-                    }
+                //down
+                idxNeighbor = index - halfInt;
+                if (!data.TryGetValue(idxNeighbor, out neighbor)
+                    || (neighbor.Move & 0b_0000_0110) == 0)
+                {
+                    erase |= 0b_1111_0000;
+                }
 
-                    //down
-                    idxNeighbor = index - halfInt;
-                    if (!data.TryGetValue(idxNeighbor, out neighbor)
-                        || (neighbor.Move & 0b_0000_0110) == 0)
-                    {
-                        erase |= 0b_1111_0000;
-                    }
-
-                    if (erase != 0x00)
-                    {
-                        erase = voxel.Data & ~(erase);
-                        data[index] = new Voxel_t2(erase);
-                    }
-                    else
-                    {
-                        notyet.Add(index);
-                    }
+                if (erase != 0x00)
+                {
+                    erase = voxel.Data & ~(erase);
+                    data[index] = new Voxel_t2(erase);
                 }
                 else
                 {
-                    notyet.Add(index);
+                    goto BLOCK;
                 }
             }
-        }
 
-        //2.
-        for (int i = 0; i < notyet.Count; ++i)
-        {
-            int index = notyet[i];
-            Voxel_t2 voxel = data[index];
-
+            BLOCK:
             if (voxel.Move != 0x00 && voxel.Move != 0xFF)
             {
-                data[index] = new Voxel_t2(voxel.Data & ~(0xFF));
+                data[index] = new Voxel_t2(voxel.Data & 0x00);
             }
         }
     }
-    private void PostProcessSlope()
-    { 
-        
+    private void PostProcessSlope(List<int> keys)
+    {
+
+    }
+    private void PostProcessPlain(List<int> keys)
+    {
+        int invert = (int)VOXEL_INVERT;
+
+        for (int i = 0; i < keys.Count; ++i)
+        {
+            bool block00 = false, block01 = false, block02 = false, block03 = false;
+            int index = keys[i];
+
+            //right & up
+            Voxel_t2 neighbor;
+            if (data.TryGetValue(index + (invert << 16) + invert, out neighbor)) { block00 = (0 == (neighbor.Move & 0b_0011_0000)); }
+            //left & up
+            if (data.TryGetValue(index - (invert << 16) + invert, out neighbor)) { block01 = (0 == (neighbor.Move & 0b_1100_0000)); }
+            //left & down
+            if (data.TryGetValue(index - (invert << 16) - invert, out neighbor)) { block02 = (0 == (neighbor.Move & 0b_0000_0011)); }
+            //right & down
+            if (data.TryGetValue(index + (invert << 16) - invert, out neighbor)) { block03 = (0 == (neighbor.Move & 0b_0000_1100)); }
+
+            int blocked = 0x00;
+            if (block00 & block01) { blocked |= 0b_0000_1111; }
+            if (block01 & block02) { blocked |= 0b_0011_1100; }
+            if (block02 & block03) { blocked |= 0b_1111_0000; }
+            if (block03 & block00) { blocked |= 0b_1100_0011; }
+
+            data[index] = new Voxel_t2(data[index].Data & ~blocked);
+        }
     }
 
     private VoxelType GetSubVoxelType(float y1, float y2, float y3)
@@ -296,16 +330,8 @@ public class MapSampler3rd : MonoBehaviour
             movable = voxel.Move | (1 << shift);
         }
 
+        objectType = data[index].ObjectType > objectType ? data[index].ObjectType : objectType;
         data[index] = new Voxel_t2(objectType, (int)targetType, movable);
-
-        if (!valid.ContainsKey(index))
-        {
-            valid.Add(index, (byte)(1 << shift));
-        }
-        else
-        {
-            valid[index] |= (byte)(1 << shift);
-        }
     }
     private Vector3 GetCenter(Vector3 point)
     {
@@ -363,16 +389,6 @@ public class MapSampler3rd : MonoBehaviour
             return;
         }
 
-        Gizmos.color = Color.black;
-        foreach (var vIndex in valid.Keys)
-        {
-            float vx = vIndex >> 16;
-            float vy = (vIndex & 0xFF00) >> 8;
-            float vz = vIndex & 0xFF;
-
-            Gizmos.DrawCube(new Vector3(vx, vy, vz) * VOXEL_HALF_SIZE, Vector3.one * 0.025f);
-        }
-
         //draw voxel
         float gizmoSize = VOXEL_HALF_SIZE * 0.5f / Mathf.Sqrt(2);
         foreach (int index in data.Keys)
@@ -382,7 +398,6 @@ public class MapSampler3rd : MonoBehaviour
             float z = index & 0xFF;
 
             Vector3 center = new Vector3(x, y, z) * VOXEL_HALF_SIZE;
-
             if (center.y < drawHeightLow || center.y > drawHeightHigh)
                 continue;
 
