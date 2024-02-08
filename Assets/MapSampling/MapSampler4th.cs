@@ -181,7 +181,9 @@ public class MapSampler4th : MonoBehaviour
         else if (moveType >= GetDegreeType(voxel.BitToDeg(idxSub)))
         {
             int degreeMask = voxel.GetDegreeMask(idxSub, degreeInt);
-            int moveMask = voxel.GetMoveMask(idxSub, moveType);
+
+            int bit = (moveType != 1) ? 1 : 0;
+            int moveMask = voxel.GetMoveMask(idxSub, bit);
             data[idxVoxel] = new Voxel_t4(degreeMask | moveMask);
         }
     }
@@ -190,10 +192,10 @@ public class MapSampler4th : MonoBehaviour
         int type = 0;
         switch (degreeInt)
         {
-            case 90:
+            case 0:
                 type = 0;
                 break;
-            case 0:
+            case 90:
                 type = 1;
                 break;
             case 30:
