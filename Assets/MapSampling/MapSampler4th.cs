@@ -171,38 +171,38 @@ public class MapSampler4th : MonoBehaviour
             return;
         }
 
-        int isMovable;
-        switch (degreeInt)
-        {
-            case 0:
-            case 30:
-            case 45:
-                isMovable = 1; 
-                break;
-
-            case 90:
-            default:
-                isMovable = 0;
-                break;
-        }
-
+        int moveType = GetDegreeType(degreeInt);
         if (!data.TryGetValue(idxVoxel, out Voxel_t4 voxel))
         {
-            data.Add(idxVoxel, new Voxel_t4(idxSub, degreeInt, isMovable << idxSub));
+            int bit = (moveType > 0) ? 1 : 0;
+            data.Add(idxVoxel, new Voxel_t4(idxSub, degreeInt, bit << idxSub));
             c.Add(center);
         }
-        else
+        else if (moveType >= GetDegreeType(voxel.BitToDeg(idxSub)))
         {
-            int degreeMask = voxel.Degree;
-            if (degreeInt > voxel.BitToDeg(idxSub))
-            {
-                //memory stamp에 당했다.. 필요한 만큼만 비트 가져오기...
-                degreeMask = voxel.GetDegreeMask(idxSub, degreeInt);
-            }
-            int moveMask = voxel.GetMoveMask(idxSub, isMovable);
-
+            int degreeMask = voxel.GetDegreeMask(idxSub, degreeInt);
+            int moveMask = voxel.GetMoveMask(idxSub, moveType);
             data[idxVoxel] = new Voxel_t4(degreeMask | moveMask);
         }
+    }
+    private int GetDegreeType(int degreeInt)
+    {
+        int type = 0;
+        switch (degreeInt)
+        {
+            case 90:
+                type = 0;
+                break;
+            case 0:
+                type = 1;
+                break;
+            case 30:
+            case 45:
+                type = 2;
+                break;
+        }
+
+        return type;
     }
     private Vector3 GetCenter(Vector3 point)
     {
