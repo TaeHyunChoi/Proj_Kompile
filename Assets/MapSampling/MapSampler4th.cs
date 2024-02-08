@@ -135,6 +135,9 @@ public class MapSampler4th : MonoBehaviour
             Debug.Log($"Now Sampling ({f + 1}/{filter.Length})");
             yield return null;
         }
+
+        Debug.Log($"Sampling count:({data.Keys.Count})");
+
     }
 
     private int GetDegreeInt(float y1, float y2, float y3)

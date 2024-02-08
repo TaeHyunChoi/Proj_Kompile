@@ -5,16 +5,15 @@ public static class Public
     //save to config?
     public static readonly float FADE_SPEED = 1.25f;
     public static readonly float MOVE_SPEED = 4f;
-    public static readonly float GRID_SIZE = 1f;
-    public static readonly float GRID_SIZE_INVERT = 1f / 1f;
-    public static readonly float HALF_GRID_SIZE = 1f * 0.5f;
-    public static readonly float HALF_GRID_SIZE_INVERT = 1f / (1f * 0.5f);
+    //public static readonly float GRID_SIZE = 1f;
+    //public static readonly float GRID_SIZE_INVERT = 1f / 1f;
+    //public static readonly float HALF_GRID_SIZE = 1f * 0.5f;
+    //public static readonly float HALF_GRID_SIZE_INVERT = 1f / (1f * 0.5f);
 
-    //For test Sampler 3rd)
     public const float VOXEL_SIZE          = 1f;
-    public const float VOXEL_INVERT        = 1f;
-    public const float VOXEL_HALF_SIZE     = 0.5f;
-    public const float VOXEL_HALF_INVERT   = 2f;
+    public const float VOXEL_INVERT        = 1f / VOXEL_SIZE;
+    public const float VOXEL_HALF_SIZE     = 0.5f * VOXEL_SIZE;
+    public const float VOXEL_HALF_INVERT   = 1f / VOXEL_HALF_SIZE;
 
     public static void BlockInput(int input) { ;}
 }

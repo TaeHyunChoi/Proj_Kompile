@@ -69,15 +69,17 @@ public class UnitPlayer : Unit
     }
     private bool IsMovable(Dictionary<int, Voxel_t> voxel,Vector3 pos, Vector3 delta)
     {
-        Vector3 next = pos + delta;
-        Vector3 center = Parser.GetCenterPoint(next);
-        int radix = Parser.GetVoxelRadix(center);
+        Debug.Log("Need New Parser");
 
-        if (voxel.ContainsKey(radix) 
-            && Parser.GetVoxelType(voxel[radix], next - center) == VoxelType.Plain)
-        {
-            return true;
-        }
+        //Vector3 next = pos + delta;
+        //Vector3 center = Parser.GetCenterPoint(next);
+        //int radix = Parser.GetVoxelRadix(center);
+
+        //if (voxel.ContainsKey(radix) 
+        //    && Parser.GetVoxelType(voxel[radix], next - center) == VoxelType.Plain)
+        //{
+        //    return true;
+        //}
 
         return false;
     }
