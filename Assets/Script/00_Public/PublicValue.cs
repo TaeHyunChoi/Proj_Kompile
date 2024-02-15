@@ -14,6 +14,11 @@ public static class Public
     public const int SHIFT_SLOPE_DIRECTION =  8;  // 4 bits
     public const int SHIFT_MOVE            =  0;  // 8 bits
 
+    public const int OBSTACLE = 0b_00;
+    public const int PLAIN = 0b_01;
+    public const int SLOPE30 = 0b_10;
+    public const int SLOPE45 = 0b_11;
+
     public const float VOXEL_SIZE          = 0.5f;
     public const float VOXEL_INVERT        = 1f / VOXEL_SIZE;
     public const float VOXEL_HALF_SIZE     = 0.5f * VOXEL_SIZE;

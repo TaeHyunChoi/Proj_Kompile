@@ -21,11 +21,6 @@ public class MapSampler5th : MonoBehaviour
     private Dictionary<int, Voxel_t5> map;
     private MeshFilter[] filter;
 
-    private readonly int OBSTACLE = 0b_00;
-    private readonly int PLAIN    = 0b_01;
-    private readonly int SLOPE30  = 0b_10;
-    private readonly int SLOPE45  = 0b_11;
-
     private void Awake()
     {
         filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
@@ -44,8 +39,8 @@ public class MapSampler5th : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F1))
         {
-            //DataTable.WriteBinaryMapVoxel(data, fileName);
-            Debug.Log("save: Code not implemented;");
+            DataTable.WriteBinaryMappingData(map, fileName);
+            Debug.Log($"save: {fileName};");
         }
         if (Input.GetKeyDown(KeyCode.Delete))
         {
@@ -58,8 +53,8 @@ public class MapSampler5th : MonoBehaviour
         {
             if (map != null)
             {
-                //data = DataTable.LoadMapVoxel(fileName);
-                Debug.Log("load: Code not implemented;");
+                map = DataTable.LoadMappingData(fileName);
+                Debug.Log($"load: {fileName};");
             }
             else
             {
@@ -184,22 +179,13 @@ public class MapSampler5th : MonoBehaviour
     private void SetVoxel(int data, Vector3 point)
     {
         //Clamp(point) => get pivot => get index(key)
-        float cx = CMath.Floor1000(CMath.FloorToInt1000(point.x * VOXEL_INVERT) * VOXEL_SIZE);
-        float cy = CMath.Floor1000(CMath.FloorToInt1000(point.y * VOXEL_INVERT) * VOXEL_SIZE);
-        float cz = CMath.Floor1000(CMath.FloorToInt1000(point.z * VOXEL_INVERT) * VOXEL_SIZE);
-        Vector3 pivot = new Vector3(cx, cy, cz);
+        Vector3 pivot = Parser.GetVoxelPivot(point);
         int key = Parser.GetVoxelIndex(pivot);
 
         //Set Sub-voxel Type
         //1. Diagonal lines do not enter the point (sampling rule)
         //2. When moving, diagonal lines must be processed separately (all adjacent sub-voxels must be checked)
-        bool e1 = (point.z - pivot.z) >  (point.x - pivot.x);
-        bool e2 = (point.z - pivot.z) > -(point.x - pivot.x) + VOXEL_SIZE;
-        int idxMove = -1;
-        if (!e1 &  e2) { idxMove = 0; }
-        if ( e1 &  e2) { idxMove = 1; }
-        if ( e1 & !e2) { idxMove = 2; }
-        if (!e1 & !e2) { idxMove = 3; }
+        int idxMove = Parser.GetSubVoxelIndex(pivot, point);
         Debug.Assert(idxMove != -1, "Wrong sub index");
 
         int type = data >> SHIFT_SLOPE_DEGREE;

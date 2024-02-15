@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using PublicValue;
 
 internal class InField : ISequenceUpdater
 {
     private GameObject gameObject;
     private Transform transform;
 
-    private static Dictionary<int, Voxel_t> voxel;
+    //private static Dictionary<int, Voxel_t> voxel;
+    private static Dictionary<int, Voxel_t5> map;
     private static UnitPlayer player;
 
 
@@ -17,7 +19,7 @@ internal class InField : ISequenceUpdater
         gameObject = obj;
         transform  = obj.transform;
 
-        voxel = DataTable.LoadMapVoxel(obj.name);
+        map = DataTable.LoadMappingData(obj.name);
     }
     public async Task<bool> InitMap()
     {
@@ -84,7 +86,7 @@ internal class InField : ISequenceUpdater
 
         if (dir != Vector3.zero)
         {
-            player.Move(voxel, dir);
+            player.Move(map, dir);
         }
     }
 }

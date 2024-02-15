@@ -1,5 +1,6 @@
 using UnityEngine;
 using static Public;
+using CMathf;
 
 public static class Parser
 {
@@ -56,9 +57,30 @@ public static class Parser
     //    return index;
 
     //}
+    public static Vector3 GetVoxelPivot(Vector3 point)
+    {
+        float cx = CMath.Floor1000(CMath.FloorToInt1000(point.x * VOXEL_INVERT) * VOXEL_SIZE);
+        float cy = CMath.Floor1000(CMath.FloorToInt1000(point.y * VOXEL_INVERT) * VOXEL_SIZE);
+        float cz = CMath.Floor1000(CMath.FloorToInt1000(point.z * VOXEL_INVERT) * VOXEL_SIZE);
+
+        return new Vector3(cx, cy, cz);
+    }
     public static int GetVoxelIndex(Vector3 center)
     {
         return (int)(center.x * VOXEL_INVERT) << 16 | (int)(center.y * VOXEL_INVERT) << 8 | (int)(center.z * VOXEL_INVERT);
+    }
+    public static int GetSubVoxelIndex(Vector3 pivot, Vector3 point)
+    {
+        int index = -1;
+
+        bool e1 = (point.z - pivot.z) > (point.x - pivot.x);
+        bool e2 = (point.z - pivot.z) > -(point.x - pivot.x) + VOXEL_SIZE;
+        if      (!e1 &  e2) { index = 0; }
+        else if ( e1 &  e2) { index = 1; }
+        else if ( e1 & !e2) { index = 2; }
+        else if (!e1 & !e2) { index = 3; }
+
+        return index;
     }
 
     public static VoxelType GetVoxelType(Voxel_t data, Vector3 diff)
