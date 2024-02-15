@@ -10,7 +10,11 @@ public static class Public
     //public static readonly float HALF_GRID_SIZE = 1f * 0.5f;
     //public static readonly float HALF_GRID_SIZE_INVERT = 1f / (1f * 0.5f);
 
-    public const float VOXEL_SIZE          = 1f;
+    public const int SHIFT_SLOPE_DEGREE      = 12;  // 2 bits
+    public const int SHIFT_SLOPE_DIRECTION =  8;  // 4 bits
+    public const int SHIFT_MOVE            =  0;  // 8 bits
+
+    public const float VOXEL_SIZE          = 0.5f;
     public const float VOXEL_INVERT        = 1f / VOXEL_SIZE;
     public const float VOXEL_HALF_SIZE     = 0.5f * VOXEL_SIZE;
     public const float VOXEL_HALF_INVERT   = 1f / VOXEL_HALF_SIZE;
@@ -117,7 +121,6 @@ public enum VoxelType : int
 
 
 // struct
-
 [Serializable]
 public struct Voxel_t
 {
@@ -136,6 +139,7 @@ public struct Voxel_t
 
 namespace PublicValue
 {
+    [Serializable]
     public struct Voxel_t3
     {
         private const int BITSHIFT_INCLINE = 4 * 2;  //use 2 bits (0,30,45,90)
@@ -194,6 +198,8 @@ namespace PublicValue
             data = (int)objType << BITSHIFT_OBJECT | incline << BITSHIFT_INCLINE | move;
         }
     }
+    
+    [Serializable]
     public struct Voxel_t4
     {
         // [8:__] [16:slope] [8:movable]
@@ -271,6 +277,30 @@ namespace PublicValue
             }
 
             data = degreeMask | moveMask;
+        }
+    }
+
+    [Serializable]
+    public struct Voxel_t5
+    {
+        private int data;
+
+        public int Data { get => data; }
+        public int Move { get => data & 0xFF; }
+        public int SlopeDirection { get => (data & 0x0F00) >> Public.SHIFT_SLOPE_DIRECTION; }
+        public int SlopeDegree { get => (data >> Public.SHIFT_SLOPE_DEGREE); }
+
+        public int GetSubType(int shift)
+        {
+            shift *= 2;
+            int sub = data & (0b11 << shift);
+            sub &= 0xFF;
+            return sub >> shift;
+        }
+
+        public Voxel_t5(int data)
+        {
+            this.data = data;
         }
     }
 }

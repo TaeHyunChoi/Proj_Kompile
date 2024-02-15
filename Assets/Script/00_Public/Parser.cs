@@ -46,14 +46,19 @@ public static class Parser
 
     //    return radix;
     //}
+
+    //public static int GetVoxelIndex(Vector3 center)
+    //{
+    //    int index =   (int)(center.x * VOXEL_HALF_INVERT) << 16
+    //                | (int)(center.y * VOXEL_HALF_INVERT) << 8
+    //                | (int)(center.z * VOXEL_HALF_INVERT) << 0;
+
+    //    return index;
+
+    //}
     public static int GetVoxelIndex(Vector3 center)
     {
-        int index =   (int)(center.x * VOXEL_HALF_INVERT) << 16
-                    | (int)(center.y * VOXEL_HALF_INVERT) << 8
-                    | (int)(center.z * VOXEL_HALF_INVERT) << 0;
-
-        return index;
-
+        return (int)(center.x * VOXEL_INVERT) << 16 | (int)(center.y * VOXEL_INVERT) << 8 | (int)(center.z * VOXEL_INVERT);
     }
 
     public static VoxelType GetVoxelType(Voxel_t data, Vector3 diff)
