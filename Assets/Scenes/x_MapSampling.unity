@@ -1133,6 +1133,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 7c239f7a73296084b8337c2cf88f1e68, type: 2}
+    - target: {fileID: 1549666830293975317, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 896943f4adac8944b852787bdeaa8b86, type: 2}
     - target: {fileID: 1549666831473289859, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
       propertyPath: m_Name
       value: 020_FieldTest

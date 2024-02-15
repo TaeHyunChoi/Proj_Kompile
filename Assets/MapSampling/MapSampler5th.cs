@@ -21,8 +21,8 @@ public class MapSampler5th : MonoBehaviour
     private Dictionary<int, Voxel_t5> map;
     private MeshFilter[] filter;
 
-    private readonly int PLAIN    = 0b_00;
-    private readonly int OBSTACLE = 0b_01;
+    private readonly int OBSTACLE = 0b_00;
+    private readonly int PLAIN    = 0b_01;
     private readonly int SLOPE30  = 0b_10;
     private readonly int SLOPE45  = 0b_11;
 
@@ -40,7 +40,42 @@ public class MapSampler5th : MonoBehaviour
 
         Sampling();
     }
-
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            //DataTable.WriteBinaryMapVoxel(data, fileName);
+            Debug.Log("save: Code not implemented;");
+        }
+        if (Input.GetKeyDown(KeyCode.Delete))
+        {
+            if (map != null)
+            {
+                map.Clear();
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.F2))
+        {
+            if (map != null)
+            {
+                //data = DataTable.LoadMapVoxel(fileName);
+                Debug.Log("load: Code not implemented;");
+            }
+            else
+            {
+                Debug.Log("load: data is null;");
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (map != null)
+            {
+                map.Clear();
+            }
+            filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
+            Sampling();
+        }
+    }
     private void Sampling()
     {
         Coroutiner.PlayCoroutine(SamplingVoxels());
@@ -105,18 +140,6 @@ public class MapSampler5th : MonoBehaviour
         }
 
         Debug.Log($"Sampling count:({map.Keys.Count})");
-
-        //foreach (int key in map.Keys)
-        //{
-        //    float x = (key & 0x_FF_0000) >> 16;
-        //    float y = (key & 0x_00_FF00) >> 8;
-        //    float z = (key & 0x_00_00FF);
-
-        //    Vector3 pivot = new Vector3(x, y, z) * VOXEL_SIZE;
-        //    Voxel_t5 voxel = map[key];
-        //    Debug.Log($"[GET]{pivot:F3} SLOPE_DEG:{voxel.SlopeDegree} SLOPE_DIR:{System.Convert.ToString(voxel.SlopeDirection, 2)}\n\tMOVE:{System.Convert.ToString(voxel.Move, 2)}");
-        //    //Debug.Log($"[GET:{3}]{pivot:F3} type:{voxel.SlopeDegree} => 3:{voxel.GetSubType(3)}");
-        //}
     }
 
     private int SetSlopeData(Vector3 normal1, Vector3 normal2, Vector3 normal3)
@@ -179,14 +202,6 @@ public class MapSampler5th : MonoBehaviour
         if (!e1 & !e2) { idxMove = 3; }
         Debug.Assert(idxMove != -1, "Wrong sub index");
 
-        //int type = -1;
-        //switch (data >> SHIFT_SLOPE_DEGREE)
-        //{
-        //    case 0: type = PLAIN; break;  // plain
-        //    case 3: type = OBSTACLE; break;  // obstacle
-        //    case 1: type = 0b_10; break;  // slope30
-        //    case 2: type = 0b_01; break;  // slope45
-        //}
         int type = data >> SHIFT_SLOPE_DEGREE;
         Debug.Assert(0 <= type && type < 4, $"Wrong sub type({type})");
 
@@ -195,12 +210,24 @@ public class MapSampler5th : MonoBehaviour
             map.Add(key, new Voxel_t5(data));
         }
 
-        //degree, direction 2개를 따져야 하는데
-        else if (type > voxel.GetSubType(idxMove))
+        else if (type > voxel.GetSubType(idxMove)
+            || type == OBSTACLE && voxel.GetSubType(idxMove) == PLAIN) //Exception: To treat the default value as obstacle
         {
             int newData = voxel.Data;
+
+            //Update Slope Degree (ex. obstacle => slope)
+            int degree = data >> SHIFT_SLOPE_DEGREE;
+            if (degree > voxel.SlopeDegree)
+            {
+                newData &= ~(0b11 << SHIFT_SLOPE_DEGREE);
+                newData |= degree << SHIFT_SLOPE_DEGREE;
+            }
+
+            //Update Sub-voxel Type
             newData &= ~(0b11 << (idxMove * 2));
             newData |= type << (idxMove * 2);
+
+            //Update Data
             map[key] = new Voxel_t5(newData);
         }
     }
