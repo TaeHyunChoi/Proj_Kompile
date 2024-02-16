@@ -29,7 +29,6 @@ public class UnitPlayer : Unit
         new Vector3( VOXEL_HALF_SIZE       ,  0f, -VOXEL_HALF_SIZE       ).normalized,
         new Vector3( VOXEL_HALF_SIZE       ,  0f, -VOXEL_HALF_SIZE * 0.5f).normalized
     };
-    private Vector3[] collisionPoints         = new Vector3[2];
     private Vector3[] direction               = new Vector3[5];
 
     private bool hasRightPriority;
@@ -47,17 +46,14 @@ public class UnitPlayer : Unit
 
         for (int i = 0; i < direction.Length; ++i)
         {
-            int idxTarget = GetDirectionIndex(direction[i]);
-            Vector3 colPoint1 = position + cacheDirection[(idxTarget + 1)      % 16] * (delta + VOXEL_HALF_SIZE);
-            Vector3 colPoint2 = position + cacheDirection[(idxTarget - 1 + 16) % 16] * (delta + VOXEL_HALF_SIZE);
+            int     idxTarget = GetDirectionIndex(direction[i]);
+            Vector3 colPoint1 = CMath.Floor1000Vector3(position + cacheDirection[(idxTarget + 1) % 16]      * (delta + VOXEL_HALF_SIZE));
+            Vector3 colPoint2 = CMath.Floor1000Vector3(position + cacheDirection[(idxTarget - 1 + 16) % 16] * (delta + VOXEL_HALF_SIZE));
 
-            for (int j = 0; j < collisionPoints.Length; ++j)
+            if (DoesNotCollided(map, colPoint1) && DoesNotCollided(map, colPoint2))
             {
-                if (DoesNotCollided(map, colPoint1, colPoint2))
-                {
-                    inputDir = direction[i];
-                    goto MOVE;
-                }
+                inputDir = direction[i];
+                goto MOVE;
             }
         }
 
@@ -147,34 +143,19 @@ public class UnitPlayer : Unit
     }
 
     //I don't want to use heap memory, so I pass it as a parameter. (Close your eyes on code duplication...)
-    private bool DoesNotCollided(Dictionary<int, Voxel_t> map, Vector3 colPoint1, Vector3 colPoint2)
+    private bool DoesNotCollided(Dictionary<int, Voxel_t> map, Vector3 colPoint)
     {
-        Vector3 pivot;
-        int key;
-
-        //collision point #1
-        pivot = Parser.GetVoxelPivot(colPoint1);
-        key = Parser.GetVoxelIndex(pivot);
-        if (map.TryGetValue(key, out Voxel_t voxel1))
-        {
-            int idxSub = Parser.GetSubVoxelIndex(pivot, colPoint1);
-            if (voxel1.GetSubType(idxSub) == OBSTACLE)
-            {
-                return false;
-            }
-        }
-        else
+        if (colPoint.x < 0 || colPoint.z < 0)
         {
             return false;
         }
 
-        //collision point #2
-        pivot = Parser.GetVoxelPivot(colPoint2);
-        key = Parser.GetVoxelIndex(pivot);
-        if (map.TryGetValue(key, out Voxel_t voxel2))
+        Vector3 pivot = Parser.GetVoxelPivot(colPoint);
+        int key = Parser.GetVoxelIndex(pivot);
+        if (map.TryGetValue(key, out Voxel_t voxel1))
         {
-            int idxSub = Parser.GetSubVoxelIndex(pivot, colPoint2);
-            if (voxel2.GetSubType(idxSub) == OBSTACLE)
+            int idxSub = Parser.GetSubVoxelIndex(pivot, colPoint);
+            if (voxel1.GetSubType(idxSub) == OBSTACLE)
             {
                 return false;
             }
