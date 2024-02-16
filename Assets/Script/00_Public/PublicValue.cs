@@ -123,170 +123,11 @@ public enum VoxelType : int
     Obstacle,
 }
 
-
-
-// struct
-[Serializable]
-public struct Voxel_t
-{
-    public Voxel_t(int sub)
-    {
-        this.sub = sub;
-    }
-    private int sub;
-    public int SubVoxel { get => sub; }
-    public VoxelType GetSubType(int quadrant)
-    {
-        int typed = sub & (0b11 << quadrant * 2);
-        return (VoxelType)(typed >> (quadrant * 2));
-    }
-}
-
-namespace PublicValue
+//굳이  namespace 나눌 필요는 없으나 사용해보고 싶었다.
+namespace CDataStructure
 {
     [Serializable]
-    public struct Voxel_t3
-    {
-        private const int BITSHIFT_INCLINE = 4 * 2;  //use 2 bits (0,30,45,90)
-        private const int BITSHIFT_OBJECT = 4 * 3;   // normal.y (None, Plain, Obstacle, Trigger?)
-
-        private int data;
-
-        public int Data { get => data; }
-        public int Incline
-        {
-            get
-            {
-                int inc = data & (0b11 << BITSHIFT_INCLINE);
-                inc >>= BITSHIFT_INCLINE;
-
-                switch (inc)
-                {
-                    case 1: return 30;
-                    case 2: return 45;
-                    case 3: return 90;
-                }
-
-                return 0;
-            }
-        }
-        public VoxelType ObjectType
-        {
-            get
-            {
-                int type = data & (0b11 << BITSHIFT_OBJECT);
-                type >>= BITSHIFT_OBJECT;
-
-                return (VoxelType)type;
-            }
-        }
-        public int Move
-        {
-            get
-            {
-                return data & 0xFF;
-            }
-        }
-
-
-        public bool IsMovable(int idxSub)
-        {
-            return (data & (1 << idxSub)) != 0;
-        }
-
-        public Voxel_t3(int data)
-        {
-            this.data = data;
-        }
-        public Voxel_t3(VoxelType objType, int incline, int move)
-        {
-            data = (int)objType << BITSHIFT_OBJECT | incline << BITSHIFT_INCLINE | move;
-        }
-    }
-    
-    [Serializable]
-    public struct Voxel_t4
-    {
-        // [8:__] [16:slope] [8:movable]
-        private const int BITSHIFT_Degree = 8;
-        private int data;
-
-        //Degree
-        public int Degree { get => data & 0xFFFF00; }
-        public int Move   { get => data & 0x0000FF; }
-        public int DegToBit(int degreeInt)
-        {
-            switch (degreeInt)
-            {
-                case 30: return 1;
-                case 45: return 2;
-                case 90: return 3;
-            }
-
-            return 0;
-        }
-        public int BitToDeg(int idxSub)
-        {
-            int shift = (idxSub * 2) + BITSHIFT_Degree;
-            int inc = data & (0b11 << shift);
-
-            switch (inc >>= shift)
-            {
-                case 1: return 30;
-                case 2: return 45;
-                case 3: return 90;
-            }
-
-            return 0;
-        }
-        public int GetDegreeMask(int idxSub, int degreeInt)
-        {
-            int shift = (idxSub * 2) + BITSHIFT_Degree;
-
-            int degMask = Degree & ~(0b11 << shift);
-            return degMask |= DegToBit(degreeInt) << shift;
-        }
-
-        //Move
-        public int GetMoveMask(int idxSub, int isMove)
-        {
-            if (isMove == 0)
-            {
-                return Move & ~(1 << idxSub);
-            }
-            else
-            {
-                return Move | (1 << idxSub);
-            }
-        }
-        public bool IsMovable(int idxSub)
-        {
-            return (Move & (1 << idxSub)) != 0;
-        }
-
-        public Voxel_t4(int data)
-        {
-            this.data = data;
-        }
-        public Voxel_t4(int sub, int degreeInt, int moveMask)
-        {
-            int degreeMask;
-            int shift = BITSHIFT_Degree + sub * 2;
-
-            switch (degreeInt)
-            {
-                case 90: degreeMask = 0b11 << shift; break;
-                case 45: degreeMask = 0b10 << shift; break;
-                case 30: degreeMask = 0b01 << shift; break;
-                default: degreeMask = 0b00 << shift; break;
-            }
-
-            data = degreeMask | moveMask;
-        }
-    }
-
-    [Serializable]
-    public struct Voxel_t5
+    public struct Voxel_t
     {
         private int data;
 
@@ -303,7 +144,7 @@ namespace PublicValue
             return sub >> shift;
         }
 
-        public Voxel_t5(int data)
+        public Voxel_t(int data)
         {
             this.data = data;
         }

@@ -1,5 +1,5 @@
 using CMathf;
-using PublicValue;
+using CDataStructure;
 using static Public;
 
 using UnityEngine;
@@ -18,7 +18,7 @@ public class MapSampler5th : MonoBehaviour
     [SerializeField] private float drawHeightLow;
     [SerializeField] private float drawHeightHigh;
 
-    private Dictionary<int, Voxel_t5> map;
+    private Dictionary<int, Voxel_t> map;
     private MeshFilter[] filter;
 
     private void Awake()
@@ -77,7 +77,7 @@ public class MapSampler5th : MonoBehaviour
     }
     private IEnumerator<int> SamplingVoxels()
     {
-        map = new Dictionary<int, Voxel_t5>();
+        map = new Dictionary<int, Voxel_t>();
 
         for (int f = 0; f < filter.Length; ++f)
         {
@@ -191,9 +191,9 @@ public class MapSampler5th : MonoBehaviour
         int type = data >> SHIFT_SLOPE_DEGREE;
         Debug.Assert(0 <= type && type < 4, $"Wrong sub type({type})");
 
-        if (!map.TryGetValue(key, out Voxel_t5 voxel))
+        if (!map.TryGetValue(key, out Voxel_t voxel))
         {
-            map.Add(key, new Voxel_t5(data));
+            map.Add(key, new Voxel_t(data));
         }
 
         else if (type > voxel.GetSubType(idxMove)
@@ -214,7 +214,7 @@ public class MapSampler5th : MonoBehaviour
             newData |= type << (idxMove * 2);
 
             //Update Data
-            map[key] = new Voxel_t5(newData);
+            map[key] = new Voxel_t(newData);
         }
     }
     private void OnDrawGizmos()
@@ -245,7 +245,7 @@ public class MapSampler5th : MonoBehaviour
             Gizmos.DrawLine(pivot + Vector3.right * VOXEL_SIZE, pivot + new Vector3(1, 0, 1) * VOXEL_SIZE);
 
             //draw sub-voxel type
-            Voxel_t5 voxel = map[key];
+            Voxel_t voxel = map[key];
             int move = voxel.Move;
             Vector3 center = pivot + new Vector3(1, 0, 1) * VOXEL_HALF_SIZE;
             for (int i = 0; i < 4; ++i)

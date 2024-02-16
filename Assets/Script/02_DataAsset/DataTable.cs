@@ -3,7 +3,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
-using PublicValue;
+using CDataStructure;
 
 /// <summary>
 /// [목표] CSV 데이터 불러오기 최적화 (속도 향상을 위하여 안정성은 상대적으로 낮춤)
@@ -101,7 +101,7 @@ public class DataTable
 
 
     // map sampling
-    public static void WriteBinaryMappingData(Dictionary<int, Voxel_t5> data, string fileName)
+    public static void WriteBinaryMappingData(Dictionary<int, Voxel_t> data, string fileName)
     {
         BinaryFormatter binaryFormatter = new BinaryFormatter();
         string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
@@ -112,7 +112,7 @@ public class DataTable
 
         fileStream.Close();
     }
-    public static Dictionary<int, Voxel_t5> LoadMappingData(string fileName)
+    public static Dictionary<int, Voxel_t> LoadMappingData(string fileName)
     {
         string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
         if (File.Exists(filePath))
@@ -121,7 +121,7 @@ public class DataTable
             FileStream fileStream = File.Open(filePath, FileMode.Open);
 
             // 파일에서 데이터를 역직렬화하여 Dictionary에 로드
-            Dictionary<int, Voxel_t5> map = (Dictionary<int, Voxel_t5>)binaryFormatter.Deserialize(fileStream);
+            Dictionary<int, Voxel_t> map = (Dictionary<int, Voxel_t>)binaryFormatter.Deserialize(fileStream);
 
             fileStream.Close();
             return map;

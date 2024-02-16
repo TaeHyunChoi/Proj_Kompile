@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using PublicValue;
+using CDataStructure;
 
 internal class InField : ISequenceUpdater
 {
@@ -10,7 +10,7 @@ internal class InField : ISequenceUpdater
     private Transform transform;
 
     //private static Dictionary<int, Voxel_t> voxel;
-    private static Dictionary<int, Voxel_t5> map;
+    private static Dictionary<int, Voxel_t> map;
     private static UnitPlayer player;
 
 
