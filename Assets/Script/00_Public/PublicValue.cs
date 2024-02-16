@@ -123,7 +123,7 @@ public enum VoxelType : int
     Obstacle,
 }
 
-//굳이  namespace 나눌 필요는 없으나 사용해보고 싶었다.
+//Currently there was no need to use a separate namespace... but I wanted to try it.
 namespace CDataStructure
 {
     [Serializable]
