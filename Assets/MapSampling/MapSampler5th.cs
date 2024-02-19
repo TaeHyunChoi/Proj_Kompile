@@ -98,8 +98,7 @@ public class MapSampler5th : MonoBehaviour
                 Vector3 normal3 = rotation * normals[triangles[t + 2]];
                 normal3.Normalize();
 
-                int data = SetSlopeData(normal1, normal2, normal3);
-                if (data == -1)
+                if (!GetSlopeData(normal1, normal2, normal3, out int slopeData))
                 {
                     continue;
                 }
@@ -125,7 +124,7 @@ public class MapSampler5th : MonoBehaviour
                     {
                         ratio = CMath.Floor1000((float)j / samplingCountABtoAC);
                         Vector3 samplingPoint = CMath.Floor1000Vector3(Vector3.Lerp(AB, AC, ratio));
-                        SetVoxel(data, samplingPoint);
+                        SetVoxel(slopeData, samplingPoint);
                     }
                 }
             }
@@ -137,9 +136,9 @@ public class MapSampler5th : MonoBehaviour
         Debug.Log($"Sampling count:({map.Keys.Count})");
     }
 
-    private int SetSlopeData(Vector3 normal1, Vector3 normal2, Vector3 normal3)
+    private bool GetSlopeData(Vector3 normal1, Vector3 normal2, Vector3 normal3, out int slopeData)
     {
-        int data = 0, mask = 0;
+        slopeData = 0;
 
         //Find the normal value that serves as the standard.
         //To avoid floating point problems, round off at 3 decimal places.
@@ -148,39 +147,32 @@ public class MapSampler5th : MonoBehaviour
         if (normal3.y < normal.y) { normal = normal3; }
         normal = CMath.Floor1000Vector3(normal);
 
-        //The side is excluded because it is not subject to movement.
-        if (normal.y == 0.000f)
-        {
-            return -1;
-        }
-
         //Set Slope Degree Type
         //There are only 4 slope angles.
-        if      (normal.y == -1.000f) { mask = OBSTACLE; }
-        else if (normal.y ==  1.000f) { mask = PLAIN; }
-        else if (normal.y ==  0.707f) { mask = SLOPE45; }
-        else if (normal.y ==  0.500f) { mask = SLOPE30; }
-        data = mask << SHIFT_SLOPE_DEGREE;
+        int shift = 4;
+        if      (normal.y == -1.000f) { slopeData = OBSTACLE << shift; }
+        else if (normal.y ==  1.000f) { slopeData = PLAIN    << shift; }
+        else if (normal.y ==  0.500f) { slopeData = SLOPE30  << shift; }
+        else if (normal.y ==  0.707f) { slopeData = SLOPE45  << shift; }
+        else    { return false; }
 
         //Set Slope Diretion Flag (zero 0b_00, positive 0b_01, negative 0b_11)
         //The direction opposite to the direction indicated by normal value is the direction in which the slope increases.
-        if (mask == SLOPE30 || mask == SLOPE45)
+        if (slopeData > (PLAIN << shift))
         {
-            mask = 0b_00;
-            if      (normal.x < 0) { mask |= 0b_01_00; }
-            else if (normal.x > 0) { mask |= 0b_11_00; }
-            if      (normal.z < 0) { mask |= 0b_00_01; }
-            else if (normal.z > 0) { mask |= 0b_00_11; }
-            data |= mask << SHIFT_SLOPE_DIRECTION;
+            if      (normal.x < 0) { slopeData |= 0b_01_00; }
+            else if (normal.x > 0) { slopeData |= 0b_11_00; }
+            if      (normal.z < 0) { slopeData |= 0b_00_01; }
+            else if (normal.z > 0) { slopeData |= 0b_00_11; }
         }
 
-        return data;
+        return true;
     }
-    private void SetVoxel(int data, Vector3 point)
+    private void SetVoxel(int slopeData, Vector3 point)
     {
         //Clamp(point) => get pivot => get index(key)
         Vector3 pivot = Parser.GetVoxelPivot(point);
-        int key = Parser.GetVoxelIndex(pivot);
+        int key = Parser.GetVoxelKeyFromPivot(pivot);
 
         //Set Sub-voxel Type
         //1. Diagonal lines do not enter the point (sampling rule)
@@ -188,32 +180,29 @@ public class MapSampler5th : MonoBehaviour
         int idxMove = Parser.GetSubVoxelIndex(pivot, point);
         Debug.Assert(idxMove != -1, "Wrong sub index");
 
-        int type = data >> SHIFT_SLOPE_DEGREE;
-        Debug.Assert(0 <= type && type < 4, $"Wrong sub type({type})");
+        int sub      = slopeData >> 4;
+        int slopeDir = slopeData & 0b_11_11;
 
         if (!map.TryGetValue(key, out Voxel_t voxel))
         {
-            map.Add(key, new Voxel_t(data));
+            map.Add(key, new Voxel_t((slopeDir << SHIFT_SLOPE_DIRECTION) | (sub << idxMove * 2)));
+            return;
         }
 
-        else if (type > voxel.GetSubType(idxMove)
-            || type == OBSTACLE && voxel.GetSubType(idxMove) == PLAIN) //Exception: To treat the default value as obstacle
+        //Update Sub voxel (ex. obstacle => slope)
+        int targetSub = voxel.GetSubType(idxMove);
+        if (sub > targetSub
+            || (sub == OBSTACLE && targetSub == PLAIN)) //Exception: To treat the default value as obstacle
         {
+            //여기서 dir도 같이 갱신해야 하는구나?
+
             int newData = voxel.Data;
+            newData &= ~(0b_11_11 << SHIFT_SLOPE_DIRECTION);
+            newData |=   slopeDir << SHIFT_SLOPE_DIRECTION;
 
-            //Update Slope Degree (ex. obstacle => slope)
-            int degree = data >> SHIFT_SLOPE_DEGREE;
-            if (degree > voxel.SlopeDegree)
-            {
-                newData &= ~(0b11 << SHIFT_SLOPE_DEGREE);
-                newData |= degree << SHIFT_SLOPE_DEGREE;
-            }
+            newData &= ~(0b_11    << (idxMove * 2));
+            newData |= sub << (idxMove * 2);
 
-            //Update Sub-voxel Type
-            newData &= ~(0b11 << (idxMove * 2));
-            newData |= type << (idxMove * 2);
-
-            //Update Data
             map[key] = new Voxel_t(newData);
         }
     }
@@ -246,7 +235,7 @@ public class MapSampler5th : MonoBehaviour
 
             //draw sub-voxel type
             Voxel_t voxel = map[key];
-            int move = voxel.Move;
+            int move = voxel.Sub;
             Vector3 center = pivot + new Vector3(1, 0, 1) * VOXEL_HALF_SIZE;
             for (int i = 0; i < 4; ++i)
             {

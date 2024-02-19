@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 public static class Public
 {
@@ -10,9 +11,8 @@ public static class Public
     //public static readonly float HALF_GRID_SIZE = 1f * 0.5f;
     //public static readonly float HALF_GRID_SIZE_INVERT = 1f / (1f * 0.5f);
 
-    public const int SHIFT_SLOPE_DEGREE      = 12;  // 2 bits
-    public const int SHIFT_SLOPE_DIRECTION =  8;  // 4 bits
-    public const int SHIFT_MOVE            =  0;  // 8 bits
+    public const int SHIFT_SLOPE_DIRECTION   =  8;  // 4 bits
+    public const int SHIFT_SUB              =  0;  // 8 bits
 
     public const int OBSTACLE = 0b_00;
     public const int PLAIN = 0b_01;
@@ -131,16 +131,15 @@ namespace CDataStructure
     {
         private int data;
 
+        //getter
         public int Data { get => data; }
-        public int Move { get => data & 0xFF; }
-        public int SlopeDirection { get => (data & 0x0F00) >> Public.SHIFT_SLOPE_DIRECTION; }
-        public int SlopeDegree { get => (data >> Public.SHIFT_SLOPE_DEGREE); }
+        public int Sub { get => data & 0xFF; }
 
+        //get func
         public int GetSubType(int shift)
         {
             shift *= 2;
             int sub = data & (0b11 << shift);
-            sub &= 0xFF;
             return sub >> shift;
         }
 

@@ -50,7 +50,7 @@ public class UnitPlayer : Unit
             Vector3 colPoint1 = CMath.Floor1000Vector3(position + cacheDirection[(idxTarget + 1) % 16]      * (delta + VOXEL_HALF_SIZE));
             Vector3 colPoint2 = CMath.Floor1000Vector3(position + cacheDirection[(idxTarget - 1 + 16) % 16] * (delta + VOXEL_HALF_SIZE));
 
-            if (DoesNotCollided(map, colPoint1) && DoesNotCollided(map, colPoint2))
+            if (!IsCollidedOrNull(map, colPoint1) && !IsCollidedOrNull(map, colPoint2))
             {
                 inputDir = direction[i];
                 goto MOVE;
@@ -61,13 +61,14 @@ public class UnitPlayer : Unit
         return;
 
     MOVE:
+        inputDir.Normalize();
         transform.position += delta * inputDir;
 
         //Set Move Priority
         if      (inputDir.x > 0) { hasRightPriority = true;  }
         else if (inputDir.x < 0) { hasRightPriority = false; }
-        if      (inputDir.z > 0) { hasUpPriority = true; }
-        else if (inputDir.z < 0) { hasUpPriority = false; }
+        if      (inputDir.z > 0) { hasUpPriority    = true;  }
+        else if (inputDir.z < 0) { hasUpPriority    = false; }
     }
     private int GetDirectionIndex(Vector3 inputDir)
     {
@@ -142,8 +143,7 @@ public class UnitPlayer : Unit
         }
     }
 
-    //I don't want to use heap memory, so I pass it as a parameter. (Close your eyes on code duplication...)
-    private bool DoesNotCollided(Dictionary<int, Voxel_t> map, Vector3 colPoint)
+    private bool IsCollidedOrNull(Dictionary<int, Voxel_t> map, Vector3 colPoint)
     {
         if (colPoint.x < 0 || colPoint.z < 0)
         {
@@ -151,21 +151,21 @@ public class UnitPlayer : Unit
         }
 
         Vector3 pivot = Parser.GetVoxelPivot(colPoint);
-        int key = Parser.GetVoxelIndex(pivot);
-        if (map.TryGetValue(key, out Voxel_t voxel1))
+        int key = Parser.GetVoxelKeyFromPivot(pivot);
+        if (map.TryGetValue(key, out Voxel_t voxel))
         {
             int idxSub = Parser.GetSubVoxelIndex(pivot, colPoint);
-            if (voxel1.GetSubType(idxSub) == OBSTACLE)
+            if (voxel.GetSubType(idxSub) == OBSTACLE)
             {
-                return false;
+                return true; // is collided.
             }
         }
         else
         {
-            return false;
+            return true; // null voxel;
         }
 
-        return true;
+        return false;
     }
 
     //private void OnDrawGizmos()
@@ -176,7 +176,6 @@ public class UnitPlayer : Unit
     //    Gizmos.color = Color.white;
     //    Gizmos.DrawLine(collisionPoints[0], collisionPoints[1]);
     //}
-
 
     #region [Not Used] Vector rotation was used, but it cannot be used because there is a problem with the diagonal movement distance attached to the wall.
     /*

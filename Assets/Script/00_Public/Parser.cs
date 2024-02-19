@@ -1,6 +1,8 @@
 using UnityEngine;
 using static Public;
 using CMathf;
+using CDataStructure;
+using System.Collections.Generic;
 
 public static class Parser
 {
@@ -12,7 +14,24 @@ public static class Parser
 
         return new Vector3(cx, cy, cz);
     }
-    public static int GetVoxelIndex(Vector3 pivot)
+    public static bool GetVoxel(Dictionary<int, Voxel_t> map, Vector3 point, out Voxel_t voxel)
+    {
+        Vector3 pivot = GetVoxelPivot(point);
+        int key = GetVoxelKeyFromPivot(pivot);
+
+        if (map.TryGetValue(key, out voxel))
+        {
+            return true;
+        }
+
+        return false;
+    }
+    public static int GetVoxelKeyFromPoint(Vector3 point)
+    {
+        Vector3 pivot = GetVoxelPivot(point);
+        return GetVoxelKeyFromPivot(pivot);
+    }
+    public static int GetVoxelKeyFromPivot(Vector3 pivot)
     {
         return (int)(pivot.x * VOXEL_INVERT) << 16 | (int)(pivot.y * VOXEL_INVERT) << 8 | (int)(pivot.z * VOXEL_INVERT);
     }
