@@ -235,7 +235,7 @@ public class MapSampler5th : MonoBehaviour
 
             //draw sub-voxel type
             Voxel_t voxel = map[key];
-            int move = voxel.Sub;
+            int move = voxel.SUB;
             Vector3 center = pivot + new Vector3(1, 0, 1) * VOXEL_HALF_SIZE;
             for (int i = 0; i < 4; ++i)
             {

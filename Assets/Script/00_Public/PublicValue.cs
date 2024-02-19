@@ -131,15 +131,34 @@ namespace CDataStructure
     {
         private int data;
 
-        //getter
         public int Data { get => data; }
-        public int Sub { get => data & 0xFF; }
+        public int SUB { get => data & 0xFF; }
+        public int SlopeFlag { get => (data >> Public.SHIFT_SLOPE_DIRECTION); }
+        public Vector3 SlopeDirection
+        {
+            get
+            {
+                int flag = (data >> Public.SHIFT_SLOPE_DIRECTION);
+                int fx = (flag & 0b1100), fz = (flag & 0b0011);
+                float x, z;
 
-        //get func
+                if      (fx == 0b0100) { x =  1f; }
+                else if (fx == 0b1100) { x = -1f; }
+                else                   { x =  0f; }
+
+                if      (fz == 0b0001) { z =  1f; }
+                else if (fz == 0b0011) { z = -1f; }
+                else                   { z =  0f; }
+
+                return new Vector3(x, 0, z);
+            }
+        }
+
         public int GetSubType(int shift)
         {
             shift *= 2;
             int sub = data & (0b11 << shift);
+            //sub &= 0xFF;
             return sub >> shift;
         }
 

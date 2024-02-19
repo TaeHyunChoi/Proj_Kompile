@@ -39,7 +39,7 @@ public class UnitPlayer : Unit
         inputDir.Normalize();
         Vector3 position = CMath.Floor1000Vector3(transform.position);
         float delta = Time.deltaTime * MOVE_SPEED;
-
+        Vector3 y = Vector3.zero;
         //Conflict with OBSTACLE?
         int idxDir = GetDirectionIndex(inputDir);
         GetTargetDirections(idxDir);
@@ -55,10 +55,26 @@ public class UnitPlayer : Unit
                 inputDir = direction[i];
                 goto MOVE;
             }
+
+            y = new Vector3(0f, VOXEL_SIZE - 0.001f, 0f);
+            if (!IsCollidedOrNull(map, colPoint1 + y) && !IsCollidedOrNull(map, colPoint2 + y))
+            {
+                inputDir = direction[i];
+                goto MOVE;
+            }
+
+            y = -y;
+            if (!IsCollidedOrNull(map, colPoint1 + y) && !IsCollidedOrNull(map, colPoint2 + y))
+            {
+                inputDir = direction[i];
+                goto MOVE;
+            }
         }
 
         Debug.Log("Can`t move here. Move to oppsite side of last input?");
         return;
+
+
 
     MOVE:
         inputDir.Normalize();
