@@ -39,7 +39,7 @@ public class UnitPlayer : Unit
         inputDir.Normalize();
         Vector3 position = CMath.Floor1000Vector3(transform.position);
         float delta = Time.deltaTime * MOVE_SPEED;
-        Vector3 y = Vector3.zero;
+
         //Conflict with OBSTACLE?
         int idxDir = GetDirectionIndex(inputDir);
         GetTargetDirections(idxDir);
@@ -56,7 +56,7 @@ public class UnitPlayer : Unit
                 goto MOVE;
             }
 
-            y = new Vector3(0f, VOXEL_SIZE - 0.001f, 0f);
+            Vector3 y = new Vector3(0f, VOXEL_SIZE - 0.001f, 0f);
             if (!IsCollidedOrNull(map, colPoint1 + y) && !IsCollidedOrNull(map, colPoint2 + y))
             {
                 inputDir = direction[i];
@@ -80,8 +80,11 @@ public class UnitPlayer : Unit
         inputDir.Normalize();
         transform.position += delta * inputDir;
 
+        //Is it necessary to find the y value at the ¡®current point (position without calculation)¡¯ rather than the position after addition?
+        //++ Process as y = default_height + y_value.
+
         //Set Move Priority
-        if      (inputDir.x > 0) { hasRightPriority = true;  }
+        if (inputDir.x > 0) { hasRightPriority = true;  }
         else if (inputDir.x < 0) { hasRightPriority = false; }
         if      (inputDir.z > 0) { hasUpPriority    = true;  }
         else if (inputDir.z < 0) { hasUpPriority    = false; }
@@ -136,6 +139,11 @@ public class UnitPlayer : Unit
             case 14: //( 1, -1)
                 option = hasRightPriority ? 1 : 2;
                 break;
+            default:
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+                Debug.LogError("Wierd Direction;");
+#endif
+                break;
         }
 
         direction[0] = cacheDirection[index];
@@ -152,10 +160,6 @@ public class UnitPlayer : Unit
             direction[2] = cacheDirection[(index - 4 + 16) % 16];
             direction[3] = cacheDirection[(index + 2) % 16];
             direction[4] = cacheDirection[(index + 4) % 16];
-        }
-        else
-        {
-            Debug.LogError("option?");
         }
     }
 
@@ -192,86 +196,4 @@ public class UnitPlayer : Unit
     //    Gizmos.color = Color.white;
     //    Gizmos.DrawLine(collisionPoints[0], collisionPoints[1]);
     //}
-
-    #region [Not Used] Vector rotation was used, but it cannot be used because there is a problem with the diagonal movement distance attached to the wall.
-    /*
-    private int[] collisionPoints = new int[4];
-    private readonly Quaternion[] inputRotation = new Quaternion[9] 
-    {
-        Quaternion.AngleAxis(    0f, Vector3.up),
-        Quaternion.AngleAxis(  -90f, Vector3.up),
-        Quaternion.AngleAxis(  -45f, Vector3.up),
-        Quaternion.AngleAxis(   45f, Vector3.up),
-        Quaternion.AngleAxis(   90f, Vector3.up),
-
-        Quaternion.AngleAxis(-22.5f, Vector3.up),
-        Quaternion.AngleAxis( 22.5f, Vector3.up),
-        Quaternion.AngleAxis(-67.5f, Vector3.up),
-        Quaternion.AngleAxis( 67.5f, Vector3.up)
-    };
-    private void GetRotationPriority(Vector3 direction, out int[] priority)
-    {
-        int value = 0;
-        if      (direction.x > 0) { value += 0100; }
-        else if (direction.x < 0) { value += 1100; }
-        if      (direction.z > 0) { value += 0001; }
-        else if (direction.z < 0) { value += 0011; }
-
-        switch (value)
-        {
-            case 0100: //( 1,  0)
-                value = hasUpPriority ? 0 : 1;
-                break;
-            case 1100: //(-1,  0)
-                value = hasUpPriority ? 1 : 0;
-                break;
-            case 0101: //( 1,  1) 
-            case 0001: //( 0,  1)
-            case 1101: //(-1,  1)
-                value = hasRightPriority ? 1 : 0;
-                break;
-            case 1111: //(-1, -1)
-            case 0011: //( 0, -1)
-            case 0111: //( 1, -1)
-                value = hasRightPriority ? 0 : 1;
-                break;
-        }
-
-        if  (value == 0) { priority = new int[5] { 0, 2, 1, 3, 4 }; }
-        else             { priority = new int[5] { 0, 3, 4, 2, 1 }; }
-    }
-    private bool DoesNotCollided(Dictionary<int, Voxel_t5> map, Vector3 position, Vector3 dir, float delta)
-    {
-        //Check whether or not it touches an obstacle in 22.5 degree increments
-        //from 90 degrees to the left of the input direction to 90 degrees to the right.
-
-        for (int i = 0; i < inputRotation.Length; ++i)
-        {
-            Vector3 targetPoint = position + (inputRotation[i] * dir) * (delta + VOXEL_HALF_SIZE);
-            Vector3 pivot = Parser.GetVoxelPivot(targetPoint);
-            int key = Parser.GetVoxelIndex(pivot);
-
-            if (map.TryGetValue(key, out Voxel_t5 voxel))
-            {
-                int idxSub = Parser.GetSubVoxelIndex(pivot, targetPoint);
-                if (voxel.GetSubType(idxSub) == OBSTACLE)
-                {
-                    Debug.Log($"[OBSTACLE][{i}] {position}=>{targetPoint}\n\t{pivot}.move[{idxSub}] == {System.Convert.ToString(voxel.Move, 2)}");
-                    return false;
-                }
-                else
-                {
-                    Debug.Log($"[MOVABLE][{i}] {position}=>{targetPoint}\n\t{pivot}.move[{idxSub}] == {System.Convert.ToString(voxel.Move, 2)}");
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-    //*/
-    #endregion
 }
