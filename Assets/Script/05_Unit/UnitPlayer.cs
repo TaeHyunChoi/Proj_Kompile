@@ -9,82 +9,106 @@ public class UnitPlayer : Unit
     //Take octagon points and partially check collisions according to direction and decision priority. (see #region below)
     private readonly Vector3[] cacheDirection = new Vector3[]
     {
-        new Vector3( VOXEL_HALF_SIZE       ,  0f,  0f                    ).normalized,
-        new Vector3( VOXEL_HALF_SIZE       ,  0f,  VOXEL_HALF_SIZE * 0.5f).normalized,
-        new Vector3( VOXEL_HALF_SIZE       ,  0f,  VOXEL_HALF_SIZE       ).normalized,
-        new Vector3( VOXEL_HALF_SIZE * 0.5f,  0f,  VOXEL_HALF_SIZE       ).normalized,
+        new Vector3(   1f,    0f,    0f).normalized,
+        new Vector3(   1f,    0f,  0.5f).normalized,
+        new Vector3(   1f,    0f,    1f).normalized,
+        new Vector3( 0.5f,    0f,    1f).normalized,
 
-        new Vector3( 0f                    ,  0f,  VOXEL_HALF_SIZE       ).normalized,
-        new Vector3(-VOXEL_HALF_SIZE * 0.5f,  0f,  VOXEL_HALF_SIZE       ).normalized,
-        new Vector3(-VOXEL_HALF_SIZE       ,  0f,  VOXEL_HALF_SIZE       ).normalized,
-        new Vector3(-VOXEL_HALF_SIZE       ,  0f,  VOXEL_HALF_SIZE * 0.5f).normalized,
+        new Vector3(   0f,    0f,    1f).normalized,
+        new Vector3(-0.5f,    0f,    1f).normalized,
+        new Vector3(  -1f,    0f,    1f).normalized,
+        new Vector3(  -1f,    0f,  0.5f).normalized,
 
-        new Vector3(-VOXEL_HALF_SIZE       ,  0f,  0f                    ).normalized,
-        new Vector3(-VOXEL_HALF_SIZE       ,  0f, -VOXEL_HALF_SIZE * 0.5f).normalized,
-        new Vector3(-VOXEL_HALF_SIZE       ,  0f, -VOXEL_HALF_SIZE       ).normalized,
-        new Vector3(-VOXEL_HALF_SIZE * 0.5f,  0f, -VOXEL_HALF_SIZE       ).normalized,
+        new Vector3(  -1f,    0f,    0f).normalized,
+        new Vector3(  -1f,    0f, -0.5f).normalized,
+        new Vector3(  -1f,    0f,   -1f).normalized,
+        new Vector3(-0.5f,    0f,   -1f).normalized,
 
-        new Vector3( 0f                    ,  0f, -VOXEL_HALF_SIZE       ).normalized,
-        new Vector3( VOXEL_HALF_SIZE * 0.5f,  0f, -VOXEL_HALF_SIZE       ).normalized,
-        new Vector3( VOXEL_HALF_SIZE       ,  0f, -VOXEL_HALF_SIZE       ).normalized,
-        new Vector3( VOXEL_HALF_SIZE       ,  0f, -VOXEL_HALF_SIZE * 0.5f).normalized
+        new Vector3(   0f,    0f,   -1f).normalized,
+        new Vector3( 0.5f,    0f,   -1f).normalized,
+        new Vector3(   1f,    0f,   -1f).normalized,
+        new Vector3(   1f,    0f, -0.5f).normalized
     };
     private Vector3[] direction               = new Vector3[5];
 
+    private float sign;
     private bool hasRightPriority;
     private bool hasUpPriority;
 
+    private Vector3 colPoint1, colPoint2;
+
     public void Move(Dictionary<int, Voxel_t> map, Vector3 inputDir)
     {
-        inputDir.Normalize();
         Vector3 position = CMath.Floor1000Vector3(transform.position);
-        float delta = Time.deltaTime * MOVE_SPEED;
+        float   delta = Time.deltaTime * MOVE_SPEED;
+        inputDir.Normalize();
 
         //Conflict with OBSTACLE?
-        int idxDir = GetDirectionIndex(inputDir);
-        GetTargetDirections(idxDir);
+        int   idxDir = GetDirectionIndex(inputDir);
+        direction = GetTargetDirections(idxDir); //direction 배열이 명시적으로 보이지 않아서 이렇게 작성
 
         for (int i = 0; i < direction.Length; ++i)
         {
-            int     idxTarget = GetDirectionIndex(direction[i]);
-            Vector3 colPoint1 = CMath.Floor1000Vector3(position + cacheDirection[(idxTarget + 1) % 16]      * (delta + VOXEL_HALF_SIZE));
-            Vector3 colPoint2 = CMath.Floor1000Vector3(position + cacheDirection[(idxTarget - 1 + 16) % 16] * (delta + VOXEL_HALF_SIZE));
+            int idxTarget = GetDirectionIndex(direction[i]);
+            colPoint1 = CMath.Floor1000Vector3(position + cacheDirection[(idxTarget + 1)      % 16] * (delta + VOXEL_HALF_SIZE));
+            colPoint2 = CMath.Floor1000Vector3(position + cacheDirection[(idxTarget - 1 + 16) % 16] * (delta + VOXEL_HALF_SIZE));
 
-            if (!IsCollidedOrNull(map, colPoint1) && !IsCollidedOrNull(map, colPoint2))
+            float signed = sign;
+            for (int j = 0; j < 3; ++j)
             {
-                inputDir = direction[i];
-                goto MOVE;
-            }
-
-            Vector3 y = new Vector3(0f, VOXEL_SIZE - 0.001f, 0f);
-            if (!IsCollidedOrNull(map, colPoint1 + y) && !IsCollidedOrNull(map, colPoint2 + y))
-            {
-                inputDir = direction[i];
-                goto MOVE;
-            }
-
-            y = -y;
-            if (!IsCollidedOrNull(map, colPoint1 + y) && !IsCollidedOrNull(map, colPoint2 + y))
-            {
-                inputDir = direction[i];
-                goto MOVE;
+                float y = signed * VOXEL_HALF_SIZE;
+                if (!IsCollidedOrNull(map, colPoint1 + new Vector3(0f, y, 0f)) && !IsCollidedOrNull(map, colPoint2 + new Vector3(0f, y, 0f)))
+                {
+                    inputDir = direction[i];
+                    goto MOVE;
+                }
+                signed += 1;
+                if (signed > 1)
+                { 
+                    signed = -1; 
+                }
             }
         }
 
         Debug.Log("Can`t move here. Move to oppsite side of last input?");
         return;
 
-
-
     MOVE:
-        inputDir.Normalize();
-        transform.position += delta * inputDir;
 
-        //Is it necessary to find the y value at the ‘current point (position without calculation)’ rather than the position after addition?
-        //++ Process as y = default_height + y_value.
+        Vector3 dir = inputDir;
+        dir.Normalize();
+
+        //get y value
+        int key = Parser.GetVoxelKeyFromPoint(position);
+        if (map.TryGetValue(key, out Voxel_t voxel))
+        {
+            float dot = Vector3.Dot(inputDir, voxel.SlopeDirection);
+            float radian;
+            sign = 0f;
+            if      (dot > 0) { sign =  1f; }
+            else if (dot < 0) { sign = -1f; }
+
+            if (voxel.SUB == 0b_11_11_11_11)
+            { 
+                radian = sign  * 45 * Mathf.Deg2Rad; //degree == 45;
+            } 
+            else
+            {
+                radian = 0; 
+            }
+
+            dir += new Vector3(0f, sign * Mathf.Sin(radian), 0f);
+        }
+        else
+        {
+            Debug.LogError($"Impossible voxel in position;");
+            return;
+        }
+
+        transform.position += delta * dir;
 
         //Set Move Priority
-        if (inputDir.x > 0) { hasRightPriority = true;  }
+        if      (inputDir.x > 0) { hasRightPriority = true;  }
         else if (inputDir.x < 0) { hasRightPriority = false; }
         if      (inputDir.z > 0) { hasUpPriority    = true;  }
         else if (inputDir.z < 0) { hasUpPriority    = false; }
@@ -112,7 +136,7 @@ public class UnitPlayer : Unit
 
         return index;
     }
-    private void GetTargetDirections(int index)
+    private Vector3[] GetTargetDirections(int index)
     {
         int option = 0;
 
@@ -161,8 +185,9 @@ public class UnitPlayer : Unit
             direction[3] = cacheDirection[(index + 2) % 16];
             direction[4] = cacheDirection[(index + 4) % 16];
         }
-    }
 
+        return direction;
+    }
     private bool IsCollidedOrNull(Dictionary<int, Voxel_t> map, Vector3 colPoint)
     {
         if (colPoint.x < 0 || colPoint.z < 0)
@@ -188,12 +213,9 @@ public class UnitPlayer : Unit
         return false;
     }
 
-    //private void OnDrawGizmos()
-    //{
-    //    if (collisionPoints.Length == 0)
-    //        return;
-
-    //    Gizmos.color = Color.white;
-    //    Gizmos.DrawLine(collisionPoints[0], collisionPoints[1]);
-    //}
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.white;
+        Gizmos.DrawLine(colPoint1, colPoint2);
+    }
 }
