@@ -3,6 +3,8 @@ using UnityEngine;
 using static Public;
 using CDataStructure;
 using CMathf;
+using static UnityEngine.RuleTile.TilingRuleOutput;
+using UnityEngine.UIElements;
 
 public class UnitPlayer : Unit
 {
@@ -31,7 +33,7 @@ public class UnitPlayer : Unit
     };
     private Vector3[] direction               = new Vector3[5];
 
-    private float sign;
+    private float lastSign;
     private bool hasRightPriority;
     private bool hasUpPriority;
 
@@ -39,33 +41,32 @@ public class UnitPlayer : Unit
 
     public void Move(Dictionary<int, Voxel_t> map, Vector3 inputDir)
     {
-        Vector3 position = CMath.Floor1000Vector3(transform.position);
-        float   delta = Time.deltaTime * MOVE_SPEED;
+        Vector3 currentPos = CMath.Floor1000Vector3(transform.position);
         inputDir.Normalize();
+        float   delta = Time.deltaTime * MOVE_SPEED;
+        float sign = lastSign; //-1, 0, 1 
 
         //Conflict with OBSTACLE?
-        int   idxDir = GetDirectionIndex(inputDir);
-        direction = GetTargetDirections(idxDir); //direction 배열이 명시적으로 보이지 않아서 이렇게 작성
-
+        direction = GetTargetDirections(inputDir);
         for (int i = 0; i < direction.Length; ++i)
         {
-            int idxTarget = GetDirectionIndex(direction[i]);
-            colPoint1 = CMath.Floor1000Vector3(position + cacheDirection[(idxTarget + 1)      % 16] * (delta + VOXEL_HALF_SIZE));
-            colPoint2 = CMath.Floor1000Vector3(position + cacheDirection[(idxTarget - 1 + 16) % 16] * (delta + VOXEL_HALF_SIZE));
+            int idxDir = GetDirectionIndex(direction[i]);
+            colPoint1 = CMath.Floor1000Vector3(currentPos + cacheDirection[(idxDir + 1)      % 16] * (delta + VOXEL_HALF_SIZE));
+            colPoint2 = CMath.Floor1000Vector3(currentPos + cacheDirection[(idxDir - 1 + 16) % 16] * (delta + VOXEL_HALF_SIZE));
 
-            float signed = sign;
             for (int j = 0; j < 3; ++j)
             {
-                float y = signed * VOXEL_HALF_SIZE;
-                if (!IsCollidedOrNull(map, colPoint1 + new Vector3(0f, y, 0f)) && !IsCollidedOrNull(map, colPoint2 + new Vector3(0f, y, 0f)))
+                Vector3 offset = new Vector3(0f, sign * (VOXEL_HALF_SIZE + 0.001f), 0f);
+                if (!IsCollidedOrNull(map, colPoint1 + offset) 
+                    && !IsCollidedOrNull(map, colPoint2 + offset))
                 {
                     inputDir = direction[i];
                     goto MOVE;
                 }
-                signed += 1;
-                if (signed > 1)
+                sign += 1;
+                if (sign > 1)
                 { 
-                    signed = -1; 
+                    sign = -1; 
                 }
             }
         }
@@ -74,38 +75,40 @@ public class UnitPlayer : Unit
         return;
 
     MOVE:
+        //get x, z value
+        Vector3 dir = CMath.Floor1000Vector3(delta * inputDir);
+        Vector3 targetPos = currentPos + dir;
 
-        Vector3 dir = inputDir;
-        dir.Normalize();
-
-        //get y value
-        int key = Parser.GetVoxelKeyFromPoint(position);
+        //[post-process] get y value from current position;
+        Vector3 pivot = Parser.GetVoxelPivot(targetPos);
+        int key = Parser.GetVoxelKeyFromPivot(pivot);
         if (map.TryGetValue(key, out Voxel_t voxel))
         {
-            float dot = Vector3.Dot(inputDir, voxel.SlopeDirection);
-            float radian;
-            sign = 0f;
-            if      (dot > 0) { sign =  1f; }
-            else if (dot < 0) { sign = -1f; }
+            if (voxel.SlopeFlag != 0)
+            {
+                sign = 0;
+                float dot = Vector3.Dot(inputDir, voxel.SlopeDirection);
+                if (dot > 0) { sign = 1f; }
+                else if (dot < 0) { sign = -1f; }
 
-            if (voxel.SUB == 0b_11_11_11_11)
-            { 
-                radian = sign  * 45 * Mathf.Deg2Rad; //degree == 45;
-            } 
+                if (sign == 0) { targetPos = new Vector3(targetPos.x, pivot.y, targetPos.z); }
+                else { targetPos += new Vector3(0f, sign * delta, 0f); }
+
+                lastSign = sign;
+            }
             else
             {
-                radian = 0; 
+                //offset?
+                targetPos = new Vector3(targetPos.x, pivot.y, targetPos.z);
             }
 
-            dir += new Vector3(0f, sign * Mathf.Sin(radian), 0f);
+            transform.position = targetPos;
         }
         else
         {
-            Debug.LogError($"Impossible voxel in position;");
+            Debug.LogError($"Impossible voxel in position;\n\tcurrent:{currentPos:F3}, pivot:{pivot:F3}");
             return;
         }
-
-        transform.position += delta * dir;
 
         //Set Move Priority
         if      (inputDir.x > 0) { hasRightPriority = true;  }
@@ -136,8 +139,9 @@ public class UnitPlayer : Unit
 
         return index;
     }
-    private Vector3[] GetTargetDirections(int index)
+    private Vector3[] GetTargetDirections(Vector3 inputDir)
     {
+        int index = GetDirectionIndex(inputDir);
         int option = 0;
 
         switch (index)
@@ -217,5 +221,15 @@ public class UnitPlayer : Unit
     {
         Gizmos.color = Color.white;
         Gizmos.DrawLine(colPoint1, colPoint2);
+
+        Vector3 y = new Vector3(0f, VOXEL_HALF_SIZE - 0.001f, 0f);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(colPoint1, colPoint1 - y);
+        Gizmos.DrawLine(colPoint2, colPoint2 - y);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(colPoint1, colPoint1 + y);
+        Gizmos.DrawLine(colPoint2, colPoint2 + y);
     }
 }
