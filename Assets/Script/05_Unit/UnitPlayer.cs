@@ -62,9 +62,10 @@ public class UnitPlayer : Unit
                 if (IsMovable(map, colPoint1 + offset) && IsMovable(map, colPoint2 + offset))
                 {
                     inputDir = direction[i]; //already normalized.
+                    inputDir.Normalize();
 
-                    if (   true == TryGetNextPosition(map, currentPos,          inputDir, out Vector3 nextPos)
-                        || true == TryGetNextPosition(map, currentPos + offset, inputDir, out         nextPos))
+                    if (   true == TryGetNextPosition(map, currentPos + inputDir * delta,          out Vector3 nextPos)
+                        || true == TryGetNextPosition(map, currentPos + inputDir * delta + offset, out         nextPos))
                     {
                         //Move
                         transform.position = CMath.Floor1000Vector3(nextPos);
@@ -182,9 +183,9 @@ public class UnitPlayer : Unit
 
         return true;
     }
-    private bool TryGetNextPosition(Dictionary<int, Voxel_t> map, Vector3 currentPos, Vector3 dir, out Vector3 nextPos)
+    private bool TryGetNextPosition(Dictionary<int, Voxel_t> map, Vector3 targetPoint, out Vector3 nextPos)
     {
-        nextPos = currentPos + dir;
+        nextPos = targetPoint;
         Vector3 nextPivot = Parser.GetVoxelPivot(nextPos);
         int key = Parser.GetVoxelKeyFromPivot(nextPivot);
 
