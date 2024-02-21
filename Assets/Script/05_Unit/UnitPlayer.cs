@@ -61,9 +61,7 @@ public class UnitPlayer : Unit
 
                 if (IsMovable(map, colPoint1 + offset) && IsMovable(map, colPoint2 + offset))
                 {
-                    inputDir = direction[i];
-                    inputDir.Normalize();
-                    inputDir *= delta;
+                    inputDir = direction[i]; //already normalized.
 
                     if (   true == TryGetNextPosition(map, currentPos,          inputDir, out Vector3 nextPos)
                         || true == TryGetNextPosition(map, currentPos + offset, inputDir, out         nextPos))
@@ -195,26 +193,32 @@ public class UnitPlayer : Unit
             int idxSub = Parser.GetSubVoxelIndex(nextPivot, nextPos);
             idxSub = targetVoxel.GetSubType(idxSub);
 
-            //TODO: add condition: can`t move between different height voxels.
-
-            if (idxSub != OBSTACLE)
+            //if targeted voxel`type is SLOPE, set the y value of the targeted coordinates.
+            switch (idxSub)
             {
-                //if targeted voxel has slope, set the y value of the targeted coordinates.
-                if (targetVoxel.SlopeFlag != 0)
-                {
-                    Vector3 lowPoint = nextPivot + (new Vector3(1f, 0f, 1f) - targetVoxel.SlopeDirection) * VOXEL_HALF_SIZE;
-                    float size = Vector3.Distance(lowPoint, nextPos);
-                    float angle = Vector3.Angle(from: targetVoxel.SlopeDirection, to: nextPos - lowPoint);
-                    angle = (angle + 180) % 180; //unsigned
+                case OBSTACLE:
+                    { 
+                        
+                    }
+                    return false;
+                case PLAIN:
+                    {
+                        nextPos = new Vector3(nextPos.x, nextPivot.y, nextPos.z);
+                        
+                        //check additional condition?
+                    }
+                    return true;
+                default:
+                    {
+                        Vector3 lowPoint = nextPivot + (new Vector3(1f, 0f, 1f) - targetVoxel.SlopeDirection) * VOXEL_HALF_SIZE;
+                        float size = Vector3.Distance(lowPoint, nextPos);
+                        float angle = Vector3.Angle(from: targetVoxel.SlopeDirection, to: nextPos - lowPoint);
+                        angle = (angle + 180) % 180; //unsigned angle.
+                        float targetY = CMath.Floor1000(nextPivot.y + (Mathf.Cos(angle * Mathf.Deg2Rad) * size));
 
-                    nextPos = new Vector3(nextPos.x, CMath.Floor1000(nextPivot.y + (Mathf.Cos(angle * Mathf.Deg2Rad) * size)), nextPos.z);
-                }
-                else
-                {
-                    nextPos = new Vector3(nextPos.x, nextPivot.y, nextPos.z);
-                }
-
-                return true;
+                        nextPos = new Vector3(nextPos.x, targetY, nextPos.z);
+                    }
+                    return true;
             }
         }
 
