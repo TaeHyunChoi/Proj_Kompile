@@ -111,7 +111,7 @@ public class MapSampler5th : MonoBehaviour
                 float interval = (VOXEL_SIZE > distAB) ? samplingInterval * 4f : samplingInterval;
                 int samplingCountAB = CMath.FloorToInt1000(distAB / VOXEL_HALF_SIZE * interval);
 
-                for (int i = 1; i < samplingCountAB; ++i)
+                for (int i = 1; i < samplingCountAB - 1; ++i)
                 {
                     float ratio = CMath.Floor1000((float)i / samplingCountAB);
                     Vector3 AB = Vector3.Lerp(A, B, ratio);
@@ -120,7 +120,7 @@ public class MapSampler5th : MonoBehaviour
                     float distABtoAC = Vector3.Distance(AB, AC);
                     int samplingCountABtoAC = CMath.FloorToInt1000(distABtoAC / VOXEL_HALF_SIZE * interval);
 
-                    for (int j = 1; j < samplingCountABtoAC; ++j)
+                    for (int j = 1; j < samplingCountABtoAC - 1; ++j)
                     {
                         ratio = CMath.Floor1000((float)j / samplingCountABtoAC);
                         Vector3 samplingPoint = CMath.Floor1000Vector3(Vector3.Lerp(AB, AC, ratio));
@@ -194,8 +194,6 @@ public class MapSampler5th : MonoBehaviour
         if (sub > targetSub
             || (sub == OBSTACLE && targetSub == PLAIN)) //Exception: To treat the default value as obstacle
         {
-            //여기서 dir도 같이 갱신해야 하는구나?
-
             int newData = voxel.Data;
             newData &= ~(0b_11_11 << SHIFT_SLOPE_DIRECTION);
             newData |=   slopeDir << SHIFT_SLOPE_DIRECTION;

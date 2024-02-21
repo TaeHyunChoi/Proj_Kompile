@@ -216,7 +216,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fileName: 
   resourceTransform: {fileID: 260966024}
-  samplingInterval: 3
+  samplingInterval: 7
   drawHeightLow: 0
   drawHeightHigh: 3
 --- !u!1 &539823951

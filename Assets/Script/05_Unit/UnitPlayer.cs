@@ -43,10 +43,10 @@ public class UnitPlayer : Unit
     {
         Vector3 currentPos = CMath.Floor1000Vector3(transform.position);
         inputDir.Normalize();
-        float   delta = Time.deltaTime * MOVE_SPEED;
+        float delta = Time.deltaTime * MOVE_SPEED;
         float sign = lastSign; //-1, 0, 1 
 
-        //Conflict with OBSTACLE?
+        //Check navigation direction.
         direction = GetTargetDirections(inputDir);
         for (int i = 0; i < direction.Length; ++i)
         {
@@ -61,7 +61,8 @@ public class UnitPlayer : Unit
                     && !IsCollidedOrNull(map, colPoint2 + offset))
                 {
                     inputDir = direction[i];
-                    goto MOVE;
+                    //Also get navigation direction(float sign).
+                    goto SLOPE;
                 }
                 sign += 1;
                 if (sign > 1)
@@ -74,41 +75,74 @@ public class UnitPlayer : Unit
         Debug.Log("Can`t move here. Move to oppsite side of last input?");
         return;
 
+    SLOPE:
+        //try : 0
+        Vector3 dir = new Vector3(inputDir.x, 0, inputDir.z);
+        dir.Normalize();
+
+        //Set the y value of the targeted coordinates.
+        Vector3 targetPos = currentPos + delta * dir;
+        Vector3 targetPivot = Parser.GetVoxelPivot(targetPos);
+        int key = Parser.GetVoxelKeyFromPivot(targetPivot);
+        if (map.TryGetValue(key, out Voxel_t targetVoxel))
+        {
+            //대상 복셀이 이동 가능한지 따진다? 여기서 또...?
+            //흠...
+            int sub = Parser.GetSubVoxelIndex(targetPivot, targetPos);
+            sub = targetVoxel.GetSubType(sub);
+
+            if (sub != OBSTACLE)
+            {
+                if (targetVoxel.SlopeFlag != 0)
+                {
+                    Vector3 lowPoint = targetPivot + (new Vector3(1f, 0f, 1f) - targetVoxel.SlopeDirection) * VOXEL_HALF_SIZE;
+                    float size = Vector3.Distance(lowPoint, targetPos);
+                    float angle = Vector3.Angle(from: targetVoxel.SlopeDirection, to: targetPos - lowPoint);
+                    angle = (angle + 180) % 180; //unsigned
+
+                    targetPos = new Vector3(targetPos.x, CMath.Floor1000(targetPivot.y + (Mathf.Cos(angle * Mathf.Deg2Rad) * size)), targetPos.z);
+                }
+                else
+                {
+                    targetPos = new Vector3(targetPos.x, targetPivot.y, targetPos.z);
+                }
+
+                goto MOVE;
+            }
+        }
+
+        //try : sign
+        dir = new Vector3(inputDir.x, sign, inputDir.z);
+        dir.Normalize();
+        targetPos = currentPos + delta * dir;
+        targetPivot = Parser.GetVoxelPivot(targetPos);
+        key = Parser.GetVoxelKeyFromPivot(targetPivot);
+        if (map.TryGetValue(key, out targetVoxel))
+        {
+            int sub = Parser.GetSubVoxelIndex(targetPivot, targetPos);
+            sub = targetVoxel.GetSubType(sub);
+
+            if (sub != OBSTACLE)
+            {
+                if (targetVoxel.SlopeFlag != 0)
+                {
+                    Vector3 lowPoint = targetPivot + (new Vector3(1f, 0f, 1f) - targetVoxel.SlopeDirection) * VOXEL_HALF_SIZE;
+                    float size = Vector3.Distance(lowPoint, targetPos);
+                    float angle = Vector3.Angle(from: targetVoxel.SlopeDirection, to: targetPos - lowPoint);
+                    angle = (angle + 180) % 180; //unsigned
+
+                    targetPos = new Vector3(targetPos.x, CMath.Floor1000(targetPivot.y + (Mathf.Cos(angle * Mathf.Deg2Rad) * size)), targetPos.z);
+                }
+                else
+                {
+                    targetPos = new Vector3(targetPos.x, targetPivot.y, targetPos.z);
+                }
+            }
+        }
+
     MOVE:
-        //get x, z value
-        Vector3 dir = CMath.Floor1000Vector3(delta * inputDir);
-        Vector3 targetPos = currentPos + dir;
-
-        //[post-process] get y value from current position;
-        Vector3 pivot = Parser.GetVoxelPivot(targetPos);
-        int key = Parser.GetVoxelKeyFromPivot(pivot);
-        if (map.TryGetValue(key, out Voxel_t voxel))
-        {
-            if (voxel.SlopeFlag != 0)
-            {
-                sign = 0;
-                float dot = Vector3.Dot(inputDir, voxel.SlopeDirection);
-                if (dot > 0) { sign = 1f; }
-                else if (dot < 0) { sign = -1f; }
-
-                if (sign == 0) { targetPos = new Vector3(targetPos.x, pivot.y, targetPos.z); }
-                else { targetPos += new Vector3(0f, sign * delta, 0f); }
-
-                lastSign = sign;
-            }
-            else
-            {
-                //offset?
-                targetPos = new Vector3(targetPos.x, pivot.y, targetPos.z);
-            }
-
-            transform.position = targetPos;
-        }
-        else
-        {
-            Debug.LogError($"Impossible voxel in position;\n\tcurrent:{currentPos:F3}, pivot:{pivot:F3}");
-            return;
-        }
+        transform.position = CMath.Floor1000Vector3(targetPos);
+        lastSign = sign;
 
         //Set Move Priority
         if      (inputDir.x > 0) { hasRightPriority = true;  }
