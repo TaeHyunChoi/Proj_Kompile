@@ -3,9 +3,10 @@ using UnityEngine;
 using static Public;
 using CDataStructure;
 using CMathf;
-using static UnityEngine.RuleTile.TilingRuleOutput;
-using UnityEngine.UIElements;
 
+/// <summary>
+/// It would be better to attach it as a "movement operation" component class in the future. The size is quite large;
+/// </summary>
 public class UnitPlayer : Unit
 {
     //Take octagon points and partially check collisions according to direction and decision priority. (see #region below)
@@ -32,123 +33,55 @@ public class UnitPlayer : Unit
         new Vector3(   1f,    0f, -0.5f).normalized
     };
     private Vector3[] direction               = new Vector3[5];
+    private Vector3 colPoint1, colPoint2;
 
-    private float lastSign;
     private bool hasRightPriority;
     private bool hasUpPriority;
 
-    private Vector3 colPoint1, colPoint2;
-
     public void Move(Dictionary<int, Voxel_t> map, Vector3 inputDir)
     {
-        Vector3 currentPos = CMath.Floor1000Vector3(transform.position);
+        //data
+        Vector3 currentPos = transform.position;
         inputDir.Normalize();
         float delta = Time.deltaTime * MOVE_SPEED;
-        float sign = lastSign; //-1, 0, 1 
 
-        //Check navigation direction.
+        //is collided or null? -> Get Direction
         direction = GetTargetDirections(inputDir);
         for (int i = 0; i < direction.Length; ++i)
         {
             int idxDir = GetDirectionIndex(direction[i]);
-            colPoint1 = CMath.Floor1000Vector3(currentPos + cacheDirection[(idxDir + 1)      % 16] * (delta + VOXEL_HALF_SIZE));
+            colPoint1 = CMath.Floor1000Vector3(currentPos + cacheDirection[(idxDir + 1) % 16]      * (delta + VOXEL_HALF_SIZE));
             colPoint2 = CMath.Floor1000Vector3(currentPos + cacheDirection[(idxDir - 1 + 16) % 16] * (delta + VOXEL_HALF_SIZE));
 
+            //Navigating y value order :  0f,  1f, -1f
             for (int j = 0; j < 3; ++j)
             {
-                Vector3 offset = new Vector3(0f, sign * (VOXEL_HALF_SIZE + 0.001f), 0f);
-                if (!IsCollidedOrNull(map, colPoint1 + offset) 
-                    && !IsCollidedOrNull(map, colPoint2 + offset))
+                float dirY = (j + 1) % 3 - 1;
+                Vector3 offset = new Vector3(0f, dirY * (VOXEL_HALF_SIZE + 0.001f), 0f);
+
+                if (IsMovable(map, colPoint1 + offset) && IsMovable(map, colPoint2 + offset))
                 {
                     inputDir = direction[i];
-                    //Also get navigation direction(float sign).
-                    goto SLOPE;
-                }
-                sign += 1;
-                if (sign > 1)
-                { 
-                    sign = -1; 
-                }
-            }
-        }
+                    inputDir.Normalize();
+                    inputDir *= delta;
 
-        Debug.Log("Can`t move here. Move to oppsite side of last input?");
-        return;
+                    if (   true == TryGetNextPosition(map, currentPos,          inputDir, out Vector3 nextPos)
+                        || true == TryGetNextPosition(map, currentPos + offset, inputDir, out         nextPos))
+                    {
+                        //Move
+                        transform.position = CMath.Floor1000Vector3(nextPos);
 
-    SLOPE:
-        //try : 0
-        Vector3 dir = new Vector3(inputDir.x, 0, inputDir.z);
-        dir.Normalize();
+                        //Set move direction priority.
+                        if      (inputDir.x > 0) { hasRightPriority = true;  }
+                        else if (inputDir.x < 0) { hasRightPriority = false; }
+                        if      (inputDir.z > 0) { hasUpPriority    = true;  }
+                        else if (inputDir.z < 0) { hasUpPriority    = false; }
 
-        //Set the y value of the targeted coordinates.
-        Vector3 targetPos = currentPos + delta * dir;
-        Vector3 targetPivot = Parser.GetVoxelPivot(targetPos);
-        int key = Parser.GetVoxelKeyFromPivot(targetPivot);
-        if (map.TryGetValue(key, out Voxel_t targetVoxel))
-        {
-            //대상 복셀이 이동 가능한지 따진다? 여기서 또...?
-            //흠...
-            int sub = Parser.GetSubVoxelIndex(targetPivot, targetPos);
-            sub = targetVoxel.GetSubType(sub);
-
-            if (sub != OBSTACLE)
-            {
-                if (targetVoxel.SlopeFlag != 0)
-                {
-                    Vector3 lowPoint = targetPivot + (new Vector3(1f, 0f, 1f) - targetVoxel.SlopeDirection) * VOXEL_HALF_SIZE;
-                    float size = Vector3.Distance(lowPoint, targetPos);
-                    float angle = Vector3.Angle(from: targetVoxel.SlopeDirection, to: targetPos - lowPoint);
-                    angle = (angle + 180) % 180; //unsigned
-
-                    targetPos = new Vector3(targetPos.x, CMath.Floor1000(targetPivot.y + (Mathf.Cos(angle * Mathf.Deg2Rad) * size)), targetPos.z);
-                }
-                else
-                {
-                    targetPos = new Vector3(targetPos.x, targetPivot.y, targetPos.z);
-                }
-
-                goto MOVE;
-            }
-        }
-
-        //try : sign
-        dir = new Vector3(inputDir.x, sign, inputDir.z);
-        dir.Normalize();
-        targetPos = currentPos + delta * dir;
-        targetPivot = Parser.GetVoxelPivot(targetPos);
-        key = Parser.GetVoxelKeyFromPivot(targetPivot);
-        if (map.TryGetValue(key, out targetVoxel))
-        {
-            int sub = Parser.GetSubVoxelIndex(targetPivot, targetPos);
-            sub = targetVoxel.GetSubType(sub);
-
-            if (sub != OBSTACLE)
-            {
-                if (targetVoxel.SlopeFlag != 0)
-                {
-                    Vector3 lowPoint = targetPivot + (new Vector3(1f, 0f, 1f) - targetVoxel.SlopeDirection) * VOXEL_HALF_SIZE;
-                    float size = Vector3.Distance(lowPoint, targetPos);
-                    float angle = Vector3.Angle(from: targetVoxel.SlopeDirection, to: targetPos - lowPoint);
-                    angle = (angle + 180) % 180; //unsigned
-
-                    targetPos = new Vector3(targetPos.x, CMath.Floor1000(targetPivot.y + (Mathf.Cos(angle * Mathf.Deg2Rad) * size)), targetPos.z);
-                }
-                else
-                {
-                    targetPos = new Vector3(targetPos.x, targetPivot.y, targetPos.z);
+                        return;
+                    }
                 }
             }
         }
-
-    MOVE:
-        transform.position = CMath.Floor1000Vector3(targetPos);
-        lastSign = sign;
-
-        //Set Move Priority
-        if      (inputDir.x > 0) { hasRightPriority = true;  }
-        else if (inputDir.x < 0) { hasRightPriority = false; }
-        if      (inputDir.z > 0) { hasUpPriority    = true;  }
-        else if (inputDir.z < 0) { hasUpPriority    = false; }
     }
     private int GetDirectionIndex(Vector3 inputDir)
     {
@@ -226,11 +159,12 @@ public class UnitPlayer : Unit
 
         return direction;
     }
-    private bool IsCollidedOrNull(Dictionary<int, Voxel_t> map, Vector3 colPoint)
+
+    private bool IsMovable(Dictionary<int, Voxel_t> map, Vector3 colPoint)
     {
         if (colPoint.x < 0 || colPoint.z < 0)
         {
-            return false;
+            return false; // null voxel (out of range).
         }
 
         Vector3 pivot = Parser.GetVoxelPivot(colPoint);
@@ -240,12 +174,48 @@ public class UnitPlayer : Unit
             int idxSub = Parser.GetSubVoxelIndex(pivot, colPoint);
             if (voxel.GetSubType(idxSub) == OBSTACLE)
             {
-                return true; // is collided.
+                return false; // is collided.
             }
         }
         else
         {
-            return true; // null voxel;
+            return false; // null voxel.
+        }
+
+        return true;
+    }
+    private bool TryGetNextPosition(Dictionary<int, Voxel_t> map, Vector3 currentPos, Vector3 dir, out Vector3 nextPos)
+    {
+        nextPos = currentPos + dir;
+        Vector3 nextPivot = Parser.GetVoxelPivot(nextPos);
+        int key = Parser.GetVoxelKeyFromPivot(nextPivot);
+
+        if (map.TryGetValue(key, out Voxel_t targetVoxel))
+        {
+            int idxSub = Parser.GetSubVoxelIndex(nextPivot, nextPos);
+            idxSub = targetVoxel.GetSubType(idxSub);
+
+            //TODO: add condition: can`t move between different height voxels.
+
+            if (idxSub != OBSTACLE)
+            {
+                //if targeted voxel has slope, set the y value of the targeted coordinates.
+                if (targetVoxel.SlopeFlag != 0)
+                {
+                    Vector3 lowPoint = nextPivot + (new Vector3(1f, 0f, 1f) - targetVoxel.SlopeDirection) * VOXEL_HALF_SIZE;
+                    float size = Vector3.Distance(lowPoint, nextPos);
+                    float angle = Vector3.Angle(from: targetVoxel.SlopeDirection, to: nextPos - lowPoint);
+                    angle = (angle + 180) % 180; //unsigned
+
+                    nextPos = new Vector3(nextPos.x, CMath.Floor1000(nextPivot.y + (Mathf.Cos(angle * Mathf.Deg2Rad) * size)), nextPos.z);
+                }
+                else
+                {
+                    nextPos = new Vector3(nextPos.x, nextPivot.y, nextPos.z);
+                }
+
+                return true;
+            }
         }
 
         return false;
@@ -253,16 +223,14 @@ public class UnitPlayer : Unit
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.white;
-        Gizmos.DrawLine(colPoint1, colPoint2);
-
-        Vector3 y = new Vector3(0f, VOXEL_HALF_SIZE - 0.001f, 0f);
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, VOXEL_HALF_SIZE);
 
         Gizmos.color = Color.red;
+        Gizmos.DrawLine(colPoint1, colPoint2);
+        Vector3 y = new Vector3(0f, VOXEL_HALF_SIZE - 0.001f, 0f);
         Gizmos.DrawLine(colPoint1, colPoint1 - y);
         Gizmos.DrawLine(colPoint2, colPoint2 - y);
-
-        Gizmos.color = Color.blue;
         Gizmos.DrawLine(colPoint1, colPoint1 + y);
         Gizmos.DrawLine(colPoint2, colPoint2 + y);
     }
