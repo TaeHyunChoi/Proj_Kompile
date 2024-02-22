@@ -9,6 +9,126 @@ using CMathf;
 /// </summary>
 public class UnitPlayer : Unit
 {
+    private int[] idxTargets = new int[9];
+    private float delta;
+
+    //2nd를 만들다 보니까 '뭔가 이상하다'
+    //전반적으로 설계를 다시 살펴봅시다.
+    /*
+    public void Move2nd(Dictionary<int, Voxel_t> map, Vector3 inputDir)
+    {
+        Vector3 position = transform.position;
+        inputDir.Normalize();
+        delta = Time.deltaTime * MOVE_SPEED;
+
+        //Broad Collision Check
+        if(false == BroadCollisionCheck(map, position, inputDir, out Voxel_t targetVoxel))
+        {
+            //입력 방향으로 이동이 불가하면? 종료
+            return;
+        }
+
+        //Narrow Collision Check
+        //targetVoxel을 받아왔다?
+
+        //Move
+
+    }
+    private bool BroadCollisionCheck(Dictionary<int, Voxel_t> map, Vector3 position, Vector3 inputDir, out Voxel_t targetVoxel)
+    {
+        int idxDir = GetDirectionIndex(inputDir);
+        idxTargets = GetTargetIndex(idxDir, idxTargets);
+
+        for (int i = 0; i < idxTargets.Length; ++i)
+        {
+            Quaternion rot = Quaternion.AngleAxis(idxTargets[i] * 22.5f, Vector3.up);
+            Vector3 checkPoint = position + (delta + VOXEL_HALF_SIZE) * (rot * inputDir);
+
+            //위치에 충돌(또는 null)이 없다면 targetVoxel을 그대로 반환
+            //여기에 위/아래 탐색도 추가한다면...
+            if (!IsCollisionOrNull(map, checkPoint, out targetVoxel))
+            {
+                return true;
+            }
+        }
+
+        targetVoxel = new Voxel_t(-1);
+        return false;
+    }
+    private int[] GetTargetIndex(int index, int[] direction)
+    {
+        int option = 0;
+
+        switch (index)
+        {
+            //z is zero
+            case 0: //( 1,  0)
+                option = hasUpPriority ? 1 : -1;
+                break;
+            case 8: //(-1,  0)
+                option = hasUpPriority ? -1 : 1;
+                break;
+
+            //z upper
+            case 2: //( 1,  1)
+            case 4: //( 0,  1)
+            case 6: //(-1,  1)
+                option = hasRightPriority ? -1 : 1;
+                break;
+
+            //z lower
+            case 10: //(-1, -1)
+            case 12: //( 0, -1)
+            case 14: //( 1, -1)
+                option = hasRightPriority ? 1 : -1;
+                break;
+            default:
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+                Debug.LogError("Wierd Direction;");
+#endif
+                break;
+        }
+
+
+        int signed = option;
+        //direction[0] = index;
+        for (int i = 0; i < direction.Length; ++i)
+        {
+            direction[i] = (index + signed * (int)((i + 1) * 0.5f) + 16) % 16;
+            signed *= -1;
+        }
+
+        return direction;
+    }
+    private bool IsCollisionOrNull(Dictionary<int, Voxel_t> map, Vector3 colPoint, out Voxel_t targetVoxel)
+    {
+        targetVoxel = new Voxel_t(-1);
+
+        if (colPoint.x < 0 || colPoint.z < 0)
+        {
+            // null voxel (out of range).
+            return false;
+        }
+
+        Vector3 pivot = Parser.GetVoxelPivot(colPoint);
+        int key = Parser.GetVoxelKeyFromPivot(pivot);
+        if (map.TryGetValue(key, out targetVoxel))
+        {
+            int idxSub = Parser.GetSubVoxelIndex(pivot, colPoint);
+            if (targetVoxel.GetSubType(idxSub) == OBSTACLE)
+            {
+                return false;  // is collided.
+            }
+        }
+        else
+        {
+            return false; // null voxel.
+        }
+
+        return true;
+    }
+    //*/
+
     //Take octagon points and partially check collisions according to direction and decision priority. (see #region below)
     private readonly Vector3[] cacheDirection = new Vector3[]
     {
@@ -32,12 +152,11 @@ public class UnitPlayer : Unit
         new Vector3(   1f,    0f,   -1f).normalized,
         new Vector3(   1f,    0f, -0.5f).normalized
     };
-    private Vector3[] direction               = new Vector3[5];
+    private Vector3[] direction = new Vector3[5];
     private Vector3 colPoint1, colPoint2;
 
     private bool hasRightPriority;
     private bool hasUpPriority;
-
     public void Move(Dictionary<int, Voxel_t> map, Vector3 inputDir)
     {
         //data
@@ -85,7 +204,6 @@ public class UnitPlayer : Unit
     private int GetDirectionIndex(Vector3 inputDir)
     {
         int index = 0;
-        
         if      (inputDir.x > 0) { index += 0100; }
         else if (inputDir.x < 0) { index += 1100; }
         if      (inputDir.z > 0) { index += 0001; }
@@ -101,6 +219,7 @@ public class UnitPlayer : Unit
             case 1111: index = 10; break; // (-1, -1)  
             case 0011: index = 12; break; // ( 0, -1)
             case 0111: index = 14; break; // ( 1, -1)
+            default:   index = -1; break;
         }
 
         return index;
@@ -224,19 +343,5 @@ public class UnitPlayer : Unit
         }
 
         return false;
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, VOXEL_HALF_SIZE);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(colPoint1, colPoint2);
-        Vector3 y = new Vector3(0f, VOXEL_HALF_SIZE - 0.001f, 0f);
-        Gizmos.DrawLine(colPoint1, colPoint1 - y);
-        Gizmos.DrawLine(colPoint2, colPoint2 - y);
-        Gizmos.DrawLine(colPoint1, colPoint1 + y);
-        Gizmos.DrawLine(colPoint2, colPoint2 + y);
     }
 }

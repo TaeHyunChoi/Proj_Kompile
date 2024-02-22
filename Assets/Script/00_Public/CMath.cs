@@ -10,6 +10,7 @@ namespace CMathf
         {
             return new Vector3(Floor1000(value.x), Floor1000(value.y), Floor1000(value.z));
         }
+
         public static float Floor1000(float value)
         {
             value = value >= 0 ?  Mathf.FloorToInt( value * 1000f) * 0.001f 
