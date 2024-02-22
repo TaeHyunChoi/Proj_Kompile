@@ -142,13 +142,13 @@ namespace CDataStructure
                 int fx = (flag & 0b1100), fz = (flag & 0b0011);
                 float x, z;
 
-                if      (fx == 0b0100) { x =  1f; }
+                if (fx == 0b0100) { x = 1f; }
                 else if (fx == 0b1100) { x = -1f; }
-                else                   { x =  0f; }
+                else { x = 0f; }
 
-                if      (fz == 0b0001) { z =  1f; }
+                if (fz == 0b0001) { z = 1f; }
                 else if (fz == 0b0011) { z = -1f; }
-                else                   { z =  0f; }
+                else { z = 0f; }
 
                 return new Vector3(x, 0, z);
             }

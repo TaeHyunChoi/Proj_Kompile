@@ -171,13 +171,13 @@ public class MapSampler5th : MonoBehaviour
     private void SetVoxel(int slopeData, Vector3 point)
     {
         //Clamp(point) => get pivot => get index(key)
-        Vector3 pivot = Parser.GetVoxelPivot(point);
-        int key = Parser.GetVoxelKeyFromPivot(pivot);
+        Vector3 pivot = PVoxel.GetPivot(point);
+        int key = PVoxel.GetKeyFromPivot(pivot);
 
         //Set Sub-voxel Type
         //1. Diagonal lines do not enter the point (sampling rule)
         //2. When moving, diagonal lines must be processed separately (all adjacent sub-voxels must be checked)
-        int idxMove = Parser.GetSubVoxelIndex(pivot, point);
+        int idxMove = PVoxel.GetSubIndex(pivot, point);
         Debug.Assert(idxMove != -1, "Wrong sub index");
 
         int sub      = slopeData >> 4;
@@ -213,12 +213,7 @@ public class MapSampler5th : MonoBehaviour
 
         foreach (int key in map.Keys)
         {
-            float x = (key & 0x_FF_0000) >> 16;
-            float y = (key & 0x_00_FF00) >> 8;
-            float z = (key & 0x_00_00FF);
-
-            Vector3 pivot = new Vector3(x, y, z) * VOXEL_SIZE;
-
+            Vector3 pivot = PVoxel.GetPivot(key);
             if (pivot.y < drawHeightLow || pivot.y > drawHeightHigh)
             {
                 continue;

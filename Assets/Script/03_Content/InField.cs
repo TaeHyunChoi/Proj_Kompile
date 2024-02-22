@@ -86,7 +86,7 @@ internal class InField : ISequenceUpdater
 
         if (dir != Vector3.zero)
         {
-            player.Move(map, dir);
+            player.Move2nd(map, dir);
         }
     }
 }
