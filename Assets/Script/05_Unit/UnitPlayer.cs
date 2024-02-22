@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 using static Public;
 using CDataStructure;
@@ -12,9 +12,11 @@ public class UnitPlayer : Unit
     private int[] idxTargets = new int[9];
     private float delta;
 
-    //2nd¸¦ ¸¸µé´Ù º¸´Ï±î '¹º°¡ ÀÌ»óÇÏ´Ù'
-    //Àü¹İÀûÀ¸·Î ¼³°è¸¦ ´Ù½Ã »ìÆìº¾½Ã´Ù.
+
+    //2ndë¥¼ ë§Œë“¤ë‹¤ ë³´ë‹ˆê¹Œ 'ë­”ê°€ ì´ìƒí•˜ë‹¤'
+    //ì „ë°˜ì ìœ¼ë¡œ ì„¤ê³„ë¥¼ ë‹¤ì‹œ ì‚´í´ë´…ì‹œë‹¤.
     /*
+     * 
     public void Move2nd(Dictionary<int, Voxel_t> map, Vector3 inputDir)
     {
         Vector3 position = transform.position;
@@ -24,12 +26,12 @@ public class UnitPlayer : Unit
         //Broad Collision Check
         if(false == BroadCollisionCheck(map, position, inputDir, out Voxel_t targetVoxel))
         {
-            //ÀÔ·Â ¹æÇâÀ¸·Î ÀÌµ¿ÀÌ ºÒ°¡ÇÏ¸é? Á¾·á
+            //ì…ë ¥ ë°©í–¥ìœ¼ë¡œ ì´ë™ì´ ë¶ˆê°€í•˜ë©´? ì¢…ë£Œ
             return;
         }
 
         //Narrow Collision Check
-        //targetVoxelÀ» ¹Ş¾Æ¿Ô´Ù?
+        //targetVoxelì„ ë°›ì•„ì™”ë‹¤?
 
         //Move
 
@@ -44,8 +46,8 @@ public class UnitPlayer : Unit
             Quaternion rot = Quaternion.AngleAxis(idxTargets[i] * 22.5f, Vector3.up);
             Vector3 checkPoint = position + (delta + VOXEL_HALF_SIZE) * (rot * inputDir);
 
-            //À§Ä¡¿¡ Ãæµ¹(¶Ç´Â null)ÀÌ ¾ø´Ù¸é targetVoxelÀ» ±×´ë·Î ¹İÈ¯
-            //¿©±â¿¡ À§/¾Æ·¡ Å½»öµµ Ãß°¡ÇÑ´Ù¸é...
+            //ìœ„ì¹˜ì— ì¶©ëŒ(ë˜ëŠ” null)ì´ ì—†ë‹¤ë©´ targetVoxelì„ ê·¸ëŒ€ë¡œ ë°˜í™˜
+            //ì—¬ê¸°ì— ìœ„/ì•„ë˜ íƒìƒ‰ë„ ì¶”ê°€í•œë‹¤ë©´...
             if (!IsCollisionOrNull(map, checkPoint, out targetVoxel))
             {
                 return true;
