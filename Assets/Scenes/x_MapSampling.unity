@@ -166,6 +166,7 @@ GameObject:
   - component: {fileID: 464495206}
   - component: {fileID: 464495208}
   - component: {fileID: 464495212}
+  - component: {fileID: 464495213}
   m_Layer: 0
   m_Name: Sampler
   m_TagString: Untagged
@@ -209,7 +210,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 464495204}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c76c7343d7fc3a24a881e3a9316c269d, type: 3}
   m_Name: 
@@ -219,6 +220,24 @@ MonoBehaviour:
   samplingInterval: 7
   drawHeightLow: 0
   drawHeightHigh: 3
+--- !u!114 &464495213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 464495204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e018882aa98d8d24d8062ac8400b5663, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fileName: 
+  resourceTransform: {fileID: 260966024}
+  samplingInterval: 7
+  gizmoMesh: {fileID: 5924159088411371066, guid: a4f5dced4062b9946a5998f4eb66f188, type: 3}
+  drawHeightLow: 0
+  drawHeightHigh: 10
 --- !u!1 &539823951
 GameObject:
   m_ObjectHideFlags: 0

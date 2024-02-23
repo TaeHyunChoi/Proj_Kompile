@@ -19,7 +19,7 @@ internal class InField : ISequenceUpdater
         gameObject = obj;
         transform  = obj.transform;
 
-        map = DataTable.LoadMappingData(obj.name);
+        map = DataTable.LoadMappingData<Voxel_t>(obj.name);
     }
     public async Task<bool> InitMap()
     {

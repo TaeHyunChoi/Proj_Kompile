@@ -1,11 +1,11 @@
+﻿using CDataStructure;
 using CMathf;
-using CDataStructure;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using static Public;
 
-using UnityEngine;
-using System.Collections.Generic;
-
-public class MapSampler5th : MonoBehaviour
+public class MapSampler6th : MonoBehaviour
 {
     [Header("File")]
     [SerializeField] private string fileName;
@@ -15,10 +15,11 @@ public class MapSampler5th : MonoBehaviour
     [SerializeField] private float samplingInterval;
 
     [Header("Gizmos")]
+    [SerializeField] private Mesh gizmoMesh;
     [SerializeField] private float drawHeightLow;
     [SerializeField] private float drawHeightHigh;
 
-    private Dictionary<int, Voxel_t> map;
+    private Dictionary<int, Voxel_t2> map;
     private MeshFilter[] filter;
 
     private void Awake()
@@ -53,7 +54,7 @@ public class MapSampler5th : MonoBehaviour
         {
             if (map != null)
             {
-                map = DataTable.LoadMappingData<Voxel_t>(fileName);
+                map = DataTable.LoadMappingData<Voxel_t2>(fileName);
                 Debug.Log($"load: {fileName};");
             }
             else
@@ -71,17 +72,28 @@ public class MapSampler5th : MonoBehaviour
             Sampling();
         }
     }
+
     private void Sampling()
     {
-        Coroutiner.PlayCoroutine(SamplingVoxels());
+        IEnumerator sampling = Coroutiner.Play(SamplingVoxels());
+        while (sampling.MoveNext())
+        {
+            Debug.Log($"Progress: {CMath.Floor1000((float)sampling.Current) * 100f:F1} %");
+        }
     }
-    private IEnumerator<int> SamplingVoxels()
+    private IEnumerator<float> SamplingVoxels()
     {
-        map = new Dictionary<int, Voxel_t>();
+        map = new Dictionary<int, Voxel_t2>();
 
         for (int f = 0; f < filter.Length; ++f)
         {
+
             Transform targetTransform = filter[f].transform;
+            if (targetTransform.CompareTag("MapObject"))
+            {
+                continue;
+            }
+
             Quaternion rotation = targetTransform.rotation;
 
             Mesh mesh = filter[f].mesh;
@@ -98,10 +110,9 @@ public class MapSampler5th : MonoBehaviour
                 Vector3 normal3 = rotation * normals[triangles[t + 2]];
                 normal3.Normalize();
 
-                if (!GetSlopeData(normal1, normal2, normal3, out int slopeData))
-                {
-                    continue;
-                }
+                int slopeFlag = GetSlopeFlag(normal1, normal2, normal3);
+                //The variable slopeFlag can have values ​​of -1, 0, 1, 2, 3.
+                //There is special processing when slopeFlag == -1.
 
                 Vector3 A = targetTransform.TransformPoint(vertices[triangles[t]]);
                 Vector3 B = targetTransform.TransformPoint(vertices[triangles[t + 1]]);
@@ -124,22 +135,20 @@ public class MapSampler5th : MonoBehaviour
                     {
                         ratio = CMath.Floor1000((float)j / samplingCountABtoAC);
                         Vector3 samplingPoint = CMath.Floor1000Vector3(Vector3.Lerp(AB, AC, ratio));
-                        SetVoxel(slopeData, samplingPoint);
+                        SetVoxel(slopeFlag, samplingPoint);
+
                     }
                 }
             }
 
-            //Debug.Log($"Now Sampling ({f + 1}/{filter.Length})");
-            yield return f + 1;
+            yield return (float)(f + 1) / filter.Length;
         }
 
         Debug.Log($"Sampling count:({map.Keys.Count})");
     }
 
-    private bool GetSlopeData(Vector3 normal1, Vector3 normal2, Vector3 normal3, out int slopeData)
+    private int GetSlopeFlag(Vector3 normal1, Vector3 normal2, Vector3 normal3)
     {
-        slopeData = 0;
-
         //Find the normal value that serves as the standard.
         //To avoid floating point problems, round off at 3 decimal places.
         Vector3 normal = normal1;
@@ -147,66 +156,90 @@ public class MapSampler5th : MonoBehaviour
         if (normal3.y < normal.y) { normal = normal3; }
         normal = CMath.Floor1000Vector3(normal);
 
-        //Set Slope Degree Type
-        //There are only 4 slope angles.
-        int shift = 4;
-        if      (normal.y == -1.000f) { slopeData = OBSTACLE << shift; }
-        else if (normal.y ==  1.000f) { slopeData = PLAIN    << shift; }
-        else if (normal.y ==  0.500f) { slopeData = SLOPE30  << shift; }
-        else if (normal.y ==  0.707f) { slopeData = SLOPE45  << shift; }
-        else    { return false; }
+        //Set Slope Degree Type (only 4 slope angles types.)
+        int data;
+        if      (normal.y == 1.000f) { data = DEG_00 << VOXEL_BIT_DEG; }
+        else if (normal.y == 0.500f) { data = DEG_30 << VOXEL_BIT_DEG; }
+        else if (normal.y == 0.707f) { data = DEG_45 << VOXEL_BIT_DEG; }
+        else if (normal.y == 0.898f) { data = DEG_64 << VOXEL_BIT_DEG; }
+        else { return -1; }
 
-        //Set Slope Diretion Flag (zero 0b_00, positive 0b_01, negative 0b_11)
+        //Set Slope Diretion Flag
         //The direction opposite to the direction indicated by normal value is the direction in which the slope increases.
-        if (slopeData > (PLAIN << shift))
+        if (data > 0)
         {
-            if      (normal.x < 0) { slopeData |= 0b_01_00; }
-            else if (normal.x > 0) { slopeData |= 0b_11_00; }
-            if      (normal.z < 0) { slopeData |= 0b_00_01; }
-            else if (normal.z > 0) { slopeData |= 0b_00_11; }
+            if      (normal.x < 0) { data |= (0b_01_00) << VOXEL_BIT_DIR; }
+            else if (normal.x > 0) { data |= (0b_11_00) << VOXEL_BIT_DIR; }
+            if      (normal.z < 0) { data |= (0b_00_01) << VOXEL_BIT_DIR; }
+            else if (normal.z > 0) { data |= (0b_00_11) << VOXEL_BIT_DIR; }
         }
 
-        return true;
+        return data;
     }
-    private void SetVoxel(int slopeData, Vector3 point)
+    private void SetVoxel(int slopeFlag, Vector3 point)
     {
-        //Clamp(point) => get pivot => get index(key)
-        Vector3 pivot = PVoxel.GetPivot(point);
-        int key = PVoxel.GetKeyFromPivot(pivot);
+        int key = PVoxel.GetKeyFromPoint(point);
+        int moveShift = PVoxel.GetMoveIndex(point);
+        int degree = (slopeFlag != -1) ? (slopeFlag & 0x0F00) >> 4 : -1; // How to improve read-ability?
+        Debug.Assert(moveShift != -1, "Wrong shift index");
 
-        //Set Sub-voxel Type
-        //1. Diagonal lines do not enter the point (sampling rule)
-        //2. When moving, diagonal lines must be processed separately (all adjacent sub-voxels must be checked)
-        int idxMove = PVoxel.GetSubIndex(pivot, point);
-        Debug.Assert(idxMove != -1, "Wrong sub index");
-
-        int sub      = slopeData >> 4;
-        int slopeDir = slopeData & 0b_11_11;
-
-        if (!map.TryGetValue(key, out Voxel_t voxel))
+        if (false == map.TryGetValue(key, out Voxel_t2 voxel))
         {
-            map.Add(key, new Voxel_t((slopeDir << SHIFT_SLOPE_DIRECTION) | (sub << idxMove * 2)));
+            int data;
+
+            switch (degree)
+            {
+                case DEG_00:
+                    data = slopeFlag | 0 | (1 << moveShift);
+                    break;
+                case DEG_30:
+                case DEG_45:
+                case DEG_64:
+                    data = slopeFlag | (1 << (moveShift + VOXEL_BIT_HEIGHT)) | (1 << moveShift);
+                    break;
+                default:
+                    data = -1;
+                    break;
+            }
+
+            map.Add(key, new Voxel_t2(data));
             return;
         }
 
-        //Update Sub voxel (ex. obstacle => slope)
-        int targetSub = voxel.GetSubType(idxMove);
-        if (sub > targetSub
-            || (sub == OBSTACLE && targetSub == PLAIN)) //Exception: To treat the default value as obstacle
+        //Update Voxel Data
+        //TODO: Wrong. Plz use "voxel.HaveHeight(index);"
+        int voxelDeg = voxel.GetDegree();
+
+        if (degree == -1
+            && DEG_00 == voxelDeg)
         {
-            int newData = voxel.Data;
-            newData &= ~(0b_11_11 << SHIFT_SLOPE_DIRECTION);
-            newData |=   slopeDir << SHIFT_SLOPE_DIRECTION;
+            int newData = voxel.MoveFlag;
+            newData &= ~(1 << moveShift);   //delete move flag
+            //The original value is DEG_00 so height == 0;
 
-            newData &= ~(0b_11    << (idxMove * 2));
-            newData |= sub << (idxMove * 2);
+            map[key] = new Voxel_t2(newData);
+        }
 
-            map[key] = new Voxel_t(newData);
+        else
+        if (false == voxel.IsValid()
+            && DEG_00 < voxelDeg)
+        {
+            //Discard invalid values ​​and enter new values
+            map[key] = new Voxel_t2(slopeFlag | (1 << (moveShift + VOXEL_BIT_HEIGHT)) | (1 << moveShift));
+        }
+
+        //usual case;
+        else
+        {
+            int newData = map[key].MoveFlag;
+            newData |= (1 << (moveShift + VOXEL_BIT_HEIGHT)) | (1 << moveShift);
+            map[key] = new Voxel_t2(newData);
         }
     }
+
     private void OnDrawGizmos()
     {
-        if (map == null)
+        if (null == map)
         {
             return;
         }
@@ -216,6 +249,14 @@ public class MapSampler5th : MonoBehaviour
             Vector3 pivot = PVoxel.GetPivot(key);
             if (pivot.y < drawHeightLow || pivot.y > drawHeightHigh)
             {
+                Gizmos.color = Color.clear;
+                continue;
+            }
+
+            Voxel_t2 voxel = map[key];
+            if (false == voxel.IsValid())
+            {
+                Gizmos.color = Color.clear;
                 continue;
             }
 
@@ -223,32 +264,35 @@ public class MapSampler5th : MonoBehaviour
             Gizmos.color = Color.grey;
             Gizmos.DrawLine(pivot, pivot + Vector3.forward * VOXEL_SIZE);
             Gizmos.DrawLine(pivot, pivot + Vector3.right * VOXEL_SIZE);
-            Gizmos.DrawLine(pivot + Vector3.forward * VOXEL_SIZE, pivot + new Vector3(1,0,1) * VOXEL_SIZE);
+            Gizmos.DrawLine(pivot + Vector3.forward * VOXEL_SIZE, pivot + new Vector3(1, 0, 1) * VOXEL_SIZE);
             Gizmos.DrawLine(pivot + Vector3.right * VOXEL_SIZE, pivot + new Vector3(1, 0, 1) * VOXEL_SIZE);
 
-            //draw sub-voxel type
-            Voxel_t voxel = map[key];
-            int move = voxel.SUB;
-            Vector3 center = pivot + new Vector3(1, 0, 1) * VOXEL_HALF_SIZE;
+            Vector3 center = pivot + VOXEL_HALF_SIZE * new Vector3(1f, 0f, 1f);
             for (int i = 0; i < 4; ++i)
             {
-                int masked = move & (0b11 << i*2);
-                masked >>= i*2;
+                if (true == voxel.CanMove(i))
+                {
+                    Gizmos.color = Color.green;
 
-                if      (masked == PLAIN)    { Gizmos.color = Color.green; }
-                else if (masked == OBSTACLE) { Gizmos.color = Color.red; }
-                else if (masked == SLOPE30)  { Gizmos.color = Color.blue; }
-                else if (masked == SLOPE45)  { Gizmos.color = Color.blue; }
-                else { continue; }
+                    if(true == voxel.HaveHeight(i))
+                    {
+                        Gizmos.color = Color.blue;
+                    }
+                }
+                else
+                {
+                    Gizmos.color = Color.red;
+                }
 
                 switch (i)
                 {
-                    case 0: Gizmos.DrawLine(center, center + Vector3.right   * VOXEL_HALF_SIZE); break;
+                    case 0: Gizmos.DrawLine(center, center + Vector3.right * VOXEL_HALF_SIZE); break;
                     case 1: Gizmos.DrawLine(center, center + Vector3.forward * VOXEL_HALF_SIZE); break;
-                    case 2: Gizmos.DrawLine(center, center + Vector3.left    * VOXEL_HALF_SIZE); break;
-                    case 3: Gizmos.DrawLine(center, center + Vector3.back    * VOXEL_HALF_SIZE); break;
+                    case 2: Gizmos.DrawLine(center, center + Vector3.left * VOXEL_HALF_SIZE); break;
+                    case 3: Gizmos.DrawLine(center, center + Vector3.back * VOXEL_HALF_SIZE); break;
                 }
             }
+
         }
     }
 }

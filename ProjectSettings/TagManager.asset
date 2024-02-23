@@ -5,9 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - Field
-  - Slope
-  - Obstacle
-  - Plain
+  - MapObject
   layers:
   - Default
   - TransparentFX

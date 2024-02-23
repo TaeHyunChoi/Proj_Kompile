@@ -10,6 +10,11 @@ public class Coroutiner : MonoBehaviour
     {
         instance = this;
     }
+    public static IEnumerator Play(IEnumerator ie)
+    {
+        instance.StartCoroutine(ie);
+        return ie;
+    }
     public static Coroutine PlayCoroutine(IEnumerator coroutine)
     {
         return instance.StartCoroutine(coroutine);

@@ -37,6 +37,20 @@ public static class PVoxel
     {
         return (int)(pivot.x * VOXEL_INVERT) << 16 | (int)(pivot.y * VOXEL_INVERT) << 8 | (int)(pivot.z * VOXEL_INVERT);
     }
+    public static int GetMoveIndex(Vector3 point)
+    {
+        int index = -1;
+        Vector3 pivot = GetPivot(point);
+
+        bool e1 = (point.z - pivot.z) >  (point.x - pivot.x);
+        bool e2 = (point.z - pivot.z) > -(point.x - pivot.x) + VOXEL_SIZE;
+        if      (!e1 & e2)  { index = 0; }
+        else if (e1 & e2)   { index = 1; }
+        else if (e1 & !e2)  { index = 2; }
+        else if (!e1 & !e2) { index = 3; }
+
+        return index;
+    }
     public static int GetSubIndex(Vector3 pivot, Vector3 point)
     {
         int index = -1;
