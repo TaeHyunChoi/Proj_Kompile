@@ -23,9 +23,8 @@ public static class Public
     public const int DEG_00 = 0b_00;
     public const int DEG_30 = 0b_01;
     public const int DEG_45 = 0b_10;
-    public const int DEG_64 = 0b_11;
+    public const int DEG_57 = 0b_11;
 
-    //내가 헷갈려서 넣어야겠네...
     //public const int VOXEL_BIT_MOVE =  0;
     public const int VOXEL_BIT_HEIGHT =  4;
     public const int VOXEL_BIT_DEG    =  8;

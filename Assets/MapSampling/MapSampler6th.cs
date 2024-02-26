@@ -118,10 +118,6 @@ public class MapSampler6th : MonoBehaviour
                 {
                     continue;
                 }
-                if (slopeFlag == -1)
-                {
-                    int a = 10;
-                }
 
                 Vector3 A = targetTransform.TransformPoint(vertices[triangles[t]]);
                 Vector3 B = targetTransform.TransformPoint(vertices[triangles[t + 1]]);
@@ -168,8 +164,9 @@ public class MapSampler6th : MonoBehaviour
         int data;
         if      (normal.y ==  1.000f) { data = DEG_00 << VOXEL_BIT_DEG; }
         else if (normal.y ==  0.500f) { data = DEG_30 << VOXEL_BIT_DEG; }
+        else if (normal.y ==  0.577f) { data = DEG_57 << VOXEL_BIT_DEG; }
         else if (normal.y ==  0.707f) { data = DEG_45 << VOXEL_BIT_DEG; }
-        else if (normal.y ==  0.898f) { data = DEG_64 << VOXEL_BIT_DEG; }
+        //else if (normal.y ==  0.898f) { data = DEG_64 << VOXEL_BIT_DEG; }
         else if (normal.y == -1.000f) { return -1; }
         else                          { return 0x000F_0000; }
 
