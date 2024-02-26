@@ -119,9 +119,10 @@ public class MapSampler6th : MonoBehaviour
                     continue;
                 }
 
-                Vector3 A = targetTransform.TransformPoint(vertices[triangles[t]]);
-                Vector3 B = targetTransform.TransformPoint(vertices[triangles[t + 1]]);
-                Vector3 C = targetTransform.TransformPoint(vertices[triangles[t + 2]]);
+                //Additional calculation of new Vector3(-0.001f, 0.001f, -0.001f) to reduce floating point issues
+                Vector3 A = targetTransform.TransformPoint(vertices[triangles[t]])      + new Vector3(-0.001f, 0.001f, -0.001f);
+                Vector3 B = targetTransform.TransformPoint(vertices[triangles[t + 1]])  + new Vector3(-0.001f, 0.001f, -0.001f);
+                Vector3 C = targetTransform.TransformPoint(vertices[triangles[t + 2]])  + new Vector3(-0.001f, 0.001f, -0.001f);
 
                 float distAB = Vector3.Distance(A, B);
                 float interval = (VOXEL_SIZE > distAB) ? samplingInterval * 4f : samplingInterval;
