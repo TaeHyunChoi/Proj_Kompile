@@ -20,6 +20,7 @@ public class MapSampler6th : MonoBehaviour
     [SerializeField] private float drawHeightHigh;
 
     private Dictionary<int, Voxel_t2> map;
+    private Dictionary<int, Voxel_t2> posted;
     private MeshFilter[] filter;
 
     private void Awake()
@@ -150,6 +151,21 @@ public class MapSampler6th : MonoBehaviour
         }
 
         Debug.Log($"Sampling count:({map.Keys.Count})");
+
+        posted = new Dictionary<int, Voxel_t2>();
+        foreach (int key in map.Keys)
+        {
+            Voxel_t2 voxel = map[key];
+            if (voxel.TypeFlag != 0)
+            {
+                int linked = GetLinked(map, key);
+                voxel.SetLinked(ref linked);
+
+                posted.Add(key, voxel);
+
+                Debug.Log($"{PVoxel.GetPivot(key)}.LINK == {System.Convert.ToString(posted[key].Link, 2)}");
+            }
+        }
     }
 
     private int GetSlopeFlag(Vector3 normal1, Vector3 normal2, Vector3 normal3)
@@ -235,15 +251,88 @@ public class MapSampler6th : MonoBehaviour
             map[voxelKey] = new Voxel_t2(newData);
         }
     }
+    private int GetLinked(Dictionary<int, Voxel_t2> map, int key)
+    {
+        int value = 0;
+
+        for (int x = -1; x < 3; ++x)
+        {
+            for (int y = -1; y < 3; ++y)
+            {
+                for (int z = -1; z < 3; ++z)
+                {
+                    // 주변 복셀을 찾아가서 + 서브 복셀까지 체크
+                    int addKey = (int)(x * VOXEL_INVERT) << 16 + (int)(y * VOXEL_INVERT) << 16 + (int)(z * VOXEL_INVERT);
+                    if (map.TryGetValue(key + addKey, out Voxel_t2 targetVoxel))
+                    {
+                        int shift = 9 * x + 3 * y + z;
+
+                        //y축 고려 안했니
+                        int flag = 0b_00_00;
+                        if (x == -1) { flag |= 0b_11_00; }
+                        else if (x == 1) { flag |= 0b_01_00; }
+
+                        if (z == -1) { flag |= 0b_00_11; }
+                        else if (z == 1) { flag |= 0b_00_01; }
+
+                        //자기자신을 0,0으로 잡았을 때의 x,z 축의 상대적 위치
+                        switch (flag)
+                        {
+                            case 0b_00_00: //  0,  0
+                                value |= 1 << shift;
+                                break;
+
+                            case 0b_00_01: //  0,  1
+                                if (targetVoxel.CanMove(3))
+                                    value |= 1 << shift;
+                                break;
+                            case 0b_01_00: //  1,  0
+                                if (targetVoxel.CanMove(2))
+                                    value |= 1 << shift;
+                                break;
+                            case 0b_00_11: //  0, -1
+                                if (targetVoxel.CanMove(1))
+                                    value |= 1 << shift;
+                                break;
+                            case 0b_11_00: // -1,  0
+                                if (targetVoxel.CanMove(0))
+                                    value |= 1 << shift;
+                                break;
+
+                            case 0b_11_01: // -1,  1
+                                if (targetVoxel.CanMove(1) && targetVoxel.CanMove(4))
+                                    value |= 1 << shift;
+                                break;
+                            case 0b_01_01: //  1,  1
+                                if (targetVoxel.CanMove(2) && targetVoxel.CanMove(3))
+                                    value |= 1 << shift;
+                                break;
+                            case 0b_11_11: // -1, -1
+                                if (targetVoxel.CanMove(0) && targetVoxel.CanMove(1))
+                                    value |= 1 << shift;
+                                break;
+                            case 0b_01_11: //  1, -1
+                                if (targetVoxel.CanMove(1) && targetVoxel.CanMove(2))
+                                    value |= 1 << shift;
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        return value; 
+    }
 
     private void OnDrawGizmos()
     {
-        if (null == map)
+        if (null == posted)
         {
             return;
         }
-
-        foreach (int key in map.Keys)
+        foreach (int key in posted.Keys)
         {
             //get pivot > decide whether to draw or not.
             Vector3 pivot = PVoxel.GetPivot(key);
@@ -254,7 +343,7 @@ public class MapSampler6th : MonoBehaviour
             }
 
             //get voxel data
-            Voxel_t2 voxel = map[key];
+            Voxel_t2 voxel = posted[key];
 
             //draw outline
             Gizmos.color = Color.grey;
