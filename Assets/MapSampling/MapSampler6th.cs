@@ -110,9 +110,18 @@ public class MapSampler6th : MonoBehaviour
                 Vector3 normal3 = rotation * normals[triangles[t + 2]];
                 normal3.Normalize();
 
-                int slopeFlag = GetSlopeFlag(normal1, normal2, normal3);
                 //The variable slopeFlag can have values ​​of -1, 0, 1, 2, 3.
-                //There is special processing when slopeFlag == -1.
+                //There is special processing when slopeFlag == -1. (It means 'OBSTACLE')
+                //The value 0xF0000 is a position that cannot be moved at all. So does not need to be saved.
+                int slopeFlag = GetSlopeFlag(normal1, normal2, normal3);
+                if (slopeFlag == 0xF0000)
+                {
+                    continue;
+                }
+                if (slopeFlag == -1)
+                {
+                    int a = 10;
+                }
 
                 Vector3 A = targetTransform.TransformPoint(vertices[triangles[t]]);
                 Vector3 B = targetTransform.TransformPoint(vertices[triangles[t + 1]]);
@@ -136,7 +145,6 @@ public class MapSampler6th : MonoBehaviour
                         ratio = CMath.Floor1000((float)j / samplingCountABtoAC);
                         Vector3 samplingPoint = CMath.Floor1000Vector3(Vector3.Lerp(AB, AC, ratio));
                         SetVoxel(slopeFlag, samplingPoint);
-
                     }
                 }
             }
@@ -156,13 +164,16 @@ public class MapSampler6th : MonoBehaviour
         if (normal3.y < normal.y) { normal = normal3; }
         normal = CMath.Floor1000Vector3(normal);
 
-        //Set Slope Degree Type (only 4 slope angles types.)
+        //Set Slope Degree Type (only 5 slope angles types. obstacle(can`t move) return -1;)
         int data;
-        if      (normal.y == 1.000f) { data = DEG_00 << VOXEL_BIT_DEG; }
-        else if (normal.y == 0.500f) { data = DEG_30 << VOXEL_BIT_DEG; }
-        else if (normal.y == 0.707f) { data = DEG_45 << VOXEL_BIT_DEG; }
-        else if (normal.y == 0.898f) { data = DEG_64 << VOXEL_BIT_DEG; }
-        else { return -1; }
+        if      (normal.y ==  1.000f) { data = DEG_00 << VOXEL_BIT_DEG; }
+        else if (normal.y ==  0.500f) { data = DEG_30 << VOXEL_BIT_DEG; }
+        else if (normal.y ==  0.707f) { data = DEG_45 << VOXEL_BIT_DEG; }
+        else if (normal.y ==  0.898f) { data = DEG_64 << VOXEL_BIT_DEG; }
+        else if (normal.y == -1.000f) { return -1; }
+        else                          { return 0x000F_0000; }
+
+        //else { return -1; }
 
         //Set Slope Diretion Flag
         //The direction opposite to the direction indicated by normal value is the direction in which the slope increases.
@@ -178,62 +189,52 @@ public class MapSampler6th : MonoBehaviour
     }
     private void SetVoxel(int slopeFlag, Vector3 point)
     {
-        int key = PVoxel.GetKeyFromPoint(point);
-        int moveShift = PVoxel.GetMoveIndex(point);
-        int degree = (slopeFlag != -1) ? (slopeFlag & 0x0F00) >> 4 : -1; // How to improve read-ability?
-        Debug.Assert(moveShift != -1, "Wrong shift index");
+        int voxelKey    = PVoxel.GetKeyFromPoint(point);
+        int shift = PVoxel.GetMoveIndex(point);
+        int moveFlag = 1 << shift;
+        int heightFlag = (slopeFlag & 0x0F00) != 0 ? 1 << (shift + VOXEL_BIT_HEIGHT) : 0;
 
-        if (false == map.TryGetValue(key, out Voxel_t2 voxel))
+        int newData = heightFlag | moveFlag;
+
+        //add voxel
+        if (false == map.TryGetValue(voxelKey, out Voxel_t2 voxel))
         {
-            int data;
-
-            switch (degree)
+            if (slopeFlag == -1)
             {
-                case DEG_00:
-                    data = slopeFlag | 0 | (1 << moveShift);
-                    break;
-                case DEG_30:
-                case DEG_45:
-                case DEG_64:
-                    data = slopeFlag | (1 << (moveShift + VOXEL_BIT_HEIGHT)) | (1 << moveShift);
-                    break;
-                default:
-                    data = -1;
-                    break;
+                newData = 0;
             }
 
-            map.Add(key, new Voxel_t2(data));
+            map.Add(voxelKey, new Voxel_t2(newData));
             return;
         }
 
-        //Update Voxel Data
-        //TODO: Wrong. Plz use "voxel.HaveHeight(index);"
-        int voxelDeg = voxel.GetDegree();
+        //update voxel
+        newData = voxel.Data;
+        int voxelType = voxel.TypeFlag >> VOXEL_BIT_TYPE;
 
-        if (degree == -1
-            && DEG_00 == voxelDeg)
+        if (OBSTACLE != voxelType)
         {
-            int newData = voxel.MoveFlag;
-            newData &= ~(1 << moveShift);   //delete move flag
-            //The original value is DEG_00 so height == 0;
+            if (-1 == slopeFlag
+                && PLAIN == voxelType)
+            {
+                newData &= ~(heightFlag | moveFlag);
+                if ((newData & 0x000F) == 0)
+                {
+                    newData = 0;
+                }
+            }
+            else
+            {
+                newData |= (slopeFlag | heightFlag | moveFlag);
+            }
 
-            map[key] = new Voxel_t2(newData);
+            map[voxelKey] = new Voxel_t2(newData);
         }
-
-        else
-        if (false == voxel.IsValid()
-            && DEG_00 < voxelDeg)
+        else if (-1 != slopeFlag
+                 && 0 != (slopeFlag & 0x0F00))
         {
-            //Discard invalid values ​​and enter new values
-            map[key] = new Voxel_t2(slopeFlag | (1 << (moveShift + VOXEL_BIT_HEIGHT)) | (1 << moveShift));
-        }
-
-        //usual case;
-        else
-        {
-            int newData = map[key].MoveFlag;
-            newData |= (1 << (moveShift + VOXEL_BIT_HEIGHT)) | (1 << moveShift);
-            map[key] = new Voxel_t2(newData);
+            newData |= (slopeFlag | heightFlag | moveFlag);
+            map[voxelKey] = new Voxel_t2(newData);
         }
     }
 
@@ -246,6 +247,7 @@ public class MapSampler6th : MonoBehaviour
 
         foreach (int key in map.Keys)
         {
+            //get pivot > decide whether to draw or not.
             Vector3 pivot = PVoxel.GetPivot(key);
             if (pivot.y < drawHeightLow || pivot.y > drawHeightHigh)
             {
@@ -253,12 +255,8 @@ public class MapSampler6th : MonoBehaviour
                 continue;
             }
 
+            //get voxel data
             Voxel_t2 voxel = map[key];
-            if (false == voxel.IsValid())
-            {
-                Gizmos.color = Color.clear;
-                continue;
-            }
 
             //draw outline
             Gizmos.color = Color.grey;
@@ -270,11 +268,11 @@ public class MapSampler6th : MonoBehaviour
             Vector3 center = pivot + VOXEL_HALF_SIZE * new Vector3(1f, 0f, 1f);
             for (int i = 0; i < 4; ++i)
             {
-                if (true == voxel.CanMove(i))
+                if (true == voxel.CanMove(moveFlag: 1 << i))
                 {
                     Gizmos.color = Color.green;
 
-                    if(true == voxel.HaveHeight(i))
+                    if (true == voxel.HaveHeight(heightFlag: 1 << (i + VOXEL_BIT_HEIGHT)))
                     {
                         Gizmos.color = Color.blue;
                     }

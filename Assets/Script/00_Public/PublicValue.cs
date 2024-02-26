@@ -13,10 +13,12 @@ public static class Public
 
     public const int SHIFT_SLOPE_DIRECTION   =  8;  // 4 bits
     public const int SHIFT_SUB              =  0;  // 8 bits
+
     public const int OBSTACLE = 0b_00;
     public const int PLAIN = 0b_01;
     public const int SLOPE30 = 0b_10;
     public const int SLOPE45 = 0b_11;
+    public const int SLOPE = 0b_10;
 
     public const int DEG_00 = 0b_00;
     public const int DEG_30 = 0b_01;
@@ -28,8 +30,9 @@ public static class Public
     public const int VOXEL_BIT_HEIGHT =  4;
     public const int VOXEL_BIT_DEG    =  8;
     public const int VOXEL_BIT_DIR    = 12;
+    public const int VOXEL_BIT_TYPE   = 16;
 
-    
+
     public const float VOXEL_SIZE          = 0.5f;
     public const float VOXEL_INVERT        = 1f / VOXEL_SIZE;
     public const float VOXEL_HALF_SIZE     = 0.5f * VOXEL_SIZE;
@@ -179,44 +182,35 @@ namespace CDataStructure
         }
     }
 
+    [Serializable]
     public struct Voxel_t2
     {
         private int dataFlag;
         private int linkFlag;
 
-        public int MoveFlag      { get => dataFlag & 0x000F; }
-        public int HeightFlag    { get => dataFlag & 0x00F0; }
-        public int DegreeFlag    { get => dataFlag & 0x0F00; }
-        public int DirectionFlag { get => dataFlag & 0xF000; }
+        public int Data { get => dataFlag; }
 
-        public bool IsValid()
+        public int TypeFlag      { get => dataFlag & 0x000F_0000; }
+
+        public int MoveFlag      { get => dataFlag & 0x0000_000F; }
+        public int HeightFlag    { get => dataFlag & 0x0000_00F0; }
+
+        public int DegreeFlag    { get => dataFlag & 0x0000_0F00; }
+        public int DirectionFlag { get => dataFlag & 0x0000_F000; }
+
+        public bool CanMove(int moveFlag)
         {
-            return (dataFlag != -1);
+            return 0 != (dataFlag & moveFlag);
         }
-        public bool CanMove(int moveShift)
+        public bool HaveHeight(int heightFlag)
         {
-            int value = dataFlag & (1 << moveShift);
-            value >>= moveShift;
-
-            return 0 != value;
+            return 0 != (dataFlag & heightFlag);
         }
-        public bool HaveHeight(int moveShift)
-        {
-            int height = (dataFlag & 0x00F0);
-            height >>= (moveShift + Public.VOXEL_BIT_HEIGHT);
-
-            return 0 != height;
-        }
-        public int GetDegree()
-        {
-            int deg = (dataFlag & 0x0F00);
-            deg >>= Public.VOXEL_BIT_DEG;
-
-            return deg;
-        }
-
         public Voxel_t2(int data)
         {
+            if      ((data & 0x00F0) != 0) { data |= Public.SLOPE << Public.VOXEL_BIT_TYPE; }
+            else if ((data & 0x000F) != 0) { data |= Public.PLAIN << Public.VOXEL_BIT_TYPE; }
+
             dataFlag = data;
             linkFlag = 0;
         }
