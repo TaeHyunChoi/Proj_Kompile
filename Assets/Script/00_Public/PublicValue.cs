@@ -188,37 +188,28 @@ namespace CDataStructure
         private int linkFlag;
 
         public int Data { get => dataFlag; }
-        public int TypeFlag      { get => dataFlag & 0x000F_0000; }
-        public int MoveFlag      { get => dataFlag & 0x0000_000F; }
-        public int HeightFlag    { get => dataFlag & 0x0000_00F0; }
-        public int DegreeFlag    { get => dataFlag & 0x0000_0F00; }
-        public int DirectionFlag { get => dataFlag & 0x0000_F000; }
-
-        public int Link { get => linkFlag; }
-
-        public bool CanMove(int moveFlag)
+        public int Type
         {
-            return 0 != (dataFlag & moveFlag);
+            get
+            {
+                if (0 != (dataFlag & 0x00F)) { return Public.PLAIN; } //1
+                if (0 != (dataFlag & 0xFF0)) { return Public.SLOPE; } //2
+
+                return Public.OBSTACLE; //0
+            }
+        }
+
+        public bool CanMove(int index)
+        {
+            return 0 != (dataFlag & (1 << index));
         }
         public bool HaveHeight(int heightFlag)
         {
             return 0 != (dataFlag & heightFlag);
         }
-        public void SetLinked(ref int link)
-        {
-            linkFlag = link;
-        }
-        public bool IsLinked(int x, int y, int z)
-        {
-
-            return false;
-        }
 
         public Voxel_t2(int data)
         {
-            if      ((data & 0x00F0) != 0) { data |= Public.SLOPE << Public.VOXEL_BIT_TYPE; }
-            else if ((data & 0x000F) != 0) { data |= Public.PLAIN << Public.VOXEL_BIT_TYPE; }
-
             dataFlag = data;
             linkFlag = 0;
         }

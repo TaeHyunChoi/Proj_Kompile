@@ -20,7 +20,6 @@ public class MapSampler6th : MonoBehaviour
     [SerializeField] private float drawHeightHigh;
 
     private Dictionary<int, Voxel_t2> map;
-    private Dictionary<int, Voxel_t2> posted;
     private MeshFilter[] filter;
 
     private void Awake()
@@ -110,12 +109,12 @@ public class MapSampler6th : MonoBehaviour
                 normal2.Normalize();
                 Vector3 normal3 = rotation * normals[triangles[t + 2]];
                 normal3.Normalize();
-
+                
                 //The variable slopeFlag can have values ​​of -1, 0, 1, 2, 3.
                 //There is special processing when slopeFlag == -1. (It means 'OBSTACLE')
                 //The value 0xF0000 is a position that cannot be moved at all. So does not need to be saved.
-                int slopeFlag = GetSlopeFlag(normal1, normal2, normal3);
-                if (slopeFlag == 0xF0000)
+                int heightFlag = GetHeightFlag(normal1, normal2, normal3);
+                if (heightFlag == 0xF000)
                 {
                     continue;
                 }
@@ -142,7 +141,7 @@ public class MapSampler6th : MonoBehaviour
                     {
                         ratio = CMath.Floor1000((float)j / samplingCountABtoAC);
                         Vector3 samplingPoint = CMath.Floor1000Vector3(Vector3.Lerp(AB, AC, ratio));
-                        SetVoxel(slopeFlag, samplingPoint);
+                        SetVoxel(heightFlag, samplingPoint);
                     }
                 }
             }
@@ -151,24 +150,9 @@ public class MapSampler6th : MonoBehaviour
         }
 
         Debug.Log($"Sampling count:({map.Keys.Count})");
-
-        posted = new Dictionary<int, Voxel_t2>();
-        foreach (int key in map.Keys)
-        {
-            Voxel_t2 voxel = map[key];
-            if (voxel.TypeFlag != 0)
-            {
-                int linked = GetLinked(map, key);
-                voxel.SetLinked(ref linked);
-
-                posted.Add(key, voxel);
-
-                Debug.Log($"{PVoxel.GetPivot(key)}.LINK == {System.Convert.ToString(posted[key].Link, 2)}");
-            }
-        }
     }
 
-    private int GetSlopeFlag(Vector3 normal1, Vector3 normal2, Vector3 normal3)
+    private int GetHeightFlag(Vector3 normal1, Vector3 normal2, Vector3 normal3)
     {
         //Find the normal value that serves as the standard.
         //To avoid floating point problems, round off at 3 decimal places.
@@ -177,162 +161,99 @@ public class MapSampler6th : MonoBehaviour
         if (normal3.y < normal.y) { normal = normal3; }
         normal = CMath.Floor1000Vector3(normal);
 
-        //Set Slope Degree Type (only 5 slope angles types. obstacle(can`t move) return -1;)
-        int data;
-        if      (normal.y ==  1.000f) { data = DEG_00 << VOXEL_BIT_DEG; }
-        else if (normal.y ==  0.500f) { data = DEG_30 << VOXEL_BIT_DEG; }
-        else if (normal.y ==  0.577f) { data = DEG_57 << VOXEL_BIT_DEG; }
-        else if (normal.y ==  0.707f) { data = DEG_45 << VOXEL_BIT_DEG; }
-        //else if (normal.y ==  0.898f) { data = DEG_64 << VOXEL_BIT_DEG; }
-        else if (normal.y == -1.000f) { return -1; }
-        else                          { return 0x000F_0000; }
+        //Set Slope Degree Type
+        //only 5 slope angles types. obstacle(can`t move) return -1;
+        //variable 'h' means relative height in voxel vertices;
+        int heightFlag = -1, h;
 
-        //else { return -1; }
-
-        //Set Slope Diretion Flag
-        //The direction opposite to the direction indicated by normal value is the direction in which the slope increases.
-        if (data > 0)
+        switch (normal.y)
         {
-            if      (normal.x < 0) { data |= (0b_01_00) << VOXEL_BIT_DIR; }
-            else if (normal.x > 0) { data |= (0b_11_00) << VOXEL_BIT_DIR; }
-            if      (normal.z < 0) { data |= (0b_00_01) << VOXEL_BIT_DIR; }
-            else if (normal.z > 0) { data |= (0b_00_11) << VOXEL_BIT_DIR; }
+            case  0.500f: h = 0b_01; break;   // slope30
+            case  0.707f: h = 0b_10; break;   // slope45
+            case  0.577f: h = 0b_10; break;   // slope45_partial
+
+            case  1.000f: return  0;          // plain
+            case -1.000f: return -1;  // obstacle, -1
+            default:      return 0xF000;      // unnecessary data (ex. side)
         }
 
-        return data;
+        //Set height flag(mapping)
+        int dirFlag = 0;
+        if      (normal.x < 0) { dirFlag |= 0b_01_00; }
+        else if (normal.x > 0) { dirFlag |= 0b_11_00; }
+        if      (normal.z < 0) { dirFlag |= 0b_00_01; }
+        else if (normal.z > 0) { dirFlag |= 0b_00_11; }
+
+        switch (dirFlag)
+        {
+            case 0b_01_00: heightFlag = (h << 6) | (0 << 4) | (0 << 2) | h; break;  // +x,  0
+            case 0b_11_00: heightFlag = (0 << 6) | (h << 4) | (h << 2) | 0; break;  // -x,  0
+            case 0b_00_01: heightFlag = (0 << 6) | (0 << 4) | (h << 2) | h; break;  //  0, +z
+            case 0b_00_11: heightFlag = (h << 6) | (h << 4) | (0 << 2) | 0; break;  //  0, -z
+            case 0b_01_01: heightFlag = (0 << 6) | (0 << 4) | (0 << 2) | h; break;  // +x, +z
+            case 0b_01_11: heightFlag = (h << 6) | (0 << 4) | (0 << 2) | 0; break;  // +x, -z
+            case 0b_11_01: heightFlag = (0 << 6) | (0 << 4) | (h << 2) | 0; break;  // -x, +z
+            case 0b_11_11: heightFlag = (0 << 6) | (h << 4) | (0 << 2) | 0; break;  // -x, -z
+        }
+
+        return heightFlag;
     }
-    private void SetVoxel(int slopeFlag, Vector3 point)
+    private void SetVoxel(int heightFlag, Vector3 point)
     {
-        int voxelKey    = PVoxel.GetKeyFromPoint(point);
-        int shift = PVoxel.GetMoveIndex(point);
-        int moveFlag = 1 << shift;
-        int heightFlag = (slopeFlag & 0x0F00) != 0 ? 1 << (shift + VOXEL_BIT_HEIGHT) : 0;
+        int voxelKey = PVoxel.GetKeyFromPoint(point);
+        int moveFlag = 1 << PVoxel.GetMoveIndex(point);
 
-        int newData = heightFlag | moveFlag;
-
-        //add voxel
+        //Add voxel
         if (false == map.TryGetValue(voxelKey, out Voxel_t2 voxel))
         {
-            if (slopeFlag == -1)
-            {
-                newData = 0;
-            }
-
-            map.Add(voxelKey, new Voxel_t2(newData));
+            map.Add(voxelKey, new Voxel_t2(heightFlag | moveFlag));
             return;
         }
 
-        //update voxel
-        newData = voxel.Data;
-        int voxelType = voxel.TypeFlag >> VOXEL_BIT_TYPE;
+        //Update voxel data
+        int newData = voxel.Data;
+        int type = voxel.Type;
 
-        if (OBSTACLE != voxelType)
+        //update case 01: input obstacle in PLAIN voxel;
+        if (PLAIN == type && -1 == heightFlag)
         {
-            if (-1 == slopeFlag
-                && PLAIN == voxelType)
+            newData = voxel.Data & ~moveFlag;
+
+            //If this voxel can`t move, delete height flag also;
+            if ((newData & 0x00F) == 0)
             {
-                newData &= ~(heightFlag | moveFlag);
-                if ((newData & 0x000F) == 0)
-                {
-                    newData = 0;
-                }
-            }
-            else
-            {
-                newData |= (slopeFlag | heightFlag | moveFlag);
-            }
-
-            map[voxelKey] = new Voxel_t2(newData);
-        }
-        else if (-1 != slopeFlag
-                 && 0 != (slopeFlag & 0x0F00))
-        {
-            newData |= (slopeFlag | heightFlag | moveFlag);
-            map[voxelKey] = new Voxel_t2(newData);
-        }
-    }
-    private int GetLinked(Dictionary<int, Voxel_t2> map, int key)
-    {
-        int value = 0;
-
-        for (int x = -1; x < 3; ++x)
-        {
-            for (int y = -1; y < 3; ++y)
-            {
-                for (int z = -1; z < 3; ++z)
-                {
-                    // 주변 복셀을 찾아가서 + 서브 복셀까지 체크
-                    int addKey = (int)(x * VOXEL_INVERT) << 16 + (int)(y * VOXEL_INVERT) << 16 + (int)(z * VOXEL_INVERT);
-                    if (map.TryGetValue(key + addKey, out Voxel_t2 targetVoxel))
-                    {
-                        int shift = 9 * x + 3 * y + z;
-
-                        //y축 고려 안했니
-                        int flag = 0b_00_00;
-                        if (x == -1) { flag |= 0b_11_00; }
-                        else if (x == 1) { flag |= 0b_01_00; }
-
-                        if (z == -1) { flag |= 0b_00_11; }
-                        else if (z == 1) { flag |= 0b_00_01; }
-
-                        //자기자신을 0,0으로 잡았을 때의 x,z 축의 상대적 위치
-                        switch (flag)
-                        {
-                            case 0b_00_00: //  0,  0
-                                value |= 1 << shift;
-                                break;
-
-                            case 0b_00_01: //  0,  1
-                                if (targetVoxel.CanMove(3))
-                                    value |= 1 << shift;
-                                break;
-                            case 0b_01_00: //  1,  0
-                                if (targetVoxel.CanMove(2))
-                                    value |= 1 << shift;
-                                break;
-                            case 0b_00_11: //  0, -1
-                                if (targetVoxel.CanMove(1))
-                                    value |= 1 << shift;
-                                break;
-                            case 0b_11_00: // -1,  0
-                                if (targetVoxel.CanMove(0))
-                                    value |= 1 << shift;
-                                break;
-
-                            case 0b_11_01: // -1,  1
-                                if (targetVoxel.CanMove(1) && targetVoxel.CanMove(4))
-                                    value |= 1 << shift;
-                                break;
-                            case 0b_01_01: //  1,  1
-                                if (targetVoxel.CanMove(2) && targetVoxel.CanMove(3))
-                                    value |= 1 << shift;
-                                break;
-                            case 0b_11_11: // -1, -1
-                                if (targetVoxel.CanMove(0) && targetVoxel.CanMove(1))
-                                    value |= 1 << shift;
-                                break;
-                            case 0b_01_11: //  1, -1
-                                if (targetVoxel.CanMove(1) && targetVoxel.CanMove(2))
-                                    value |= 1 << shift;
-                                break;
-                        }
-                    }
-                }
+                newData &= ~0xFF0; 
             }
         }
 
+        //update case 01: input SLOPE in Any voxel;
+        else if (0 != heightFlag)
+        {
+            //delete before height flag
+            newData &= ~0xFF0;
+            newData |= heightFlag;
 
+            //add new (height | move) flag
+            newData |= (heightFlag | moveFlag);
+        }
 
-        return value; 
+        //else cases don`t need to update voxel data;
+        else
+        {
+            return;
+        }
+
+        //update
+        map[voxelKey] = new Voxel_t2(newData);
     }
 
     private void OnDrawGizmos()
     {
-        if (null == posted)
+        if (null == map)
         {
             return;
         }
-        foreach (int key in posted.Keys)
+        foreach (int key in map.Keys)
         {
             //get pivot > decide whether to draw or not.
             Vector3 pivot = PVoxel.GetPivot(key);
@@ -343,7 +264,7 @@ public class MapSampler6th : MonoBehaviour
             }
 
             //get voxel data
-            Voxel_t2 voxel = posted[key];
+            Voxel_t2 voxel = map[key];
 
             //draw outline
             Gizmos.color = Color.grey;
@@ -355,10 +276,12 @@ public class MapSampler6th : MonoBehaviour
             Vector3 center = pivot + VOXEL_HALF_SIZE * new Vector3(1f, 0f, 1f);
             for (int i = 0; i < 4; ++i)
             {
-                if (true == voxel.CanMove(moveFlag: 1 << i))
+                //한 번에 처리할 수도 있을 것 같은데
+                if (true == voxel.CanMove(i))
                 {
                     Gizmos.color = Color.green;
 
+                    //이걸 어떻게 판별한담?
                     if (true == voxel.HaveHeight(heightFlag: 1 << (i + VOXEL_BIT_HEIGHT)))
                     {
                         Gizmos.color = Color.blue;
