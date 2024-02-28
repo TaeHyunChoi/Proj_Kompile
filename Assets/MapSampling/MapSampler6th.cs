@@ -78,7 +78,7 @@ public class MapSampler6th : MonoBehaviour
         IEnumerator sampling = Coroutiner.Play(SamplingVoxels());
         while (sampling.MoveNext())
         {
-            Debug.Log($"Progress: {CMath.Floor1000((float)sampling.Current) * 100f:F1} %");
+            //Debug.Log($"Progress: {CMath.Floor1000((float)sampling.Current) * 100f:F1} %");
         }
     }
     private IEnumerator<float> SamplingVoxels()
@@ -101,6 +101,8 @@ public class MapSampler6th : MonoBehaviour
             Vector3[] normals = mesh.normals;
             int[] triangles = mesh.triangles;
 
+            Hashtable table = new Hashtable();
+
             for (int t = 0; t < triangles.Length; t += 3)
             {
                 Vector3 normal1 = rotation * normals[triangles[t]];
@@ -109,7 +111,7 @@ public class MapSampler6th : MonoBehaviour
                 normal2.Normalize();
                 Vector3 normal3 = rotation * normals[triangles[t + 2]];
                 normal3.Normalize();
-                
+
                 //The variable slopeFlag can have values ​​of -1, 0, 1, 2, 3.
                 //There is special processing when slopeFlag == -1. (It means 'OBSTACLE')
                 //The value 0xF0000 is a position that cannot be moved at all. So does not need to be saved.
@@ -120,9 +122,25 @@ public class MapSampler6th : MonoBehaviour
                 }
 
                 //Additional calculation of new Vector3(-0.001f, 0.001f, -0.001f) to reduce floating point issues
-                Vector3 A = targetTransform.TransformPoint(vertices[triangles[t]])      + new Vector3(-0.001f, 0.001f, -0.001f);
-                Vector3 B = targetTransform.TransformPoint(vertices[triangles[t + 1]])  + new Vector3(-0.001f, 0.001f, -0.001f);
-                Vector3 C = targetTransform.TransformPoint(vertices[triangles[t + 2]])  + new Vector3(-0.001f, 0.001f, -0.001f);
+                Vector3 A = targetTransform.TransformPoint(vertices[triangles[t]])    /*  + new Vector3(-0.001f, 0.001f, -0.001f)*/;
+                Vector3 B = targetTransform.TransformPoint(vertices[triangles[t + 1]])/*  + new Vector3(-0.001f, 0.001f, -0.001f)*/;
+                Vector3 C = targetTransform.TransformPoint(vertices[triangles[t + 2]])/*  + new Vector3(-0.001f, 0.001f, -0.001f)*/;
+
+                A = CMath.Floor1000Vector3(A);
+                B = CMath.Floor1000Vector3(B);
+                C = CMath.Floor1000Vector3(C);
+
+                if (false == table.ContainsKey(A)) { table.Add(A, A.y); }
+                if (false == table.ContainsKey(B)) { table.Add(B, B.y); }
+                if (false == table.ContainsKey(C)) { table.Add(C, C.y); }
+
+                continue;
+
+                //테스트 좀 해봅시다.
+                int index = TEST_GetTriIndex(normals, triangles[t], triangles[t + 1], triangles[t + 2], out Vector3 normal);
+                Vector3 point = targetTransform.TransformPoint(vertices[triangles[index]]);
+                float d = CMath.Floor1000((point.x * normal.x) + (point.y * normal.y) + (point.z * normal.z));
+                Debug.Log($"point:{point:F3}, normal:{normal:F3}, d == {d:F3}\n\tvertices.y==({A.y:F3}, {B.y:F3}, {C.y:F3})");
 
                 float distAB = Vector3.Distance(A, B);
                 float interval = (VOXEL_SIZE > distAB) ? samplingInterval * 4f : samplingInterval;
@@ -141,9 +159,19 @@ public class MapSampler6th : MonoBehaviour
                     {
                         ratio = CMath.Floor1000((float)j / samplingCountABtoAC);
                         Vector3 samplingPoint = CMath.Floor1000Vector3(Vector3.Lerp(AB, AC, ratio));
-                        SetVoxel(heightFlag, samplingPoint);
+
+                        if (SetVoxel(heightFlag, samplingPoint))
+                        {
+
+                        }
+
                     }
                 }
+            }
+
+            foreach (var point in table.Keys)
+            {
+                Debug.Log($"{point:F3}.y == {table[point]:F3}");
             }
 
             yield return (float)(f + 1) / filter.Length;
@@ -151,6 +179,21 @@ public class MapSampler6th : MonoBehaviour
 
         Debug.Log($"Sampling count:({map.Keys.Count})");
     }
+
+
+    private int TEST_GetTriIndex(Vector3[] normals, int t1, int t2, int t3, out Vector3 normal)
+    {
+        int result = t1;
+
+        normal = normals[t1];
+        if (normals[t1].y < normal.y) { normal = normals[t1]; result = t1; }
+        if (normals[t2].y < normal.y) { normal = normals[t2]; result = t2; }
+
+        normal = CMath.Floor1000Vector3(normal);
+
+        return result;
+    }
+
 
     private int GetHeightFlag(Vector3 normal1, Vector3 normal2, Vector3 normal3)
     {
@@ -198,7 +241,7 @@ public class MapSampler6th : MonoBehaviour
 
         return heightFlag;
     }
-    private void SetVoxel(int heightFlag, Vector3 point)
+    private bool SetVoxel(int heightFlag, Vector3 point)
     {
         int voxelKey = PVoxel.GetKeyFromPoint(point);
         int moveFlag = 1 << PVoxel.GetMoveIndex(point);
@@ -206,8 +249,8 @@ public class MapSampler6th : MonoBehaviour
         //Add voxel
         if (false == map.TryGetValue(voxelKey, out Voxel_t2 voxel))
         {
-            map.Add(voxelKey, new Voxel_t2(heightFlag | moveFlag));
-            return;
+            map.Add(voxelKey, new Voxel_t2((heightFlag << 4) | moveFlag));
+            return true;
         }
 
         //Update voxel data
@@ -234,73 +277,74 @@ public class MapSampler6th : MonoBehaviour
             newData |= heightFlag;
 
             //add new (height | move) flag
-            newData |= (heightFlag | moveFlag);
+            newData |= (heightFlag << 4) | moveFlag;
         }
 
         //else cases don`t need to update voxel data;
         else
         {
-            return;
+            return false;
         }
 
         //update
         map[voxelKey] = new Voxel_t2(newData);
+        return true;
     }
 
-    private void OnDrawGizmos()
-    {
-        if (null == map)
-        {
-            return;
-        }
-        foreach (int key in map.Keys)
-        {
-            //get pivot > decide whether to draw or not.
-            Vector3 pivot = PVoxel.GetPivot(key);
-            if (pivot.y < drawHeightLow || pivot.y > drawHeightHigh)
-            {
-                Gizmos.color = Color.clear;
-                continue;
-            }
+    //private void OnDrawGizmos()
+    //{
+    //    if (null == map)
+    //    {
+    //        return;
+    //    }
+    //    foreach (int key in map.Keys)
+    //    {
+    //        //get pivot > decide whether to draw or not.
+    //        Vector3 pivot = PVoxel.GetPivot(key);
+    //        if (pivot.y < drawHeightLow || pivot.y > drawHeightHigh)
+    //        {
+    //            Gizmos.color = Color.clear;
+    //            continue;
+    //        }
 
-            //get voxel data
-            Voxel_t2 voxel = map[key];
+    //        //get voxel data
+    //        Voxel_t2 voxel = map[key];
 
-            //draw outline
-            Gizmos.color = Color.grey;
-            Gizmos.DrawLine(pivot, pivot + Vector3.forward * VOXEL_SIZE);
-            Gizmos.DrawLine(pivot, pivot + Vector3.right * VOXEL_SIZE);
-            Gizmos.DrawLine(pivot + Vector3.forward * VOXEL_SIZE, pivot + new Vector3(1, 0, 1) * VOXEL_SIZE);
-            Gizmos.DrawLine(pivot + Vector3.right * VOXEL_SIZE, pivot + new Vector3(1, 0, 1) * VOXEL_SIZE);
+    //        //draw outline
+    //        Gizmos.color = Color.grey;
+    //        Gizmos.DrawLine(pivot, pivot + Vector3.forward * VOXEL_SIZE);
+    //        Gizmos.DrawLine(pivot, pivot + Vector3.right * VOXEL_SIZE);
+    //        Gizmos.DrawLine(pivot + Vector3.forward * VOXEL_SIZE, pivot + new Vector3(1, 0, 1) * VOXEL_SIZE);
+    //        Gizmos.DrawLine(pivot + Vector3.right * VOXEL_SIZE, pivot + new Vector3(1, 0, 1) * VOXEL_SIZE);
 
-            Vector3 center = pivot + VOXEL_HALF_SIZE * new Vector3(1f, 0f, 1f);
-            for (int i = 0; i < 4; ++i)
-            {
-                //한 번에 처리할 수도 있을 것 같은데
-                if (true == voxel.CanMove(i))
-                {
-                    Gizmos.color = Color.green;
+    //        Vector3 center = pivot + VOXEL_HALF_SIZE * new Vector3(1f, 0f, 1f);
+    //        for (int i = 0; i < 4; ++i)
+    //        {
+    //            //한 번에 처리할 수도 있을 것 같은데
+    //            if (true == voxel.CanMove(i))
+    //            {
+    //                Gizmos.color = Color.green;
 
-                    //이걸 어떻게 판별한담?
-                    if (true == voxel.HaveHeight(heightFlag: 1 << (i + VOXEL_BIT_HEIGHT)))
-                    {
-                        Gizmos.color = Color.blue;
-                    }
-                }
-                else
-                {
-                    Gizmos.color = Color.red;
-                }
+    //                //이걸 어떻게 판별한담?
+    //                if (true == voxel.HaveHeight(heightFlag: 1 << (i + VOXEL_BIT_HEIGHT)))
+    //                {
+    //                    Gizmos.color = Color.blue;
+    //                }
+    //            }
+    //            else
+    //            {
+    //                Gizmos.color = Color.red;
+    //            }
 
-                switch (i)
-                {
-                    case 0: Gizmos.DrawLine(center, center + Vector3.right * VOXEL_HALF_SIZE); break;
-                    case 1: Gizmos.DrawLine(center, center + Vector3.forward * VOXEL_HALF_SIZE); break;
-                    case 2: Gizmos.DrawLine(center, center + Vector3.left * VOXEL_HALF_SIZE); break;
-                    case 3: Gizmos.DrawLine(center, center + Vector3.back * VOXEL_HALF_SIZE); break;
-                }
-            }
+    //            switch (i)
+    //            {
+    //                case 0: Gizmos.DrawLine(center, center + Vector3.right * VOXEL_HALF_SIZE); break;
+    //                case 1: Gizmos.DrawLine(center, center + Vector3.forward * VOXEL_HALF_SIZE); break;
+    //                case 2: Gizmos.DrawLine(center, center + Vector3.left * VOXEL_HALF_SIZE); break;
+    //                case 3: Gizmos.DrawLine(center, center + Vector3.back * VOXEL_HALF_SIZE); break;
+    //            }
+    //        }
 
-        }
-    }
+    //    }
+    //}
 }
