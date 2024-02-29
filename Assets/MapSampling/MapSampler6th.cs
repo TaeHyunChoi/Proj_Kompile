@@ -87,7 +87,6 @@ public class MapSampler6th : MonoBehaviour
 
         for (int f = 0; f < filter.Length; ++f)
         {
-
             Transform targetTransform = filter[f].transform;
             if (targetTransform.CompareTag("MapObject"))
             {
