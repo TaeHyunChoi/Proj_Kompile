@@ -61,6 +61,41 @@ public static class PVoxel
         return index;
     }
 
+    public static int GetHeightFlag(Vector3 diff)
+    {
+        diff = CMath.FloorToVector(diff * VOXEL_HALF_INVERT, 2);
+        int x = CMath.FloorToInt(diff.x, 1) << 2;
+        int z = CMath.FloorToInt(diff.z, 1);
+        int y = CMath.FloorToInt(diff.y, 1);
+
+        switch (x | z)
+        {
+            case 0b_10_00: return y << (0 + VOXEL_BIT_HEIGHT);
+            case 0b_10_10: return y << (2 + VOXEL_BIT_HEIGHT);
+            case 0b_00_10: return y << (4 + VOXEL_BIT_HEIGHT);
+            case 0b_00_00: return y << (6 + VOXEL_BIT_HEIGHT);
+            case 0b_01_01: return y << (8 + VOXEL_BIT_HEIGHT);
+        }
+
+        return 0;
+    }
+    public static int GetMoveFlag(Vector3 diff)
+    {
+        int flag = 0;
+        flag |= (diff.z > diff.x) ? 0b_10 : 0;
+        flag |= (diff.z > -diff.x + VOXEL_SIZE) ? 0b_01 : 0;
+
+        switch (flag)
+        {
+            case 0b_01: return 0b_0001;
+            case 0b_11: return 0b_0010;
+            case 0b_10: return 0b_0100;
+            case 0b_00: return 0b_1000;
+            default:    return 0;
+        }
+    }
+
+
     public static bool Get(Dictionary<int, Voxel_t2> map, Vector3 point, out Voxel_t2 voxel)
     {
         Vector3 pivot = GetPivot(point);
@@ -73,6 +108,7 @@ public static class PVoxel
 
         return false;
     }
+
     //no ref
     public static bool Get(Dictionary<int, Voxel_t> map, Vector3 point, out Voxel_t voxel)
     {

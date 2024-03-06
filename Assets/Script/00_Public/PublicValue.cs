@@ -32,7 +32,7 @@ public static class Public
     public const int VOXEL_BIT_TYPE   = 16;
 
 
-    public const float VOXEL_SIZE          = 0.5f;
+    public const float VOXEL_SIZE          = 1f;
     public const float VOXEL_INVERT        = 1f / VOXEL_SIZE;
     public const float VOXEL_HALF_SIZE     = 0.5f * VOXEL_SIZE;
     public const float VOXEL_HALF_INVERT   = 1f / VOXEL_HALF_SIZE;
@@ -188,6 +188,8 @@ namespace CDataStructure
         private int linkFlag;
 
         public int Data { get => dataFlag; }
+        public int MoveFlag { get => dataFlag & 0xF; }
+        public int HeightFlag { get => dataFlag & 0x3FF0; }
         public int Type
         {
             get
