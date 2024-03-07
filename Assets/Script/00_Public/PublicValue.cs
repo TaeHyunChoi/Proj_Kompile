@@ -190,6 +190,7 @@ namespace CDataStructure
         public int Data { get => dataFlag; }
         public int MoveFlag { get => dataFlag & 0xF; }
         public int HeightFlag { get => dataFlag & 0x3FF0; }
+        public int LinkFlag { get => linkFlag; }
         public int Type
         {
             get
@@ -201,19 +202,31 @@ namespace CDataStructure
             }
         }
 
-        public bool CanMove(int index)
+        public bool IsMovable(int quarant)
         {
-            return 0 != (dataFlag & (1 << index));
+            return 0 != (dataFlag & (1 << quarant));
         }
-        public bool HaveHeight(int heightFlag)
+        public int GetQuarantHeight(int quarant)
         {
-            return 0 != (dataFlag & heightFlag);
-        }
+            switch (quarant)
+            {
+                case 0: return ((dataFlag & 0x3FF0) >> 4) & 0b_00_00_00_11_11;
+                case 1: break;
+                case 2: break;
+                case 3: break;
+            }
 
+            return -1;
+        }
         public Voxel_t2(int data)
         {
             dataFlag = data;
             linkFlag = 0;
+        }
+        public Voxel_t2(int data, int link)
+        {
+            dataFlag = data;
+            linkFlag = link;
         }
     }
 }

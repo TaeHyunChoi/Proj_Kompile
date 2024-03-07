@@ -49,9 +49,60 @@ public class MapSampling7th : MonoBehaviour
             }
         }
 
-        foreach (int key in map.Keys)
+        int key = -1;
+        foreach (int k in map.Keys)
         {
-            Debug.Log($"{PVoxel.GetPivot(key)}:: {System.Convert.ToString(map[key].HeightFlag >> VOXEL_BIT_HEIGHT, 2)} | {System.Convert.ToString(map[key].MoveFlag, 2)}");
+            key = k;
+            break;
+        }
+
+        //너비 우선 탐색을 사용하여 link flag를 만듭니다...!?
+        Dictionary<int, int> searched = new Dictionary<int, int>();
+        Queue<int> keys = new Queue<int>();
+        keys.Enqueue(key);
+
+
+        while (keys.Count > 0)
+        {
+            int targetKey = keys.Dequeue();
+            Voxel_t2 targetVoxel = map[targetKey];
+            Voxel_t2 neighborVoxel;
+            //같은 y축에서만 판단하는 것으로 테스트 돌립시다.
+            //float x = (key & 0x_FF_0000) >> 16;
+            //float y = (key & 0x_00_FF00) >> 8;
+            //float z = (key & 0x_00_00FF);
+
+
+            int link = targetVoxel.LinkFlag;
+
+            //left: x-1
+            int neighborKey = targetKey - (1 << 16);
+            if (map.TryGetValue(neighborKey, out neighborVoxel))
+            {
+                //1. 마주보는 면이 movable한가
+                if (true == targetVoxel.IsMovable(0)
+                    && true == neighborVoxel.IsMovable(3))
+                {
+                    //2. 높이가 동일한가...
+                    if (neighborVoxel.GetQuarantHeight(3) == targetVoxel.GetQuarantHeight(0))
+                    {
+                        link |= 1<<0;
+
+                        if (false == searched.ContainsKey(neighborKey))
+                        {
+                            keys.Enqueue(neighborKey);
+                        }
+                    }
+                }
+            }
+            //right: x+1
+            neighborKey = targetKey + (1 << 16);
+            if (map.TryGetValue(neighborKey, out neighborVoxel))
+            {
+
+            }
+
+            map[targetKey] = new Voxel_t2(targetVoxel.Data, link);
         }
     }
     private bool IsTargetPlane(Quaternion rot, Vector3[] normals, int t0, int t1, int t2)
