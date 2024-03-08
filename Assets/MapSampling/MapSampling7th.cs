@@ -61,7 +61,6 @@ public class MapSampling7th : MonoBehaviour
         Queue<int> keys = new Queue<int>();
         keys.Enqueue(key);
 
-
         while (keys.Count > 0)
         {
             int targetKey = keys.Dequeue();
@@ -80,14 +79,13 @@ public class MapSampling7th : MonoBehaviour
             if (map.TryGetValue(neighborKey, out neighborVoxel))
             {
                 //1. 마주보는 면이 movable한가
-                if (true == targetVoxel.IsMovable(0)
-                    && true == neighborVoxel.IsMovable(3))
+                if (true == targetVoxel.IsMovable(2)
+                    && true == neighborVoxel.IsMovable(0))
                 {
                     //2. 높이가 동일한가...
-                    if (neighborVoxel.GetQuarantHeight(3) == targetVoxel.GetQuarantHeight(0))
+                    if(targetVoxel.GetHeight(3) == neighborVoxel.GetHeight(0))
                     {
-                        link |= 1<<0;
-
+                        link |= 1 << 0;
                         if (false == searched.ContainsKey(neighborKey))
                         {
                             keys.Enqueue(neighborKey);
@@ -95,15 +93,22 @@ public class MapSampling7th : MonoBehaviour
                     }
                 }
             }
-            //right: x+1
-            neighborKey = targetKey + (1 << 16);
-            if (map.TryGetValue(neighborKey, out neighborVoxel))
-            {
+            ////right: x+1
+            //neighborKey = targetKey + (1 << 16);
+            //if (map.TryGetValue(neighborKey, out neighborVoxel))
+            //{
 
-            }
+            //}
 
             map[targetKey] = new Voxel_t2(targetVoxel.Data, link);
         }
+
+        foreach (int k in map.Keys)
+        {
+            Voxel_t2 voxel = map[k];
+            Debug.Log($"{PVoxel.GetPivot(k)} LINK:{voxel.LinkFlag}");
+        }
+
     }
     private bool IsTargetPlane(Quaternion rot, Vector3[] normals, int t0, int t1, int t2)
     { 
@@ -172,6 +177,7 @@ public class MapSampling7th : MonoBehaviour
 
             //set voxel data
             int key = PVoxel.GetKeyFromPoint(centroidPoint);
+
             if (false == PVoxel.Get(map, centroidPoint, out Voxel_t2 voxel))
             {
                 map.Add(key, new Voxel_t2(heightFlag | movableFlag));

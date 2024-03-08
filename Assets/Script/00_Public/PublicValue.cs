@@ -206,14 +206,20 @@ namespace CDataStructure
         {
             return 0 != (dataFlag & (1 << quarant));
         }
+        public int GetHeight(int index)
+        {
+            index *= 2;
+            int h = (dataFlag >> Public.VOXEL_BIT_HEIGHT) & (0b11 << index);
+            return h >> index;
+        }
         public int GetQuarantHeight(int quarant)
         {
             switch (quarant)
             {
-                case 0: return ((dataFlag & 0x3FF0) >> 4) & 0b_00_00_00_11_11;
-                case 1: break;
-                case 2: break;
-                case 3: break;
+                case 0: return (dataFlag >> 4) & 0b_00_00_00_11_11;
+                case 1: return (dataFlag >> 4) & 0b_00_00_11_11_00;
+                case 2: return (dataFlag >> 4) & 0b_00_11_11_00_00;
+                case 3: return (dataFlag >> 4) & 0b_00_11_00_00_11;
             }
 
             return -1;
