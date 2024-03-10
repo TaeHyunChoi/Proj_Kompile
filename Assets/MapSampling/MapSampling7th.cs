@@ -65,39 +65,87 @@ public class MapSampling7th : MonoBehaviour
         {
             int targetKey = keys.Dequeue();
             Voxel_t2 targetVoxel = map[targetKey];
-            Voxel_t2 neighborVoxel;
-            //같은 y축에서만 판단하는 것으로 테스트 돌립시다.
-            //float x = (key & 0x_FF_0000) >> 16;
-            //float y = (key & 0x_00_FF00) >> 8;
-            //float z = (key & 0x_00_00FF);
 
-
-            int link = targetVoxel.LinkFlag;
-
-            //left: x-1
-            int neighborKey = targetKey - (1 << 16);
-            if (map.TryGetValue(neighborKey, out neighborVoxel))
+            //relative coord: rx, ry, rz
+            for (int rx = -1; rx <= 1; ++rx)
             {
-                //1. 마주보는 면이 movable한가
-                if (true == targetVoxel.IsMovable(2)
-                    && true == neighborVoxel.IsMovable(0))
+                for (int rz = -1; rz <= 1; ++rz)
                 {
-                    //2. 높이가 동일한가...
-                    if(targetVoxel.GetHeight(3) == neighborVoxel.GetHeight(0))
+                    int flag = 0;
+                    for (int ry = -1; ry <= 1; ++ry)
                     {
-                        link |= 1 << 0;
-                        if (false == searched.ContainsKey(neighborKey))
+                        int neighborKey = targetKey + (rx * (1 << 16) + ry * (1 << 8) + rz);
+                        if (false == map.TryGetValue(neighborKey, out Voxel_t2 neighborVoxel))
                         {
-                            keys.Enqueue(neighborKey);
+                            continue;
+                        }
+
+                        bool bothMovable = false;
+                        bool sameHeight = false;
+
+                        //대각선은 계산식이 꽤 다르다 제길...
+                        switch (10 * rx + rz)
+                        {
+                            case -10 + 0: // (-1,  0)
+                                bothMovable = targetVoxel.IsMovable(2) && neighborVoxel.IsMovable(0);
+                                sameHeight  = targetVoxel.GetQuarantHeight(2) == neighborVoxel.GetQuarantHeight(0);
+                                break;
+                            case +10 + 0: // ( 1,  0)
+                                bothMovable = targetVoxel.IsMovable(0) && neighborVoxel.IsMovable(2);
+                                sameHeight  = targetVoxel.GetQuarantHeight(0) == neighborVoxel.GetQuarantHeight(2);
+                                break;
+                            case +00 + 1: // ( 0,  1)
+                                bothMovable = targetVoxel.IsMovable(1) && neighborVoxel.IsMovable(3);
+                                sameHeight  = targetVoxel.GetQuarantHeight(1) == neighborVoxel.GetQuarantHeight(3);
+                                break;
+                            case +00 - 1: // ( 0, -1)
+                                bothMovable = targetVoxel.IsMovable(3) && neighborVoxel.IsMovable(1);
+                                sameHeight  = targetVoxel.GetQuarantHeight(3) == neighborVoxel.GetQuarantHeight(1);
+                                break;
+
+                            case -10 + 1: // (-1,  1)
+                                break;
+                            case -10 - 1: // (-1, -1)
+                                break;
+                            case +10 + 1: // ( 1,  1)
+                                break;
+                            case +10 - 1: // ( 1, -1)
+                                break;
+
+                            case +00 + 0:
+                                break;
+                        }
+
+                        if (true == bothMovable && true == sameHeight)
+                        {
+                            int shift = (3 * rx + rz);
+                            if      (ry ==  1) { shift +=  9; }
+                            else if (ry == -1) { shift += 18; }
+                            flag |= 1 << shift;
+
+                            if (false == searched.ContainsKey(neighborKey))
+                            {
+                                keys.Enqueue(neighborKey);
+                            }
                         }
                     }
                 }
             }
-            ////right: x+1
-            //neighborKey = targetKey + (1 << 16);
+
+
+            //int relative = -(1 << 16); //x-1
+            //int neighborKey = targetKey - (1 << 16);
             //if (map.TryGetValue(neighborKey, out neighborVoxel))
             //{
-
+            //    flag = PVoxel.IsLinkable(relative, targetVoxel, neighborVoxel);
+            //    if (0 != flag)
+            //    {
+            //        link |= flag;
+            //        if (false == searched.ContainsKey(neighborKey))
+            //        {
+            //            keys.Enqueue(neighborKey);
+            //        }
+            //    }
             //}
 
             map[targetKey] = new Voxel_t2(targetVoxel.Data, link);

@@ -139,6 +139,8 @@ public enum VoxelType : int
 //Currently there was no need to use a separate namespace... but I wanted to try it.
 namespace CDataStructure
 {
+    using static Public;
+
     [Serializable]
     public struct Voxel_t
     {
@@ -195,10 +197,10 @@ namespace CDataStructure
         {
             get
             {
-                if (0 != (dataFlag & 0x00F)) { return Public.PLAIN; } //1
-                if (0 != (dataFlag & 0xFF0)) { return Public.SLOPE; } //2
+                if (0 != (dataFlag & 0x00F)) { return PLAIN; } //1
+                if (0 != (dataFlag & 0xFF0)) { return SLOPE; } //2
 
-                return Public.OBSTACLE; //0
+                return OBSTACLE; //0
             }
         }
 
@@ -208,18 +210,26 @@ namespace CDataStructure
         }
         public int GetHeight(int index)
         {
-            index *= 2;
-            int h = (dataFlag >> Public.VOXEL_BIT_HEIGHT) & (0b11 << index);
-            return h >> index;
+            //Written with bit operations and binary notation instead of calculation formulas so that it can be read intuitively
+            switch (index)
+            {
+                case 0: return (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_00_00_00_00_11;
+                case 1: return (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_00_00_00_11_00;
+                case 2: return (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_00_00_11_00_00;
+                case 3: return (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_00_11_00_00_00;
+                case 4: return (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11_00_00_00_00;
+            }
+
+            return -1;
         }
         public int GetQuarantHeight(int quarant)
         {
             switch (quarant)
             {
-                case 0: return (dataFlag >> 4) & 0b_00_00_00_11_11;
-                case 1: return (dataFlag >> 4) & 0b_00_00_11_11_00;
-                case 2: return (dataFlag >> 4) & 0b_00_11_11_00_00;
-                case 3: return (dataFlag >> 4) & 0b_00_11_00_00_11;
+                case 0: return GetHeight(0) | GetHeight(1);
+                case 1: return GetHeight(1) | GetHeight(2);
+                case 2: return GetHeight(2) | GetHeight(3);
+                case 3: return GetHeight(3) | GetHeight(0);
             }
 
             return -1;

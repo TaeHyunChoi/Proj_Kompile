@@ -110,49 +110,33 @@ public static class PVoxel
         return false;
     }
 
-    public static bool CompareHeight(int target, int neighbor, int shift)
+    public static int IsLinkable(int x, int y, int z, int targetKey, out int neighborKey)
     {
-        target >>= 4;
-        neighbor >>= 4;
-
-        switch (shift)
+        switch (10 * x + z)
         {
-            case -(1 << 16): //(x-1)
-                return ((target & 0b_11_00_00_00) >> 6) == (neighbor & 0b_00_00_00_11);
+            case -10 + 0: // (-1,  0)
+
+                break;
+            case +10 + 0: // ( 1,  0)
+                break;
+            case +00 + 1: // ( 0,  1)
+                break;
+            case +00 - 1: // ( 0, -1)
+                break;
+
+            case -10 + 1: // (-1,  1)
+                break;
+            case -10 - 1: // (-1, -1)
+                break;
+            case +10 + 1: // ( 1,  1)
+                break;
+            case +10 - 1: // ( 1, -1)
+                break;
+
+            case +00 + 0:
+                break;
         }
 
-        return false;
+        return 0;
     }
-
-
-
-    //no ref
-    //public static bool Get(Dictionary<int, Voxel_t> map, Vector3 point, out Voxel_t voxel)
-    //{
-    //    Vector3 pivot = GetPivot(point);
-    //    int key = GetKeyFromPivot(pivot);
-
-    //    if (map.TryGetValue(key, out voxel))
-    //    {
-    //        return true;
-    //    }
-
-    //    return false;
-    //}
-    //public static int GetSubFromKey(Dictionary<int, Voxel_t> map, int key, Vector3 point)
-    //{
-    //    if (map.TryGetValue(key, out Voxel_t voxel))
-    //    {
-    //        Vector3 targetPivot = GetPivot(key);
-    //        int idxSub = GetSubIndex(targetPivot, point);
-    //        return voxel.GetSubType(idxSub);
-    //    }
-
-    //    return -1;
-    //}
-    //public static int GetSubIndex(Vector3 point)
-    //{
-    //    Vector3 pivot = GetPivot(point);
-    //    return GetSubIndex(pivot, point);
-    //}
 }
