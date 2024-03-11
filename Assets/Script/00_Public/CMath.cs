@@ -11,7 +11,7 @@ namespace CMathf
             float d = (int)Mathf.Pow(10, exponent);
             float di = 1 / d;
 
-            value = value >= 0 ?  Mathf.FloorToInt( value * d) * di
+            value = value >= 0 ? Mathf.FloorToInt(value * d) * di
                                : -Mathf.FloorToInt(-value * d) * di;
 
             return value;

@@ -8,11 +8,11 @@ using UnityEngine.Rendering;
 /// <summary> Parser related to Voxel </summary>
 public static class PVoxel
 {
-    public static Vector3 GetPivot(Vector3 point)
+    public static Vector3 GetPivot(Vector3 point, int exponent = 2)
     {
-        float cx = CMath.Floor1000(CMath.FloorToInt1000(point.x * VOXEL_INVERT) * VOXEL_SIZE);
-        float cy = CMath.Floor1000(CMath.FloorToInt1000(point.y * VOXEL_INVERT) * VOXEL_SIZE);
-        float cz = CMath.Floor1000(CMath.FloorToInt1000(point.z * VOXEL_INVERT) * VOXEL_SIZE);
+        float cx = CMath.FloorToInt(point.x * VOXEL_INVERT, exponent) * VOXEL_SIZE;
+        float cy = CMath.FloorToInt(point.y * VOXEL_INVERT, exponent) * VOXEL_SIZE;
+        float cz = CMath.FloorToInt(point.z * VOXEL_INVERT, exponent) * VOXEL_SIZE;
 
         return new Vector3(cx, cy, cz);
     }
@@ -61,7 +61,7 @@ public static class PVoxel
         return index;
     }
 
-    public static int GetHeightFlag(Vector3 diff)
+    public static int SetHeightFlag(Vector3 diff)
     {
         diff = CMath.FloorToVector(diff * VOXEL_HALF_INVERT, 2);
         int x = CMath.FloorToInt(diff.x, 1) << 2;
@@ -108,35 +108,5 @@ public static class PVoxel
         }
 
         return false;
-    }
-
-    public static int IsLinkable(int x, int y, int z, int targetKey, out int neighborKey)
-    {
-        switch (10 * x + z)
-        {
-            case -10 + 0: // (-1,  0)
-
-                break;
-            case +10 + 0: // ( 1,  0)
-                break;
-            case +00 + 1: // ( 0,  1)
-                break;
-            case +00 - 1: // ( 0, -1)
-                break;
-
-            case -10 + 1: // (-1,  1)
-                break;
-            case -10 - 1: // (-1, -1)
-                break;
-            case +10 + 1: // ( 1,  1)
-                break;
-            case +10 - 1: // ( 1, -1)
-                break;
-
-            case +00 + 0:
-                break;
-        }
-
-        return 0;
     }
 }

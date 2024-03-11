@@ -211,28 +211,19 @@ namespace CDataStructure
         public int GetHeight(int index)
         {
             //Written with bit operations and binary notation instead of calculation formulas so that it can be read intuitively
+            int value;
             switch (index)
             {
-                case 0: return (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_00_00_00_00_11;
-                case 1: return (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_00_00_00_11_00;
-                case 2: return (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_00_00_11_00_00;
-                case 3: return (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_00_11_00_00_00;
-                case 4: return (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11_00_00_00_00;
+                case 0: value = (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11;             break;
+                case 1: value = (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11_00;          break;
+                case 2: value = (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11_00_00;       break;
+                case 3: value = (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11_00_00_00;    break;
+                case 4: value = (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11_00_00_00_00; break;
+                default: return -1;
             }
 
-            return -1;
-        }
-        public int GetQuarantHeight(int quarant)
-        {
-            switch (quarant)
-            {
-                case 0: return GetHeight(0) | GetHeight(1);
-                case 1: return GetHeight(1) | GetHeight(2);
-                case 2: return GetHeight(2) | GetHeight(3);
-                case 3: return GetHeight(3) | GetHeight(0);
-            }
-
-            return -1;
+            value >>= index * 2;
+            return value;
         }
         public Voxel_t2(int data)
         {

@@ -36,7 +36,15 @@ public class MapSampling7th : MonoBehaviour
                 int t1 = triangles[t + 1];
                 int t2 = triangles[t + 2];
 
-                if (false == IsTargetPlane(rot, normals, t0, t1, t2))
+                //Determine whether the mesh is the target for sampling by normal value.
+                Vector3 normal1 = rot * normals[t0];
+                Vector3 normal2 = rot * normals[t1];
+                Vector3 normal3 = rot * normals[t2];
+                Vector3 normal  = normal1;
+                if (normal2.y < normal.y) { normal = normal2; }
+                if (normal3.y < normal.y) { normal = normal3; }
+                normal = CMath.FloorToVector(normal, 3);
+                if (0 >= normal.y)
                 {
                     continue;
                 }
@@ -45,33 +53,52 @@ public class MapSampling7th : MonoBehaviour
                 Vector3 A = CMath.FloorToVector(targetTransform.TransformPoint(vertices[t0]), 2);
                 Vector3 B = CMath.FloorToVector(targetTransform.TransformPoint(vertices[t1]), 2);
                 Vector3 C = CMath.FloorToVector(targetTransform.TransformPoint(vertices[t2]), 2);
+
+                A = SnappingPoint(A, VOXEL_SIZE, 2);
+                A = CMath.FloorToVector(A, 0);
+
+                B = SnappingPoint(B, VOXEL_SIZE, 2);
+                B = CMath.FloorToVector(B, 0);
+
+                C = SnappingPoint(C, VOXEL_SIZE, 2);
+                C = CMath.FloorToVector(C, 0);
+
                 Set(A, B, C);
             }
         }
 
+        //## When creating a link flag, use breadth-first search(BFS).
+        //Set Queue(Key)
         int key = -1;
+        Dictionary<int, int> searched = new Dictionary<int, int>();
+        Queue<int> keys = new Queue<int>();
         foreach (int k in map.Keys)
         {
             key = k;
             break;
         }
-
-        //너비 우선 탐색을 사용하여 link flag를 만듭니다...!?
-        Dictionary<int, int> searched = new Dictionary<int, int>();
-        Queue<int> keys = new Queue<int>();
         keys.Enqueue(key);
 
         while (keys.Count > 0)
         {
+            int flag = 0;
             int targetKey = keys.Dequeue();
-            Voxel_t2 targetVoxel = map[targetKey];
+
+            if (true == searched.ContainsKey(targetKey))
+            {
+                continue;
+            }
+            else
+            {
+                searched.Add(targetKey, flag);
+            }
 
             //relative coord: rx, ry, rz
+            Voxel_t2 targetVoxel = map[targetKey];
             for (int rx = -1; rx <= 1; ++rx)
             {
                 for (int rz = -1; rz <= 1; ++rz)
                 {
-                    int flag = 0;
                     for (int ry = -1; ry <= 1; ++ry)
                     {
                         int neighborKey = targetKey + (rx * (1 << 16) + ry * (1 << 8) + rz);
@@ -83,42 +110,66 @@ public class MapSampling7th : MonoBehaviour
                         bool bothMovable = false;
                         bool sameHeight = false;
 
-                        //대각선은 계산식이 꽤 다르다 제길...
+                        int diffY = 0;
+                        if      (ry ==  1) { diffY = +2; }
+                        else if (ry == -1) { diffY = -2; }
+
                         switch (10 * rx + rz)
                         {
                             case -10 + 0: // (-1,  0)
                                 bothMovable = targetVoxel.IsMovable(2) && neighborVoxel.IsMovable(0);
-                                sameHeight  = targetVoxel.GetQuarantHeight(2) == neighborVoxel.GetQuarantHeight(0);
+                                sameHeight  = targetVoxel.GetHeight(2) == neighborVoxel.GetHeight(1) + diffY;
+                                sameHeight &= targetVoxel.GetHeight(3) == neighborVoxel.GetHeight(0) + diffY;
                                 break;
                             case +10 + 0: // ( 1,  0)
                                 bothMovable = targetVoxel.IsMovable(0) && neighborVoxel.IsMovable(2);
-                                sameHeight  = targetVoxel.GetQuarantHeight(0) == neighborVoxel.GetQuarantHeight(2);
+                                sameHeight  = targetVoxel.GetHeight(0) == neighborVoxel.GetHeight(3) + diffY;
+                                sameHeight &= targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(2) + diffY;
                                 break;
                             case +00 + 1: // ( 0,  1)
                                 bothMovable = targetVoxel.IsMovable(1) && neighborVoxel.IsMovable(3);
-                                sameHeight  = targetVoxel.GetQuarantHeight(1) == neighborVoxel.GetQuarantHeight(3);
+                                sameHeight  = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(0) + diffY;
+                                sameHeight &= targetVoxel.GetHeight(2) == neighborVoxel.GetHeight(3) + diffY;
                                 break;
                             case +00 - 1: // ( 0, -1)
                                 bothMovable = targetVoxel.IsMovable(3) && neighborVoxel.IsMovable(1);
-                                sameHeight  = targetVoxel.GetQuarantHeight(3) == neighborVoxel.GetQuarantHeight(1);
+                                sameHeight  = targetVoxel.GetHeight(0) == neighborVoxel.GetHeight(1) + diffY;
+                                sameHeight &= targetVoxel.GetHeight(3) == neighborVoxel.GetHeight(2) + diffY;
                                 break;
 
                             case -10 + 1: // (-1,  1)
+                                bothMovable  = targetVoxel.IsMovable(1) || targetVoxel.IsMovable(2);
+                                bothMovable &= neighborVoxel.IsMovable(0) || neighborVoxel.IsMovable(3);
+                                sameHeight   = targetVoxel.GetHeight(2) == neighborVoxel.GetHeight(0) + diffY;
                                 break;
                             case -10 - 1: // (-1, -1)
+                                bothMovable  = targetVoxel.IsMovable(2) || targetVoxel.IsMovable(3);
+                                bothMovable &= neighborVoxel.IsMovable(0) || neighborVoxel.IsMovable(1);
+                                sameHeight   = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(3) + diffY;
                                 break;
                             case +10 + 1: // ( 1,  1)
+                                bothMovable  = targetVoxel.IsMovable(0) || targetVoxel.IsMovable(1);
+                                bothMovable &= neighborVoxel.IsMovable(2) || neighborVoxel.IsMovable(3);
+                                sameHeight   = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(3) + diffY;
                                 break;
                             case +10 - 1: // ( 1, -1)
+                                bothMovable  = targetVoxel.IsMovable(0) || targetVoxel.IsMovable(1);
+                                bothMovable &= neighborVoxel.IsMovable(2) || neighborVoxel.IsMovable(3);
+                                sameHeight   = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(3) + diffY;
                                 break;
 
                             case +00 + 0:
+                                if (ry == 0)
+                                {
+                                    bothMovable = true;
+                                    sameHeight = true;
+                                }
                                 break;
                         }
 
                         if (true == bothMovable && true == sameHeight)
                         {
-                            int shift = (3 * rx + rz);
+                            int shift = (rx + 1) + 3 * (rz + 1);
                             if      (ry ==  1) { shift +=  9; }
                             else if (ry == -1) { shift += 18; }
                             flag |= 1 << shift;
@@ -132,44 +183,8 @@ public class MapSampling7th : MonoBehaviour
                 }
             }
 
-
-            //int relative = -(1 << 16); //x-1
-            //int neighborKey = targetKey - (1 << 16);
-            //if (map.TryGetValue(neighborKey, out neighborVoxel))
-            //{
-            //    flag = PVoxel.IsLinkable(relative, targetVoxel, neighborVoxel);
-            //    if (0 != flag)
-            //    {
-            //        link |= flag;
-            //        if (false == searched.ContainsKey(neighborKey))
-            //        {
-            //            keys.Enqueue(neighborKey);
-            //        }
-            //    }
-            //}
-
-            map[targetKey] = new Voxel_t2(targetVoxel.Data, link);
+            map[targetKey] = new Voxel_t2(targetVoxel.Data, flag);
         }
-
-        foreach (int k in map.Keys)
-        {
-            Voxel_t2 voxel = map[k];
-            Debug.Log($"{PVoxel.GetPivot(k)} LINK:{voxel.LinkFlag}");
-        }
-
-    }
-    private bool IsTargetPlane(Quaternion rot, Vector3[] normals, int t0, int t1, int t2)
-    { 
-        Vector3 normal1 = rot * normals[t0];
-        Vector3 normal2 = rot * normals[t1];
-        Vector3 normal3 = rot * normals[t2];
-
-        Vector3 normal = normal1;
-        if (normal2.y < normal.y) { normal = normal2; }
-        if (normal3.y < normal.y) { normal = normal3; }
-        normal = CMath.FloorToVector(normal, 3);
-
-        return 0 < normal.y;    
     }
     private void Set(Vector3 p0, Vector3 p1, Vector3 p2)
     {
@@ -206,27 +221,27 @@ public class MapSampling7th : MonoBehaviour
         //Update and save information when the minimum unit (?) is reached
         if (VOXEL_SIZE < diagonal)
         {
-            Vector3 midPoint = (p1 + p2) * 0.5f;
+            Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 1);
             Set(p0, p1, midPoint);
             Set(p0, p2, midPoint);
         }
         else
         {
             //get point, get pivot
-            Vector3 centroidPoint = CMath.FloorToVector((p0 + p1 + p2) * 0.333f, 3);
+            Vector3 centroidPoint = CMath.FloorToVector((p0 + p1 + p2) * 0.33f, 2);
+            centroidPoint = SnappingPoint(centroidPoint, VOXEL_HALF_SIZE, 2);
             Vector3 pivot = PVoxel.GetPivot(centroidPoint);
 
             //set flag
             int movableFlag = PVoxel.GetMoveFlag(centroidPoint - pivot);
             int heightFlag = 0;
-            heightFlag |= PVoxel.GetHeightFlag(p0 - pivot);
-            heightFlag |= PVoxel.GetHeightFlag(p1 - pivot);
-            heightFlag |= PVoxel.GetHeightFlag(p2 - pivot);
+            heightFlag |= PVoxel.SetHeightFlag(p0 - pivot);
+            heightFlag |= PVoxel.SetHeightFlag(p1 - pivot);
+            heightFlag |= PVoxel.SetHeightFlag(p2 - pivot);
 
             //set voxel data
             int key = PVoxel.GetKeyFromPoint(centroidPoint);
-
-            if (false == PVoxel.Get(map, centroidPoint, out Voxel_t2 voxel))
+            if (false == map.TryGetValue(key, out Voxel_t2 voxel))
             {
                 map.Add(key, new Voxel_t2(heightFlag | movableFlag));
             }
@@ -235,6 +250,52 @@ public class MapSampling7th : MonoBehaviour
                 map[key] = new Voxel_t2(voxel.Data | heightFlag | movableFlag);
             }
         }
+    }
+    private Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
+    {
+        float x = p.x;
+        float y = p.y;
+        float z = p.z;
+        float diff;
+        diff = x % dist;
+
+        //Similar to rounding, but the standard is different for each dist, not 0.5f.
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            x -= diff;
+            x = CMath.Floor(x - diff, exponent);
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            x += (dist - diff);
+            x = CMath.Floor(x + (dist - diff), exponent);
+        }
+
+        diff = y % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            y -= diff;
+            y = CMath.Floor(y - diff, exponent);
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            y += (dist - diff);
+            y = CMath.Floor(y + (dist - diff), exponent);
+        }
+
+        diff = z % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            z -= diff;
+            z = CMath.Floor(z - diff, exponent);
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            z += (dist - diff);
+            z = CMath.Floor(z + (dist - diff), exponent);
+        }
+
+        return new Vector3(x, y, z);
     }
 
     #region Height calculation example code
