@@ -1,328 +1,337 @@
-//using System.Collections.Generic;
-//using Unity.VisualScripting.Antlr3.Runtime.Tree;
-//using UnityEditor;
-//using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-//public class MapSampler : MonoBehaviour
-//{
-//    [Header("File")]
-//    [SerializeField] private string fileName;
+using CDataStructure;
+using CMathf;
+using static Public;
 
-//    [Header("Voxels")]
-//    [SerializeField] private Transform resourceTransform;
-//    [SerializeField] private float grid;
-//    [SerializeField] private float samplingInterval;
-//    [SerializeField] private Mesh gizmoMesh;
+public class MapSampler : MonoBehaviour
+{
+    [SerializeField] private Transform resourceTransform;
 
-//    [Header("Grids")]
-//    [SerializeField] private bool drawGrids;
-//    private bool canDraw;
-//    [SerializeField] private float[] alpha;
+    private Dictionary<int, Voxel_t> map;
+    private MeshFilter[] filter;
 
-//    private static MapSampler instance;
-//    public static Dictionary<int, Voxel_t> Data { get => instance.data; }
-//    private Dictionary<int, Voxel_t> data;
-//    private MeshFilter[] filter;
+    private void Awake()
+    {
+        filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
+        map = new Dictionary<int, Voxel_t>();
+    }
+    private void Start()
+    {
+        for (int f = 0; f < filter.Length; ++f)
+        {
+            Transform targetTransform = filter[f].transform;
+            Mesh mesh = filter[f].mesh;
 
-//    private void Awake()
-//    {
-//        instance = this;
-//        data = new Dictionary<int, Voxel_t>();
-//        filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
-//    }
-//    private void Start()
-//    {
-//        if (fileName == string.Empty)
-//        {
-//            GameObject obj = resourceTransform.GetChild(0).gameObject;
-//            fileName = obj.name;
-//        }
+            Quaternion rot      = targetTransform.rotation;
+            Vector3[] vertices  = mesh.vertices;
+            Vector3[] normals   = mesh.normals;
+            int[] triangles     = mesh.triangles;
 
-//        SamplingVoxels();
-//    }
-//    private void Update()
-//    {
-//        if (Input.GetKeyDown(KeyCode.F1))
-//        {
-//            DataTable.WriteBinaryMapVoxel(data, fileName);
-//            Debug.Log("save");
-//        }
-//        if (Input.GetKeyDown(KeyCode.Delete))
-//        {
-//            data.Clear();
-//        }
-//        if (Input.GetKeyDown(KeyCode.F2))
-//        {
-//            data = DataTable.LoadMapVoxel(fileName);
-//            SamplingVoxels();
-//        }
-//        if (Input.GetKeyDown(KeyCode.Space))
-//        {
-//            data.Clear();
-//            filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
-//            SamplingVoxels();
-//        }
-//    }
+            for (int t = 0; t < triangles.Length; t += 3)
+            {
+                int t0 = triangles[t];
+                int t1 = triangles[t + 1];
+                int t2 = triangles[t + 2];
 
-//    private void SamplingVoxels()
-//    {
-//        VoxelType type;
-//        Vector3 A, B, C;
-//        Vector3 elipson = Vector3.one * -0.0001f;
+                //Determine whether the mesh is the target for sampling by normal value.
+                Vector3 normal1 = rot * normals[t0];
+                Vector3 normal2 = rot * normals[t1];
+                Vector3 normal3 = rot * normals[t2];
+                Vector3 normal  = normal1;
+                if (normal2.y < normal.y) { normal = normal2; }
+                if (normal3.y < normal.y) { normal = normal3; }
+                normal = CMath.FloorToVector(normal, 3);
+                if (0 >= normal.y)
+                {
+                    continue;
+                }
 
-//        for (int f = 0; f < filter.Length; ++f)
-//        {
-//            Transform targetTransform = filter[f].transform;
-//            Mesh mesh = filter[f].mesh;
-//            Vector3[] vertices = mesh.vertices;
-//            Vector3[] normals = mesh.normals;
-//            int[] triangles = mesh.triangles;
-//            float offset;
+                //voxel_half is 0.25f, so you can use up to 2 decimal places.
+                Vector3 A = CMath.FloorToVector(targetTransform.TransformPoint(vertices[t0]), 2);
+                Vector3 B = CMath.FloorToVector(targetTransform.TransformPoint(vertices[t1]), 2);
+                Vector3 C = CMath.FloorToVector(targetTransform.TransformPoint(vertices[t2]), 2);
 
-//            for (int t = 0; t < triangles.Length; t += 3)
-//            {
-//                // get status
-//                Quaternion rot = targetTransform.rotation;
-//                Vector3 normal1 = rot * normals[triangles[t]];
-//                        normal1.Normalize();
-//                Vector3 normal2 = rot * normals[triangles[t + 1]];
-//                        normal2.Normalize();
-//                Vector3 normal3 = rot * normals[triangles[t + 2]];
-//                        normal3.Normalize();
-//                type = GetVoxelType(normal1.y, normal2.y, normal3.y);
+                A = SnappingPoint(A, VOXEL_SIZE, 2);
+                A = CMath.FloorToVector(A, 0);
 
-//                A = targetTransform.TransformPoint(vertices[triangles[t]]);
-//                B = targetTransform.TransformPoint(vertices[triangles[t + 1]]);
-//                C = targetTransform.TransformPoint(vertices[triangles[t + 2]]);
+                B = SnappingPoint(B, VOXEL_SIZE, 2);
+                B = CMath.FloorToVector(B, 0);
 
-//                #region 주석 처리
-//                /*
-//if (type == VoxelType.Obstacle
-//    && !targetTransform.gameObject.CompareTag("Slope"))
-//{
-//    int ra = Parser.GetVoxelRadix(Parser.GetCenterPoint(A));
-//    int rb = Parser.GetVoxelRadix(Parser.GetCenterPoint(B));
-//    int rc = Parser.GetVoxelRadix(Parser.GetCenterPoint(C));
+                C = SnappingPoint(C, VOXEL_SIZE, 2);
+                C = CMath.FloorToVector(C, 0);
 
-//    if (!data.ContainsKey(ra)) { data.Add(ra, new Voxel_t(0x0000)); }
-//    if (!data.ContainsKey(rb)) { data.Add(rb, new Voxel_t(0x0000)); }
-//    if (!data.ContainsKey(rc)) { data.Add(rc, new Voxel_t(0x0000)); }
+                Set(A, B, C);
+            }
+        }
 
-//    for (int i = 0; i < 4; ++i)
-//    {
-//        int typeBits = (int)type << (i * 2);
+        //## When creating a link flag, use breadth-first search(BFS).
+        int key = -1;
+        Dictionary<int, int> searched = new Dictionary<int, int>();
+        Queue<int> keys = new Queue<int>();
+        foreach (int k in map.Keys)
+        {
+            key = k;
+            break;
+        }
+        keys.Enqueue(key);
 
-//        if (type > data[ra].GetSubType(i))
-//        {
-//            int sub = data[ra].SubVoxel;
-//            int mask = 0b11 << (i * 2);
+        while (keys.Count > 0)
+        {
+            int flag = 0;
+            int targetKey = keys.Dequeue();
 
-//            sub &= ~mask;
-//            sub |= typeBits;
-//            data[ra] = new Voxel_t(sub);
-//        }
+            if (true == searched.ContainsKey(targetKey))
+            {
+                continue;
+            }
+            else
+            {
+                searched.Add(targetKey, flag);
+            }
 
-//        if (type > data[rb].GetSubType(i))
-//        {
-//            int sub = data[rb].SubVoxel;
-//            int mask = 0b11 << (i * 2);
+            //relative coord: rx, ry, rz
+            Voxel_t targetVoxel = map[targetKey];
+            for (int rx = -1; rx <= 1; ++rx)
+            {
+                for (int rz = -1; rz <= 1; ++rz)
+                {
+                    for (int ry = -1; ry <= 1; ++ry)
+                    {
+                        int neighborKey = targetKey + (rx * (1 << 16) + ry * (1 << 8) + rz);
+                        if (false == map.TryGetValue(neighborKey, out Voxel_t neighborVoxel))
+                        {
+                            continue;
+                        }
 
-//            sub &= ~mask;
-//            sub |= typeBits;
-//            data[rb] = new Voxel_t(sub);
-//        }
+                        bool bothMovable = false;
+                        bool sameHeight = false;
 
-//        if (type > data[rc].GetSubType(i))
-//        {
-//            int sub = data[rc].SubVoxel;
-//            int mask = 0b11 << (i * 2);
+                        int diffY = 0;
+                        if      (ry ==  1) { diffY = +2; }
+                        else if (ry == -1) { diffY = -2; }
 
-//            sub &= ~mask;
-//            sub |= typeBits;
-//            data[rc] = new Voxel_t(sub);
-//        }
-//    }
-//}
-////*/
-//                #endregion
+                        switch (10 * rx + rz)
+                        {
+                            case -10 + 0: // (-1,  0)
+                                bothMovable = targetVoxel.IsMovable(2) && neighborVoxel.IsMovable(0);
+                                sameHeight  = targetVoxel.GetHeight(2) == neighborVoxel.GetHeight(1) + diffY;
+                                sameHeight &= targetVoxel.GetHeight(3) == neighborVoxel.GetHeight(0) + diffY;
+                                break;
+                            case +10 + 0: // ( 1,  0)
+                                bothMovable = targetVoxel.IsMovable(0) && neighborVoxel.IsMovable(2);
+                                sameHeight  = targetVoxel.GetHeight(0) == neighborVoxel.GetHeight(3) + diffY;
+                                sameHeight &= targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(2) + diffY;
+                                break;
+                            case +00 + 1: // ( 0,  1)
+                                bothMovable = targetVoxel.IsMovable(1) && neighborVoxel.IsMovable(3);
+                                sameHeight  = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(0) + diffY;
+                                sameHeight &= targetVoxel.GetHeight(2) == neighborVoxel.GetHeight(3) + diffY;
+                                break;
+                            case +00 - 1: // ( 0, -1)
+                                bothMovable = targetVoxel.IsMovable(3) && neighborVoxel.IsMovable(1);
+                                sameHeight  = targetVoxel.GetHeight(0) == neighborVoxel.GetHeight(1) + diffY;
+                                sameHeight &= targetVoxel.GetHeight(3) == neighborVoxel.GetHeight(2) + diffY;
+                                break;
 
-//                float distAB = Vector3.Distance(A, B);
-//                float interval = (grid > distAB) ? samplingInterval * 4f : samplingInterval;
-//                int samplingCountAB = (int)(distAB / grid * interval);
-//                offset = grid * 0.25f;
+                            case -10 + 1: // (-1,  1)
+                                bothMovable  = targetVoxel.IsMovable(1) || targetVoxel.IsMovable(2);
+                                bothMovable &= neighborVoxel.IsMovable(0) || neighborVoxel.IsMovable(3);
+                                sameHeight   = targetVoxel.GetHeight(2) == neighborVoxel.GetHeight(0) + diffY;
+                                break;
+                            case -10 - 1: // (-1, -1)
+                                bothMovable  = targetVoxel.IsMovable(2) || targetVoxel.IsMovable(3);
+                                bothMovable &= neighborVoxel.IsMovable(0) || neighborVoxel.IsMovable(1);
+                                sameHeight   = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(3) + diffY;
+                                break;
+                            case +10 + 1: // ( 1,  1)
+                                bothMovable  = targetVoxel.IsMovable(0) || targetVoxel.IsMovable(1);
+                                bothMovable &= neighborVoxel.IsMovable(2) || neighborVoxel.IsMovable(3);
+                                sameHeight   = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(3) + diffY;
+                                break;
+                            case +10 - 1: // ( 1, -1)
+                                bothMovable  = targetVoxel.IsMovable(0) || targetVoxel.IsMovable(1);
+                                bothMovable &= neighborVoxel.IsMovable(2) || neighborVoxel.IsMovable(3);
+                                sameHeight   = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(3) + diffY;
+                                break;
 
-//                for (int i = 0; i < samplingCountAB; ++i)
-//                {
-//                    float ratio = (float)i / samplingCountAB;
-//                    Vector3 AB = Vector3.Lerp(A, B, ratio);
-//                    Vector3 AC = Vector3.Lerp(A, C, ratio);
+                            case +00 + 0:
+                                if (ry == 0)
+                                {
+                                    bothMovable = true;
+                                    sameHeight = true;
+                                }
+                                break;
+                        }
 
-//                    float distABtoAC = Vector3.Distance(AB, AC);
-//                    int samplingCountABtoAC = (int)(distABtoAC / grid * interval);
+                        if (true == bothMovable && true == sameHeight)
+                        {
+                            int shift = (rx + 1) + 3 * (rz + 1);
+                            if      (ry ==  1) { shift +=  9; }
+                            else if (ry == -1) { shift += 18; }
+                            flag |= 1 << shift;
 
-//                    for (int j = 0; j < samplingCountABtoAC; ++j) 
-//                    {
-//                        Vector3 samplingPoint = Vector3.Lerp(AB, AC, (float)j / samplingCountABtoAC);
-//                        SetVoxel(samplingPoint, type);
-//                        SetVoxel(samplingPoint + normal1 * offset, type);
-//                        SetVoxel(samplingPoint + normal2 * offset, type);
-//                        SetVoxel(samplingPoint + normal3 * offset, type);
-//                    }
-//                }
-//            }
-//        }
+                            if (false == searched.ContainsKey(neighborKey))
+                            {
+                                keys.Enqueue(neighborKey);
+                            }
+                        }
+                    }
+                }
+            }
 
-//        resourceTransform.gameObject.SetActive(false);
-//        Debug.Log($"Sampling Done. (count:{data.Keys.Count})");
-//        canDraw = true;
-//    }
-//    private VoxelType GetVoxelType(float n1, float n2, float n3)
-//    {
-//        bool plain = (n1 == 1 && n2 == 1 && n3 == 1);
+            map[targetKey] = new Voxel_t(targetVoxel.Data, flag);
+        }
 
-//        bool obstacle = n1 <= float.Epsilon
-//                        || n2 <= float.Epsilon
-//                        || n3 <= float.Epsilon;
+        //Save Mapping Data
+        DataTable.WriteBinaryMappingData<Voxel_t>(map, resourceTransform.GetChild(0).name);
+    }
+    private void Set(Vector3 p0, Vector3 p1, Vector3 p2)
+    {
+        Vector3 swap;
+        float diagonal;
 
-//        bool slope = Mathf.Approximately(Mathf.Acos(n1) * Mathf.Rad2Deg, 45)
-//                    || Mathf.Approximately(Mathf.Acos(n2) * Mathf.Rad2Deg, 45)
-//                    || Mathf.Approximately(Mathf.Acos(n3) * Mathf.Rad2Deg, 45);
-                    
-//        VoxelType type = VoxelType.None;
-//        if (plain)    { type = VoxelType.Plain; }
-//        if (obstacle) { type = VoxelType.Obstacle; }
-//        if (slope)    { type = VoxelType.Slope45; }
+        //(Isosceles right triangle) Find the right angle point and store it in p0
+        float v0to1 = CMath.Floor(Vector3.Distance(new Vector3(p0.x, 0, p0.z), new Vector3(p1.x, 0, p1.z)), 3);
+        float v1to2 = CMath.Floor(Vector3.Distance(new Vector3(p1.x, 0, p1.z), new Vector3(p2.x, 0, p2.z)), 3);
+        float v0to2 = CMath.Floor(Vector3.Distance(new Vector3(p0.x, 0, p0.z), new Vector3(p2.x, 0, p2.z)), 3);
 
-//        return type;
-//    }
-//    private int GetBitShift(Vector3 diff)
-//    {
-//        int shift;
+        if (v0to1 == v1to2)
+        {
+            swap = p1;
+            p1 = p0;
+            p0 = swap;
 
-//        float angle = Mathf.Atan2(diff.z, diff.x) * Mathf.Rad2Deg;
-//        angle = (angle + 360) % 360;
+            diagonal = v0to2;
+        }
+        else if(v1to2 == v0to2)
+        {
+            swap = p2;
+            p2 = p0;
+            p0 = swap;
 
-//        if (diff.y <= 0)
-//        {
-//            if      (angle >= 0 && angle < 90)    { shift = 0; }
-//            else if (angle >= 90 && angle < 180)  { shift = 1; }
-//            else if (angle >= 180 && angle < 270) { shift = 2; }
-//            else                                  { shift = 3; }
-//        }
-//        else
-//        {
-//            if      (angle >= 0 && angle < 90)    { shift = 4; }
-//            else if (angle >= 90 && angle < 180)  { shift = 5; }
-//            else if (angle >= 180 && angle < 270) { shift = 6; }
-//            else                                  { shift = 7; }
-//        }
+            diagonal = v0to1;
+        }
+        else
+        {
+            //don`t need to swap. v0 is right angle point;
+            diagonal = v1to2;
+        }
 
-//        return shift;
-//    }
-//    private void SetVoxel(Vector3 point, VoxelType type)
-//    {
-//        Vector3 center = Parser.GetCenterPoint(point);
-//        int radix = Parser.GetVoxelRadix(center);
+        //Update and save information when the minimum unit (?) is reached
+        if (VOXEL_SIZE < diagonal)
+        {
+            Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 1);
+            Set(p0, p1, midPoint);
+            Set(p0, p2, midPoint);
+        }
+        else
+        {
+            //get point, get pivot
+            Vector3 centroidPoint = CMath.FloorToVector((p0 + p1 + p2) * 0.33f, 2);
+            centroidPoint = SnappingPoint(centroidPoint, VOXEL_HALF_SIZE, 2);
+            Vector3 pivot = PVoxel.GetPivot(centroidPoint);
 
-//        Vector3 diff = point - center;
-//        int quarant = GetBitShift(diff);
-//        int typeBits = (int)type << (quarant * 2);
+            //set flag
+            int movableFlag = PVoxel.GetMoveFlag(centroidPoint - pivot);
+            int heightFlag = 0;
+            heightFlag |= PVoxel.SetHeightFlag(p0 - pivot);
+            heightFlag |= PVoxel.SetHeightFlag(p1 - pivot);
+            heightFlag |= PVoxel.SetHeightFlag(p2 - pivot);
 
-//        if (!data.ContainsKey(radix))
-//        {
-//            data.Add(radix, new Voxel_t(typeBits));
-//        }
+            //set voxel data
+            int key = PVoxel.GetKey(centroidPoint);
+            if (false == map.TryGetValue(key, out Voxel_t voxel))
+            {
+                map.Add(key, new Voxel_t(heightFlag | movableFlag));
+            }
+            else
+            {
+                map[key] = new Voxel_t(voxel.Data | heightFlag | movableFlag);
+            }
+        }
+    }
+    private Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
+    {
+        float x = p.x;
+        float y = p.y;
+        float z = p.z;
+        float diff;
+        diff = x % dist;
 
-//        if (type > data[radix].GetSubType(quarant))
-//        {
-//            int sub = data[radix].SubVoxel;
-//            int mask = 0b11 << (quarant * 2);
+        //Similar to rounding, but the standard is different for each dist, not 0.5f.
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            x -= diff;
+            x = CMath.Floor(x - diff, exponent);
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            x += (dist - diff);
+            x = CMath.Floor(x + (dist - diff), exponent);
+        }
 
-//            sub &= ~mask;
-//            sub |= typeBits;
-//            data[radix] = new Voxel_t(sub);
-//        }
-//    }
+        diff = y % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            y -= diff;
+            y = CMath.Floor(y - diff, exponent);
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            y += (dist - diff);
+            y = CMath.Floor(y + (dist - diff), exponent);
+        }
 
-//    private void OnDrawGizmos()
-//    {
-//        if (!canDraw)
-//        {
-//            return;
-//        }
+        diff = z % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            z -= diff;
+            z = CMath.Floor(z - diff, exponent);
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            z += (dist - diff);
+            z = CMath.Floor(z + (dist - diff), exponent);
+        }
 
-//        if (drawGrids)
-//        {
-//            float halfGrid = grid * 0.5f;
-//            float quaterGrid = grid * 0.25f;
+        return new Vector3(x, y, z);
+    }
 
-//            //draw voxel
-//            foreach (int radix in data.Keys)
-//            {
-//                float x = radix >> 16;
-//                float y = (radix & 0xFF00) >> 8;
-//                float z = radix & 0xFF;
+    #region Height calculation example code
+    /*
+    [SerializeField] private Vector2 point;
+    [SerializeField] private GameObject obj;
+    private void Start()
+    {
+        point = new Vector2(0.5f, 0.5f);
+        obj.transform.position = new Vector3(point.x, 0f, point.y);
+    }
+    private void Update()
+    {
+        float x = point.x;
+        float z = point.y;
 
-//                Vector3 center = new Vector3(x, y, z) * halfGrid;
+        Vector3 pa = new Vector3(1, 0, 0);
+        Vector3 pb = new Vector3(0, 0, 1);
+        Vector3 pc = new Vector3(1, 1, 1);
 
-//                if (center.y < grid * 1.25f)
-//                    continue;
+        Vector3 ab = pb - pa;
+        Vector3 ac = pc - pa;
 
-//                bool IsContoured = false;
-//                for (int i = 0; i < 4; ++i)
-//                {
-//                    int sub_type = (data[radix].SubVoxel & (0b11 << i * 2)) >> i * 2;
-//                    switch ((VoxelType)sub_type)
-//                    {
-//                        case VoxelType.Plain:    Gizmos.color = new Color(0, 1, 0, alpha[0]); break;
-//                        case VoxelType.Slope45:    Gizmos.color = new Color(0, 0, 1, alpha[1]); break;
-//                        case VoxelType.Obstacle: Gizmos.color = new Color(1, 0, 0, alpha[2]); break;
-//                        default: continue;
-//                    }
+        Vector3 normal = Vector3.Cross(ab, ac).normalized;
 
-//                    Quaternion rot = Quaternion.Euler(0, 90 * (1 - i), 90);
-//                    Vector3 c = (i < 4) ? center + Vector3.down * quaterGrid : center + Vector3.up * quaterGrid;
+        float A = normal.x;
+        float B = normal.y;
+        float C = normal.z;
+        float D = Vector3.Dot(normal, pa);
 
-//                    switch (i)
-//                    {
-//                        case 0:
-//                        case 4:
-//                            c += new Vector3(1, 0, 1) * quaterGrid;
-//                            break;
-//                        case 1:
-//                        case 5:
-//                            c += new Vector3(-1, 0, 1) * quaterGrid;
-//                            break;
-//                        case 2:
-//                        case 6:
-//                            c += new Vector3(-1, 0, -1) * quaterGrid;
-//                            break;
-//                        case 3:
-//                        case 7:
-//                            c += new Vector3(1, 0, -1) * quaterGrid;
-//                            break;
-//                        default: continue;
-//                    }
-
-//                    Gizmos.matrix = Matrix4x4.TRS(c, rot, new Vector3(quaterGrid, quaterGrid, quaterGrid));
-//                    Gizmos.DrawMesh(gizmoMesh, Vector3.zero, Quaternion.identity);
-//                    Gizmos.matrix = Matrix4x4.identity;
-
-//                    Gizmos.color = new Color(1f, 0.922f, 0.016f, 0.10f);
-
-//                    if (!IsContoured)
-//                    {
-//                        Gizmos.DrawLine(center + Vector3.right * halfGrid, center + Vector3.back * halfGrid);
-//                        Gizmos.DrawLine(center + Vector3.back * halfGrid, center + Vector3.left * halfGrid);
-//                        Gizmos.DrawLine(center + Vector3.left * halfGrid, center + Vector3.forward * halfGrid);
-//                        Gizmos.DrawLine(center + Vector3.forward * halfGrid, center + Vector3.right * halfGrid);
-
-//                        Gizmos.DrawLine(center + Vector3.left * halfGrid, center + Vector3.right * halfGrid);
-//                        Gizmos.DrawLine(center + Vector3.forward * halfGrid, center + Vector3.back * halfGrid);
-//                        IsContoured = true;
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
+        float y = (-A * x + -C * z + D) / B;
+        Debug.Log(y);
+        obj.transform.position = new Vector3(x, y, z);
+    }
+     */
+    #endregion
+}

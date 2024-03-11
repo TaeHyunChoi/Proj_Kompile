@@ -127,14 +127,6 @@ public enum InteractType
     Door,
     Talk,
 }
-public enum VoxelType : int
-{
-    None = 0,
-
-    Plain,
-    Slope45,
-    Obstacle,
-}
 
 //Currently there was no need to use a separate namespace... but I wanted to try it.
 namespace CDataStructure
@@ -143,48 +135,6 @@ namespace CDataStructure
 
     [Serializable]
     public struct Voxel_t
-    {
-        private int data;
-
-        public int Data { get => data; }
-        public int SUB { get => data & 0xFF; }
-        public int SlopeFlag { get => (data >> Public.SHIFT_SLOPE_DIRECTION); }
-        public Vector3 SlopeDirection
-        {
-            get
-            {
-                int flag = (data >> Public.SHIFT_SLOPE_DIRECTION);
-                int fx = (flag & 0b1100), fz = (flag & 0b0011);
-                float x, z;
-
-                if (fx == 0b0100) { x = 1f; }
-                else if (fx == 0b1100) { x = -1f; }
-                else { x = 0f; }
-
-                if (fz == 0b0001) { z = 1f; }
-                else if (fz == 0b0011) { z = -1f; }
-                else { z = 0f; }
-
-                return new Vector3(x, 0, z);
-            }
-        }
-
-        public int GetSubType(int shift)
-        {
-            shift *= 2;
-            int sub = data & (0b11 << shift);
-            //sub &= 0xFF;
-            return sub >> shift;
-        }
-
-        public Voxel_t(int data)
-        {
-            this.data = data;
-        }
-    }
-
-    [Serializable]
-    public struct Voxel_t2
     {
         private int dataFlag;
         private int linkFlag;
@@ -204,6 +154,14 @@ namespace CDataStructure
             }
         }
 
+        public bool PossibleToMove(Vector3 point, Vector3 pivot)
+        {
+            //link를 어찌 판단하면 좋을까요?
+            //point와 다른 복셀이다 >> link인지 판단?
+            //point와 같은 복셀이다 >> move만 판단?
+
+            return false;
+        }
         public bool IsMovable(int quarant)
         {
             return 0 != (dataFlag & (1 << quarant));
@@ -225,12 +183,12 @@ namespace CDataStructure
             value >>= index * 2;
             return value;
         }
-        public Voxel_t2(int data)
+        public Voxel_t(int data)
         {
             dataFlag = data;
             linkFlag = 0;
         }
-        public Voxel_t2(int data, int link)
+        public Voxel_t(int data, int link)
         {
             dataFlag = data;
             linkFlag = link;

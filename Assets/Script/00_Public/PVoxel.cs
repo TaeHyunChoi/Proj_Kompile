@@ -18,47 +18,33 @@ public static class PVoxel
     }
     public static Vector3 GetPivot(int key)
     {
-        float x = (key & 0x_FF_0000) >> 16;
-        float y = (key & 0x_00_FF00) >> 8;
-        float z = (key & 0x_00_00FF);
+        float x = (key >> 16)           * VOXEL_SIZE;
+        float y = ((key >> 8) & 0x00FF) * VOXEL_SIZE;
+        float z = (key & 0xFF)          * VOXEL_SIZE;
 
-        return new Vector3(x, y, z) * VOXEL_SIZE;
+        return new Vector3(x, y, z);
     }
-    public static int GetKeyFromPoint(Vector3 point)
+    public static int GetKey(Vector3 point)
     {
         Vector3 pivot = GetPivot(point);
-        return GetKeyFromPivot(pivot);
-    }
-    public static int GetKeyFromPivot(Vector3 pivot)
-    {
         return (int)(pivot.x * VOXEL_INVERT) << 16 | (int)(pivot.y * VOXEL_INVERT) << 8 | (int)(pivot.z * VOXEL_INVERT);
     }
-    public static int GetMoveIndex(Vector3 point)
+    public static int GetMoveFlag(Vector3 diff)
     {
-        int index = -1;
-        Vector3 pivot = GetPivot(point);
+        int index = 0;
+        index |= (diff.z > diff.x) ? 0b_10 : 0;
+        index |= (diff.z > -diff.x + VOXEL_SIZE) ? 0b_01 : 0;
 
-        bool e1 = (point.z - pivot.z) >  (point.x - pivot.x);
-        bool e2 = (point.z - pivot.z) > -(point.x - pivot.x) + VOXEL_SIZE;
-        if      (!e1 & e2)  { index = 0; }
-        else if (e1 & e2)   { index = 1; }
-        else if (e1 & !e2)  { index = 2; }
-        else if (!e1 & !e2) { index = 3; }
+        switch (index)
+        {
+            case 0b_01: index = 0; break;
+            case 0b_11: index = 1; break;
+            case 0b_10: index = 2; break;
+            case 0b_00: index = 3; break;
+            default: return -1;
+        }
 
-        return index;
-    }
-    public static int GetSubIndex(Vector3 pivot, Vector3 point)
-    {
-        int index = -1;
-
-        bool e1 = (point.z - pivot.z) > (point.x - pivot.x);
-        bool e2 = (point.z - pivot.z) > -(point.x - pivot.x) + VOXEL_SIZE;
-        if      (!e1 &  e2) { index = 0; }
-        else if ( e1 &  e2) { index = 1; }
-        else if ( e1 & !e2) { index = 2; }
-        else if (!e1 & !e2) { index = 3; }
-
-        return index;
+        return 1 << index;
     }
 
     public static int SetHeightFlag(Vector3 diff)
@@ -78,35 +64,5 @@ public static class PVoxel
         }
 
         return 0;
-    }
-    public static int GetMoveFlag(Vector3 diff)
-    {
-        int flag = 0;
-        flag |= (diff.z > diff.x) ? 0b_10 : 0;
-        flag |= (diff.z > -diff.x + VOXEL_SIZE) ? 0b_01 : 0;
-
-        switch (flag)
-        {
-            case 0b_01: return 0b_0001;
-            case 0b_11: return 0b_0010;
-            case 0b_10: return 0b_0100;
-            case 0b_00: return 0b_1000;
-            default:    return 0;
-        }
-    }
-
-
-    //need...?
-    public static bool Get(Dictionary<int, Voxel_t2> map, Vector3 point, out Voxel_t2 voxel)
-    {
-        Vector3 pivot = GetPivot(point);
-        int key = GetKeyFromPivot(pivot);
-
-        if (map.TryGetValue(key, out voxel))
-        {
-            return true;
-        }
-
-        return false;
     }
 }

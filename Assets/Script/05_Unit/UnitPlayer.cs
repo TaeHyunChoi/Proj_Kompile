@@ -16,36 +16,27 @@ public class UnitPlayer : Unit
     private bool priorUp;
 
     //*
-    public void Move2nd(Dictionary<int, Voxel_t> map, Vector3 inputDir)
+    public void Move(Dictionary<int, Voxel_t> map, Vector3 inputDir)
     {
-        Vector3 position = transform.position;
+        Vector3 currentPoint = transform.position;
         inputDir.Normalize();
-        delta = Time.deltaTime * MOVE_SPEED;
 
-        int currentKey = PVoxel.GetKeyFromPoint(position);
-        int targetKey;
+        Vector3 nextPoint = currentPoint + inputDir * Time.deltaTime * MOVE_SPEED;
+        int key = PVoxel.GetKey(nextPoint);
 
-        int idxDir = GetDirectionIndex(inputDir);
-        idxTargets = GetTargetIndex(idxDir, idxTargets);
-
-        //Set X, Z Value
-        for (int i = 0; i < idxTargets.Length; ++i)
+        if(false == map.TryGetValue(key, out Voxel_t voxel))
         {
-            Quaternion rot = Quaternion.AngleAxis(idxTargets[i] * 22.5f, Vector3.up);
-            Vector3 checkPoint = position + (delta + VOXEL_HALF_SIZE) * (rot * inputDir);
-
-            for (int j = 0; j < 3; ++j)
-            {
-                float dirY = (j + 1) % 3 - 1;
-                Vector3 offset = new Vector3(0f, dirY * (VOXEL_HALF_SIZE + 0.001f), 0f);
-                //if (false == isCollided(map, checkPoint + offset))
-                //{
-                //    targetKey = PVoxel.GetKeyFromPoint(position + (rot * inputDir) + offset);
-
-                //}
-            }
-
+            Debug.Log("Find other point");
+            return;
         }
+
+        Debug.Log("Need to Dev: IsPossibleToMove?");
+        //Vector3 pivot = PVoxel.GetPivot(key);
+        //if (true == voxel.PossibleToMove(nextPoint, pivot))
+        //{
+        //    transform.position = nextPoint;
+        //    return;
+        //}
     }
 
     /// <summary> return valid voxel-map key; </summary>
@@ -117,6 +108,7 @@ public class UnitPlayer : Unit
 
         return direction;
     }
+
     //*/
 
 //    //Take octagon points and partially check collisions according to direction and decision priority. (see #region below)
