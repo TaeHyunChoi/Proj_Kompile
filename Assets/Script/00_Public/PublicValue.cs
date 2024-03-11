@@ -140,26 +140,11 @@ namespace CDataStructure
         private int linkFlag;
 
         public int Data { get => dataFlag; }
-        public int MoveFlag { get => dataFlag & 0xF; }
-        public int HeightFlag { get => dataFlag & 0x3FF0; }
-        public int LinkFlag { get => linkFlag; }
-        public int Type
-        {
-            get
-            {
-                if (0 != (dataFlag & 0x00F)) { return PLAIN; } //1
-                if (0 != (dataFlag & 0xFF0)) { return SLOPE; } //2
-
-                return OBSTACLE; //0
-            }
-        }
+        public int Link { get => linkFlag; }
 
         public bool PossibleToMove(Vector3 point, Vector3 pivot)
         {
-            //link를 어찌 판단하면 좋을까요?
-            //point와 다른 복셀이다 >> link인지 판단?
-            //point와 같은 복셀이다 >> move만 판단?
-
+            Debug.Log("Need to dev: Possible to Move;");
             return false;
         }
         public bool IsMovable(int quarant)
