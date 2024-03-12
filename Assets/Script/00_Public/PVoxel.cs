@@ -61,6 +61,7 @@ public static class PVoxel
         Vector3 p0 = voxel.GetYValue((quarant + 4) % 4) * Vector3.up;
         Vector3 p1 = voxel.GetYValue((quarant + 5) % 4) * Vector3.up;
         Vector3 pm = pivot + new Vector3(1, 0, 1) * VOXEL_HALF_SIZE + voxel.GetYValue(4) * Vector3.up;
+
         //set x,z value
         switch (quarant)
         {
@@ -86,19 +87,25 @@ public static class PVoxel
         p0 = CMath.FloorToVector(p0, 3);
         p1 = CMath.FloorToVector(p1, 3);
         pm = CMath.FloorToVector(pm, 3);
+        Debug.Log($"coord p0:{p0:F3}, p1:{p1:F3}, pm:{pm:F3}");
 
         Vector3 normal = Vector3.Cross(p1 - pm, p0 - pm);
         normal.Normalize();
-        Debug.Log($"{p0.y}, {p1.y}, {pm.y} => normal:{normal.y:F3}");
+        normal = CMath.FloorToVector(normal, 3);
 
         if (0f == normal.y)
         {
+            Debug.Log("normal.y == 0f;");
             return 0f;
         }
 
         //vector equation of the plane
-        float y = (-normal.x * point.x + -normal.z * point.z + Vector3.Dot(normal, point)) / normal.y;
+        float y = -(normal.x * point.x + normal.z * point.z - Vector3.Dot(normal, pm)) / normal.y;
         y = CMath.Floor(y, 3);
+
+        Debug.Log($"{p0.y}, {p1.y}, {pm.y} => normal:{normal.y:F3} => y:{y:F3}");
+        //Debug.Log($"(normal:{normal}) => {y:F3} = ({-normal.x}*{point.x} + {-normal.z}*{point.z} + {Vector3.Dot(normal, point)})/{normal.y}");
+
         return y;
     }
 

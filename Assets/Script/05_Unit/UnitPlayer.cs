@@ -25,8 +25,7 @@ public class UnitPlayer : Unit
                 && true == targetVoxel.CanMoveTo(targetPoint))
             {
                 float y = PVoxel.GetYValue(targetVoxel, targetPoint);
-                targetPoint += new Vector3(0, y, 0);
-                transform.position = CMath.FloorToVector(targetPoint, 3);
+                transform.position = CMath.FloorToVector(new Vector3(targetPoint.x, y, targetPoint.z), 3);
                 return;
             }
         }
