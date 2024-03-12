@@ -79,7 +79,7 @@ public static class PVoxel
                 break;
             case 3:
                 p0 += pivot;
-                p1 += pivot + new Vector3(0, 0, 1) * VOXEL_SIZE;
+                p1 += pivot + new Vector3(1, 0, 0) * VOXEL_SIZE;
                 break;
         }
 
