@@ -87,29 +87,64 @@ public static class PVoxel
         p0 = CMath.FloorToVector(p0, 3);
         p1 = CMath.FloorToVector(p1, 3);
         pm = CMath.FloorToVector(pm, 3);
-        Debug.Log($"coord p0:{p0:F3}, p1:{p1:F3}, pm:{pm:F3}");
 
         Vector3 normal = Vector3.Cross(p1 - pm, p0 - pm);
         normal.Normalize();
         normal = CMath.FloorToVector(normal, 3);
 
-        if (0f == normal.y)
-        {
-            Debug.Log("normal.y == 0f;");
-            return 0f;
-        }
-
         //vector equation of the plane
+        Debug.Log($"{normal.y:F3}");
+
         float y = -(normal.x * point.x + normal.z * point.z - Vector3.Dot(normal, pm)) / normal.y;
-        y = CMath.Floor(y, 3);
-
-        Debug.Log($"{p0.y}, {p1.y}, {pm.y} => normal:{normal.y:F3} => y:{y:F3}");
-        //Debug.Log($"(normal:{normal}) => {y:F3} = ({-normal.x}*{point.x} + {-normal.z}*{point.z} + {Vector3.Dot(normal, point)})/{normal.y}");
-
-        return y;
+        return CMath.Floor(y, 3);
     }
 
+    public static Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
+    {
+        float x = p.x;
+        float y = p.y;
+        float z = p.z;
+        float diff;
+        diff = x % dist;
 
+        //Similar to rounding, but the standard is different for each dist, not 0.5f.
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            x -= diff;
+            x = CMath.Floor(x - diff, exponent);
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            x += (dist - diff);
+            x = CMath.Floor(x + (dist - diff), exponent);
+        }
+
+        diff = y % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            y -= diff;
+            y = CMath.Floor(y - diff, exponent);
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            y += (dist - diff);
+            y = CMath.Floor(y + (dist - diff), exponent);
+        }
+
+        diff = z % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            z -= diff;
+            z = CMath.Floor(z - diff, exponent);
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            z += (dist - diff);
+            z = CMath.Floor(z + (dist - diff), exponent);
+        }
+
+        return new Vector3(x, y, z);
+    }
     public static int SetHeightFlag(Vector3 diff)
     {
         diff = CMath.FloorToVector(diff * VOXEL_HALF_INVERT, 2);

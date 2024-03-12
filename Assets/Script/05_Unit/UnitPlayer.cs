@@ -15,44 +15,68 @@ public class UnitPlayer : Unit
         inputDir.Normalize();
 
         Vector3 nowPoint = transform.position;
-        int nowKey = PVoxel.GetKey(nowPoint);
         Vector3 targetPoint = CMath.FloorToVector(nowPoint + inputDir * Time.deltaTime * MOVE_SPEED, 3);
-        int targetKey = PVoxel.GetKey(targetPoint);
 
-        if (true == map.TryGetValue(targetKey, out Voxel_t targetVoxel))
+        if (true == MoveTo(map, nowPoint, targetPoint, out Vector3 point))
         {
-            //의도한 위치.y == 0
-            if (true == targetVoxel.IsLinkedWith(nowKey, targetKey)
-                && true == targetVoxel.CanMoveTo(targetPoint))
-            {
-                float y = PVoxel.GetYValue(targetVoxel, targetPoint);
-                transform.position = CMath.FloorToVector(new Vector3(targetPoint.x, y, targetPoint.z), 3);
-                return;
-            }
+            transform.position = point;
+            return;
         }
 
-        //의도한 위치 +y
-        //Vector3 newPoint = targetPoint + Vector3.up * Time.deltaTime * MOVE_SPEED;
-        //targetKey = PVoxel.GetKey(newPoint);
-        //if (true == map.TryGetValue(targetKey, out targetVoxel))
-        //{
-        //    if (true == targetVoxel.IsLinkedWith(nowKey, targetKey)
-        //        && true == targetVoxel.CanMoveTo(newPoint))
-        //    {
-        //        float y = PVoxel.GetYValue(targetVoxel, targetPoint);
-        //        transform.position = CMath.FloorToVector(new Vector3(newPoint.x, y, newPoint.z), 3);
-        //        return;
-        //    }
-        //}
-
-        //의도한 위치 -y
-
-
-
-        //여기서부터 이제 link를 설계해서 올려야 하는데...
         Debug.Log($"Try other direction (point:{targetPoint:F3}, pivot:{PVoxel.GetPivot(targetPoint):F2})");
+    }
+    private bool IsMovable(Dictionary<int, Voxel_t> map, int fromKey, int targetKey, Vector3 toPoint, out Voxel_t targetVoxel)
+    {
+        if (false == map.TryGetValue(targetKey, out targetVoxel))
+            return false;
 
+        if (false == targetVoxel.IsLinkedWith(fromKey, targetKey))
+            return false;
 
+        if (false == targetVoxel.CanMoveTo(toPoint))
+            return false;
+
+        return true;
+    }
+    private bool MoveTo(Dictionary<int, Voxel_t> map, Vector3 from, Vector3 to, out Vector3 point)
+    {
+        point = Vector3.zero;
+        int nowKey = PVoxel.GetKey(from);
+        int targetKey = PVoxel.GetKey(to);
+
+        //y ==
+        if (true == IsMovable(map, nowKey, targetKey, to, out Voxel_t targetVoxel))
+        {
+            float y = PVoxel.GetYValue(targetVoxel, to);
+            point = CMath.FloorToVector(new Vector3(to.x, y, to.z), 3);
+            return true;
+        }
+
+        //더 좋은 이름 없니..?
+        Vector3 newPoint;
+        int newKey;
+
+        //y ++
+        newPoint = to + Vector3.up * VOXEL_SIZE;
+        newKey = PVoxel.GetKey(newPoint);
+        if (true == IsMovable(map, nowKey, newKey, to, out targetVoxel))
+        {
+            float y = PVoxel.GetYValue(targetVoxel, newPoint);
+            point = CMath.FloorToVector(new Vector3(newPoint.x, y, newPoint.z), 3);
+            return true;
+        }
+
+        //y --
+        newPoint = to - Vector3.up * VOXEL_SIZE;
+        newKey = PVoxel.GetKey(newPoint);
+        if (true == IsMovable(map, nowKey, newKey, to, out targetVoxel))
+        {
+            float y = PVoxel.GetYValue(targetVoxel, newPoint);
+            point = CMath.FloorToVector(new Vector3(newPoint.x, y, newPoint.z), 3);
+            return true;
+        }
+
+        return false;
     }
 
     //    //Take octagon points and partially check collisions according to direction and decision priority. (see #region below)

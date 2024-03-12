@@ -54,13 +54,13 @@ public class MapSampler : MonoBehaviour
                 Vector3 B = CMath.FloorToVector(targetTransform.TransformPoint(vertices[t1]), 2);
                 Vector3 C = CMath.FloorToVector(targetTransform.TransformPoint(vertices[t2]), 2);
 
-                A = SnappingPoint(A, VOXEL_SIZE, 2);
+                A = PVoxel.SnappingPoint(A, VOXEL_SIZE, 2);
                 A = CMath.FloorToVector(A, 0);
 
-                B = SnappingPoint(B, VOXEL_SIZE, 2);
+                B = PVoxel.SnappingPoint(B, VOXEL_SIZE, 2);
                 B = CMath.FloorToVector(B, 0);
 
-                C = SnappingPoint(C, VOXEL_SIZE, 2);
+                C = PVoxel.SnappingPoint(C, VOXEL_SIZE, 2);
                 C = CMath.FloorToVector(C, 0);
 
                 Set(A, B, C);
@@ -232,7 +232,7 @@ public class MapSampler : MonoBehaviour
         {
             //get point, get pivot
             Vector3 centroidPoint = CMath.FloorToVector((p0 + p1 + p2) * 0.33f, 2);
-            centroidPoint = SnappingPoint(centroidPoint, VOXEL_HALF_SIZE, 2);
+            centroidPoint = PVoxel.SnappingPoint(centroidPoint, VOXEL_HALF_SIZE, 2);
             Vector3 pivot = PVoxel.GetPivot(centroidPoint);
 
             //set flag
@@ -253,52 +253,6 @@ public class MapSampler : MonoBehaviour
                 map[key] = new Voxel_t(voxel.DataFlag | heightFlag | movableFlag);
             }
         }
-    }
-    private Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
-    {
-        float x = p.x;
-        float y = p.y;
-        float z = p.z;
-        float diff;
-        diff = x % dist;
-
-        //Similar to rounding, but the standard is different for each dist, not 0.5f.
-        if (0 < diff & diff <= dist * 0.1f)
-        {
-            x -= diff;
-            x = CMath.Floor(x - diff, exponent);
-        }
-        else if (dist * 0.9f <= diff && diff < dist)
-        {
-            x += (dist - diff);
-            x = CMath.Floor(x + (dist - diff), exponent);
-        }
-
-        diff = y % dist;
-        if (0 < diff & diff <= dist * 0.1f)
-        {
-            y -= diff;
-            y = CMath.Floor(y - diff, exponent);
-        }
-        else if (dist * 0.9f <= diff && diff < dist)
-        {
-            y += (dist - diff);
-            y = CMath.Floor(y + (dist - diff), exponent);
-        }
-
-        diff = z % dist;
-        if (0 < diff & diff <= dist * 0.1f)
-        {
-            z -= diff;
-            z = CMath.Floor(z - diff, exponent);
-        }
-        else if (dist * 0.9f <= diff && diff < dist)
-        {
-            z += (dist - diff);
-            z = CMath.Floor(z + (dist - diff), exponent);
-        }
-
-        return new Vector3(x, y, z);
     }
 
     #region Height calculation example code
