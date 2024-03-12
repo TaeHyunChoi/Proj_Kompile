@@ -139,19 +139,22 @@ namespace CDataStructure
         private int dataFlag;
         private int linkFlag;
 
-        public int Data { get => dataFlag; }
-        public int Link { get => linkFlag; }
+        public int DataFlag   { get => dataFlag; }
+        public int HeightFlag { get => dataFlag >> 4; }
+        public int LinkFlag   { get => linkFlag; }
 
-        public bool PossibleToMove(Vector3 point, Vector3 pivot)
+        public bool CanMoveTo(Vector3 point)
         {
-            Debug.Log("Need to dev: Possible to Move;");
-            return false;
+            Vector3 diff = point - PVoxel.GetPivot(point);
+            int quarant = PVoxel.GetMoveQuarant(diff);
+
+            return IsMovable(quarant);
         }
         public bool IsMovable(int quarant)
         {
             return 0 != (dataFlag & (1 << quarant));
         }
-        public int GetHeight(int index)
+        public int GetHeightCode(int index)
         {
             //Written with bit operations and binary notation instead of calculation formulas so that it can be read intuitively
             int value;
@@ -168,6 +171,52 @@ namespace CDataStructure
             value >>= index * 2;
             return value;
         }
+        public float GetYValue(int index)
+        {
+            int code = (dataFlag >> VOXEL_BIT_HEIGHT) & (0b11 << index * 2);
+            code >>= (index * 2);
+
+            return code * VOXEL_HALF_SIZE;
+        }
+        public bool IsLinkedWith(int nowKey, int targetKey)
+        {
+            if (nowKey == targetKey)
+            {
+                return true;
+            }
+
+            int flag = 0b_00_00_00;
+            int mask = 0xFF;
+            int nowMask, targetMask;
+
+            for (int i = 2; i >= 0; --i)
+            {
+                nowMask = nowKey & (mask << 8 * i);
+                targetMask = targetKey & (mask << 8 * i);
+
+                if (nowMask == targetMask)
+                {
+                    flag |= 0b_01 << (2 * i);
+                }
+                else if (nowMask > targetMask)
+                {
+                    flag |= 0b_10 << (2 * i);
+                }
+            }
+
+            int relative = (flag >> 4) + 3 * (flag & 0b_11);
+            flag &= 0b_00_11_00;
+            switch (flag >> 2)
+            {
+                case 0: relative += 18;  break;
+                case 1: /* y is same; */ break;
+                case 2: relative += 9;   break;
+            }
+
+            return 0 != (linkFlag & (1 << relative));
+        }
+
+
         public Voxel_t(int data)
         {
             dataFlag = data;

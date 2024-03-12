@@ -117,44 +117,44 @@ public class MapSampler : MonoBehaviour
                         {
                             case -10 + 0: // (-1,  0)
                                 bothMovable = targetVoxel.IsMovable(2) && neighborVoxel.IsMovable(0);
-                                sameHeight  = targetVoxel.GetHeight(2) == neighborVoxel.GetHeight(1) + diffY;
-                                sameHeight &= targetVoxel.GetHeight(3) == neighborVoxel.GetHeight(0) + diffY;
+                                sameHeight  = targetVoxel.GetHeightCode(2) == neighborVoxel.GetHeightCode(1) + diffY;
+                                sameHeight &= targetVoxel.GetHeightCode(3) == neighborVoxel.GetHeightCode(0) + diffY;
                                 break;
                             case +10 + 0: // ( 1,  0)
                                 bothMovable = targetVoxel.IsMovable(0) && neighborVoxel.IsMovable(2);
-                                sameHeight  = targetVoxel.GetHeight(0) == neighborVoxel.GetHeight(3) + diffY;
-                                sameHeight &= targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(2) + diffY;
+                                sameHeight  = targetVoxel.GetHeightCode(0) == neighborVoxel.GetHeightCode(3) + diffY;
+                                sameHeight &= targetVoxel.GetHeightCode(1) == neighborVoxel.GetHeightCode(2) + diffY;
                                 break;
                             case +00 + 1: // ( 0,  1)
                                 bothMovable = targetVoxel.IsMovable(1) && neighborVoxel.IsMovable(3);
-                                sameHeight  = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(0) + diffY;
-                                sameHeight &= targetVoxel.GetHeight(2) == neighborVoxel.GetHeight(3) + diffY;
+                                sameHeight  = targetVoxel.GetHeightCode(1) == neighborVoxel.GetHeightCode(0) + diffY;
+                                sameHeight &= targetVoxel.GetHeightCode(2) == neighborVoxel.GetHeightCode(3) + diffY;
                                 break;
                             case +00 - 1: // ( 0, -1)
                                 bothMovable = targetVoxel.IsMovable(3) && neighborVoxel.IsMovable(1);
-                                sameHeight  = targetVoxel.GetHeight(0) == neighborVoxel.GetHeight(1) + diffY;
-                                sameHeight &= targetVoxel.GetHeight(3) == neighborVoxel.GetHeight(2) + diffY;
+                                sameHeight  = targetVoxel.GetHeightCode(0) == neighborVoxel.GetHeightCode(1) + diffY;
+                                sameHeight &= targetVoxel.GetHeightCode(3) == neighborVoxel.GetHeightCode(2) + diffY;
                                 break;
 
                             case -10 + 1: // (-1,  1)
                                 bothMovable  = targetVoxel.IsMovable(1) || targetVoxel.IsMovable(2);
                                 bothMovable &= neighborVoxel.IsMovable(0) || neighborVoxel.IsMovable(3);
-                                sameHeight   = targetVoxel.GetHeight(2) == neighborVoxel.GetHeight(0) + diffY;
+                                sameHeight   = targetVoxel.GetHeightCode(2) == neighborVoxel.GetHeightCode(0) + diffY;
                                 break;
                             case -10 - 1: // (-1, -1)
                                 bothMovable  = targetVoxel.IsMovable(2) || targetVoxel.IsMovable(3);
                                 bothMovable &= neighborVoxel.IsMovable(0) || neighborVoxel.IsMovable(1);
-                                sameHeight   = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(3) + diffY;
+                                sameHeight   = targetVoxel.GetHeightCode(1) == neighborVoxel.GetHeightCode(3) + diffY;
                                 break;
                             case +10 + 1: // ( 1,  1)
                                 bothMovable  = targetVoxel.IsMovable(0) || targetVoxel.IsMovable(1);
                                 bothMovable &= neighborVoxel.IsMovable(2) || neighborVoxel.IsMovable(3);
-                                sameHeight   = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(3) + diffY;
+                                sameHeight   = targetVoxel.GetHeightCode(1) == neighborVoxel.GetHeightCode(3) + diffY;
                                 break;
                             case +10 - 1: // ( 1, -1)
                                 bothMovable  = targetVoxel.IsMovable(0) || targetVoxel.IsMovable(1);
                                 bothMovable &= neighborVoxel.IsMovable(2) || neighborVoxel.IsMovable(3);
-                                sameHeight   = targetVoxel.GetHeight(1) == neighborVoxel.GetHeight(3) + diffY;
+                                sameHeight   = targetVoxel.GetHeightCode(1) == neighborVoxel.GetHeightCode(3) + diffY;
                                 break;
 
                             case +00 + 0:
@@ -182,11 +182,12 @@ public class MapSampler : MonoBehaviour
                 }
             }
 
-            map[targetKey] = new Voxel_t(targetVoxel.Data, flag);
+            map[targetKey] = new Voxel_t(targetVoxel.DataFlag, flag);
         }
 
         //Save Mapping Data
         DataTable.WriteBinaryMappingData<Voxel_t>(map, resourceTransform.GetChild(0).name);
+        Debug.Log("Sampling done.");
     }
     private void Set(Vector3 p0, Vector3 p1, Vector3 p2)
     {
@@ -249,7 +250,7 @@ public class MapSampler : MonoBehaviour
             }
             else
             {
-                map[key] = new Voxel_t(voxel.Data | heightFlag | movableFlag);
+                map[key] = new Voxel_t(voxel.DataFlag | heightFlag | movableFlag);
             }
         }
     }
