@@ -21,6 +21,7 @@ public class UnitPlayer : Unit
 
         if (true == map.TryGetValue(targetKey, out Voxel_t targetVoxel))
         {
+            //의도한 위치.y == 0
             if (true == targetVoxel.IsLinkedWith(nowKey, targetKey)
                 && true == targetVoxel.CanMoveTo(targetPoint))
             {
@@ -29,10 +30,29 @@ public class UnitPlayer : Unit
                 return;
             }
         }
-        else
-        {
-            Debug.Log($"Try other direction;");
-        }
+
+        //의도한 위치 +y
+        //Vector3 newPoint = targetPoint + Vector3.up * Time.deltaTime * MOVE_SPEED;
+        //targetKey = PVoxel.GetKey(newPoint);
+        //if (true == map.TryGetValue(targetKey, out targetVoxel))
+        //{
+        //    if (true == targetVoxel.IsLinkedWith(nowKey, targetKey)
+        //        && true == targetVoxel.CanMoveTo(newPoint))
+        //    {
+        //        float y = PVoxel.GetYValue(targetVoxel, targetPoint);
+        //        transform.position = CMath.FloorToVector(new Vector3(newPoint.x, y, newPoint.z), 3);
+        //        return;
+        //    }
+        //}
+
+        //의도한 위치 -y
+
+
+
+        //여기서부터 이제 link를 설계해서 올려야 하는데...
+        Debug.Log($"Try other direction (point:{targetPoint:F3}, pivot:{PVoxel.GetPivot(targetPoint):F2})");
+
+
     }
 
     //    //Take octagon points and partially check collisions according to direction and decision priority. (see #region below)

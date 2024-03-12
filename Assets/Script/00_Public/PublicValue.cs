@@ -178,9 +178,9 @@ namespace CDataStructure
 
             return code * VOXEL_HALF_SIZE;
         }
-        public bool IsLinkedWith(int nowKey, int targetKey)
+        public bool IsLinkedWith(int fromKey, int toKey)
         {
-            if (nowKey == targetKey)
+            if (fromKey == toKey)
             {
                 return true;
             }
@@ -191,8 +191,8 @@ namespace CDataStructure
 
             for (int i = 2; i >= 0; --i)
             {
-                nowMask = nowKey & (mask << 8 * i);
-                targetMask = targetKey & (mask << 8 * i);
+                nowMask = fromKey & (mask << 8 * i);
+                targetMask = toKey & (mask << 8 * i);
 
                 if (nowMask == targetMask)
                 {
