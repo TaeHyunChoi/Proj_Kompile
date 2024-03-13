@@ -4,6 +4,7 @@ using CMathf;
 using CDataStructure;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
+using System;
 
 /// <summary> Parser related to Voxel </summary>
 public static class PVoxel
@@ -93,9 +94,14 @@ public static class PVoxel
         normal = CMath.FloorToVector(normal, 3);
 
         //vector equation of the plane
-        Debug.Log($"{normal.y:F3}");
+        float y_invert = 1f;
+        switch (normal.y)
+        {
+            case 0.577f: y_invert = 1.733f; break;
+            case 0.707f: y_invert = 1.414f; break;
+        }
 
-        float y = -(normal.x * point.x + normal.z * point.z - Vector3.Dot(normal, pm)) / normal.y;
+        float y = -(normal.x * point.x + normal.z * point.z - Vector3.Dot(normal, pm)) * y_invert;
         return CMath.Floor(y, 3);
     }
 

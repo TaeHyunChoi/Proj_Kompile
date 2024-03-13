@@ -10,20 +10,37 @@ using Unity.VisualScripting;
 /// </summary>
 public class UnitPlayer : Unit
 {
+    private readonly int[] intervalRot = new int[] { 0, 1, -1, 2, -2 };
+    private Vector2 before;
+
     public void Move(Dictionary<int, Voxel_t> map, Vector3 inputDir)
     {
         inputDir.Normalize();
 
         Vector3 nowPoint = transform.position;
-        Vector3 targetPoint = CMath.FloorToVector(nowPoint + inputDir * Time.deltaTime * MOVE_SPEED, 3);
 
-        if (true == MoveTo(map, nowPoint, targetPoint, out Vector3 point))
+        int sign = 1;
+        if (before.x < 0)   { sign *= -1; }
+        if (inputDir.z < 0) { sign *= -1; }
+
+        for (int i = 0; i < intervalRot.Length; ++i)
         {
-            transform.position = point;
-            return;
-        }
+            Vector3 rotDir = Quaternion.Euler(0f, sign * intervalRot[i] * 45f, 0f) * inputDir;
+            rotDir.Normalize();
+            Vector3 targetPoint = CMath.FloorToVector(nowPoint + rotDir * Time.deltaTime * MOVE_SPEED, 3);
+            if (targetPoint.x < 0 || targetPoint.z < 0)
+            {
+                continue;
+            }
 
-        Debug.Log($"Try other direction (point:{targetPoint:F3}, pivot:{PVoxel.GetPivot(targetPoint):F2})");
+            if (true == MoveTo(map, nowPoint, targetPoint, out Vector3 point))
+            {
+                transform.position = point;
+                before = new Vector2(inputDir.x, inputDir.z);
+                return;
+            }
+        }
+        //Debug.Log($"Try other direction (point:{targetPoint:F3}, pivot:{PVoxel.GetPivot(targetPoint):F2})");
     }
     private bool IsMovable(Dictionary<int, Voxel_t> map, int fromKey, int targetKey, Vector3 toPoint, out Voxel_t targetVoxel)
     {
