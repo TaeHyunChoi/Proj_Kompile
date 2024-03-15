@@ -36,6 +36,7 @@ public static class Public
     public const float VOXEL_INVERT        = 1f / VOXEL_SIZE;
     public const float VOXEL_HALF_SIZE     = 0.5f * VOXEL_SIZE;
     public const float VOXEL_HALF_INVERT   = 1f / VOXEL_HALF_SIZE;
+    public const float VOXEL_QUATER_SIZE   = 0.25f * VOXEL_SIZE;
 
     public static void BlockInput(int input) { ;}
 }

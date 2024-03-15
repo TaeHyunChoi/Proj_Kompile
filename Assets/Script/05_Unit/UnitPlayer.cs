@@ -10,40 +10,62 @@ using Unity.VisualScripting;
 /// </summary>
 public class UnitPlayer : Unit
 {
-    private readonly int[] intervalRot = new int[] { 0, 1, -1, 2, -2 };
+    private readonly int[] intervalRot = new int[] { 0, 1, -1, 2, -2 }; //시계 방향을 우선 탐색하는 기준
     private Vector2 before;
 
     public void Move(Dictionary<int, Voxel_t> map, Vector3 inputDir)
     {
         inputDir.Normalize();
-
         Vector3 nowPoint = transform.position;
 
         int sign = 1;
         if (before.x < 0)   { sign *= -1; }
         if (inputDir.z < 0) { sign *= -1; }
 
-        for (int i = 0; i < intervalRot.Length; ++i)
+        //Debug.Log($"[{sign}{inputDir:F0}] {intervalRot[0]}, {intervalRot[1]}, {intervalRot[2]}, {intervalRot[3]}, {intervalRot[4]}");
+
+        float dist = CMath.Floor(Time.deltaTime * MOVE_SPEED, 3);
+        for (int i = 0; i < intervalRot.Length; ++i) 
         {
             Vector3 rotDir = Quaternion.Euler(0f, sign * intervalRot[i] * 45f, 0f) * inputDir;
             rotDir.Normalize();
-            rotDir = CMath.FloorToVector(rotDir * Time.deltaTime * MOVE_SPEED, 3);
-            Vector3 targetPoint = CMath.FloorToVector(nowPoint + rotDir, 3);
 
-            if (targetPoint.x < 0 || targetPoint.z < 0)
+            //## Check collision only up to 45 degrees
+            Vector3 colDir, colPoint;
+            for (int j = 0; j < 3; ++j) 
             {
-                continue;
+                colDir = Quaternion.Euler(0f, sign * intervalRot[j] * 45f, 0f) * rotDir;
+                colDir.Normalize();
+                colDir = CMath.FloorToVector(colDir * (VOXEL_QUATER_SIZE - dist), 3);
+                colPoint = CMath.FloorToVector(nowPoint + colDir, 3);
+
+                if (colPoint.x < 0 || colPoint.z < 0
+                    || false == MoveTo(map, nowPoint, colPoint, out colPoint))
+                {
+                    Debug.Log($"Collided[{j}] {colPoint:F3}");
+                    goto CONTINUE;
+                }
             }
 
-            Debug.Log($"FROM {targetPoint:F3}");
+            //## check Move
+            rotDir = CMath.FloorToVector(rotDir * dist, 3);
+            Vector3 targetPoint = CMath.FloorToVector(nowPoint + rotDir, 3);
+
             if (true == MoveTo(map, nowPoint, targetPoint, out Vector3 point))
             {
-                Debug.Log($"TO   {point:F3}");
-                transform.position = point;
+                //min, max
+                if (point.x < 0)
+                    point = new Vector3(0, point.y, point.z);
+                if (point.z < 0)
+                    point = new Vector3(point.x, point.y, 0);
 
+                transform.position = point;
                 before = new Vector2(inputDir.x, inputDir.z);
                 return;
             }
+
+        CONTINUE:
+            continue;
         }
     }
     private bool IsMovable(Dictionary<int, Voxel_t> map, int fromKey, int targetKey, Vector3 toPoint, out Voxel_t targetVoxel)
