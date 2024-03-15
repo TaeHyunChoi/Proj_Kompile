@@ -59,28 +59,28 @@ public static class PVoxel
         int quarant = GetMoveQuarant(point - pivot);
 
         //set y value
-        Vector3 p0 = voxel.GetYValue((quarant + 4) % 4) * Vector3.up;
-        Vector3 p1 = voxel.GetYValue((quarant + 5) % 4) * Vector3.up;
-        Vector3 pm = pivot + new Vector3(1, 0, 1) * VOXEL_HALF_SIZE + voxel.GetYValue(4) * Vector3.up;
+        Vector3 p0 = pivot + new Vector3(0, voxel.GetYValue((quarant + 4) % 4), 0) * VOXEL_SIZE;
+        Vector3 p1 = pivot + new Vector3(0, voxel.GetYValue((quarant + 5) % 4), 0) * VOXEL_SIZE;
+        Vector3 pm = pivot + new Vector3(VOXEL_HALF_SIZE, voxel.GetYValue(4) * VOXEL_SIZE, VOXEL_HALF_SIZE);
 
         //set x,z value
         switch (quarant)
         {
             case 0:
-                p0 += pivot + new Vector3(1, 0, 0) * VOXEL_SIZE;
-                p1 += pivot + new Vector3(1, 0, 1) * VOXEL_SIZE;
+                p0 += new Vector3(1, 0, 0) * VOXEL_SIZE;
+                p1 += new Vector3(1, 0, 1) * VOXEL_SIZE;
                 break;
             case 1:
-                p0 += pivot + new Vector3(1, 0, 1) * VOXEL_SIZE;
-                p1 += pivot + new Vector3(0, 0, 1) * VOXEL_SIZE;
+                p0 += new Vector3(1, 0, 1) * VOXEL_SIZE;
+                p1 += new Vector3(0, 0, 1) * VOXEL_SIZE;
                 break;
             case 2:
-                p0 += pivot + new Vector3(0, 0, 1) * VOXEL_SIZE;
-                p1 += pivot;
+                p0 += new Vector3(0, 0, 1) * VOXEL_SIZE;
+                //p1 += Vector3.zero;
                 break;
             case 3:
-                p0 += pivot;
-                p1 += pivot + new Vector3(1, 0, 0) * VOXEL_SIZE;
+                //p0 += Vector3.zero;
+                p1 += new Vector3(1, 0, 0) * VOXEL_SIZE;
                 break;
         }
 
@@ -99,12 +99,19 @@ public static class PVoxel
         {
             case 0.577f: y_invert = 1.733f; break;
             case 0.707f: y_invert = 1.414f; break;
+            case 1.000f: return pivot.y;
         }
 
         float y = -(normal.x * point.x + normal.z * point.z - Vector3.Dot(normal, pm)) * y_invert;
+
+        //TODO: I didn't want to solve floating point problems like this...
+        if (y < pivot.y)
+            y = pivot.y;
+        else if (y > pivot.y + VOXEL_SIZE)
+            y = pivot.y + VOXEL_SIZE;
+
         return CMath.Floor(y, 3);
     }
-
     public static Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
     {
         float x = p.x;

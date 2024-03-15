@@ -10,9 +10,10 @@ namespace CMathf
         {
             float d = (int)Mathf.Pow(10, exponent);
             float di = 1 / d;
+            float sign = value >= 0 ? 1f : -1f;
 
-            value = value >= 0 ? Mathf.FloorToInt(value * d) * di
-                               : -Mathf.FloorToInt(-value * d) * di;
+            value = Mathf.FloorToInt(sign * value * d);
+            value *= sign * di;
 
             return value;
         }
@@ -22,7 +23,11 @@ namespace CMathf
         }
         public static Vector3 FloorToVector(Vector3 value, int exponent)
         {
-            return new Vector3(Floor(value.x, exponent), Floor(value.y, exponent), Floor(value.z, exponent));
+            float x = Floor(value.x, exponent);
+            float y = Floor(value.y, exponent);
+            float z = Floor(value.z, exponent);
+
+            return new Vector3(x, y, z);
         }
     }
 }
