@@ -45,36 +45,78 @@ public class UnitPlayer : Unit
 
 
     CHECK_OTHER_DIRS:
+
+
         float rotY = Mathf.Sign(Vector3.Cross(inputDir, beforeDir).y);
         if (rotY >= 0) { sign = 1; }
         else { sign = -1; }
 
-        for (int d = 1; d < 5; ++d)
+        for (int i = 0; i < 5; ++i)
         {
-            Vector3 otherDir = Quaternion.Euler(0f, sign * intervalRot[d] * 45f, 0f) * inputDir;
+            Vector3 inputRotDir = Quaternion.Euler(0f, intervalRot[i] * 45f, 0f) * inputDir;
+            inputRotDir.Normalize();
+            inputRotDir = CMath.FloorToVector(dir * (VOXEL_QUATER_SIZE + dist), 3);
 
-            for (int c = 0; c < 3; ++c)
+            for (int d = 1; d < 5; ++d)
             {
-                dir = Quaternion.Euler(0f, intervalRot[c] * 45f, 0f) * otherDir;
-                dir.Normalize();
-                dir = CMath.FloorToVector(dir * (VOXEL_QUATER_SIZE + dist), 3);
+                Vector3 otherDir = Quaternion.Euler(0f, sign * intervalRot[d] * 45f, 0f) * inputRotDir;
 
-                targetPoint = CMath.FloorToVector(nowPoint + dir, 3);
-
-                if (targetPoint.x < 0 || targetPoint.z < 0
-                    || false == CanMove(map, nowPoint, targetPoint, out targetPoint))
+                for (int c = 0; c < 3; ++c)
                 {
-                    goto CONTINUE;
+                    dir = Quaternion.Euler(0f, intervalRot[c] * 45f, 0f) * otherDir;
+                    dir.Normalize();
+                    dir = CMath.FloorToVector(dir * (VOXEL_QUATER_SIZE + dist), 3);
+
+                    targetPoint = CMath.FloorToVector(nowPoint + dir, 3);
+
+                    if (targetPoint.x < 0 || targetPoint.z < 0
+                        || false == CanMove(map, nowPoint, targetPoint, out targetPoint))
+                    {
+                        goto CONTINUE;
+                    }
                 }
+
+                otherDir.Normalize();
+                dir = CMath.FloorToVector(otherDir, 3);
+                goto SET_POSITION;
+
+            CONTINUE:
+                continue;
             }
-
-            otherDir.Normalize();
-            dir = CMath.FloorToVector(otherDir, 3);
-            goto SET_POSITION;
-
-        CONTINUE:
-            continue;
         }
+
+        //float rotY = Mathf.Sign(Vector3.Cross(inputDir, beforeDir).y);
+        //if (rotY >= 0) { sign = 1; }
+        //else { sign = -1; }
+
+        //for (int d = 1; d < 5; ++d)
+        //{
+        //    Vector3 otherDir = Quaternion.Euler(0f, sign * intervalRot[d] * 45f, 0f) * inputDir;
+
+        //    for (int c = 0; c < 3; ++c)
+        //    {
+        //        dir = Quaternion.Euler(0f, intervalRot[c] * 45f, 0f) * otherDir;
+        //        dir.Normalize();
+        //        dir = CMath.FloorToVector(dir * (VOXEL_QUATER_SIZE + dist), 3);
+
+        //        targetPoint = CMath.FloorToVector(nowPoint + dir, 3);
+
+        //        if (targetPoint.x < 0 || targetPoint.z < 0
+        //            || false == CanMove(map, nowPoint, targetPoint, out targetPoint))
+        //        {
+        //            goto CONTINUE;
+        //        }
+        //    }
+
+        //    otherDir.Normalize();
+        //    dir = CMath.FloorToVector(otherDir, 3);
+        //    goto SET_POSITION;
+
+        //CONTINUE:
+        //    continue;
+        //}
+
+        Debug.Log("Can`t MOVE");
 
     SET_POSITION:
         dir = CMath.FloorToVector(dir * dist, 3);
