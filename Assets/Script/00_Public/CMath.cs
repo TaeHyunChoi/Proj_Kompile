@@ -10,11 +10,12 @@ namespace CMathf
         {
             float d = (int)Mathf.Pow(10, exponent);
             float di = 1 / d;
-            float sign = value >= 0 ? 1f : -1f;
 
-            value = Mathf.FloorToInt(sign * value * d);
-            value *= sign * di;
+            //float sign = value >= 0 ? 1f : -1f;
+            //value = Mathf.FloorToInt(sign * value * d);
+            //value *= sign * di;
 
+            value = Mathf.FloorToInt(value * d) * di;
             return value;
         }
         public static int FloorToInt(float value, int exponent)

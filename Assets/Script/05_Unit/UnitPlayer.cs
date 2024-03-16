@@ -3,7 +3,6 @@ using UnityEngine;
 using static Public;
 using CDataStructure;
 using CMathf;
-using Unity.VisualScripting;
 
 /// <summary>
 /// It would be better to attach it as a "movement operation" component class in the future. The size is quite large;
@@ -11,64 +10,98 @@ using Unity.VisualScripting;
 public class UnitPlayer : Unit
 {
     private readonly int[] intervalRot = new int[] { 0, 1, -1, 2, -2 }; //시계 방향을 우선 탐색하는 기준
-    private Vector2 before;
+    private int flagBefore;
 
     public void Move(Dictionary<int, Voxel_t> map, Vector3 inputDir)
     {
         inputDir.Normalize();
+
         Vector3 nowPoint = transform.position;
-
-        int sign = 1;
-        if (before.x < 0)   { sign *= -1; }
-        if (inputDir.z < 0) { sign *= -1; }
-
-        //Debug.Log($"[{sign}{inputDir:F0}] {intervalRot[0]}, {intervalRot[1]}, {intervalRot[2]}, {intervalRot[3]}, {intervalRot[4]}");
+        Vector3 targetPoint;
+        Vector3 dir;
 
         float dist = CMath.Floor(Time.deltaTime * MOVE_SPEED, 3);
-        for (int i = 0; i < intervalRot.Length; ++i) 
+        int sign;
+
+        
+    //CHECK_INPUT_DIR:
+        for (int c = 0; c < 3; ++c)
         {
-            Vector3 rotDir = Quaternion.Euler(0f, sign * intervalRot[i] * 45f, 0f) * inputDir;
-            rotDir.Normalize();
+            dir = Quaternion.Euler(0f, intervalRot[c] * 45f, 0f) * inputDir;
+            dir.Normalize();
+            dir = CMath.FloorToVector(dir * (VOXEL_QUATER_SIZE + dist), 3);
 
-            //## Check collision only up to 45 degrees
-            Vector3 colDir, colPoint;
-            for (int j = 0; j < 3; ++j) 
+            targetPoint = CMath.FloorToVector(nowPoint + dir, 3);
+
+            if (targetPoint.x < 0 || targetPoint.z < 0
+                || false == CanMove(map, nowPoint, targetPoint, out targetPoint))
             {
-                colDir = Quaternion.Euler(0f, sign * intervalRot[j] * 45f, 0f) * rotDir;
-                colDir.Normalize();
-                colDir = CMath.FloorToVector(colDir * (VOXEL_QUATER_SIZE - dist), 3);
-                colPoint = CMath.FloorToVector(nowPoint + colDir, 3);
+                goto CHECK_OTHER_DIRS;
+            }
+        }
+        dir = CMath.FloorToVector(inputDir, 3);
+        goto SET_POSITION;
 
-                if (colPoint.x < 0 || colPoint.z < 0
-                    || false == MoveTo(map, nowPoint, colPoint, out colPoint))
+
+    CHECK_OTHER_DIRS:
+        sign = 1;
+        if ((flagBefore >> 2)    > 0b_01) { sign *= -1; } // before.x < 0
+        if ((flagBefore & 0b_11) > 0b_01) { sign *= -1; } // before.z < 0
+
+        for (int d = 1; d < 5; ++d)
+        {
+            Vector3 otherDir = Quaternion.Euler(0f, sign * intervalRot[d] * 45f, 0f) * inputDir;
+
+            for (int c = 0; c < 3; ++c)
+            {
+                dir = Quaternion.Euler(0f, intervalRot[c] * 45f, 0f) * otherDir;
+                dir.Normalize();
+                dir = CMath.FloorToVector(dir * (VOXEL_QUATER_SIZE + dist), 3);
+
+                targetPoint = CMath.FloorToVector(nowPoint + dir, 3);
+
+                if (targetPoint.x < 0 || targetPoint.z < 0
+                    || false == CanMove(map, nowPoint, targetPoint, out targetPoint))
                 {
-                    Debug.Log($"Collided[{j}] {colPoint:F3}");
                     goto CONTINUE;
                 }
             }
 
-            //## check Move
-            rotDir = CMath.FloorToVector(rotDir * dist, 3);
-            Vector3 targetPoint = CMath.FloorToVector(nowPoint + rotDir, 3);
-
-            if (true == MoveTo(map, nowPoint, targetPoint, out Vector3 point))
-            {
-                //min, max
-                if (point.x < 0)
-                    point = new Vector3(0, point.y, point.z);
-                if (point.z < 0)
-                    point = new Vector3(point.x, point.y, 0);
-
-                transform.position = point;
-                before = new Vector2(inputDir.x, inputDir.z);
-                return;
-            }
+            otherDir.Normalize();
+            dir = CMath.FloorToVector(otherDir, 3);
+            goto SET_POSITION;
 
         CONTINUE:
             continue;
         }
+
+
+    SET_POSITION:
+        dir = CMath.FloorToVector(dir * dist, 3);
+        targetPoint = CMath.FloorToVector(nowPoint + dir, 3);
+
+        if (false == CanMove(map, nowPoint, targetPoint, out targetPoint))
+        {
+            //Debug.Log($"{nowPoint:F3}.CANNOT_MOVE {targetPoint:F3}");
+            return;
+        }
+
+        //Debug.Log($"{nowPoint:F3}.SET_POSITION {targetPoint:F3}");
+        transform.position = targetPoint;
+
+    //SET_LAST_DIR:
+        int flag;
+        if      (dir.x > 0) { flag  = 0b_01_00; }
+        else if (dir.x < 0) { flag  = 0b_11_00; }
+        else                { flag  = flagBefore & 0b_11_00; }
+
+        if      (dir.z > 0) { flag |= 0b_00_01; }
+        else if (dir.z < 0) { flag |= 0b_00_11; }
+        else                { flag |= flagBefore & 0b_00_11; }
+
+        flagBefore = flag;
     }
-    private bool IsMovable(Dictionary<int, Voxel_t> map, int fromKey, int targetKey, Vector3 toPoint, out Voxel_t targetVoxel)
+    private bool IsMovableVoxel(Dictionary<int, Voxel_t> map, int fromKey, int targetKey, Vector3 toPoint, out Voxel_t targetVoxel)
     {
         if (false == map.TryGetValue(targetKey, out targetVoxel))
             return false;
@@ -81,14 +114,14 @@ public class UnitPlayer : Unit
 
         return true;
     }
-    private bool MoveTo(Dictionary<int, Voxel_t> map, Vector3 from, Vector3 to, out Vector3 point)
+    private bool CanMove(Dictionary<int, Voxel_t> map, Vector3 from, Vector3 to, out Vector3 point)
     {
         point = Vector3.zero;
         int keyFrom = PVoxel.GetKey(from);
         int keyTo   = PVoxel.GetKey(to);
 
         //y ==
-        if (true == IsMovable(map, keyFrom, keyTo, to, out Voxel_t voxelTo))
+        if (true == IsMovableVoxel(map, keyFrom, keyTo, to, out Voxel_t voxelTo))
         {
             float y = PVoxel.GetYValue(voxelTo, to);
             point = CMath.FloorToVector(new Vector3(to.x, y, to.z), 3);
@@ -100,7 +133,7 @@ public class UnitPlayer : Unit
         //y ++
         newTo = to + Vector3.up * VOXEL_HALF_SIZE;
         keyTo = PVoxel.GetKey(newTo);
-        if (true == IsMovable(map, keyFrom, keyTo, newTo, out voxelTo))
+        if (true == IsMovableVoxel(map, keyFrom, keyTo, newTo, out voxelTo))
         {
             float y = PVoxel.GetYValue(voxelTo, newTo);
             point = CMath.FloorToVector(new Vector3(newTo.x, y, newTo.z), 3);
@@ -110,7 +143,7 @@ public class UnitPlayer : Unit
         //y --
         newTo = to - Vector3.up * VOXEL_HALF_SIZE;
         keyTo = PVoxel.GetKey(newTo);
-        if (true == IsMovable(map, keyFrom, keyTo, newTo, out voxelTo))
+        if (true == IsMovableVoxel(map, keyFrom, keyTo, newTo, out voxelTo))
         {
             float y = PVoxel.GetYValue(voxelTo, newTo);
             point = CMath.FloorToVector(new Vector3(newTo.x, y, newTo.z), 3);
