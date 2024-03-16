@@ -9,14 +9,17 @@ namespace CMathf
         public static float Floor(float value, int exponent)
         {
             float d = (int)Mathf.Pow(10, exponent);
-            float di = 1 / d;
 
-            //float sign = value >= 0 ? 1f : -1f;
-            //value = Mathf.FloorToInt(sign * value * d);
-            //value *= sign * di;
+            //exponent가 대부분 2 또는 3이므로 캐싱
+            float d_invert;
+            switch (exponent)
+            {
+                case 2:  d_invert = 0.01f;  break;
+                case 3:  d_invert = 0.001f; break;
+                default: d_invert = 1 /d;   break;
+            }
 
-            value = Mathf.FloorToInt(value * d) * di;
-            return value;
+            return (int)(value * d) * d_invert;
         }
         public static int FloorToInt(float value, int exponent)
         {

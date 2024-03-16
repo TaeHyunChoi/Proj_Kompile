@@ -3,6 +3,7 @@ using UnityEngine;
 using static Public;
 using CDataStructure;
 using CMathf;
+using Unity.VisualScripting;
 
 /// <summary>
 /// It would be better to attach it as a "movement operation" component class in the future. The size is quite large;
@@ -10,7 +11,7 @@ using CMathf;
 public class UnitPlayer : Unit
 {
     private readonly int[] intervalRot = new int[] { 0, 1, -1, 2, -2 }; //시계 방향을 우선 탐색하는 기준
-    private int flagBefore;
+    private Vector3 beforeDir;
 
     public void Move(Dictionary<int, Voxel_t> map, Vector3 inputDir)
     {
@@ -23,8 +24,8 @@ public class UnitPlayer : Unit
         float dist = CMath.Floor(Time.deltaTime * MOVE_SPEED, 3);
         int sign;
 
-        
-    //CHECK_INPUT_DIR:
+
+        //CHECK_INPUT_DIR:
         for (int c = 0; c < 3; ++c)
         {
             dir = Quaternion.Euler(0f, intervalRot[c] * 45f, 0f) * inputDir;
@@ -44,9 +45,9 @@ public class UnitPlayer : Unit
 
 
     CHECK_OTHER_DIRS:
-        sign = 1;
-        if ((flagBefore >> 2)    > 0b_01) { sign *= -1; } // before.x < 0
-        if ((flagBefore & 0b_11) > 0b_01) { sign *= -1; } // before.z < 0
+        float rotY = Mathf.Sign(Vector3.Cross(inputDir, beforeDir).y);
+        if (rotY >= 0) { sign = 1; }
+        else { sign = -1; }
 
         for (int d = 1; d < 5; ++d)
         {
@@ -75,31 +76,17 @@ public class UnitPlayer : Unit
             continue;
         }
 
-
     SET_POSITION:
         dir = CMath.FloorToVector(dir * dist, 3);
         targetPoint = CMath.FloorToVector(nowPoint + dir, 3);
 
         if (false == CanMove(map, nowPoint, targetPoint, out targetPoint))
         {
-            //Debug.Log($"{nowPoint:F3}.CANNOT_MOVE {targetPoint:F3}");
             return;
         }
 
-        //Debug.Log($"{nowPoint:F3}.SET_POSITION {targetPoint:F3}");
         transform.position = targetPoint;
-
-    //SET_LAST_DIR:
-        int flag;
-        if      (dir.x > 0) { flag  = 0b_01_00; }
-        else if (dir.x < 0) { flag  = 0b_11_00; }
-        else                { flag  = flagBefore & 0b_11_00; }
-
-        if      (dir.z > 0) { flag |= 0b_00_01; }
-        else if (dir.z < 0) { flag |= 0b_00_11; }
-        else                { flag |= flagBefore & 0b_00_11; }
-
-        flagBefore = flag;
+        beforeDir = dir;
     }
     private bool IsMovableVoxel(Dictionary<int, Voxel_t> map, int fromKey, int targetKey, Vector3 toPoint, out Voxel_t targetVoxel)
     {
