@@ -253,18 +253,4 @@ public class MapSampler : MonoBehaviour
             }
         }
     }
-
-    private void OnDrawGizmos()
-    {
-        if (map == null)
-        {
-            return;
-        }
-
-        Tile_t tile;
-        foreach (int key in map.Keys)
-        {
-
-        }
-    }
 }

@@ -8,9 +8,9 @@ public static class Public
 
     public const int    TILE_BIT_HEIGHT     = 4;
     public const float  TILE_SIZE           = 1f;
-    public const float  TILE_INVERT         = 1f    / TILE_SIZE;
+    public const float  TILE_INVERSE         = 1f    / TILE_SIZE;
     public const float  TILE_HALF           = 0.5f  * TILE_SIZE;
-    public const float  TILE_HALF_INVERT    = 1f    / TILE_HALF;
+    public const float  TILE_HALF_INVERSE    = 1f    / TILE_HALF;
     public const float  TILE_QUATER         = 0.25f * TILE_SIZE;
 
     public static void BlockInput(int input) { ;}

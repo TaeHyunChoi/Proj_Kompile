@@ -8,14 +8,17 @@ public static class PVoxel
 {
     public static Vector3 GetPivot(Vector3 point, int exponent = 2)
     {
-        float cx = CMath.FloorToInt(point.x * TILE_INVERT, exponent) * TILE_SIZE;
-        float cy = CMath.FloorToInt(point.y * TILE_INVERT, exponent) * TILE_SIZE;
-        float cz = CMath.FloorToInt(point.z * TILE_INVERT, exponent) * TILE_SIZE;
+        float cx = CMath.FloorToInt(point.x * TILE_INVERSE, exponent) * TILE_SIZE;
+        float cy = CMath.FloorToInt(point.y * TILE_INVERSE, exponent) * TILE_SIZE;
+        float cz = CMath.FloorToInt(point.z * TILE_INVERSE, exponent) * TILE_SIZE;
 
         return new Vector3(cx, cy, cz);
     }
     public static Vector3 GetPivot(int key)
     {
+        //using static Public;
+        //Public.TILE_SIZE = 0.5f;
+
         float x = (key >> 16)           * TILE_SIZE;
         float y = ((key >> 8) & 0x00FF) * TILE_SIZE;
         float z = (key & 0xFF)          * TILE_SIZE;
@@ -25,8 +28,20 @@ public static class PVoxel
     public static int GetKey(Vector3 point)
     {
         Vector3 pivot = GetPivot(point);
-        return (int)(pivot.x * TILE_INVERT) << 16 | (int)(pivot.y * TILE_INVERT) << 8 | (int)(pivot.z * TILE_INVERT);
+        return (int)(pivot.x * TILE_INVERSE) << 16 | (int)(pivot.y * TILE_INVERSE) << 8 | (int)(pivot.z * TILE_INVERSE);
     }
+
+    public static int GetKey(Vector3 point, int exponent = 2)
+    {
+        float px = CMath.FloorToInt(point.x * TILE_INVERSE, exponent) * TILE_SIZE;
+        float py = CMath.FloorToInt(point.y * TILE_INVERSE, exponent) * TILE_SIZE;
+        float pz = CMath.FloorToInt(point.z * TILE_INVERSE, exponent) * TILE_SIZE;
+
+        Vector3 pivot = new Vector3(px, py, pz);
+        return (int)(pivot.x * TILE_INVERSE) << 16 | (int)(pivot.y * TILE_INVERSE) << 8 | (int)(pivot.z * TILE_INVERSE);
+    }
+
+
     public static int GetMoveFlag(Vector3 diff)
     {
         int quarant = GetMoveQuarant(diff);
@@ -35,8 +50,8 @@ public static class PVoxel
     public static int GetMoveQuarant(Vector3 diff)
     {
         int index = 0;
-        index |= (diff.z > diff.x) ? 0b_10 : 0;
-        index |= (diff.z > -diff.x + TILE_SIZE) ? 0b_01 : 0;
+        index |= (diff.z > diff.x) ? 0b_10 : 0;                 // y =  x 기준으로 비교
+        index |= (diff.z > -diff.x + TILE_SIZE) ? 0b_01 : 0;    // y = -x 기준으로 비교
 
         switch (index)
         {
@@ -52,13 +67,12 @@ public static class PVoxel
     public static float GetYValue(Tile_t voxel, Vector3 point)
     {
         Vector3 pivot = GetPivot(point);
-
         int quarant = GetMoveQuarant(point - pivot);
 
         //set y value
-        Vector3 p0 = pivot + new Vector3(0, voxel.GetYValue((quarant + 4) % 4), 0) * TILE_SIZE;
-        Vector3 p1 = pivot + new Vector3(0, voxel.GetYValue((quarant + 5) % 4), 0) * TILE_SIZE;
-        Vector3 pm = pivot + new Vector3(TILE_HALF, voxel.GetYValue(4) * TILE_SIZE, TILE_HALF);
+        Vector3 p0   = pivot + new Vector3(0, voxel.GetYValue((quarant + 4) % 4), 0) * TILE_SIZE;
+        Vector3 p1   = pivot + new Vector3(0, voxel.GetYValue((quarant + 5) % 4), 0) * TILE_SIZE;
+        Vector3 pMid = pivot + new Vector3(TILE_HALF, voxel.GetYValue(4) * TILE_SIZE, TILE_HALF);
 
         //set x,z value
         switch (quarant)
@@ -84,24 +98,24 @@ public static class PVoxel
         //get normal
         p0 = CMath.FloorToVector(p0, 3);
         p1 = CMath.FloorToVector(p1, 3);
-        pm = CMath.FloorToVector(pm, 3);
+        pMid = CMath.FloorToVector(pMid, 3);
 
-        Vector3 normal = Vector3.Cross(p1 - pm, p0 - pm);
+        Vector3 normal = Vector3.Cross(p1 - pMid, p0 - pMid);
         normal.Normalize();
         normal = CMath.FloorToVector(normal, 3);
 
-        //vector equation of the plane
-        float y_invert = 1f;
+        //(cached) vector equation of the plane
+        float y_inverse = 1f;
         switch (normal.y)
         {
-            case 0.577f: y_invert = 1.733f; break;
-            case 0.707f: y_invert = 1.414f; break;
+            case 0.577f: y_inverse = 1.733f; break;
+            case 0.707f: y_inverse = 1.414f; break;
             case 1.000f: return pivot.y;
         }
 
-        float y = -(normal.x * point.x + normal.z * point.z - Vector3.Dot(normal, pm)) * y_invert;
+        float y = -(normal.x * point.x + normal.z * point.z - Vector3.Dot(normal, pMid)) * y_inverse;
 
-        //TODO: I didn't want to solve floating point problems like this...
+        //The y value may be out of range due to floating point, etc., so process it again
         if (y < pivot.y)
             y = pivot.y;
         else if (y > pivot.y + TILE_SIZE)
@@ -157,7 +171,7 @@ public static class PVoxel
     }
     public static int SetHeightFlag(Vector3 diff)
     {
-        diff = CMath.FloorToVector(diff * TILE_HALF_INVERT, 2);
+        diff = CMath.FloorToVector(diff * TILE_HALF_INVERSE, 2);
         int x = CMath.FloorToInt(diff.x, 1) << 2;
         int z = CMath.FloorToInt(diff.z, 1);
         int y = CMath.FloorToInt(diff.y, 1);
