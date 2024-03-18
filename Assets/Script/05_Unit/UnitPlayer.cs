@@ -106,7 +106,7 @@ public class UnitPlayer : Unit
         if (false == targetVoxel.IsLinkedWith(fromKey, targetKey))
             return false;
 
-        if (false == targetVoxel.CanMoveTo(toPoint))
+        if (false == targetVoxel.IsMovable(toPoint))
             return false;
 
         return true;

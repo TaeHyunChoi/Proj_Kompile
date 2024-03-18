@@ -115,46 +115,18 @@ namespace CDataStructure
         private int dataFlag;
         private int linkFlag;
 
-        public int DataFlag   { get => dataFlag; }
+        public int DataFlag { get => dataFlag; }
 
-        //for debug;
-        //public int HeightFlag { get => dataFlag >> 4; }
-        //public int LinkFlag   { get => linkFlag; }
-
-        public bool CanMoveTo(Vector3 point)
+        public bool IsMovable(int quarant)
+        {
+            return 0 != (dataFlag & (1 << quarant));
+        }
+        public bool IsMovable(Vector3 point)
         {
             Vector3 diff = point - PVoxel.GetPivot(point);
             int quarant = PVoxel.GetMoveQuarant(diff);
 
             return IsMovable(quarant);
-        }
-        public bool IsMovable(int quarant)
-        {
-            return 0 != (dataFlag & (1 << quarant));
-        }
-        public int GetHeightCode(int index)
-        {
-            //Written with bit operations and binary notation instead of calculation formulas so that it can be read intuitively
-            int value;
-            switch (index)
-            {
-                case 0: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11;             break;
-                case 1: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00;          break;
-                case 2: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00;       break;
-                case 3: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00_00;    break;
-                case 4: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00_00_00; break;
-                default: return -1;
-            }
-
-            value >>= index * 2;
-            return value;
-        }
-        public float GetYValue(int index)
-        {
-            int code = (dataFlag >> TILE_BIT_HEIGHT) & (0b11 << index * 2);
-            code >>= (index * 2);
-
-            return code * TILE_HALF;
         }
         public bool IsLinkedWith(int fromKey, int toKey)
         {
@@ -186,12 +158,37 @@ namespace CDataStructure
             flag &= 0b_00_11_00;
             switch (flag >> 2)
             {
-                case 0: relative += 18;  break;
+                case 0: relative += 18; break;
                 case 1: /* y is same; */ break;
-                case 2: relative += 9;   break;
+                case 2: relative += 9; break;
             }
 
             return 0 != (linkFlag & (1 << relative));
+        }
+
+        public int GetHeightCode(int index)
+        {
+            //Written with bit operations and binary notation instead of calculation formulas so that it can be read intuitively
+            int value;
+            switch (index)
+            {
+                case 0: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11; break;
+                case 1: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00; break;
+                case 2: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00; break;
+                case 3: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00_00; break;
+                case 4: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00_00_00; break;
+                default: return -1;
+            }
+
+            value >>= index * 2;
+            return value;
+        }
+        public float GetYValue(int index)
+        {
+            int code = (dataFlag >> TILE_BIT_HEIGHT) & (0b11 << index * 2);
+            code >>= (index * 2);
+
+            return code * TILE_HALF;
         }
 
         public Tile_t(int data)
