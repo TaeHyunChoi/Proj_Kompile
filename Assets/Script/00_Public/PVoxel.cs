@@ -2,33 +2,30 @@ using UnityEngine;
 using static Public;
 using CMathf;
 using CDataStructure;
-using System.Collections.Generic;
-using UnityEngine.Rendering;
-using System;
 
 /// <summary> Parser related to Voxel </summary>
 public static class PVoxel
 {
     public static Vector3 GetPivot(Vector3 point, int exponent = 2)
     {
-        float cx = CMath.FloorToInt(point.x * VOXEL_INVERT, exponent) * VOXEL_SIZE;
-        float cy = CMath.FloorToInt(point.y * VOXEL_INVERT, exponent) * VOXEL_SIZE;
-        float cz = CMath.FloorToInt(point.z * VOXEL_INVERT, exponent) * VOXEL_SIZE;
+        float cx = CMath.FloorToInt(point.x * TILE_INVERT, exponent) * TILE_SIZE;
+        float cy = CMath.FloorToInt(point.y * TILE_INVERT, exponent) * TILE_SIZE;
+        float cz = CMath.FloorToInt(point.z * TILE_INVERT, exponent) * TILE_SIZE;
 
         return new Vector3(cx, cy, cz);
     }
     public static Vector3 GetPivot(int key)
     {
-        float x = (key >> 16)           * VOXEL_SIZE;
-        float y = ((key >> 8) & 0x00FF) * VOXEL_SIZE;
-        float z = (key & 0xFF)          * VOXEL_SIZE;
+        float x = (key >> 16)           * TILE_SIZE;
+        float y = ((key >> 8) & 0x00FF) * TILE_SIZE;
+        float z = (key & 0xFF)          * TILE_SIZE;
 
         return new Vector3(x, y, z);
     }
     public static int GetKey(Vector3 point)
     {
         Vector3 pivot = GetPivot(point);
-        return (int)(pivot.x * VOXEL_INVERT) << 16 | (int)(pivot.y * VOXEL_INVERT) << 8 | (int)(pivot.z * VOXEL_INVERT);
+        return (int)(pivot.x * TILE_INVERT) << 16 | (int)(pivot.y * TILE_INVERT) << 8 | (int)(pivot.z * TILE_INVERT);
     }
     public static int GetMoveFlag(Vector3 diff)
     {
@@ -39,7 +36,7 @@ public static class PVoxel
     {
         int index = 0;
         index |= (diff.z > diff.x) ? 0b_10 : 0;
-        index |= (diff.z > -diff.x + VOXEL_SIZE) ? 0b_01 : 0;
+        index |= (diff.z > -diff.x + TILE_SIZE) ? 0b_01 : 0;
 
         switch (index)
         {
@@ -52,35 +49,35 @@ public static class PVoxel
 
         return index;
     }
-    public static float GetYValue(Voxel_t voxel, Vector3 point)
+    public static float GetYValue(Tile_t voxel, Vector3 point)
     {
         Vector3 pivot = GetPivot(point);
 
         int quarant = GetMoveQuarant(point - pivot);
 
         //set y value
-        Vector3 p0 = pivot + new Vector3(0, voxel.GetYValue((quarant + 4) % 4), 0) * VOXEL_SIZE;
-        Vector3 p1 = pivot + new Vector3(0, voxel.GetYValue((quarant + 5) % 4), 0) * VOXEL_SIZE;
-        Vector3 pm = pivot + new Vector3(VOXEL_HALF_SIZE, voxel.GetYValue(4) * VOXEL_SIZE, VOXEL_HALF_SIZE);
+        Vector3 p0 = pivot + new Vector3(0, voxel.GetYValue((quarant + 4) % 4), 0) * TILE_SIZE;
+        Vector3 p1 = pivot + new Vector3(0, voxel.GetYValue((quarant + 5) % 4), 0) * TILE_SIZE;
+        Vector3 pm = pivot + new Vector3(TILE_HALF, voxel.GetYValue(4) * TILE_SIZE, TILE_HALF);
 
         //set x,z value
         switch (quarant)
         {
             case 0:
-                p0 += new Vector3(1, 0, 0) * VOXEL_SIZE;
-                p1 += new Vector3(1, 0, 1) * VOXEL_SIZE;
+                p0 += new Vector3(1, 0, 0) * TILE_SIZE;
+                p1 += new Vector3(1, 0, 1) * TILE_SIZE;
                 break;
             case 1:
-                p0 += new Vector3(1, 0, 1) * VOXEL_SIZE;
-                p1 += new Vector3(0, 0, 1) * VOXEL_SIZE;
+                p0 += new Vector3(1, 0, 1) * TILE_SIZE;
+                p1 += new Vector3(0, 0, 1) * TILE_SIZE;
                 break;
             case 2:
-                p0 += new Vector3(0, 0, 1) * VOXEL_SIZE;
+                p0 += new Vector3(0, 0, 1) * TILE_SIZE;
                 //p1 += Vector3.zero;
                 break;
             case 3:
                 //p0 += Vector3.zero;
-                p1 += new Vector3(1, 0, 0) * VOXEL_SIZE;
+                p1 += new Vector3(1, 0, 0) * TILE_SIZE;
                 break;
         }
 
@@ -107,8 +104,8 @@ public static class PVoxel
         //TODO: I didn't want to solve floating point problems like this...
         if (y < pivot.y)
             y = pivot.y;
-        else if (y > pivot.y + VOXEL_SIZE)
-            y = pivot.y + VOXEL_SIZE;
+        else if (y > pivot.y + TILE_SIZE)
+            y = pivot.y + TILE_SIZE;
 
         return CMath.Floor(y, 3);
     }
@@ -160,18 +157,18 @@ public static class PVoxel
     }
     public static int SetHeightFlag(Vector3 diff)
     {
-        diff = CMath.FloorToVector(diff * VOXEL_HALF_INVERT, 2);
+        diff = CMath.FloorToVector(diff * TILE_HALF_INVERT, 2);
         int x = CMath.FloorToInt(diff.x, 1) << 2;
         int z = CMath.FloorToInt(diff.z, 1);
         int y = CMath.FloorToInt(diff.y, 1);
 
         switch (x | z)
         {
-            case 0b_10_00: return y << (0 + VOXEL_BIT_HEIGHT);
-            case 0b_10_10: return y << (2 + VOXEL_BIT_HEIGHT);
-            case 0b_00_10: return y << (4 + VOXEL_BIT_HEIGHT);
-            case 0b_00_00: return y << (6 + VOXEL_BIT_HEIGHT);
-            case 0b_01_01: return y << (8 + VOXEL_BIT_HEIGHT);
+            case 0b_10_00: return y << (0 + TILE_BIT_HEIGHT);
+            case 0b_10_10: return y << (2 + TILE_BIT_HEIGHT);
+            case 0b_00_10: return y << (4 + TILE_BIT_HEIGHT);
+            case 0b_00_00: return y << (6 + TILE_BIT_HEIGHT);
+            case 0b_01_01: return y << (8 + TILE_BIT_HEIGHT);
         }
 
         return 0;

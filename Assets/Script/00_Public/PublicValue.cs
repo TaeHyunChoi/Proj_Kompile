@@ -3,40 +3,15 @@ using UnityEngine;
 
 public static class Public
 {
-    //save to config?
-    public static readonly float FADE_SPEED = 1.25f;
-    public static readonly float MOVE_SPEED = 4f;
-    //public static readonly float GRID_SIZE = 1f;
-    //public static readonly float GRID_SIZE_INVERT = 1f / 1f;
-    //public static readonly float HALF_GRID_SIZE = 1f * 0.5f;
-    //public static readonly float HALF_GRID_SIZE_INVERT = 1f / (1f * 0.5f);
+    public const float SPEED_FADE = 1.25f;
+    public const float SPEED_MOVE = 4f;
 
-    public const int SHIFT_SLOPE_DIRECTION   =  8;  // 4 bits
-    public const int SHIFT_SUB              =  0;  // 8 bits
-
-    public const int OBSTACLE = 0b_00;
-    public const int PLAIN = 0b_01;
-    public const int SLOPE30 = 0b_10;
-    public const int SLOPE45 = 0b_11;
-    public const int SLOPE = 0b_10;
-
-    public const int DEG_00 = 0b_00;
-    public const int DEG_30 = 0b_01;
-    public const int DEG_45 = 0b_10;
-    public const int DEG_57 = 0b_11;
-
-    //public const int VOXEL_BIT_MOVE =  0;
-    public const int VOXEL_BIT_HEIGHT =  4;
-    public const int VOXEL_BIT_DEG    =  8;
-    public const int VOXEL_BIT_DIR    = 12;
-    public const int VOXEL_BIT_TYPE   = 16;
-
-
-    public const float VOXEL_SIZE          = 1f;
-    public const float VOXEL_INVERT        = 1f / VOXEL_SIZE;
-    public const float VOXEL_HALF_SIZE     = 0.5f * VOXEL_SIZE;
-    public const float VOXEL_HALF_INVERT   = 1f / VOXEL_HALF_SIZE;
-    public const float VOXEL_QUATER_SIZE   = 0.25f * VOXEL_SIZE;
+    public const int    TILE_BIT_HEIGHT     = 4;
+    public const float  TILE_SIZE           = 1f;
+    public const float  TILE_INVERT         = 1f    / TILE_SIZE;
+    public const float  TILE_HALF           = 0.5f  * TILE_SIZE;
+    public const float  TILE_HALF_INVERT    = 1f    / TILE_HALF;
+    public const float  TILE_QUATER         = 0.25f * TILE_SIZE;
 
     public static void BlockInput(int input) { ;}
 }
@@ -135,14 +110,16 @@ namespace CDataStructure
     using static Public;
 
     [Serializable]
-    public struct Voxel_t
+    public struct Tile_t
     {
         private int dataFlag;
         private int linkFlag;
 
         public int DataFlag   { get => dataFlag; }
-        public int HeightFlag { get => dataFlag >> 4; }
-        public int LinkFlag   { get => linkFlag; }
+
+        //for debug;
+        //public int HeightFlag { get => dataFlag >> 4; }
+        //public int LinkFlag   { get => linkFlag; }
 
         public bool CanMoveTo(Vector3 point)
         {
@@ -161,11 +138,11 @@ namespace CDataStructure
             int value;
             switch (index)
             {
-                case 0: value = (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11;             break;
-                case 1: value = (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11_00;          break;
-                case 2: value = (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11_00_00;       break;
-                case 3: value = (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11_00_00_00;    break;
-                case 4: value = (dataFlag >> VOXEL_BIT_HEIGHT) & 0b_11_00_00_00_00; break;
+                case 0: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11;             break;
+                case 1: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00;          break;
+                case 2: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00;       break;
+                case 3: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00_00;    break;
+                case 4: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00_00_00; break;
                 default: return -1;
             }
 
@@ -174,10 +151,10 @@ namespace CDataStructure
         }
         public float GetYValue(int index)
         {
-            int code = (dataFlag >> VOXEL_BIT_HEIGHT) & (0b11 << index * 2);
+            int code = (dataFlag >> TILE_BIT_HEIGHT) & (0b11 << index * 2);
             code >>= (index * 2);
 
-            return code * VOXEL_HALF_SIZE;
+            return code * TILE_HALF;
         }
         public bool IsLinkedWith(int fromKey, int toKey)
         {
@@ -217,13 +194,12 @@ namespace CDataStructure
             return 0 != (linkFlag & (1 << relative));
         }
 
-
-        public Voxel_t(int data)
+        public Tile_t(int data)
         {
             dataFlag = data;
             linkFlag = 0;
         }
-        public Voxel_t(int data, int link)
+        public Tile_t(int data, int link)
         {
             dataFlag = data;
             linkFlag = link;

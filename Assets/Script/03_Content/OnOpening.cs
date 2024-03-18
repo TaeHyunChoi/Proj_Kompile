@@ -53,7 +53,7 @@ public class OnOpening : ISequenceUpdater
             switch (state)
             {
                 case 0:
-                    float cValue = logoImage.color.r + Time.deltaTime * Public.FADE_SPEED;
+                    float cValue = logoImage.color.r + Time.deltaTime * Public.SPEED_FADE;
                     logoImage.color = new Color(cValue, cValue, cValue, 1f);
                     if (cValue >= 1)
                     {
@@ -67,7 +67,7 @@ public class OnOpening : ISequenceUpdater
                     }
                     break;
                 case 2:
-                    cValue = logoImage.color.r - Time.deltaTime * Public.FADE_SPEED;
+                    cValue = logoImage.color.r - Time.deltaTime * Public.SPEED_FADE;
                     logoImage.color = new Color(cValue, cValue, cValue, 1f);
                     if (cValue <= 0)
                     {

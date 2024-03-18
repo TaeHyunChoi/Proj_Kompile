@@ -1,7 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 using CDataStructure;
 using CMathf;
 using static Public;
@@ -9,14 +7,15 @@ using static Public;
 public class MapSampler : MonoBehaviour
 {
     [SerializeField] private Transform resourceTransform;
+    [SerializeField] private GameObject objectGizmo;
 
-    private Dictionary<int, Voxel_t> map;
+    private Dictionary<int, Tile_t> map;
     private MeshFilter[] filter;
 
     private void Awake()
     {
         filter = resourceTransform.GetComponentsInChildren<MeshFilter>();
-        map = new Dictionary<int, Voxel_t>();
+        map = new Dictionary<int, Tile_t>();
     }
     private void Start()
     {
@@ -54,13 +53,13 @@ public class MapSampler : MonoBehaviour
                 Vector3 B = CMath.FloorToVector(targetTransform.TransformPoint(vertices[t1]), 2);
                 Vector3 C = CMath.FloorToVector(targetTransform.TransformPoint(vertices[t2]), 2);
 
-                A = PVoxel.SnappingPoint(A, VOXEL_SIZE, 2);
+                A = PVoxel.SnappingPoint(A, TILE_SIZE, 2);
                 A = CMath.FloorToVector(A, 0);
 
-                B = PVoxel.SnappingPoint(B, VOXEL_SIZE, 2);
+                B = PVoxel.SnappingPoint(B, TILE_SIZE, 2);
                 B = CMath.FloorToVector(B, 0);
 
-                C = PVoxel.SnappingPoint(C, VOXEL_SIZE, 2);
+                C = PVoxel.SnappingPoint(C, TILE_SIZE, 2);
                 C = CMath.FloorToVector(C, 0);
 
                 Set(A, B, C);
@@ -93,7 +92,7 @@ public class MapSampler : MonoBehaviour
             }
 
             //relative coord: rx, ry, rz
-            Voxel_t targetVoxel = map[targetKey];
+            Tile_t targetVoxel = map[targetKey];
             for (int rx = -1; rx <= 1; ++rx)
             {
                 for (int rz = -1; rz <= 1; ++rz)
@@ -101,7 +100,7 @@ public class MapSampler : MonoBehaviour
                     for (int ry = -1; ry <= 1; ++ry)
                     {
                         int neighborKey = targetKey + (rx * (1 << 16) + ry * (1 << 8) + rz);
-                        if (false == map.TryGetValue(neighborKey, out Voxel_t neighborVoxel))
+                        if (false == map.TryGetValue(neighborKey, out Tile_t neighborVoxel))
                         {
                             continue;
                         }
@@ -182,11 +181,11 @@ public class MapSampler : MonoBehaviour
                 }
             }
 
-            map[targetKey] = new Voxel_t(targetVoxel.DataFlag, flag);
+            map[targetKey] = new Tile_t(targetVoxel.DataFlag, flag);
         }
 
         //Save Mapping Data
-        DataTable.WriteBinaryMappingData<Voxel_t>(map, resourceTransform.GetChild(0).name);
+        DataTable.WriteBinaryMappingData<Tile_t>(map, resourceTransform.GetChild(0).name);
         Debug.Log("Sampling done.");
     }
     private void Set(Vector3 p0, Vector3 p1, Vector3 p2)
@@ -222,7 +221,7 @@ public class MapSampler : MonoBehaviour
         }
 
         //Update and save information when the minimum unit (?) is reached
-        if (VOXEL_SIZE < diagonal)
+        if (TILE_SIZE < diagonal)
         {
             Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 1);
             Set(p0, p1, midPoint);
@@ -232,7 +231,7 @@ public class MapSampler : MonoBehaviour
         {
             //get point, get pivot
             Vector3 centroidPoint = CMath.FloorToVector((p0 + p1 + p2) * 0.33f, 2);
-            centroidPoint = PVoxel.SnappingPoint(centroidPoint, VOXEL_HALF_SIZE, 2);
+            centroidPoint = PVoxel.SnappingPoint(centroidPoint, TILE_HALF, 2);
             Vector3 pivot = PVoxel.GetPivot(centroidPoint);
 
             //set flag
@@ -244,49 +243,28 @@ public class MapSampler : MonoBehaviour
 
             //set voxel data
             int key = PVoxel.GetKey(centroidPoint);
-            if (false == map.TryGetValue(key, out Voxel_t voxel))
+            if (false == map.TryGetValue(key, out Tile_t voxel))
             {
-                map.Add(key, new Voxel_t(heightFlag | movableFlag));
+                map.Add(key, new Tile_t(heightFlag | movableFlag));
             }
             else
             {
-                map[key] = new Voxel_t(voxel.DataFlag | heightFlag | movableFlag);
+                map[key] = new Tile_t(voxel.DataFlag | heightFlag | movableFlag);
             }
         }
     }
 
-    #region Height calculation example code
-    /*
-    [SerializeField] private Vector2 point;
-    [SerializeField] private GameObject obj;
-    private void Start()
+    private void OnDrawGizmos()
     {
-        point = new Vector2(0.5f, 0.5f);
-        obj.transform.position = new Vector3(point.x, 0f, point.y);
+        if (map == null)
+        {
+            return;
+        }
+
+        Tile_t tile;
+        foreach (int key in map.Keys)
+        {
+
+        }
     }
-    private void Update()
-    {
-        float x = point.x;
-        float z = point.y;
-
-        Vector3 pa = new Vector3(1, 0, 0);
-        Vector3 pb = new Vector3(0, 0, 1);
-        Vector3 pc = new Vector3(1, 1, 1);
-
-        Vector3 ab = pb - pa;
-        Vector3 ac = pc - pa;
-
-        Vector3 normal = Vector3.Cross(ab, ac).normalized;
-
-        float A = normal.x;
-        float B = normal.y;
-        float C = normal.z;
-        float D = Vector3.Dot(normal, pa);
-
-        float y = (-A * x + -C * z + D) / B;
-        Debug.Log(y);
-        obj.transform.position = new Vector3(x, y, z);
-    }
-     */
-    #endregion
 }
