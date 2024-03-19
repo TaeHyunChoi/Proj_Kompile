@@ -42,7 +42,7 @@ public static class PVoxel
     }
 
 
-    public static int GetMoveFlag(Vector3 diff)
+    public static int SetMoveFlag(Vector3 diff)
     {
         int quarant = GetMoveQuarant(diff);
         return 1 << quarant;

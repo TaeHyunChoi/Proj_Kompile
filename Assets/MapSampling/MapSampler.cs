@@ -235,7 +235,7 @@ public class MapSampler : MonoBehaviour
             Vector3 pivot = PVoxel.GetPivot(centroidPoint);
 
             //set flag
-            int movableFlag = PVoxel.GetMoveFlag(centroidPoint - pivot);
+            int movableFlag = PVoxel.SetMoveFlag(centroidPoint - pivot);
             int heightFlag = 0;
             heightFlag |= PVoxel.SetHeightFlag(p0 - pivot);
             heightFlag |= PVoxel.SetHeightFlag(p1 - pivot);

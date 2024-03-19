@@ -9,7 +9,7 @@ using CMathf;
 /// </summary>
 public class UnitPlayer : Unit
 {
-    private readonly int[] intervalRot = new int[] { 0, 1, -1, 2, -2 }; //시계 방향을 우선 탐색하는 기준
+    private readonly int[] intervalRot = new int[] { 0, 1, -1, 2, -2 }; //clockwise
     private Vector3 beforeDir;
 
     public void Move(Dictionary<int, Tile_t> map, Vector3 inputDir)
