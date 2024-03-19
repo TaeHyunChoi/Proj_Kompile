@@ -103,6 +103,12 @@ public enum InteractType
     Door,
     Talk,
 }
+public enum TileFeature
+{ 
+    None = 0,
+    Inner
+}
+
 
 //Currently there was no need to use a separate namespace... but I wanted to try it.
 namespace CDataStructure

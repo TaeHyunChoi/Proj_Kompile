@@ -7,7 +7,6 @@ using static Public;
 public class MapSampler : MonoBehaviour
 {
     [SerializeField] private Transform resourceTransform;
-    [SerializeField] private GameObject objectGizmo;
 
     private Dictionary<int, Tile_t> map;
     private MeshFilter[] filter;
@@ -28,6 +27,12 @@ public class MapSampler : MonoBehaviour
             Vector3[] vertices  = mesh.vertices;
             Vector3[] normals   = mesh.normals;
             int[] triangles     = mesh.triangles;
+            TileFeature character = TileFeature.None;
+            switch (gameObject.tag)
+            {
+                case "Inner": character = TileFeature.Inner; break; //INNER
+            }
+
 
             for (int t = 0; t < triangles.Length; t += 3)
             {
@@ -62,7 +67,7 @@ public class MapSampler : MonoBehaviour
                 C = PVoxel.SnappingPoint(C, TILE_SIZE, 2);
                 C = CMath.FloorToVector(C, 0);
 
-                Set(A, B, C);
+                Set(A, B, C, character);
             }
         }
 
@@ -188,7 +193,7 @@ public class MapSampler : MonoBehaviour
         DataTable.WriteBinaryMappingData<Tile_t>(map, resourceTransform.GetChild(0).name);
         Debug.Log("Sampling done.");
     }
-    private void Set(Vector3 p0, Vector3 p1, Vector3 p2)
+    private void Set(Vector3 p0, Vector3 p1, Vector3 p2, TileFeature feature)
     {
         Vector3 swap;
         float diagonal;
@@ -224,8 +229,8 @@ public class MapSampler : MonoBehaviour
         if (TILE_SIZE < diagonal)
         {
             Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 1);
-            Set(p0, p1, midPoint);
-            Set(p0, p2, midPoint);
+            Set(p0, p1, midPoint, feature);
+            Set(p0, p2, midPoint, feature);
         }
         else
         {
