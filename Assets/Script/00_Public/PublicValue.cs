@@ -6,12 +6,14 @@ public static class Public
     public const float SPEED_FADE = 1.25f;
     public const float SPEED_MOVE = 4f;
 
-    public const int    TILE_BIT_HEIGHT     = 4;
+    public const int    TILE_SHIFT_HEIGHT   = 8;
+
     public const float  TILE_SIZE           = 1f;
-    public const float  TILE_INVERSE         = 1f    / TILE_SIZE;
+    public const float  TILE_INVERSE        = 1f    / TILE_SIZE;
     public const float  TILE_HALF           = 0.5f  * TILE_SIZE;
-    public const float  TILE_HALF_INVERSE    = 1f    / TILE_HALF;
+    public const float  TILE_HALF_INVERSE   = 1f    / TILE_HALF;
     public const float  TILE_QUATER         = 0.25f * TILE_SIZE;
+    public const float  TILE_QUATER_INVERSE = 1f    / TILE_QUATER;
 
     public static void BlockInput(int input) { ;}
 }
@@ -103,10 +105,15 @@ public enum InteractType
     Door,
     Talk,
 }
-public enum TileFeature
+
+[Flags]
+public enum TileFeature : byte
 { 
-    None = 0,
-    Inner
+    Inner = 1 << 0,
+    Small = 1 << 1,
+
+
+    Trans = 1 << 7
 }
 
 
@@ -114,6 +121,32 @@ public enum TileFeature
 namespace CDataStructure
 {
     using static Public;
+
+    [Serializable]
+    public struct Tile_t2
+    {
+        //total: 8 bytes
+        private byte info; // 2: mask_Layer, 6:flag_Status
+        private byte move; // 8: flag
+        private short link; // 18: mask
+        private int height; // 27: mask
+
+        public byte Layer { get => (byte)(info >> 6); }
+        public byte Status { get => (byte)(info & 0x3F); }
+
+        public byte Info { get => info; }
+        public byte Move { get => move; }
+        public short Link { get => link; }
+        public int Height { get => height; }
+
+        public Tile_t2(byte info, byte move, int height)
+        {
+            this.info = info;
+            this.move = move;
+            this.height = height;
+            this.link = 0;
+        }
+    }
 
     [Serializable]
     public struct Tile_t
@@ -178,11 +211,11 @@ namespace CDataStructure
             int value;
             switch (index)
             {
-                case 0: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11; break;
-                case 1: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00; break;
-                case 2: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00; break;
-                case 3: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00_00; break;
-                case 4: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00_00_00; break;
+                case 0: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11; break;
+                case 1: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00; break;
+                case 2: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00; break;
+                case 3: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00_00; break;
+                case 4: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00_00_00; break;
                 default: return -1;
             }
 
@@ -191,7 +224,7 @@ namespace CDataStructure
         }
         public float GetYValue(int index)
         {
-            int code = (dataFlag >> TILE_BIT_HEIGHT) & (0b11 << index * 2);
+            int code = (dataFlag >> TILE_SHIFT_HEIGHT) & (0b11 << index * 2);
             code >>= (index * 2);
 
             return code * TILE_HALF;

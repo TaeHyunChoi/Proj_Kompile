@@ -30,39 +30,67 @@ public static class PVoxel
         Vector3 pivot = GetPivot(point);
         return (int)(pivot.x * TILE_INVERSE) << 16 | (int)(pivot.y * TILE_INVERSE) << 8 | (int)(pivot.z * TILE_INVERSE);
     }
-
-    public static int GetKey(Vector3 point, int exponent = 2)
-    {
-        float px = CMath.FloorToInt(point.x * TILE_INVERSE, exponent) * TILE_SIZE;
-        float py = CMath.FloorToInt(point.y * TILE_INVERSE, exponent) * TILE_SIZE;
-        float pz = CMath.FloorToInt(point.z * TILE_INVERSE, exponent) * TILE_SIZE;
-
-        Vector3 pivot = new Vector3(px, py, pz);
-        return (int)(pivot.x * TILE_INVERSE) << 16 | (int)(pivot.y * TILE_INVERSE) << 8 | (int)(pivot.z * TILE_INVERSE);
-    }
-
-
+    //public static byte GetMoveFlag(Vector3 diff)
+    //{
+    //    byte quarant = GetMoveQuarant(diff);
+    //    return (byte)(1 << quarant);
+    //}
     public static int GetMoveFlag(Vector3 diff)
     {
-        int quarant = GetMoveQuarant(diff);
-        return 1 << quarant;
-    }
-    public static int GetMoveQuarant(Vector3 diff)
-    {
-        int index = 0;
-        index |= (diff.z > diff.x) ? 0b_10 : 0;                 // y =  x 기준으로 비교
-        index |= (diff.z > -diff.x + TILE_SIZE) ? 0b_01 : 0;    // y = -x 기준으로 비교
+        //8분면으로 나눠야 한다...
+        int flag = 0;
+        if (diff.x > TILE_HALF) { flag |= 0b_100; }
+        if (diff.z > TILE_HALF) { flag |= 0b_010; }
 
-        switch (index)
+        //positive
+        if (flag == 0b000 || flag == 0b110)
         {
-            case 0b_01: index = 0; break;
-            case 0b_11: index = 1; break;
-            case 0b_10: index = 2; break;
-            case 0b_00: index = 3; break;
-            default: return -1;
+            if (diff.z > diff.x)
+            {
+                flag |= 0b001;
+            }
+
+            switch (flag)
+            {
+                case 0b000: return 1 << 0;
+                case 0b001: return 1 << 7;
+                case 0b110: return 1 << 3;
+                case 0b111: return 1 << 4;
+            }
+        }
+        else
+        {
+            if (diff.z > -diff.x + TILE_SIZE)
+            {
+                flag |= 0b001;
+            }
+            switch (flag)
+            {
+                case 0b100: return 1 << 1;
+                case 0b101: return 1 << 2;
+                case 0b010: return 1 << 6;
+                case 0b011: return 1 << 5;
+            }
         }
 
-        return index;
+        return -1;
+    }
+
+    public static byte GetMoveQuarant(Vector3 diff)
+    {
+        byte q = 0;
+        q |= (byte)((diff.z > diff.x) ? 0b_10 : 0);                 // y =  x 기준으로 비교
+        q |= (byte)((diff.z > -diff.x + TILE_SIZE) ? 0b_01 : 0);    // y = -x 기준으로 비교
+
+        switch (q)
+        {
+            case 0b_01: q = 1; break;
+            case 0b_11: q = 2; break;
+            case 0b_10: q = 3; break;
+            case 0b_00: q = 0; break;
+        }
+
+        return q;
     }
     public static float GetYValue(Tile_t voxel, Vector3 point)
     {
@@ -169,22 +197,32 @@ public static class PVoxel
 
         return new Vector3(x, y, z);
     }
-    public static int SetHeightFlag(Vector3 diff)
+    public static int GetHeightFlag(Vector3 diff)
     {
-        diff = CMath.FloorToVector(diff * TILE_HALF_INVERSE, 2);
-        int x = CMath.FloorToInt(diff.x, 1) << 2;
-        int z = CMath.FloorToInt(diff.z, 1);
-        int y = CMath.FloorToInt(diff.y, 1);
+        int x = CMath.FloorToInt(diff.x * TILE_HALF_INVERSE,   0);
+        int y = CMath.FloorToInt(diff.y * TILE_QUATER_INVERSE, 0);
+        int z = CMath.FloorToInt(diff.z * TILE_HALF_INVERSE,   0);
 
-        switch (x | z)
-        {
-            case 0b_10_00: return y << (0 + TILE_BIT_HEIGHT);
-            case 0b_10_10: return y << (2 + TILE_BIT_HEIGHT);
-            case 0b_00_10: return y << (4 + TILE_BIT_HEIGHT);
-            case 0b_00_00: return y << (6 + TILE_BIT_HEIGHT);
-            case 0b_01_01: return y << (8 + TILE_BIT_HEIGHT);
-        }
+        return y << (x + z * 3) * 3;
+    }
+    public static int GetHeightFlag(Vector3 diff0, Vector3 diff1, Vector3 diff2)
+    {
+        int flag = 0;
+        flag |= GetHeightFlag(diff0);
+        flag |= GetHeightFlag(diff1);
+        flag |= GetHeightFlag(diff2);
 
-        return 0;
+        return flag;
+    }
+
+    public static void DebugTileData(int key, Tile_t2 tile)
+    {
+        string stringData = string.Format("l:{0}, s:{1}, h:{2}, m:{3}",
+                                            tile.Layer,
+                                            System.Convert.ToString(tile.Status, 2),
+                                            System.Convert.ToString(tile.Height, 2),
+                                            System.Convert.ToString(tile.Move, 2));
+
+        Debug.Log(string.Format($"{GetPivot(key)} " + stringData));
     }
 }
