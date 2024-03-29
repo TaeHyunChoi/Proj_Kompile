@@ -1,11 +1,39 @@
 using UnityEngine;
-using static Public;
+//using static Public;
 using CMathf;
 using CDataStructure;
+using System;
 
 /// <summary> Parser related to Voxel </summary>
-public static class PVoxel
+/// 
+[Flags]
+public enum TileFeature : byte
 {
+    Inner = 1 << 0,
+    Small = 1 << 1,
+
+
+    Trans = 1 << 7
+}
+public enum TileSize
+{
+    Default,
+    Half,
+    Quater,
+    Inverse, //±¸ºÐÁ¡
+    Size_Inverse,
+    Half_inverse,
+    Quater_inverse
+}
+public static class PTile
+{
+    public const float TILE_SIZE = 1f;
+    public const float TILE_INVERSE = 1f / TILE_SIZE;
+    public const float TILE_HALF = 0.5f * TILE_SIZE;
+    public const float TILE_HALF_INVERSE = 1f / TILE_HALF;
+    public const float TILE_QUATER = 0.25f * TILE_SIZE;
+    public const float TILE_QUATER_INVERSE = 1f / TILE_QUATER;
+
     //## getter
     public static Vector3 GetPivot(Vector3 point, float size)
     {
@@ -30,15 +58,33 @@ public static class PVoxel
         size = 1 / size;
         return (int)(pivot.x * size) << 16 | (int)(pivot.y * size) << 8 | (int)(pivot.z * size);
     }
-    public static float GetSize(float size, int flagInfo)
+    /// <summary>
+    /// for using cache data
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="scale"></param>
+    /// <returns></returns>
+    public static float GetSize(TileSize type, float scale)
     {
-        if (0 != ((int)TileFeature.Small & flagInfo))
+        float size = 0;
+        switch (type)
         {
-            return size * 0.5f;
+            case TileSize.Default:        size = TILE_SIZE;           break;
+            case TileSize.Half:           size = TILE_HALF;           break;
+            case TileSize.Quater:         size = TILE_QUATER;         break;
+            case TileSize.Size_Inverse:   size = TILE_INVERSE;        break;
+            case TileSize.Half_inverse:   size = TILE_HALF_INVERSE;   break;
+            case TileSize.Quater_inverse: size = TILE_QUATER_INVERSE; break;
         }
 
-        return size;
+        if (type > TileSize.Inverse)
+        {
+            scale = 1 / scale;
+        }
+
+        return size * scale;
     }
+
     public static int GetMoveFlag(Vector3 diff, float size)
     {
         float size_half = size * 0.5f;
@@ -66,13 +112,12 @@ public static class PVoxel
             equation |= 0b10;
         }
 
-        //Debug.Log($"e:{equation} ({diff.z:F3} >= -{diff.x:F3} + {size:F3})");
         switch (equation)
         {
             case 0b00: return 1 << (0 + quarant);
-            case 0b01: return 1 << (1 + quarant);
-            case 0b10: return 1 << (2 + quarant);
-            case 0b11: return 1 << (3 + quarant);
+            case 0b10: return 1 << (1 + quarant);
+            case 0b11: return 1 << (2 + quarant);
+            case 0b01: return 1 << (3 + quarant);
         }
 
         return -1;
@@ -118,33 +163,31 @@ public static class PVoxel
         return CMath.FloorToVector(new Vector3(x, y, z), exponent);
         //return new Vector3(x, y, z);
     }
-    public static int GetHeightFlag(Vector3 diff0, Vector3 diff1, Vector3 diff2, float size_inverse)
+    public static int GetHeightFlag(Vector3 diff, float size)
     {
-        int flag = 0;
-        flag |= GetHeightFlag(diff0, size_inverse);
-        flag |= GetHeightFlag(diff1, size_inverse);
-        flag |= GetHeightFlag(diff2, size_inverse);
+        diff = CMath.FloorToVector(diff, 2);
+        if (diff.x % size != 0 || diff.z % size != 0)
+        {
+            return 0;
+        }
 
-        return flag;
-    }
-    private static int GetHeightFlag(Vector3 diff, float size_inverse)
-    {
+        float size_inverse = 1 / size;
         int x = CMath.FloorToInt(diff.x * size_inverse, 2);
         int y = CMath.FloorToInt(diff.y * size_inverse * 2f, 2);
         int z = CMath.FloorToInt(diff.z * size_inverse, 2);
 
+        //Debug.Log($"{diff:F3} {y} << ({x} + {z}*3)*3");
         return y << (x + z * 3) * 3;
     }
     public static void DebugTileData(int key, Tile_t2 tile)
     {
         string stringData = string.Format("l:{0}, s:{1}, h:{2}, m:{3}",
                                             tile.Layer,
-                                            System.Convert.ToString(tile.Status, 2),
-                                            System.Convert.ToString(tile.Height, 2),
-                                            System.Convert.ToString(tile.Move, 2));
+                                            Convert.ToString(tile.Status, 2),
+                                            Convert.ToString(tile.Height, 2),
+                                            Convert.ToString(tile.Move, 2));
 
-        float size = GetSize(TILE_SIZE, tile.Status);
-        Debug.Log(string.Format($"{GetPivot(key, size)} " + stringData));
+        Debug.Log(string.Format($"{GetPivot(key, tile.Size)} " + stringData));
     }
 
 

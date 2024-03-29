@@ -10,12 +10,22 @@ public class Dev_Tile : MonoBehaviour
     private TileFeature status;
     [SerializeField]
     private byte layer;
+    private float scale;
 
     public float Size { get; set; }
 
     public void Set(Dictionary<int, Tile_t2> map)
     {
         int info = (layer << 6) | (int)status;
+        if (0 != ((byte)TileFeature.Small & (byte)status))
+        {
+            scale = 0.5f;
+        }
+        else
+        {
+            scale = 1f;
+        }
+
 
         Mesh mesh = transform.GetComponent<MeshFilter>().mesh;
         Quaternion rot = transform.rotation;
@@ -47,11 +57,11 @@ public class Dev_Tile : MonoBehaviour
             Vector3 B = CMath.FloorToVector(transform.TransformPoint(vertices[t1]), 2);
             Vector3 C = CMath.FloorToVector(transform.TransformPoint(vertices[t2]), 2);
 
-            float size = PVoxel.GetSize(Public.TILE_SIZE, info);
+            float size = PTile.GetSize(TileSize.Default, scale);
             Size = size;
-            A = PVoxel.SnappingPoint(A, size, 2);
-            B = PVoxel.SnappingPoint(B, size, 2);
-            C = PVoxel.SnappingPoint(C, size, 2);
+            A = PTile.SnappingPoint(A, size, 2);
+            B = PTile.SnappingPoint(B, size, 2);
+            C = PTile.SnappingPoint(C, size, 2);
 
             SetTileData(map, A, B, C, info);
         }
@@ -82,7 +92,7 @@ public class Dev_Tile : MonoBehaviour
             diagonal = v0to2;
         }
 
-        float size_half = PVoxel.GetSize(Public.TILE_HALF, info);
+        float size_half = PTile.GetSize(TileSize.Half, scale);
         if (size_half < diagonal)
         {
             Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 3);
@@ -91,20 +101,23 @@ public class Dev_Tile : MonoBehaviour
         }
         else
         {
-            float size = PVoxel.GetSize(Public.TILE_SIZE, info);
+            float size = PTile.GetSize(TileSize.Default, scale);
 
             //get point, get pivot
-            //Vector3 pointCenter = CMath.FloorToVector((p0 + p1 + p2) * 0.333f, 3);
-            Vector3 pointCenter = CMath.GetInCenterPoint(p0, p1, p2, 3);
-            Vector3 pivot       = PVoxel.GetPivot(pointCenter, size);
+            Vector3 pointCenter = CMath.FloorToVector((p0 + p1 + p2) * 0.333f, 3);
+            Vector3 pivot       = PTile.GetPivot(pointCenter, size);
 
             //set flag
-            int move = PVoxel.GetMoveFlag(pointCenter - pivot, size);
+            int move = PTile.GetMoveFlag(pointCenter - pivot, size);
             Debug.Assert(move != -1);
-            int height = PVoxel.GetHeightFlag(p0 - pivot, p1 - pivot, p2 - pivot, CMath.Floor(1 / size_half, 0));
+
+            int height = 0;
+            height |= PTile.GetHeightFlag(p0 - pivot, size_half);
+            height |= PTile.GetHeightFlag(p1 - pivot, size_half);
+            height |= PTile.GetHeightFlag(p2 - pivot, size_half);
 
             //set voxel data
-            int key = PVoxel.GetKey(pointCenter, size);
+            int key = PTile.GetKey(pointCenter, size);
             if (false == map.TryGetValue(key, out Tile_t2 tile))
             {
                 map.Add(key, new Tile_t2(info, move, height));

@@ -18,12 +18,11 @@ public class Dev_MapSampler9th : MonoBehaviour
         for (int i = 0; i < tiles.Length; ++i)
         {
             tiles[i].Set(map);
-            //PVoxel.DebugTileData(tiles[i].Key, tiles[i].Tile);
         }
 
         foreach (int key in map.Keys)
         {
-            PVoxel.DebugTileData(key, map[key]);
+            PTile.DebugTileData(key, map[key]);
         }
     }
 }

@@ -8,12 +8,12 @@ public static class Public
 
     public const int    TILE_SHIFT_HEIGHT   = 8;
 
-    public const float  TILE_SIZE           = 1f;
-    public const float  TILE_INVERSE        = 1f    / TILE_SIZE;
-    public const float  TILE_HALF           = 0.5f  * TILE_SIZE;
-    public const float  TILE_HALF_INVERSE   = 1f    / TILE_HALF;
-    public const float  TILE_QUATER         = 0.25f * TILE_SIZE;
-    public const float  TILE_QUATER_INVERSE = 1f    / TILE_QUATER;
+    //public const float  TILE_SIZE           = 1f;
+    //public const float  TILE_INVERSE        = 1f    / TILE_SIZE;
+    //public const float  TILE_HALF           = 0.5f  * TILE_SIZE;
+    //public const float  TILE_HALF_INVERSE   = 1f    / TILE_HALF;
+    //public const float  TILE_QUATER         = 0.25f * TILE_SIZE;
+    //public const float  TILE_QUATER_INVERSE = 1f    / TILE_QUATER;
 
     public static void BlockInput(int input) { ;}
 }
@@ -106,17 +106,6 @@ public enum InteractType
     Talk,
 }
 
-[Flags]
-public enum TileFeature : byte
-{ 
-    Inner = 1 << 0,
-    Small = 1 << 1,
-
-
-    Trans = 1 << 7
-}
-
-
 //Currently there was no need to use a separate namespace... but I wanted to try it.
 namespace CDataStructure
 {
@@ -133,6 +122,19 @@ namespace CDataStructure
 
         public byte Layer { get => (byte)(info >> 6); }
         public byte Status { get => (byte)(info & 0x3F); }
+        public float Size
+        {
+            get
+            {
+                float scale = 1f;
+                if (0 != ((byte)(TileFeature.Small) & info))
+                {
+                    scale = 0.5f;
+                }
+
+                return PTile.GetSize(TileSize.Default, scale);
+            }
+        }
 
         //c#은 비트 연산의 기본이 int =>  사용하기 편하게 int로 변환하여 전달
         //sign 자료형 + 부호확장 문제가 있어서 그냥 원래 자료형으로 넘겨야겠구만...

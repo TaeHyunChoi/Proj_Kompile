@@ -33,15 +33,5 @@ namespace CMathf
 
             return new Vector3(x, y, z);
         }
-
-        public static Vector3 GetInCenterPoint(Vector3 p0, Vector3 p1, Vector3 p2, int exponent)
-        {
-            float l0 = (p2 - p1).magnitude;
-            float l1 = (p0 - p2).magnitude;
-            float l2 = (p1 - p0).magnitude;
-
-            Vector3 inCenter = (l0 * p0 + l1 * p1 + l2 * p2) / (l0 + l1 + l2);
-            return FloorToVector(inCenter, exponent);
-        }
     }
 }
