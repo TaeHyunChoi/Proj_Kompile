@@ -125,120 +125,122 @@ namespace CDataStructure
     [Serializable]
     public struct Tile_t2
     {
-        //total: 8 bytes
+        //total: 9 bytes
         private byte info; // 2: mask_Layer, 6:flag_Status
-        private byte move; // 8: flag
-        private short link; // 18: mask
-        private int height; // 27: mask
+        private ushort move; // 16: flag
+        private ushort link; // 16: mask
+        private uint height; // 27: mask
 
         public byte Layer { get => (byte)(info >> 6); }
         public byte Status { get => (byte)(info & 0x3F); }
 
-        public byte Info { get => info; }
-        public byte Move { get => move; }
-        public short Link { get => link; }
-        public int Height { get => height; }
+        //c#은 비트 연산의 기본이 int =>  사용하기 편하게 int로 변환하여 전달
+        //sign 자료형 + 부호확장 문제가 있어서 그냥 원래 자료형으로 넘겨야겠구만...
+        public int Info { get => info; }
+        public int Move { get => move; } 
+        public int Link { get => link; }
+        public int Height { get => (int)height; }
 
-        public Tile_t2(byte info, byte move, int height)
+        public Tile_t2(int info, int move, int height)
         {
-            this.info = info;
-            this.move = move;
-            this.height = height;
+            this.info = (byte)info;
+            this.move = (ushort)move;
+            this.height = (uint)height;
             this.link = 0;
         }
     }
 
-    [Serializable]
-    public struct Tile_t
-    {
-        private int dataFlag;
-        private int linkFlag;
+    //[Serializable]
+    //public struct Tile_t
+    //{
+    //    private int dataFlag;
+    //    private int linkFlag;
 
-        public int DataFlag { get => dataFlag; }
+    //    public int DataFlag { get => dataFlag; }
 
-        public bool IsMovable(int quarant)
-        {
-            return 0 != (dataFlag & (1 << quarant));
-        }
-        public bool IsMovable(Vector3 point)
-        {
-            Vector3 diff = point - PVoxel.GetPivot(point);
-            int quarant = PVoxel.GetMoveQuarant(diff);
+    //    public bool IsMovable(int quarant)
+    //    {
+    //        return 0 != (dataFlag & (1 << quarant));
+    //    }
+    //    public bool IsMovable(Vector3 point)
+    //    {
+    //        Vector3 diff = point - PVoxel.GetPivot(point);
+    //        int quarant = PVoxel.GetMoveQuarant(diff);
 
-            return IsMovable(quarant);
-        }
-        public bool IsLinkedWith(int fromKey, int toKey)
-        {
-            if (fromKey == toKey)
-            {
-                return true;
-            }
+    //        return IsMovable(quarant);
+    //    }
+    //    public bool IsLinkedWith(int fromKey, int toKey)
+    //    {
+    //        if (fromKey == toKey)
+    //        {
+    //            return true;
+    //        }
 
-            int flag = 0b_00_00_00;
-            int mask = 0xFF;
-            int nowMask, targetMask;
+    //        int flag = 0b_00_00_00;
+    //        int mask = 0xFF;
+    //        int nowMask, targetMask;
 
-            for (int i = 2; i >= 0; --i)
-            {
-                nowMask = fromKey & (mask << 8 * i);
-                targetMask = toKey & (mask << 8 * i);
+    //        for (int i = 2; i >= 0; --i)
+    //        {
+    //            nowMask = fromKey & (mask << 8 * i);
+    //            targetMask = toKey & (mask << 8 * i);
 
-                if (nowMask == targetMask)
-                {
-                    flag |= 0b_01 << (2 * i);
-                }
-                else if (nowMask > targetMask)
-                {
-                    flag |= 0b_10 << (2 * i);
-                }
-            }
+    //            if (nowMask == targetMask)
+    //            {
+    //                flag |= 0b_01 << (2 * i);
+    //            }
+    //            else if (nowMask > targetMask)
+    //            {
+    //                flag |= 0b_10 << (2 * i);
+    //            }
+    //        }
 
-            int relative = (flag >> 4) + 3 * (flag & 0b_11);
-            flag &= 0b_00_11_00;
-            switch (flag >> 2)
-            {
-                case 0: relative += 18; break;
-                case 1: /* y is same; */ break;
-                case 2: relative += 9; break;
-            }
+    //        int relative = (flag >> 4) + 3 * (flag & 0b_11);
+    //        flag &= 0b_00_11_00;
+    //        switch (flag >> 2)
+    //        {
+    //            case 0: relative += 18; break;
+    //            case 1: /* y is same; */ break;
+    //            case 2: relative += 9; break;
+    //        }
 
-            return 0 != (linkFlag & (1 << relative));
-        }
+    //        return 0 != (linkFlag & (1 << relative));
+    //    }
 
-        public int GetHeightCode(int index)
-        {
-            //Written with bit operations and binary notation instead of calculation formulas so that it can be read intuitively
-            int value;
-            switch (index)
-            {
-                case 0: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11; break;
-                case 1: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00; break;
-                case 2: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00; break;
-                case 3: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00_00; break;
-                case 4: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00_00_00; break;
-                default: return -1;
-            }
+    //    public int GetHeightCode(int index)
+    //    {
+    //        //Written with bit operations and binary notation instead of calculation formulas so that it can be read intuitively
+    //        int value;
+    //        switch (index)
+    //        {
+    //            case 0: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11; break;
+    //            case 1: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00; break;
+    //            case 2: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00; break;
+    //            case 3: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00_00; break;
+    //            case 4: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00_00_00; break;
+    //            default: return -1;
+    //        }
 
-            value >>= index * 2;
-            return value;
-        }
-        public float GetYValue(int index)
-        {
-            int code = (dataFlag >> TILE_SHIFT_HEIGHT) & (0b11 << index * 2);
-            code >>= (index * 2);
+    //        value >>= index * 2;
+    //        return value;
+    //    }
+    //    public float GetYValue(int index)
+    //    {
+    //        int code = (dataFlag >> TILE_SHIFT_HEIGHT) & (0b11 << index * 2);
+    //        code >>= (index * 2);
 
-            return code * TILE_HALF;
-        }
+    //        return code * TILE_HALF;
+    //    }
 
-        public Tile_t(int data)
-        {
-            dataFlag = data;
-            linkFlag = 0;
-        }
-        public Tile_t(int data, int link)
-        {
-            dataFlag = data;
-            linkFlag = link;
-        }
-    }
+    //    public Tile_t(int data)
+    //    {
+    //        dataFlag = data;
+    //        linkFlag = 0;
+    //    }
+    //    public Tile_t(int data, int link)
+    //    {
+    //        dataFlag = data;
+    //        linkFlag = link;
+    //    }
+    //}
 }

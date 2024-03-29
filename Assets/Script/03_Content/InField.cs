@@ -10,7 +10,7 @@ internal class InField : ISequenceUpdater
     private Transform transform;
 
     //private static Dictionary<int, Voxel_t> voxel;
-    private static Dictionary<int, Tile_t> map;
+    private static Dictionary<int, Tile_t2> map;
     private static UnitPlayer player;
 
 
@@ -19,7 +19,7 @@ internal class InField : ISequenceUpdater
         gameObject = obj;
         transform  = obj.transform;
 
-        map = DataTable.LoadMappingData<Tile_t>(obj.name);
+        map = DataTable.LoadMappingData<Tile_t2>(obj.name);
     }
     public async Task<bool> InitMap()
     {
@@ -86,7 +86,8 @@ internal class InField : ISequenceUpdater
 
         if (dir != Vector3.zero)
         {
-            player.Move(map, dir);
+            Debug.Log("Need to dev");
+            //player.Move(map, dir);
         }
     }
 }

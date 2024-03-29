@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using CDataStructure;
 using CMathf;
-using static Public;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
 public class Dev_Tile : MonoBehaviour
@@ -12,16 +11,11 @@ public class Dev_Tile : MonoBehaviour
     [SerializeField]
     private byte layer;
 
-    private Tile_t2 tile;
-    private int key;
-
-    public Tile_t2 Tile { get => tile; }
-    public int Key { get => key; }
+    public float Size { get; set; }
 
     public void Set(Dictionary<int, Tile_t2> map)
     {
-        byte info = (byte)((layer << 6) | (byte)status);
-
+        int info = (layer << 6) | (int)status;
 
         Mesh mesh = transform.GetComponent<MeshFilter>().mesh;
         Quaternion rot = transform.rotation;
@@ -53,14 +47,16 @@ public class Dev_Tile : MonoBehaviour
             Vector3 B = CMath.FloorToVector(transform.TransformPoint(vertices[t1]), 2);
             Vector3 C = CMath.FloorToVector(transform.TransformPoint(vertices[t2]), 2);
 
-            A = PVoxel.SnappingPoint(A, TILE_SIZE, 2);
-            B = PVoxel.SnappingPoint(B, TILE_SIZE, 2);
-            C = PVoxel.SnappingPoint(C, TILE_SIZE, 2);
+            float size = PVoxel.GetSize(Public.TILE_SIZE, info);
+            Size = size;
+            A = PVoxel.SnappingPoint(A, size, 2);
+            B = PVoxel.SnappingPoint(B, size, 2);
+            C = PVoxel.SnappingPoint(C, size, 2);
 
             SetTileData(map, A, B, C, info);
         }
     }
-    private void SetTileData(Dictionary<int, Tile_t2> map, Vector3 p0, Vector3 p1, Vector3 p2, byte info)
+    private void SetTileData(Dictionary<int, Tile_t2> map, Vector3 p0, Vector3 p1, Vector3 p2, int info)
     {
         //(Isosceles right triangle) Find the right angle point and store it in p0
         float v0to1 = CMath.Floor(Vector3.Distance(new Vector3(p0.x, 0, p0.z), new Vector3(p1.x, 0, p1.z)), 3);
@@ -86,32 +82,32 @@ public class Dev_Tile : MonoBehaviour
             diagonal = v0to2;
         }
 
-
-        if (TILE_HALF * Mathf.Sqrt(2) < diagonal)
+        float size_half = PVoxel.GetSize(Public.TILE_HALF, info);
+        if (size_half < diagonal)
         {
-            Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 1);
+            Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 3);
             SetTileData(map, p0, p1, midPoint, info);
             SetTileData(map, p0, p2, midPoint, info);
         }
         else
         {
+            float size = PVoxel.GetSize(Public.TILE_SIZE, info);
+
             //get point, get pivot
-            Vector3 pointCenter = PVoxel.SnappingPoint((p0 + p1 + p2) * 0.33f, TILE_HALF, 2);
-            Vector3 pivot       = PVoxel.GetPivot(pointCenter);
+            //Vector3 pointCenter = CMath.FloorToVector((p0 + p1 + p2) * 0.333f, 3);
+            Vector3 pointCenter = CMath.GetInCenterPoint(p0, p1, p2, 3);
+            Vector3 pivot       = PVoxel.GetPivot(pointCenter, size);
 
             //set flag
-            int move = PVoxel.GetMoveFlag(pointCenter - pivot);
+            int move = PVoxel.GetMoveFlag(pointCenter - pivot, size);
             Debug.Assert(move != -1);
-
-            int height = PVoxel.GetHeightFlag(p0 - pivot, p1 - pivot, p2 - pivot);
+            int height = PVoxel.GetHeightFlag(p0 - pivot, p1 - pivot, p2 - pivot, CMath.Floor(1 / size_half, 0));
 
             //set voxel data
-            int key = PVoxel.GetKey(pointCenter);
-            this.key = key;
+            int key = PVoxel.GetKey(pointCenter, size);
             if (false == map.TryGetValue(key, out Tile_t2 tile))
             {
-                this.tile = new Tile_t2(info, (byte)move, height);
-                map.Add(key, this.tile);
+                map.Add(key, new Tile_t2(info, move, height));
             }
             else
             {
@@ -119,8 +115,7 @@ public class Dev_Tile : MonoBehaviour
                 move    |= tile.Move;
                 height  |= tile.Height;
 
-                this.tile = new Tile_t2(info, (byte)move, height);
-                map[key] = this.tile;
+                map[key] = new Tile_t2(info, move, height);
             }
         }
     }

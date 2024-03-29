@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using CDataStructure;
-using CMathf;
-using static Public;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
 public class Dev_MapSampler9th : MonoBehaviour
