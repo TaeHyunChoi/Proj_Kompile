@@ -20,19 +20,17 @@ public enum TileSize
     Default,
     Half,
     Quater,
-    Inverse, //±¸ºÐÁ¡
-    Size_Inverse,
+    Inverse, //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    Default_Inverse,
     Half_inverse,
     Quater_inverse
 }
 public static class PTile
 {
-    public const float TILE_SIZE = 1f;
-    public const float TILE_INVERSE = 1f / TILE_SIZE;
-    public const float TILE_HALF = 0.5f * TILE_SIZE;
-    public const float TILE_HALF_INVERSE = 1f / TILE_HALF;
-    public const float TILE_QUATER = 0.25f * TILE_SIZE;
-    public const float TILE_QUATER_INVERSE = 1f / TILE_QUATER;
+    public const float SIZE = 1f;
+    public const float SIZE_INVERSE = 1f / SIZE;
+    public const float SIZE_HALF = 0.5f * SIZE;
+    public const float SIZE_HALF_INVERSE = 1f / SIZE_HALF;
 
     //## getter
     public static Vector3 GetPivot(Vector3 point, float size)
@@ -58,23 +56,18 @@ public static class PTile
         size = 1 / size;
         return (int)(pivot.x * size) << 16 | (int)(pivot.y * size) << 8 | (int)(pivot.z * size);
     }
-    /// <summary>
-    /// for using cache data
-    /// </summary>
-    /// <param name="type"></param>
-    /// <param name="scale"></param>
-    /// <returns></returns>
+    /// <summary> for using cache data </summary>
     public static float GetSize(TileSize type, float scale)
     {
-        float size = 0;
+        float size;
+
         switch (type)
         {
-            case TileSize.Default:        size = TILE_SIZE;           break;
-            case TileSize.Half:           size = TILE_HALF;           break;
-            case TileSize.Quater:         size = TILE_QUATER;         break;
-            case TileSize.Size_Inverse:   size = TILE_INVERSE;        break;
-            case TileSize.Half_inverse:   size = TILE_HALF_INVERSE;   break;
-            case TileSize.Quater_inverse: size = TILE_QUATER_INVERSE; break;
+            case TileSize.Default:           size = SIZE;                break;
+            case TileSize.Half:              size = SIZE_HALF;           break;
+            case TileSize.Default_Inverse:   size = SIZE_INVERSE;        break;
+            case TileSize.Half_inverse:      size = SIZE_HALF_INVERSE;   break;
+            default: return -1f;
         }
 
         if (type > TileSize.Inverse)
@@ -187,29 +180,29 @@ public static class PTile
                                             Convert.ToString(tile.Height, 2),
                                             Convert.ToString(tile.Move, 2));
 
-        Debug.Log(string.Format($"{GetPivot(key, tile.Size)} " + stringData));
+        Debug.Log(string.Format($"[{key}]{GetPivot(key, tile.Size)} " + stringData));
     }
 
 
     //maybe later use
     public static Vector3 GetPivot(Vector3 point, int exponent = 2)
     {
-        float cx = CMath.FloorToInt(point.x * TILE_INVERSE, exponent) * TILE_SIZE;
-        float cy = CMath.FloorToInt(point.y * TILE_INVERSE, exponent) * TILE_SIZE;
-        float cz = CMath.FloorToInt(point.z * TILE_INVERSE, exponent) * TILE_SIZE;
+        float cx = CMath.FloorToInt(point.x * SIZE_INVERSE, exponent) * SIZE;
+        float cy = CMath.FloorToInt(point.y * SIZE_INVERSE, exponent) * SIZE;
+        float cz = CMath.FloorToInt(point.z * SIZE_INVERSE, exponent) * SIZE;
 
         return new Vector3(cx, cy, cz);
     }
     public static int GetKey(Vector3 point)
     {
         Vector3 pivot = GetPivot(point);
-        return (int)(pivot.x * TILE_INVERSE) << 16 | (int)(pivot.y * TILE_INVERSE) << 8 | (int)(pivot.z * TILE_INVERSE);
+        return (int)(pivot.x * SIZE_INVERSE) << 16 | (int)(pivot.y * SIZE_INVERSE) << 8 | (int)(pivot.z * SIZE_INVERSE);
     }
     public static byte GetMoveQuarant(Vector3 diff)
     {
         byte q = 0;
-        q |= (byte)((diff.z > diff.x) ? 0b_10 : 0);                 // y =  x ±âÁØÀ¸·Î ºñ±³
-        q |= (byte)((diff.z > -diff.x + TILE_SIZE) ? 0b_01 : 0);    // y = -x ±âÁØÀ¸·Î ºñ±³
+        q |= (byte)((diff.z > diff.x) ? 0b_10 : 0);                 // y =  x ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+        q |= (byte)((diff.z > -diff.x + SIZE) ? 0b_01 : 0);    // y = -x ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 
         switch (q)
         {

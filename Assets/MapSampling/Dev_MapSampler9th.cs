@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using CDataStructure;
+using System.Threading;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
 public class Dev_MapSampler9th : MonoBehaviour
@@ -14,16 +15,24 @@ public class Dev_MapSampler9th : MonoBehaviour
     }
     private void Start()
     {
-        Dev_Tile[] tiles = transformRsc.GetComponentsInChildren<Dev_Tile>();
+        DEV_Tile[] tiles = transformRsc.GetComponentsInChildren<DEV_Tile>();
+
+        //## Set Tile Data
+        //First set the information of each tile, then receive the information of surrounding tiles and link them.
         for (int i = 0; i < tiles.Length; ++i)
         {
-            tiles[i].Set(map);
+            tiles[i].SetData(map);
         }
 
-        foreach (int key in map.Keys)
+        //## Set Tile Link
+        //In previous versions, it was searched using BFS.
+        //But in some cases the space was 'disconnected' in the same layer, so it was used foreach.
+        for (int i = 0; i < tiles.Length; ++i)
         {
-            PTile.DebugTileData(key, map[key]);
+            tiles[i].SetLink(map);
         }
+
+        //PTile.DebugTileData(key, map[key]);
     }
 }
 #endif

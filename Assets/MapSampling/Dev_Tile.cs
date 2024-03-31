@@ -2,32 +2,37 @@ using System.Collections.Generic;
 using UnityEngine;
 using CDataStructure;
 using CMathf;
+using Unity.Collections;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-public class Dev_Tile : MonoBehaviour
+public class DEV_Tile : MonoBehaviour
 {
     [SerializeField] 
     private TileFeature status;
     [SerializeField]
     private byte layer;
+
+    //Dictionary<int, Tile_t> map과 Tile.cs를 연결하는 key값 => Mesh on/off에 사용
+    //Field.cs에서 일정 간격만큼 Dicionary<int, Tile.cs>를 들고 있어야 하나?
+    //Dev_tile과 Tile은 다르다 => Tile.cs가 Awake() 할 때에 map에다가 Mesh 넘기면 될 듯? (아니면 걍 transform.getChildren 하던가?
+    private Mesh mesh;
+    private int key;
     private float scale;
 
-    public float Size { get; set; }
+    //## getter
+    public int Key { get => key; }
 
-    public void Set(Dictionary<int, Tile_t2> map)
+    private void Awake()
+    {
+        mesh = transform.GetComponent<MeshFilter>().mesh;
+        scale = (0 != ((byte)TileFeature.Small & (byte)status)) ? 0.5f : 1f;
+        key   = PTile.GetKey(transform.position, scale);
+    }
+
+    public void SetData(Dictionary<int, Tile_t2> map)
     {
         int info = (layer << 6) | (int)status;
-        if (0 != ((byte)TileFeature.Small & (byte)status))
-        {
-            scale = 0.5f;
-        }
-        else
-        {
-            scale = 1f;
-        }
 
-
-        Mesh mesh = transform.GetComponent<MeshFilter>().mesh;
         Quaternion rot = transform.rotation;
         Vector3[] vertices = mesh.vertices;
         Vector3[] normals = mesh.normals;
@@ -58,7 +63,6 @@ public class Dev_Tile : MonoBehaviour
             Vector3 C = CMath.FloorToVector(transform.TransformPoint(vertices[t2]), 2);
 
             float size = PTile.GetSize(TileSize.Default, scale);
-            Size = size;
             A = PTile.SnappingPoint(A, size, 2);
             B = PTile.SnappingPoint(B, size, 2);
             C = PTile.SnappingPoint(C, size, 2);
@@ -116,7 +120,7 @@ public class Dev_Tile : MonoBehaviour
             height |= PTile.GetHeightFlag(p1 - pivot, size_half);
             height |= PTile.GetHeightFlag(p2 - pivot, size_half);
 
-            //set voxel data
+            //set tile data
             int key = PTile.GetKey(pointCenter, size);
             if (false == map.TryGetValue(key, out Tile_t2 tile))
             {
@@ -131,6 +135,11 @@ public class Dev_Tile : MonoBehaviour
                 map[key] = new Tile_t2(info, move, height);
             }
         }
+    }
+
+    public void SetLink(Dictionary<int, Tile_t2> map)
+    { 
+        
     }
 }
 #endif
