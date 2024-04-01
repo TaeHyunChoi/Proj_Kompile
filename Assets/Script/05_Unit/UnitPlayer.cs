@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using static Public;
-using CDataStructure;
+using DevDataType;
 using CMathf;
 
 /// <summary>

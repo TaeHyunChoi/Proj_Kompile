@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class Public
@@ -106,23 +107,22 @@ public enum InteractType
     Talk,
 }
 
-//Currently there was no need to use a separate namespace... but I wanted to try it.
-namespace CDataStructure
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+namespace DevDataType
 {
-    using static Public;
-
     [Serializable]
-    public struct Tile_t2
+    public struct Tile_sample
     {
-        //total: 9 bytes
-        private byte info; // 2: mask_Layer, 6:flag_Status
-        private ushort move; // 16: flag
-        private ushort link; // 16: mask
-        private uint height; // 27: mask
+        private int key;
 
-        public byte Layer { get => (byte)(info >> 6); }
-        public byte Status { get => (byte)(info & 0x3F); }
-        public float Size
+        //total 10 bytes
+        private ushort move; // 16: flag
+        private uint   info;   // 32: layer(2), status(6), link(24)
+        private uint   height; // 27: flag
+
+        public byte Layer { get => (byte)(info >> 30); }
+        public byte Status { get => (byte)((info >> 24) & 0x3F); }
+        public float Scale
         {
             get
             {
@@ -132,117 +132,94 @@ namespace CDataStructure
                     scale = 0.5f;
                 }
 
-                return PTile.GetSize(TileSize.Default, scale);
+                return PTile.GetScale(TileSize.Default, scale);
             }
         }
 
-        //c#은 비트 연산의 기본이 int =>  사용하기 편하게 int로 변환하여 전달
-        //sign 자료형 + 부호확장 문제가 있어서 그냥 원래 자료형으로 넘겨야겠구만...
-        public int Info { get => info; }
-        public int Move { get => move; } 
-        public int Link { get => link; }
+        public int Key { get => key; }
+        public int Info { get => (int)info; }
+        public int Move { get => move; }
         public int Height { get => (int)height; }
+        public int Link { get => (int)(info & 0xFFFFFF); }
 
-        public Tile_t2(int info, int move, int height)
+        public bool IsMovable(int quarant)
         {
-            this.info = (byte)info;
-            this.move = (ushort)move;
+            return 0 != (move & (1 << quarant));
+        }
+        public void GetHeightMask(int quarant, out int p0, out int p1)
+        {
+            p0 = -1; p1 = -1;
+            switch (quarant)
+            {
+                case  0: p0 = 0; p1 = 1; break;
+                case  4: p0 = 1; p1 = 2; break;
+                case  5: p0 = 2; p1 = 5; break;
+                case 13: p0 = 5; p1 = 8; break;
+                case 14: p0 = 7; p1 = 8; break;
+                case 10: p0 = 6; p1 = 7; break;
+                case 11: p0 = 3; p1 = 6; break;
+                case  3: p0 = 0; p1 = 3; break;
+            }
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+            Debug.Assert(-1 != p0 && -1 != p1);
+#endif
+            p0 = ((int)height >> p0 * 3) & 0b111;
+            p1 = ((int)height >> p1 * 3) & 0b111;
+        }
+
+        public Tile_sample(int key)
+        {
+            this.key    = key;
+            this.info   = 0;
+            this.move   = 0;
+            this.height = 0;
+        }
+        public Tile_sample(int key, int info, int move, int height)
+        {
+            this.key    = key;
+            this.info   = (uint)info;
+            this.move   = (ushort)move;
             this.height = (uint)height;
-            this.link = 0;
+        }
+    }
+}
+
+[Serializable]
+public struct Tile_t
+{
+    //total: 9 bytes
+    private byte info; // 2: mask_Layer, 6:flag_Status
+    private ushort move; // 16: flag
+    private ushort link; // 16: mask
+    private uint height; // 27: mask
+
+    public byte Layer { get => (byte)(info >> 6); }
+    public byte Status { get => (byte)(info & 0x3F); }
+    public float Size
+    {
+        get
+        {
+            float scale = 1f;
+            if (0 != ((byte)(TileFeature.Small) & info))
+            {
+                scale = 0.5f;
+            }
+
+            return PTile.GetScale(TileSize.Default, scale);
         }
     }
 
-    //[Serializable]
-    //public struct Tile_t
-    //{
-    //    private int dataFlag;
-    //    private int linkFlag;
+    public int Info { get => info; }
+    public int Move { get => move; }
+    public int Link { get => link; }
+    public int Height { get => (int)height; }
 
-    //    public int DataFlag { get => dataFlag; }
-
-    //    public bool IsMovable(int quarant)
-    //    {
-    //        return 0 != (dataFlag & (1 << quarant));
-    //    }
-    //    public bool IsMovable(Vector3 point)
-    //    {
-    //        Vector3 diff = point - PVoxel.GetPivot(point);
-    //        int quarant = PVoxel.GetMoveQuarant(diff);
-
-    //        return IsMovable(quarant);
-    //    }
-    //    public bool IsLinkedWith(int fromKey, int toKey)
-    //    {
-    //        if (fromKey == toKey)
-    //        {
-    //            return true;
-    //        }
-
-    //        int flag = 0b_00_00_00;
-    //        int mask = 0xFF;
-    //        int nowMask, targetMask;
-
-    //        for (int i = 2; i >= 0; --i)
-    //        {
-    //            nowMask = fromKey & (mask << 8 * i);
-    //            targetMask = toKey & (mask << 8 * i);
-
-    //            if (nowMask == targetMask)
-    //            {
-    //                flag |= 0b_01 << (2 * i);
-    //            }
-    //            else if (nowMask > targetMask)
-    //            {
-    //                flag |= 0b_10 << (2 * i);
-    //            }
-    //        }
-
-    //        int relative = (flag >> 4) + 3 * (flag & 0b_11);
-    //        flag &= 0b_00_11_00;
-    //        switch (flag >> 2)
-    //        {
-    //            case 0: relative += 18; break;
-    //            case 1: /* y is same; */ break;
-    //            case 2: relative += 9; break;
-    //        }
-
-    //        return 0 != (linkFlag & (1 << relative));
-    //    }
-
-    //    public int GetHeightCode(int index)
-    //    {
-    //        //Written with bit operations and binary notation instead of calculation formulas so that it can be read intuitively
-    //        int value;
-    //        switch (index)
-    //        {
-    //            case 0: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11; break;
-    //            case 1: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00; break;
-    //            case 2: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00; break;
-    //            case 3: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00_00; break;
-    //            case 4: value = (dataFlag >> TILE_SHIFT_HEIGHT) & 0b_11_00_00_00_00; break;
-    //            default: return -1;
-    //        }
-
-    //        value >>= index * 2;
-    //        return value;
-    //    }
-    //    public float GetYValue(int index)
-    //    {
-    //        int code = (dataFlag >> TILE_SHIFT_HEIGHT) & (0b11 << index * 2);
-    //        code >>= (index * 2);
-
-    //        return code * TILE_HALF;
-    //    }
-
-    //    public Tile_t(int data)
-    //    {
-    //        dataFlag = data;
-    //        linkFlag = 0;
-    //    }
-    //    public Tile_t(int data, int link)
-    //    {
-    //        dataFlag = data;
-    //        linkFlag = link;
-    //    }
-    //}
+    public Tile_t(int info, int move, int height)
+    {
+        this.info = (byte)info;
+        this.move = (ushort)move;
+        this.height = (uint)height;
+        this.link = 0;
+    }
 }
+#endif

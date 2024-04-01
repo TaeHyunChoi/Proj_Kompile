@@ -3,7 +3,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
-using CDataStructure;
+using DevDataType;
 
 /// <summary>
 /// [목표] CSV 데이터 불러오기 최적화 (속도 향상을 위하여 안정성은 상대적으로 낮춤)

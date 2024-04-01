@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
-using CDataStructure;
+using DevDataType;
 using CMathf;
 using Unity.Collections;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-public class DEV_Tile : MonoBehaviour
+public class DEV_MapObj : MonoBehaviour
 {
     [SerializeField] 
     private TileFeature status;
@@ -15,24 +15,25 @@ public class DEV_Tile : MonoBehaviour
     //Dictionary<int, Tile_t> map과 Tile.cs를 연결하는 key값 => Mesh on/off에 사용
     //Field.cs에서 일정 간격만큼 Dicionary<int, Tile.cs>를 들고 있어야 하나?
     //Dev_tile과 Tile은 다르다 => Tile.cs가 Awake() 할 때에 map에다가 Mesh 넘기면 될 듯? (아니면 걍 transform.getChildren 하던가?
-    private Mesh mesh;
-    private int key;
+    private Mesh  mesh;
     private float scale;
-
-    //## getter
-    public int Key { get => key; }
+    private Tile_sample[] tiles;
+    private byte index;
 
     private void Awake()
     {
         mesh = transform.GetComponent<MeshFilter>().mesh;
         scale = (0 != ((byte)TileFeature.Small & (byte)status)) ? 0.5f : 1f;
-        key   = PTile.GetKey(transform.position, scale);
-    }
 
-    public void SetData(Dictionary<int, Tile_t2> map)
-    {
+        byte length = (byte)(1 / scale);
+        tiles = new Tile_sample[length];
+        for (int i = 0; i < tiles.Length; ++i)
+        {
+            tiles[i] = new Tile_sample(-1);
+        }
+        index = 0;
+
         int info = (layer << 6) | (int)status;
-
         Quaternion rot = transform.rotation;
         Vector3[] vertices = mesh.vertices;
         Vector3[] normals = mesh.normals;
@@ -62,15 +63,15 @@ public class DEV_Tile : MonoBehaviour
             Vector3 B = CMath.FloorToVector(transform.TransformPoint(vertices[t1]), 2);
             Vector3 C = CMath.FloorToVector(transform.TransformPoint(vertices[t2]), 2);
 
-            float size = PTile.GetSize(TileSize.Default, scale);
+            float size = PTile.GetScale(TileSize.Default, scale);
             A = PTile.SnappingPoint(A, size, 2);
             B = PTile.SnappingPoint(B, size, 2);
             C = PTile.SnappingPoint(C, size, 2);
 
-            SetTileData(map, A, B, C, info);
+            SetTile(A, B, C, info);
         }
     }
-    private void SetTileData(Dictionary<int, Tile_t2> map, Vector3 p0, Vector3 p1, Vector3 p2, int info)
+    private void SetTile(Vector3 p0, Vector3 p1, Vector3 p2, int info)
     {
         //(Isosceles right triangle) Find the right angle point and store it in p0
         float v0to1 = CMath.Floor(Vector3.Distance(new Vector3(p0.x, 0, p0.z), new Vector3(p1.x, 0, p1.z)), 3);
@@ -96,16 +97,16 @@ public class DEV_Tile : MonoBehaviour
             diagonal = v0to2;
         }
 
-        float size_half = PTile.GetSize(TileSize.Half, scale);
+        float size_half = PTile.GetScale(TileSize.Half, scale);
         if (size_half < diagonal)
         {
             Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 3);
-            SetTileData(map, p0, p1, midPoint, info);
-            SetTileData(map, p0, p2, midPoint, info);
+            SetTile(p0, p1, midPoint, info);
+            SetTile(p0, p2, midPoint, info);
         }
         else
         {
-            float size = PTile.GetSize(TileSize.Default, scale);
+            float size = PTile.GetScale(TileSize.Default, scale);
 
             //get point, get pivot
             Vector3 pointCenter = CMath.FloorToVector((p0 + p1 + p2) * 0.333f, 3);
@@ -113,7 +114,6 @@ public class DEV_Tile : MonoBehaviour
 
             //set flag
             int move = PTile.GetMoveFlag(pointCenter - pivot, size);
-            Debug.Assert(move != -1);
 
             int height = 0;
             height |= PTile.GetHeightFlag(p0 - pivot, size_half);
@@ -121,25 +121,47 @@ public class DEV_Tile : MonoBehaviour
             height |= PTile.GetHeightFlag(p2 - pivot, size_half);
 
             //set tile data
-            int key = PTile.GetKey(pointCenter, size);
-            if (false == map.TryGetValue(key, out Tile_t2 tile))
+            int key = (layer << 24) | PTile.GetKey(pointCenter, size);
+            if (false == TryGetTile(key, out int indexTarget))
             {
-                map.Add(key, new Tile_t2(info, move, height));
+                tiles[index++] = new Tile_sample(key, info, move, height);
             }
             else
             {
+                Tile_sample tile = tiles[indexTarget];
                 info    |= tile.Info;
                 move    |= tile.Move;
                 height  |= tile.Height;
 
-                map[key] = new Tile_t2(info, move, height);
+                tiles[indexTarget] = new Tile_sample(key, info, move, height);
             }
         }
     }
 
-    public void SetLink(Dictionary<int, Tile_t2> map)
-    { 
-        
+    private bool TryGetTile(int key, out int index)
+    {
+        index = -1;
+        for (int i = 0; i < tiles.Length; ++i)
+        {
+            if (key == tiles[i].Key)
+            {
+                index = i;
+                return true;
+            }
+        }
+
+        return false;
+    }
+    public bool TryGetTileArray(out Tile_sample[] tileArray)
+    {
+        if (0 == index)
+        {
+            tileArray = null;
+            return false;
+        }
+
+        tileArray = tiles;
+        return true;
     }
 }
 #endif

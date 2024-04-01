@@ -1,11 +1,10 @@
 using UnityEngine;
 //using static Public;
 using CMathf;
-using CDataStructure;
+using DevDataType;
 using System;
+using System.Collections.Generic;
 
-/// <summary> Parser related to Voxel </summary>
-/// 
 [Flags]
 public enum TileFeature : byte
 {
@@ -20,11 +19,13 @@ public enum TileSize
     Default,
     Half,
     Quater,
-    Inverse, //������
+    Inverse,
     Default_Inverse,
     Half_inverse,
     Quater_inverse
 }
+
+/// <summary> Parser related to Voxel </summary> /// 
 public static class PTile
 {
     public const float SIZE = 1f;
@@ -44,6 +45,7 @@ public static class PTile
     }
     public static Vector3 GetPivot(int key, float size)
     {
+        key &= 0x00FF_FFFF;
         float x = (key >> 16)           * size;
         float y = ((key >> 8) & 0x00FF) * size;
         float z = (key & 0xFF)          * size;
@@ -57,7 +59,7 @@ public static class PTile
         return (int)(pivot.x * size) << 16 | (int)(pivot.y * size) << 8 | (int)(pivot.z * size);
     }
     /// <summary> for using cache data </summary>
-    public static float GetSize(TileSize type, float scale)
+    public static float GetScale(TileSize type, float scale)
     {
         float size;
 
@@ -172,15 +174,84 @@ public static class PTile
         //Debug.Log($"{diff:F3} {y} << ({x} + {z}*3)*3");
         return y << (x + z * 3) * 3;
     }
-    public static void DebugTileData(int key, Tile_t2 tile)
-    {
-        string stringData = string.Format("l:{0}, s:{1}, h:{2}, m:{3}",
-                                            tile.Layer,
-                                            Convert.ToString(tile.Status, 2),
-                                            Convert.ToString(tile.Height, 2),
-                                            Convert.ToString(tile.Move, 2));
 
-        Debug.Log(string.Format($"[{key}]{GetPivot(key, tile.Size)} " + stringData));
+
+    public static bool IsLinkableWith(Dictionary<int, Tile_sample> sample, int keyMy, int indexLink, int y)
+    {
+        //init quarant
+        int quarantMy, quarantTarget;
+        int keyTarget;
+
+        switch (indexLink)
+        {
+            case 1:
+                quarantMy = 0;
+                quarantTarget = 10;
+                keyTarget = keyMy + (0 << 16) + y * (1 << 8) - (1 << 0);
+                break;
+            case 2:
+                quarantMy = 4;
+                quarantTarget = 14;
+                keyTarget = keyMy + (0 << 16) + y * (1 << 8) - (1 << 0);
+                break;
+            case 4:
+                quarantMy = 5;
+                quarantTarget = 3;
+                keyTarget = keyMy + (1 << 16) + y * (1 << 8) + (0 << 0);
+                break;
+            case 5:
+                quarantMy = 13;
+                quarantTarget = 11;
+                keyTarget = keyMy + (1 << 16) + y * (1 << 8) + (0 << 0);
+                break;
+            case 7:
+                quarantMy = 14;
+                quarantTarget = 4;
+                keyTarget = keyMy + (0 << 16) + y * (1 << 8) + (1 << 0);
+                break;
+            case 8:
+                quarantMy = 10;
+                quarantTarget = 0;
+                keyTarget = keyMy + (0 << 16) + y * (1 << 8) + (1 << 0);
+                break;
+            case 10:
+                quarantMy = 11;
+                quarantTarget = 13;
+                keyTarget = keyMy - (1 << 16) + y * (1 << 8) + (0 << 0);
+                break;
+            case 11:
+                quarantMy = 3;
+                quarantTarget = 5;
+                keyTarget = keyMy - (1 << 16) + y * (1 << 8) + (0 << 0);
+                break;
+            default:
+                return false;
+        }
+
+        //check my tile
+        if (false == sample.TryGetValue(keyMy, out Tile_sample tileMy)
+            || false == tileMy.IsMovable(quarantMy))
+        {
+            return false;
+        }
+
+        //check target tile
+        if (false == sample.TryGetValue(keyTarget, out Tile_sample tileTarget)
+            || false == tileTarget.IsMovable(quarantTarget))
+        {
+            return false;
+        }
+
+        //compare height
+        tileMy.GetHeightMask(quarantMy, out int p00, out int p01);
+        tileTarget.GetHeightMask(quarantTarget, out int p10, out int p11);
+        int diff = y * 4;
+        if (p00 != p10 + diff || p01 != p11 + diff)
+        {
+            return false;
+        }
+
+        return true;
     }
 
 
@@ -214,7 +285,7 @@ public static class PTile
 
         return q;
     }
-    public static float GetYValue(Tile_t2 voxel, Vector3 point)
+    public static float GetYValue(Tile_sample voxel, Vector3 point)
     {
         Debug.Log("Need to dev");
         return 0f;
