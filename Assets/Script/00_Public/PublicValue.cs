@@ -114,20 +114,20 @@ namespace DevDataType
     public struct Tile_sample
     {
         private int key;
+        public int Key { get => key; }
+
 
         //total 10 bytes
         private ushort move; // 16: flag
-        private uint   info;   // 32: layer(2), status(6), link(24)
+        private uint   info;   // 32: status(6), link(24)
         private uint   height; // 27: flag
 
-        public byte Layer { get => (byte)(info >> 30); }
-        public byte Status { get => (byte)((info >> 24) & 0x3F); }
         public float Scale
         {
             get
             {
                 float scale = 1f;
-                if (0 != ((byte)(TileFeature.Small) & info))
+                if (0 != ((byte)(TileFeature.Small) & (info >> 24)))
                 {
                     scale = 0.5f;
                 }
@@ -135,8 +135,6 @@ namespace DevDataType
                 return PTile.GetScale(TileSize.Default, scale);
             }
         }
-
-        public int Key { get => key; }
         public int Info { get => (int)info; }
         public int Move { get => move; }
         public int Height { get => (int)height; }
@@ -146,9 +144,13 @@ namespace DevDataType
         {
             return 0 != (move & (1 << quarant));
         }
-        public void GetHeightMask(int quarant, out int p0, out int p1)
+        public int GetHeightMask(int index)
         {
-            p0 = -1; p1 = -1;
+            return ((int)height >> (index * 3)) & 0b111;
+        }
+        public void GetHeightMask(int quarant, out int mask00, out int mask01)
+        {
+            int p0 = -1, p1 = -1;
             switch (quarant)
             {
                 case  0: p0 = 0; p1 = 1; break;
@@ -163,8 +165,8 @@ namespace DevDataType
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
             Debug.Assert(-1 != p0 && -1 != p1);
 #endif
-            p0 = ((int)height >> p0 * 3) & 0b111;
-            p1 = ((int)height >> p1 * 3) & 0b111;
+            mask00 = ((int)height >> p0 * 3) & 0b111;
+            mask01 = ((int)height >> p1 * 3) & 0b111;
         }
 
         public Tile_sample(int key)
@@ -181,45 +183,6 @@ namespace DevDataType
             this.move   = (ushort)move;
             this.height = (uint)height;
         }
-    }
-}
-
-[Serializable]
-public struct Tile_t
-{
-    //total: 9 bytes
-    private byte info; // 2: mask_Layer, 6:flag_Status
-    private ushort move; // 16: flag
-    private ushort link; // 16: mask
-    private uint height; // 27: mask
-
-    public byte Layer { get => (byte)(info >> 6); }
-    public byte Status { get => (byte)(info & 0x3F); }
-    public float Size
-    {
-        get
-        {
-            float scale = 1f;
-            if (0 != ((byte)(TileFeature.Small) & info))
-            {
-                scale = 0.5f;
-            }
-
-            return PTile.GetScale(TileSize.Default, scale);
-        }
-    }
-
-    public int Info { get => info; }
-    public int Move { get => move; }
-    public int Link { get => link; }
-    public int Height { get => (int)height; }
-
-    public Tile_t(int info, int move, int height)
-    {
-        this.info = (byte)info;
-        this.move = (ushort)move;
-        this.height = (uint)height;
-        this.link = 0;
     }
 }
 #endif

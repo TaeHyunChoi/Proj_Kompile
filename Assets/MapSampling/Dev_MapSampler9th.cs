@@ -44,12 +44,13 @@ public class Dev_MapSampler9th : MonoBehaviour
 
                 sample.Add(key, tile);
                 keys.Add(key);
-                Debug.Log($"{key}:{PTile.GetPivot(key, tile.Scale)} (scale:{tile.Scale})");
+                //Debug.Log($"{key}:{PTile.GetPivot(key, tile.Scale)} (scale:{tile.Scale})\nheight:{System.Convert.ToString(tile.Height, 2)}, move:{System.Convert.ToString(tile.Move, 2)}");
             }
         }
 
 
-
+        //link flag의 주목적은 '탐색 속도를 줄이기 위함'
+        //unit.check_collide에서 감지를 하므로 대각선은 만나는 점 하나만 체크하면 된다.
         for(int i = 0; i < keys.Count; ++i)
         {
             int keyMy = keys[i];
@@ -60,23 +61,19 @@ public class Dev_MapSampler9th : MonoBehaviour
                     switch (indexLink)
                     {
                         //Diagonal direction
-                        //case 0:
-                        //    break;
-                        //case 3:
-                        //    break;
-                        //case 6:
-                        //    break;
-                        //case 9:
-                        //    break;
                         case 0:
                         case 3:
                         case 6:
                         case 9:
+                            if (false == PTile.CheckLinkOrNot_ByPoint(sample, keyMy, indexLink, y))
+                            {
+                                continue;
+                            }
                             continue;
 
                         //Right direction
                         default:
-                            if (false == PTile.IsLinkableWith(sample, keyMy, indexLink, y))
+                            if (false == PTile.IsLinkedOrNot(sample, keyMy, indexLink, y))
                             {
                                 continue;
                             }
@@ -100,10 +97,15 @@ public class Dev_MapSampler9th : MonoBehaviour
                     int height = tile.Height;
 
                     sample[keyMy] = new Tile_sample(key, info, move, height);
-                    Debug.Log($"pivot:{PTile.GetPivot(keyMy, tile.Scale)}(scale:{tile.Scale}) link[{System.Convert.ToString(sample[keyMy].Link, 2)}]");
                 }
             }
         }
+
+        //foreach (int k in sample.Keys)
+        //{
+        //    Tile_sample tile = sample[k];
+        //    Debug.Log($"{PTile.GetPivot(k, tile.Scale)} (scale:{tile.Scale})\nlink: {System.Convert.ToString(tile.Link, 2)}");
+        //}
     }
 }
 #endif

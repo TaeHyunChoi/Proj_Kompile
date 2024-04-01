@@ -12,7 +12,7 @@ public enum TileFeature : byte
     Small = 1 << 1,
 
 
-    Trans = 1 << 7
+    Trans = 1 << 5
 }
 public enum TileSize
 {
@@ -45,12 +45,11 @@ public static class PTile
     }
     public static Vector3 GetPivot(int key, float size)
     {
-        key &= 0x00FF_FFFF;
-        float x = (key >> 16)           * size;
-        float y = ((key >> 8) & 0x00FF) * size;
-        float z = (key & 0xFF)          * size;
+        float x = (key & 0xFF_00_00) >> 16;
+        float y = (key & 0x00_FF_00) >> 8;
+        float z = (key & 0x00_00_FF) >> 0;
 
-        return new Vector3(x, y, z);
+        return new Vector3(x, y, z) * size;
     }
     public static int GetKey(Vector3 point, float size)
     {
@@ -160,7 +159,8 @@ public static class PTile
     }
     public static int GetHeightFlag(Vector3 diff, float size)
     {
-        diff = CMath.FloorToVector(diff, 2);
+        //diff = CMath.FloorToVector(diff, 2);
+        diff = SnappingPoint(diff, size, 2);
         if (diff.x % size != 0 || diff.z % size != 0)
         {
             return 0;
@@ -175,8 +175,93 @@ public static class PTile
         return y << (x + z * 3) * 3;
     }
 
+    public static bool CheckLinkOrNot_ByPoint(Dictionary<int, Tile_sample> sample, int key, int indexLink, int y)
+    {
+        //nice try but architecture is missed;
 
-    public static bool IsLinkableWith(Dictionary<int, Tile_sample> sample, int keyMy, int indexLink, int y)
+        //int move_next = 0;
+        //int index = indexLink;
+        //int keyMy = key;
+
+        //while(move_next < 2)
+        //{
+        //    int keyNext;
+        //    int point;
+        //    switch (index)
+        //    {
+        //        case 0:
+        //            keyNext = key + (0 << 16) - (1 << 0);
+        //            point = 0;
+        //            break;
+        //        default: return false;
+        //    }
+
+        //    if (true == IsLinkedOrNot(sample, keyMy, index, y))
+        //    {
+        //        //After setting the height of the point of sample[keyNext] and changing the y value
+        //        for (y = -1; y <= 1; ++y)
+        //        {
+        //            //다시 y를 돌려야 하네...
+        //            if (true == IsLinkedOrNot(sample, keyNext, index, y))
+        //            {
+        //                return true;
+        //            }
+        //        }    
+
+
+        //    //    if (false == sample.TryGetValue(keyNext, out Tile_sample tileNext))
+        //    //    {
+        //    //        goto NEXT;
+        //    //    }
+
+        //    //    y = CMath.FloorToInt(tileNext.GetHeightMask(point) * 0.25f, 0);
+        //    //    if (true == IsLinkedOrNot(sample, keyNext, index, y))
+        //    //    {
+        //    //        return true;
+        //    //    }
+
+        //    NEXT:
+        //        move_next += 1;
+        //    }
+        //}
+
+        //use move_next?
+
+        //int i1, i2;
+        //int keyNext;
+        //int point;
+
+        //switch (indexLink)
+        //{
+        //    case 0:
+        //        i1 = 1; i2 = 11;
+        //        keyNext = keyMy + (0 << 16) - (1 << 0);
+        //        point = 0;
+        //        break;
+        //    case 3: 
+        //        i1 = 2; i2 = 4; 
+        //        break;
+        //    case 6: 
+        //        i1 = 5; i2 = 7; 
+        //        break;
+        //    case 9: 
+        //        i1 = 8; i2 = 10; 
+        //        break;
+        //    default: return false;
+        //}
+
+        //// need to change y value;
+        //if (true == IsLinkedOrNot(sample, keyMy, i1, y))
+        //{
+        //    //After setting the height of the point of sample[keyNext] and changing the y value
+        //    //if(true == IsLinkedOrNot(sample, keyNext, in1, y) { return true; }
+
+        //    return true;
+        //}
+
+        return false;
+    }
+    public static bool IsLinkedOrNot(Dictionary<int, Tile_sample> sample, int keyMy, int indexLink, int y)
     {
         //init quarant
         int quarantMy, quarantTarget;
@@ -243,9 +328,9 @@ public static class PTile
         }
 
         //compare height
+        int diff = y * 4;
         tileMy.GetHeightMask(quarantMy, out int p00, out int p01);
         tileTarget.GetHeightMask(quarantTarget, out int p10, out int p11);
-        int diff = y * 4;
         if (p00 != p10 + diff || p01 != p11 + diff)
         {
             return false;

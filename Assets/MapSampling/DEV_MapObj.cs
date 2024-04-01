@@ -26,6 +26,7 @@ public class DEV_MapObj : MonoBehaviour
         scale = (0 != ((byte)TileFeature.Small & (byte)status)) ? 0.5f : 1f;
 
         byte length = (byte)(1 / scale);
+        length *= length;
         tiles = new Tile_sample[length];
         for (int i = 0; i < tiles.Length; ++i)
         {
@@ -33,7 +34,7 @@ public class DEV_MapObj : MonoBehaviour
         }
         index = 0;
 
-        int info = (layer << 6) | (int)status;
+        int info = (int)status << 24;
         Quaternion rot = transform.rotation;
         Vector3[] vertices = mesh.vertices;
         Vector3[] normals = mesh.normals;
@@ -109,7 +110,8 @@ public class DEV_MapObj : MonoBehaviour
             float size = PTile.GetScale(TileSize.Default, scale);
 
             //get point, get pivot
-            Vector3 pointCenter = CMath.FloorToVector((p0 + p1 + p2) * 0.333f, 3);
+            //Vector3 pointCenter = CMath.FloorToVector((p0 + p1 + p2) * 0.333f, 3);
+            Vector3 pointCenter = PTile.SnappingPoint((p0 + p1 + p2) * 0.333f, size_half, 3);
             Vector3 pivot       = PTile.GetPivot(pointCenter, size);
 
             //set flag
