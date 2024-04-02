@@ -348,6 +348,14 @@ public class Dev_MapSampler : MonoBehaviour
     }
     private static int GetHeightFlag(Vector3 diff, float size)
     {
+        //여기서 size_quater가 먹는지가 볼까
+        float size_half = size * 0.5f;
+        if (diff.x % size_half != 0 || diff.z % size_half != 0)
+        {
+            Debug.Log($"{diff} (x:{diff.x / size_half}, z:{diff.z / size_half})");
+        }
+
+
         //diff = CMath.FloorToVector(diff, 2);
         diff = PTile.SnappingPoint(diff, size, 2);
         if (diff.x % size != 0 || diff.z % size != 0)
