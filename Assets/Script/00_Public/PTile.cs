@@ -60,7 +60,7 @@ public static class PTile
         size = 1 / size;
         return (int)(pivot.x * size) << 16 | (int)(pivot.y * size) << 8 | (int)(pivot.z * size);
     }
-    public static float GetScale(TileSize type, float scale)
+    public static float GetSize(TileSize type, float scale)
     {
         // for using cache data
 

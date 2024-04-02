@@ -111,10 +111,12 @@ namespace DataType
     [Serializable]
     public struct Tile_t
     {
-        //total 10 bytes
-        private uint   info;   // 32: status(6), link(24, 12*2)
-        private ushort move;   // 16: flag
-        private uint   height; // TODO: 27=>36 bits ·Î ¼öÁ¤
+        //total 12 bytes
+        private uint  info;     // 32: status(6), link(24, 12*2)
+        private ulong movement; // 55: height(13*3), move(16)
+
+        public int Info { get => (int)info; }
+        public long Movement { get => (long)movement; }
 
         public float Scale
         {
@@ -126,19 +128,18 @@ namespace DataType
                     scale = 0.5f;
                 }
 
-                return PTile.GetScale(TileSize.Default, scale);
+                return PTile.GetSize(TileSize.Default, scale);
             }
         }
-        public int Info { get => (int)info; }
         public TileFeature Status { get => (TileFeature)(info >> 24); }
-
-        public int Move { get => move; }
-        public int Height { get => (int)height; }
         public int Link { get => (int)(info & 0xFFFFFF); }
+        public int Move { get => (int)(movement & 0xFFFF); }
+        public long Height { get => (long)(movement >> 16); }
+
 
         public bool IsMovable(int quarant)
         {
-            return 0 != (move & (1 << quarant));
+            return 0 != (Move & (1 << quarant));
         }
         public bool IsLinked(int indexLink)
         {
@@ -152,16 +153,20 @@ namespace DataType
             y = CMath.Floor(y * Scale, 2);
 
             float mask = (Height >> (index * 3)) & 0b111;
-            mask = CMath.Floor(mask * PTile.GetScale(TileSize.Quater, Scale), 2);
+            mask = CMath.Floor(mask * PTile.GetSize(TileSize.Quater, Scale), 2);
 
             return y + mask;
         }
 
-        public Tile_t(int info, int move, int height)
+        public Tile_t(int info, long movement)
+        {
+            this.info = (uint)info;
+            this.movement = (ulong)movement;
+        }
+        public Tile_t(int info, int move, long height)
         {
             this.info   = (uint)info;
-            this.move   = (ushort)move;
-            this.height = (uint)height;
+            this.movement = (ulong)((height << 16) | (long)move);
         }
     }
 }

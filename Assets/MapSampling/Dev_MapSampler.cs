@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using DataType;
 using CMathf;
-using System.Threading;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
 public class Dev_MapSampler : MonoBehaviour
@@ -26,6 +25,7 @@ public class Dev_MapSampler : MonoBehaviour
         for (int k = 0; k < keys.Count; ++k)
         {
             int keyMy = keys[k];
+            Tile_t tileMy = map[keyMy];
             for (int i = 0; i < 12; ++i)
             {
                 //diagonal : later
@@ -34,7 +34,6 @@ public class Dev_MapSampler : MonoBehaviour
                     continue;
                 }
 
-                Tile_t tileMy = map[keyMy];
                 int qMy = quarants[i];
                 int qTarget = quarants[i + 12];
 
@@ -45,7 +44,7 @@ public class Dev_MapSampler : MonoBehaviour
                 int keyNeighbor = GetRightLinkedKey(keyMy, i);
                 for (int y = -1; y <= 1; ++y)
                 {
-                    int key = keyNeighbor + y * (1 << 8); //TODO: ÀÌ°Å scale ¹®Á¦µÉ ¼ö ÀÖ°Ú´Ù?
+                    int key = keyNeighbor + y * (1 << 8); //TODO: ï¿½Ì°ï¿½ scale ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö°Ú´ï¿½?
 
                     if (false == map.TryGetValue(key, out Tile_t tileLinked))
                     {
@@ -88,11 +87,9 @@ public class Dev_MapSampler : MonoBehaviour
                         case -1: flag = 0b11 << i * 2; break;
                     }
 
-                    int info = tileMy.Info | flag;
-                    int move = tileMy.Move;
-                    int height = tileMy.Height;
-
-                    map[keyMy] = new Tile_t(info, move, height);
+                    int info      = tileMy.Info | flag;
+                    long movement = tileMy.Movement;
+                    map[keyMy]    = tileMy = new Tile_t(info, movement);
                     break;
                 }
 
@@ -105,13 +102,16 @@ public class Dev_MapSampler : MonoBehaviour
             int keyMy = keys[k];
             Tile_t tileMy = map[keyMy];
 
+            //(1.00, 0.00, 1.00)
+            Vector3 pivot = PTile.GetPivot(keyMy, tileMy.Scale);
+
             for (int i = 0; i < 12; i += 3)
             {
                 int maskLink, sign;
                 int keyRoute;
                 Tile_t tileRoute;
 
-                byte index00, index01, index10, index11;
+                byte index00, index01, index10, index11; //link index
                 switch (i)
                 {
                     case 0: index00 =  1; index01 = 10; index10 = 11; index11 =  2; break;
@@ -142,7 +142,7 @@ public class Dev_MapSampler : MonoBehaviour
                     {
                         continue;
                     }
-                    maskLink = tileMy.Link >> (index0 * 2) & 0b11;
+                    maskLink = (tileMy.Link >> (index0 * 2)) & 0b11;
 
                     sign = 0;
                     switch (maskLink)
@@ -180,25 +180,29 @@ public class Dev_MapSampler : MonoBehaviour
                     }
                     if (true == tileRoute.IsLinked(index1))
                     {
+                        //TODO: Get Y Flag (pivotMy.y, pivotTarget.y)
                         int flagLink = maskLink << (i * 2);
 
-                        int info = tileMy.Info | flagLink;
-                        int move = tileMy.Move;
-                        int height = tileMy.Height;
-
-                        map[keyMy] = tileMy = new Tile_t(info, move, height);
+                        int info      = tileMy.Info | flagLink;
+                        long movement = tileMy.Movement;
+                        map[keyMy]    = tileMy = new Tile_t(info, movement);
                         break;
                     }
                 }
             }
         }
 
-        //for (int k = 0; k < keys.Count; ++k)
-        //{
-        //    int key = keys[k];
-        //    Tile_t tile = map[key];
-        //    Debug.Log($"{PTile.GetPivot(key, tile.Scale)} link:{System.Convert.ToString(tile.Info & 0xFFFFFF, 2)}");
-        //}
+        //debug.log
+        for (int k = 0; k < keys.Count; ++k)
+        {
+            int key = keys[k];
+            Tile_t tile = map[key];
+
+            string move   = System.Convert.ToString(tile.Move, 2).ToString();
+            string height = System.Convert.ToString(tile.Height, 2).ToString();
+            string link   = System.Convert.ToString(tile.Info & 0xFFFFFF, 2);
+            Debug.Log($"{PTile.GetPivot(key, tile.Scale)} m:{move} l:{link}\nh:{height}");
+        }
 
         DataTable.WriteBinaryMappingData<Tile_t>(map, "test_map");
     }
@@ -231,15 +235,10 @@ public class Dev_MapSampler : MonoBehaviour
                 continue;
             }
 
-            //tile_half is 0.5f, so you can use up to 2 decimal places.
-            Vector3 A = CMath.FloorToVector(transform.TransformPoint(vertices[t0]), 2);
-            Vector3 B = CMath.FloorToVector(transform.TransformPoint(vertices[t1]), 2);
-            Vector3 C = CMath.FloorToVector(transform.TransformPoint(vertices[t2]), 2);
-
-            float size = PTile.GetScale(TileSize.Default, scale);
-            A = PTile.SnappingPoint(A, size, 2);
-            B = PTile.SnappingPoint(B, size, 2);
-            C = PTile.SnappingPoint(C, size, 2);
+            float size_half = PTile.GetSize(TileSize.Half, scale);
+            Vector3 A = PTile.SnappingPoint(transform.TransformPoint(vertices[t0]), size_half, 3);
+            Vector3 B = PTile.SnappingPoint(transform.TransformPoint(vertices[t1]), size_half, 3);
+            Vector3 C = PTile.SnappingPoint(transform.TransformPoint(vertices[t2]), size_half, 3);
 
             SetTileData(A, B, C, scale, layer, info);
         }
@@ -270,16 +269,18 @@ public class Dev_MapSampler : MonoBehaviour
             diagonal = v0to2;
         }
 
-        float size_half = PTile.GetScale(TileSize.Half, scale);
+        float size_half   = PTile.GetSize(TileSize.Half,   scale);
+        float size_quater = PTile.GetSize(TileSize.Quater, scale);
+
         if (size_half < diagonal)
         {
-            Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 3);
+            Vector3 midPoint = PTile.SnappingPoint((p1 + p2) * 0.5f, size_quater, 3);
             SetTileData(p0, p1, midPoint, scale, layer, info);
             SetTileData(p0, p2, midPoint, scale, layer, info);
         }
         else
         {
-            float size = PTile.GetScale(TileSize.Default, scale);
+            float size = PTile.GetSize(TileSize.Default, scale);
 
             //get point, get pivot
             Vector3 pointCenter = PTile.SnappingPoint((p0 + p1 + p2) * 0.333f, size_half, 3);
@@ -288,10 +289,11 @@ public class Dev_MapSampler : MonoBehaviour
             //set flag
             int move = GetMoveFlag(pointCenter - pivot, size);
 
-            int height = 0;
-            height |= GetHeightFlag(p0 - pivot, size_half);
-            height |= GetHeightFlag(p1 - pivot, size_half);
-            height |= GetHeightFlag(p2 - pivot, size_half);
+            long height = 0;
+            float size_quater_inverse = PTile.GetSize(TileSize.Quater_inverse, scale);
+            height |= GetHeightFlag(p0 - pivot, size_quater, size_quater_inverse);
+            height |= GetHeightFlag(p1 - pivot, size_quater, size_quater_inverse);
+            height |= GetHeightFlag(p2 - pivot, size_quater, size_quater_inverse);
 
             //set tile data
             int key = (layer << 24) | PTile.GetKey(pointCenter, size);
@@ -304,7 +306,6 @@ public class Dev_MapSampler : MonoBehaviour
                 info   |= tile.Info;
                 move   |= tile.Move;
                 height |= tile.Height;
-
                 map[key] = new Tile_t(info, move, height);
             }
         }
@@ -346,30 +347,36 @@ public class Dev_MapSampler : MonoBehaviour
 
         return -1;
     }
-    private static int GetHeightFlag(Vector3 diff, float size)
+    private static long GetHeightFlag(Vector3 diff, float size_quater, float size_quater_inverse)
     {
-        //¿©±â¼­ size_quater°¡ ¸Ô´ÂÁö°¡ º¼±î
-        float size_half = size * 0.5f;
-        if (diff.x % size_half != 0 || diff.z % size_half != 0)
+        diff = PTile.SnappingPoint(diff, size_quater, 3);
+        int x  = (int)(diff.x * size_quater_inverse);
+        long y = (long)(diff.y * size_quater_inverse);  //y: 0 ~ 4 (0b000 ~ 0b100)
+        int z  = (int)(diff.z * size_quater_inverse);
+
+        int shift;
+        switch (x * 10 + z)
         {
-            Debug.Log($"{diff} (x:{diff.x / size_half}, z:{diff.z / size_half})");
+            case 00: shift =  0; break;
+            case 20: shift =  1; break;
+            case 40: shift =  2; break;
+            case 02: shift =  3; break;
+            case 22: shift =  4; break;
+            case 42: shift =  5; break;
+            case 04: shift =  6; break;
+            case 24: shift =  7; break;
+            case 44: shift =  8; break;
+            case 11: shift =  9; break;
+            case 31: shift = 10; break;
+            case 13: shift = 11; break;
+            case 33: shift = 12; break;
+            default:
+                Debug.LogError($"{diff:F3} {x},{z} => {y}");
+                return 0;
         }
+        shift *= 3;
 
-
-        //diff = CMath.FloorToVector(diff, 2);
-        diff = PTile.SnappingPoint(diff, size, 2);
-        if (diff.x % size != 0 || diff.z % size != 0)
-        {
-            return 0;
-        }
-
-        float size_inverse = 1 / size;
-        int x = CMath.FloorToInt(diff.x * size_inverse, 2);
-        int y = CMath.FloorToInt(diff.y * size_inverse * 2f, 2);
-        int z = CMath.FloorToInt(diff.z * size_inverse, 2);
-
-        //Debug.Log($"{diff:F3} {y} << ({x} + {z}*3)*3");
-        return y << (x + z * 3) * 3;
+        return y << shift;
     }
 
     private int GetRightLinkedKey(int key, int indexLink)
