@@ -101,16 +101,104 @@ public class Dev_MapSampler9th : MonoBehaviour
 
         //set link: diagonal direction 
         for (int k = 0; k < keys.Count; ++k)
-        { 
-            
+        {
+            int keyMy = keys[k];
+            Tile_t tileMy = map[keyMy];
+
+            for (int i = 0; i < 12; i += 3)
+            {
+                int maskLink, sign;
+                int keyRoute;
+                Tile_t tileRoute;
+
+                byte index00, index01, index10, index11;
+                switch (i)
+                {
+                    case 0: index00 =  1; index01 = 10; index10 = 11; index11 =  2; break;
+                    case 3: index00 =  2; index01 =  5; index10 =  4; index11 =  1; break;
+                    case 6: index00 =  5; index01 =  8; index10 =  9; index11 =  4; break;
+                    case 9: index00 =  8; index01 = 11; index10 = 10; index11 =  7; break;
+                    default: continue;
+                }
+
+                byte loop = 0;
+                while (loop < 2)
+                {
+                    byte index0, index1;
+
+                    if (0 == loop) 
+                    { 
+                        index0 = index00;
+                        index1 = index01;
+                    }
+                    else //if (1 == loop) 
+                    {
+                        index0 = index10;
+                        index1 = index11;
+                    }
+                    ++loop;
+
+                    if (false == tileMy.IsLinked(index0))
+                    {
+                        continue;
+                    }
+                    maskLink = tileMy.Link >> (index0 * 2) & 0b11;
+
+                    sign = 0;
+                    switch (maskLink)
+                    {
+                        case 0b01: sign =  0; break;
+                        case 0b10: sign =  1; break;
+                        case 0b11: sign = -1; break;
+                    }
+
+                    keyRoute = keyMy + sign * (1 << 8);
+                    switch (index0)
+                    {
+                        case 1:
+                        case 2:
+                            keyRoute +=  (0 << 16) - (1 << 0);
+                            break;
+                        case 4:
+                        case 5:
+                            keyRoute +=  (1 << 16) + (0 << 0); 
+                            break;
+                        case 8:
+                        case 9:
+                            keyRoute +=  (0 << 16) + (1 << 0); 
+                            break;
+                        case 10:
+                        case 11: 
+                            keyRoute += -(1 << 16) + (0 << 0); 
+                            break;
+                        default: continue;
+                    }
+
+                    if (false == map.TryGetValue(keyRoute, out tileRoute))
+                    {
+                        continue;
+                    }
+                    if (true == tileRoute.IsLinked(index1))
+                    {
+                        int flagLink = maskLink << (i * 2);
+
+                        int info = tileMy.Info | flagLink;
+                        int move = tileMy.Move;
+                        int height = tileMy.Height;
+
+                        map[keyMy] = tileMy = new Tile_t(info, move, height);
+                        break;
+                    }
+                }
+            }
         }
 
-        for (int k = 0; k < keys.Count; ++k)
-        {
-            int key = keys[k];
-            Tile_t tile = map[key];
-            Debug.Log($"{PTile.GetPivot(key, tile.Scale)} link:{System.Convert.ToString(tile.Info & 0xFFFFFF, 2)}");
-        }
+        //for (int k = 0; k < keys.Count; ++k)
+        //{
+        //    int key = keys[k];
+        //    Tile_t tile = map[key];
+        //    Debug.Log($"{PTile.GetPivot(key, tile.Scale)} link:{System.Convert.ToString(tile.Info & 0xFFFFFF, 2)}");
+        //}
     }
 
     public  static void InitTile(Transform transform, Mesh mesh, float scale, byte layer, byte status)

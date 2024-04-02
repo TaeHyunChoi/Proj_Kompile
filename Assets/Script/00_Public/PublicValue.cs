@@ -113,7 +113,7 @@ namespace DevDataType
     public struct Tile_t
     {
         //total 10 bytes
-        private uint info;   // 32: status(6), link(24, 12*2)
+        private uint   info;   // 32: status(6), link(24, 12*2)
         private ushort move;   // 16: flag
         private uint   height; // TODO: 27=>36 bits ·Î ¼öÁ¤
 
@@ -135,10 +135,17 @@ namespace DevDataType
 
         public int Move { get => move; }
         public int Height { get => (int)height; }
+        public int Link { get => (int)(info & 0xFFFFFF); }
 
         public bool IsMovable(int quarant)
         {
             return 0 != (move & (1 << quarant));
+        }
+        public bool IsLinked(int indexLink)
+        {
+            uint mask = info >> (indexLink * 2);
+            mask &= 0b11;
+            return 0 != mask;
         }
         public float GetYValue(int key, int index)
         {

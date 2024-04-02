@@ -124,32 +124,6 @@ public static class PTile
         return CMath.FloorToVector(new Vector3(x, y, z), exponent);
     }
 
-    public static int GetRightLinkedKey(int key, int indexLink)
-    {
-        int keyNeighbor = -1;
-        switch (indexLink)
-        {
-            case 1:
-            case 2:
-                keyNeighbor = key + (0 << 16) - (1 << 0);
-                break;
-            case 4:
-            case 5:
-                keyNeighbor = key + (1 << 16) + (0 << 0);
-                break;
-            case 7:
-            case 8:
-                keyNeighbor = key + (0 << 16) + (1 << 0);
-                break;
-            case 10:
-            case 11:
-                keyNeighbor = key - (1 << 16) + (0 << 0);
-                break;
-        }
-
-        return keyNeighbor;
-    }
-
 
     ////maybe use later 
     /*
