@@ -106,8 +106,7 @@ public enum InteractType
     Talk,
 }
 
-#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-namespace DevDataType
+namespace DataType
 {
     [Serializable]
     public struct Tile_t
@@ -166,4 +165,3 @@ namespace DevDataType
         }
     }
 }
-#endif

@@ -20,7 +20,7 @@ public class MapTileComponent : MonoBehaviour
         key = (layer << 24) | PTile.GetKey(position, scale);
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-        Dev_MapSampler9th.InitTile(transform, mesh, scale, layer, (byte)status);
+        Dev_MapSampler.InitTile(transform, mesh, scale, layer, (byte)status);
 #endif
     }
 }

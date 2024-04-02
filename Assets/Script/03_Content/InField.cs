@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using DevDataType;
+using DataType;
 
 internal class InField : ISequenceUpdater
 {
