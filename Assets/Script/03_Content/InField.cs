@@ -10,7 +10,7 @@ internal class InField : ISequenceUpdater
     private Transform transform;
 
     //private static Dictionary<int, Voxel_t> voxel;
-    private static Dictionary<int, Tile_sample> map;
+    private static Dictionary<int, Tile_t> map;
     private static UnitPlayer player;
 
 
@@ -19,7 +19,7 @@ internal class InField : ISequenceUpdater
         gameObject = obj;
         transform  = obj.transform;
 
-        map = DataTable.LoadMappingData<Tile_sample>(obj.name);
+        map = DataTable.LoadMappingData<Tile_t>(obj.name);
     }
     public async Task<bool> InitMap()
     {

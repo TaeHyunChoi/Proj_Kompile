@@ -111,16 +111,12 @@ public enum InteractType
 namespace DevDataType
 {
     [Serializable]
-    public struct Tile_sample
+    public struct Tile_t
     {
-        private int key;
-        public int Key { get => key; }
-
-
         //total 10 bytes
-        private ushort move; // 16: flag
-        private uint   info;   // 32: status(6), link(24)
-        private uint   height; // 27: flag
+        private uint info;   // 32: status(6), link(24, 12*2)
+        private ushort move;   // 16: flag
+        private uint   height; // TODO: 27=>36 bits ·Î ¼öÁ¤
 
         public float Scale
         {
@@ -138,7 +134,6 @@ namespace DevDataType
         public int Info { get => (int)info; }
         public int Move { get => move; }
         public int Height { get => (int)height; }
-        public int Link { get => (int)(info & 0xFFFFFF); }
 
         public bool IsMovable(int quarant)
         {
@@ -157,10 +152,10 @@ namespace DevDataType
                 case  4: p0 = 1; p1 = 2; break;
                 case  5: p0 = 2; p1 = 5; break;
                 case 13: p0 = 5; p1 = 8; break;
-                case 14: p0 = 7; p1 = 8; break;
-                case 10: p0 = 6; p1 = 7; break;
-                case 11: p0 = 3; p1 = 6; break;
-                case  3: p0 = 0; p1 = 3; break;
+                case 14: p0 = 8; p1 = 7; break;
+                case 10: p0 = 7; p1 = 6; break;
+                case 11: p0 = 6; p1 = 3; break;
+                case  3: p0 = 3; p1 = 0; break;
             }
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
             Debug.Assert(-1 != p0 && -1 != p1);
@@ -169,16 +164,8 @@ namespace DevDataType
             mask01 = ((int)height >> p1 * 3) & 0b111;
         }
 
-        public Tile_sample(int key)
+        public Tile_t(int info, int move, int height)
         {
-            this.key    = key;
-            this.info   = 0;
-            this.move   = 0;
-            this.height = 0;
-        }
-        public Tile_sample(int key, int info, int move, int height)
-        {
-            this.key    = key;
             this.info   = (uint)info;
             this.move   = (ushort)move;
             this.height = (uint)height;

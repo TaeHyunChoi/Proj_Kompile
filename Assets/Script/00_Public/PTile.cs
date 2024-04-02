@@ -25,7 +25,7 @@ public enum TileSize
     Quater_inverse
 }
 
-/// <summary> Parser related to Voxel </summary> /// 
+/// <summary> Parser related to Tile </summary> /// 
 public static class PTile
 {
     public const float SIZE = 1f;
@@ -33,7 +33,15 @@ public static class PTile
     public const float SIZE_HALF = 0.5f * SIZE;
     public const float SIZE_HALF_INVERSE = 1f / SIZE_HALF;
 
-    //## getter
+    //// get
+    public static Vector3 GetPivot(int key, float size)
+    {
+        float x = (key & 0xFF_00_00) >> 16;
+        float y = (key & 0x00_FF_00) >> 8;
+        float z = (key & 0x00_00_FF) >> 0;
+
+        return new Vector3(x, y, z) * size;
+    }
     public static Vector3 GetPivot(Vector3 point, float size)
     {
         float size_inverse = 1 / size;
@@ -43,25 +51,18 @@ public static class PTile
 
         return new Vector3(cx, cy, cz);
     }
-    public static Vector3 GetPivot(int key, float size)
-    {
-        float x = (key & 0xFF_00_00) >> 16;
-        float y = (key & 0x00_FF_00) >> 8;
-        float z = (key & 0x00_00_FF) >> 0;
-
-        return new Vector3(x, y, z) * size;
-    }
     public static int GetKey(Vector3 point, float size)
     {
         Vector3 pivot = GetPivot(point, size);
         size = 1 / size;
         return (int)(pivot.x * size) << 16 | (int)(pivot.y * size) << 8 | (int)(pivot.z * size);
     }
-    /// <summary> for using cache data </summary>
     public static float GetScale(TileSize type, float scale)
     {
-        float size;
+        // for using cache data
 
+        float size;
+        
         switch (type)
         {
             case TileSize.Default:           size = SIZE;                break;
@@ -70,51 +71,12 @@ public static class PTile
             case TileSize.Half_inverse:      size = SIZE_HALF_INVERSE;   break;
             default: return -1f;
         }
-
         if (type > TileSize.Inverse)
         {
             scale = 1 / scale;
         }
 
         return size * scale;
-    }
-
-    public static int GetMoveFlag(Vector3 diff, float size)
-    {
-        float size_half = size * 0.5f;
-
-        int quarant = 0;
-        if (diff.x >= size_half)
-        {
-            quarant |= 0b_01;
-            diff -= new Vector3(size_half, 0, 0);
-        }
-        if (diff.z >= size_half)
-        {
-            quarant |= 0b_10;
-            diff -= new Vector3(0, 0, size_half);
-        }
-        quarant *= 4;
-
-        int equation = 0;
-        if (diff.z >= diff.x)
-        {
-            equation |= 0b01;
-        }
-        if (diff.z >= -diff.x + size_half)
-        {
-            equation |= 0b10;
-        }
-
-        switch (equation)
-        {
-            case 0b00: return 1 << (0 + quarant);
-            case 0b10: return 1 << (1 + quarant);
-            case 0b11: return 1 << (2 + quarant);
-            case 0b01: return 1 << (3 + quarant);
-        }
-
-        return -1;
     }
     public static Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
     {
@@ -155,192 +117,18 @@ public static class PTile
         }
 
         return CMath.FloorToVector(new Vector3(x, y, z), exponent);
-        //return new Vector3(x, y, z);
     }
-    public static int GetHeightFlag(Vector3 diff, float size)
+
+    ////maybe use later 
+    /*
+    public static Vector3 GetPivot(int key, float size)
     {
-        //diff = CMath.FloorToVector(diff, 2);
-        diff = SnappingPoint(diff, size, 2);
-        if (diff.x % size != 0 || diff.z % size != 0)
-        {
-            return 0;
-        }
+        float x = (key & 0xFF_00_00) >> 16;
+        float y = (key & 0x00_FF_00) >> 8;
+        float z = (key & 0x00_00_FF) >> 0;
 
-        float size_inverse = 1 / size;
-        int x = CMath.FloorToInt(diff.x * size_inverse, 2);
-        int y = CMath.FloorToInt(diff.y * size_inverse * 2f, 2);
-        int z = CMath.FloorToInt(diff.z * size_inverse, 2);
-
-        //Debug.Log($"{diff:F3} {y} << ({x} + {z}*3)*3");
-        return y << (x + z * 3) * 3;
+        return new Vector3(x, y, z) * size;
     }
-
-    public static bool CheckLinkOrNot_ByPoint(Dictionary<int, Tile_sample> sample, int key, int indexLink, int y)
-    {
-        //nice try but architecture is missed;
-
-        //int move_next = 0;
-        //int index = indexLink;
-        //int keyMy = key;
-
-        //while(move_next < 2)
-        //{
-        //    int keyNext;
-        //    int point;
-        //    switch (index)
-        //    {
-        //        case 0:
-        //            keyNext = key + (0 << 16) - (1 << 0);
-        //            point = 0;
-        //            break;
-        //        default: return false;
-        //    }
-
-        //    if (true == IsLinkedOrNot(sample, keyMy, index, y))
-        //    {
-        //        //After setting the height of the point of sample[keyNext] and changing the y value
-        //        for (y = -1; y <= 1; ++y)
-        //        {
-        //            //다시 y를 돌려야 하네...
-        //            if (true == IsLinkedOrNot(sample, keyNext, index, y))
-        //            {
-        //                return true;
-        //            }
-        //        }    
-
-
-        //    //    if (false == sample.TryGetValue(keyNext, out Tile_sample tileNext))
-        //    //    {
-        //    //        goto NEXT;
-        //    //    }
-
-        //    //    y = CMath.FloorToInt(tileNext.GetHeightMask(point) * 0.25f, 0);
-        //    //    if (true == IsLinkedOrNot(sample, keyNext, index, y))
-        //    //    {
-        //    //        return true;
-        //    //    }
-
-        //    NEXT:
-        //        move_next += 1;
-        //    }
-        //}
-
-        //use move_next?
-
-        //int i1, i2;
-        //int keyNext;
-        //int point;
-
-        //switch (indexLink)
-        //{
-        //    case 0:
-        //        i1 = 1; i2 = 11;
-        //        keyNext = keyMy + (0 << 16) - (1 << 0);
-        //        point = 0;
-        //        break;
-        //    case 3: 
-        //        i1 = 2; i2 = 4; 
-        //        break;
-        //    case 6: 
-        //        i1 = 5; i2 = 7; 
-        //        break;
-        //    case 9: 
-        //        i1 = 8; i2 = 10; 
-        //        break;
-        //    default: return false;
-        //}
-
-        //// need to change y value;
-        //if (true == IsLinkedOrNot(sample, keyMy, i1, y))
-        //{
-        //    //After setting the height of the point of sample[keyNext] and changing the y value
-        //    //if(true == IsLinkedOrNot(sample, keyNext, in1, y) { return true; }
-
-        //    return true;
-        //}
-
-        return false;
-    }
-    public static bool IsLinkedOrNot(Dictionary<int, Tile_sample> sample, int keyMy, int indexLink, int y)
-    {
-        //init quarant
-        int quarantMy, quarantTarget;
-        int keyTarget;
-
-        switch (indexLink)
-        {
-            case 1:
-                quarantMy = 0;
-                quarantTarget = 10;
-                keyTarget = keyMy + (0 << 16) + y * (1 << 8) - (1 << 0);
-                break;
-            case 2:
-                quarantMy = 4;
-                quarantTarget = 14;
-                keyTarget = keyMy + (0 << 16) + y * (1 << 8) - (1 << 0);
-                break;
-            case 4:
-                quarantMy = 5;
-                quarantTarget = 3;
-                keyTarget = keyMy + (1 << 16) + y * (1 << 8) + (0 << 0);
-                break;
-            case 5:
-                quarantMy = 13;
-                quarantTarget = 11;
-                keyTarget = keyMy + (1 << 16) + y * (1 << 8) + (0 << 0);
-                break;
-            case 7:
-                quarantMy = 14;
-                quarantTarget = 4;
-                keyTarget = keyMy + (0 << 16) + y * (1 << 8) + (1 << 0);
-                break;
-            case 8:
-                quarantMy = 10;
-                quarantTarget = 0;
-                keyTarget = keyMy + (0 << 16) + y * (1 << 8) + (1 << 0);
-                break;
-            case 10:
-                quarantMy = 11;
-                quarantTarget = 13;
-                keyTarget = keyMy - (1 << 16) + y * (1 << 8) + (0 << 0);
-                break;
-            case 11:
-                quarantMy = 3;
-                quarantTarget = 5;
-                keyTarget = keyMy - (1 << 16) + y * (1 << 8) + (0 << 0);
-                break;
-            default:
-                return false;
-        }
-
-        //check my tile
-        if (false == sample.TryGetValue(keyMy, out Tile_sample tileMy)
-            || false == tileMy.IsMovable(quarantMy))
-        {
-            return false;
-        }
-
-        //check target tile
-        if (false == sample.TryGetValue(keyTarget, out Tile_sample tileTarget)
-            || false == tileTarget.IsMovable(quarantTarget))
-        {
-            return false;
-        }
-
-        //compare height
-        int diff = y * 4;
-        tileMy.GetHeightMask(quarantMy, out int p00, out int p01);
-        tileTarget.GetHeightMask(quarantTarget, out int p10, out int p11);
-        if (p00 != p10 + diff || p01 != p11 + diff)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-
-    //maybe later use
     public static Vector3 GetPivot(Vector3 point, int exponent = 2)
     {
         float cx = CMath.FloorToInt(point.x * SIZE_INVERSE, exponent) * SIZE;
@@ -370,7 +158,7 @@ public static class PTile
 
         return q;
     }
-    public static float GetYValue(Tile_sample voxel, Vector3 point)
+    public static float GetYValue(Tile_t voxel, Vector3 point)
     {
         Debug.Log("Need to dev");
         return 0f;
@@ -431,4 +219,82 @@ public static class PTile
 
         //return CMath.Floor(y, 3);
     }
+        public static bool IsLinkedOrNot(Dictionary<int, Tile_t> sample, int keyMy, int indexLink, int y)
+    {
+        //init quarant
+        int quarantMy, quarantTarget;
+        int keyTarget;
+
+        switch (indexLink)
+        {
+            case 1:
+                quarantMy = 0;
+                quarantTarget = 10;
+                keyTarget = keyMy + (0 << 16) + y * (1 << 8) - (1 << 0);
+                break;
+            case 2:
+                quarantMy = 4;
+                quarantTarget = 14;
+                keyTarget = keyMy + (0 << 16) + y * (1 << 8) - (1 << 0);
+                break;
+            case 4:
+                quarantMy = 5;
+                quarantTarget = 3;
+                keyTarget = keyMy + (1 << 16) + y * (1 << 8) + (0 << 0);
+                break;
+            case 5:
+                quarantMy = 13;
+                quarantTarget = 11;
+                keyTarget = keyMy + (1 << 16) + y * (1 << 8) + (0 << 0);
+                break;
+            case 7:
+                quarantMy = 14;
+                quarantTarget = 4;
+                keyTarget = keyMy + (0 << 16) + y * (1 << 8) + (1 << 0);
+                break;
+            case 8:
+                quarantMy = 10;
+                quarantTarget = 0;
+                keyTarget = keyMy + (0 << 16) + y * (1 << 8) + (1 << 0);
+                break;
+            case 10:
+                quarantMy = 11;
+                quarantTarget = 13;
+                keyTarget = keyMy - (1 << 16) + y * (1 << 8) + (0 << 0);
+                break;
+            case 11:
+                quarantMy = 3;
+                quarantTarget = 5;
+                keyTarget = keyMy - (1 << 16) + y * (1 << 8) + (0 << 0);
+                break;
+            default:
+                return false;
+        }
+
+        //check my tile
+        if (false == sample.TryGetValue(keyMy, out Tile_t tileMy)
+            || false == tileMy.IsMovable(quarantMy))
+        {
+            return false;
+        }
+
+        //check target tile
+        if (false == sample.TryGetValue(keyTarget, out Tile_t tileTarget)
+            || false == tileTarget.IsMovable(quarantTarget))
+        {
+            return false;
+        }
+
+        //compare height
+        int diff = y * 4;
+        tileMy.GetHeightMask(quarantMy, out int p00, out int p01);
+        tileTarget.GetHeightMask(quarantTarget, out int p10, out int p11);
+        if (p00 != p10 + diff || p01 != p11 + diff)
+        {
+            return false;
+        }
+
+        return true;
+    }
+    //*/
 }
