@@ -44,8 +44,7 @@ public class Dev_MapSampler : MonoBehaviour
                 int keyNeighbor = GetRightLinkedKey(keyMy, i);
                 for (int y = -1; y <= 1; ++y)
                 {
-                    int key = keyNeighbor + y * (1 << 8); //TODO: �̰� scale ������ �� �ְڴ�?
-
+                    int key = keyNeighbor + y * (1 << 8);
                     if (false == map.TryGetValue(key, out Tile_t tileLinked))
                     {
                         continue;
@@ -181,7 +180,26 @@ public class Dev_MapSampler : MonoBehaviour
                     if (true == tileRoute.IsLinked(index1))
                     {
                         //TODO: Get Y Flag (pivotMy.y, pivotTarget.y)
-                        int flagLink = maskLink << (i * 2);
+
+                        int mask = (int)((tileRoute.Link >> (index1 * 2)) & 0b11);
+                        switch (mask)
+                        {
+                            case 0b01: mask = 0; break;
+                            case 0b10: mask = 1; break;
+                            case 0b11: mask = -1; break;
+                        }
+
+                        float ytarget = ((keyRoute >> 8) & 0xFF) + mask;
+                        float yMy = ((keyMy >> 8) & 0xFF);
+                        Debug.Log($"{PTile.GetPivot(keyMy, tileMy.Scale)} my.{yMy}, target.{ytarget} (mask.{mask})");
+
+                        int flagLink = 0;
+                        switch (ytarget - yMy)
+                        {
+                            case  0: flagLink = 0b01 << i * 2; break;
+                            case  1: flagLink = 0b10 << i * 2; break;
+                            case -1: flagLink = 0b11 << i * 2; break;
+                        }
 
                         int info      = tileMy.Info | flagLink;
                         long movement = tileMy.Movement;
