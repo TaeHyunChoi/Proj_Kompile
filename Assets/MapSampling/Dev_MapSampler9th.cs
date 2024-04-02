@@ -9,18 +9,107 @@ public class Dev_MapSampler9th : MonoBehaviour
 {
     [SerializeField] 
     private Transform transformRsc;
-    private static Dictionary<int, Tile_t> map;
+    private static Dictionary<int, Tile_t> map = new Dictionary<int, Tile_t>();
 
-    private void Awake()
-    {
-        map = new Dictionary<int, Tile_t>();
-    }
     private void Start()
     {
         List<int> keys = new List<int>();
         foreach (int k in map.Keys)
         {
             keys.Add(k);
+        }
+
+        int[] quarants = new int[] { -1,  0,  4, -1, 5, 13, -1, 14, 10, -1, 11, 3,
+                                     -1, 10, 14, -1, 3, 11, -1,  4,  0, -1, 13, 5};
+
+        //set link: right direction 
+        for (int k = 0; k < keys.Count; ++k)
+        {
+            int keyMy = keys[k];
+            for (int i = 0; i < 12; ++i)
+            {
+                //diagonal : later
+                if (0 == i % 3)
+                {
+                    continue;
+                }
+
+                Tile_t tileMy = map[keyMy];
+                int qMy = quarants[i];
+                int qTarget = quarants[i + 12];
+
+                if (false == tileMy.IsMovable(qMy))
+                {
+                    continue;
+                }
+                int keyNeighbor = GetRightLinkedKey(keyMy, i);
+                for (int y = -1; y <= 1; ++y)
+                {
+                    int key = keyNeighbor + y * (1 << 8); //TODO: 이거 scale 문제될 수 있겠다?
+
+                    if (false == map.TryGetValue(key, out Tile_t tileLinked))
+                    {
+                        continue;
+                    }
+                    if (false == tileLinked.IsMovable(qTarget))
+                    {
+                        continue;
+                    }
+
+                    byte hMy0, hMy1, hNei0, hNei1;
+                    switch (qMy)
+                    {
+                        case  0: hMy0 = 0; hMy1 = 1; hNei0 = 6; hNei1 = 7; break;
+                        case  4: hMy0 = 1; hMy1 = 2; hNei0 = 7; hNei1 = 8; break;
+                        case  5: hMy0 = 2; hMy1 = 5; hNei0 = 0; hNei1 = 3; break;
+                        case 13: hMy0 = 5; hMy1 = 8; hNei0 = 3; hNei1 = 6; break;
+                        case 14: hMy0 = 8; hMy1 = 7; hNei0 = 2; hNei1 = 1; break;
+                        case 10: hMy0 = 7; hMy1 = 6; hNei0 = 1; hNei1 = 0; break;
+                        case 11: hMy0 = 6; hMy1 = 3; hNei0 = 8; hNei1 = 5; break;
+                        case  3: hMy0 = 3; hMy1 = 0; hNei0 = 5; hNei1 = 2; break;
+                        default: continue;
+                    }
+
+                    if (tileMy.GetYValue(keyMy, hMy0) != tileLinked.GetYValue(key, hNei0))
+                    {
+                        continue;
+                    }
+                    if (tileMy.GetYValue(keyMy, hMy1) != tileLinked.GetYValue(key, hNei1))
+                    {
+                        continue;
+                    }
+
+                    //set data
+                    int flag = 0;
+                    switch (y)
+                    {
+                        case  0: flag = 0b01 << i * 2; break;
+                        case  1: flag = 0b10 << i * 2; break;
+                        case -1: flag = 0b11 << i * 2; break;
+                    }
+
+                    int info = tileMy.Info | flag;
+                    int move = tileMy.Move;
+                    int height = tileMy.Height;
+
+                    map[keyMy] = new Tile_t(info, move, height);
+                    break;
+                }
+
+            }
+        }
+
+        //set link: diagonal direction 
+        for (int k = 0; k < keys.Count; ++k)
+        { 
+            
+        }
+
+        for (int k = 0; k < keys.Count; ++k)
+        {
+            int key = keys[k];
+            Tile_t tile = map[key];
+            Debug.Log($"{PTile.GetPivot(key, tile.Scale)} link:{System.Convert.ToString(tile.Info & 0xFFFFFF, 2)}");
         }
     }
 
@@ -183,6 +272,31 @@ public class Dev_MapSampler9th : MonoBehaviour
 
         //Debug.Log($"{diff:F3} {y} << ({x} + {z}*3)*3");
         return y << (x + z * 3) * 3;
+    }
+    private int GetRightLinkedKey(int key, int indexLink)
+    {
+        int keyNeighbor = -1;
+        switch (indexLink)
+        {
+            case 1:
+            case 2:
+                keyNeighbor = key + (0 << 16) - (1 << 0);
+                break;
+            case 4:
+            case 5:
+                keyNeighbor = key + (1 << 16) + (0 << 0);
+                break;
+            case 7:
+            case 8:
+                keyNeighbor = key + (0 << 16) + (1 << 0);
+                break;
+            case 10:
+            case 11:
+                keyNeighbor = key - (1 << 16) + (0 << 0);
+                break;
+        }
+
+        return keyNeighbor;
     }
 }
 #endif

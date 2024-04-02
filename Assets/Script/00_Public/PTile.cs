@@ -8,6 +8,7 @@ using System.Collections.Generic;
 [Flags]
 public enum TileFeature : byte
 {
+    None = 0,
     Inner = 1 << 0,
     Small = 1 << 1,
 
@@ -28,10 +29,12 @@ public enum TileSize
 /// <summary> Parser related to Tile </summary> /// 
 public static class PTile
 {
-    public const float SIZE = 1f;
-    public const float SIZE_INVERSE = 1f / SIZE;
-    public const float SIZE_HALF = 0.5f * SIZE;
-    public const float SIZE_HALF_INVERSE = 1f / SIZE_HALF;
+    public const float SIZE                 = 1f;
+    public const float SIZE_INVERSE         = 1f    / SIZE;
+    public const float SIZE_HALF            = 0.5f  * SIZE;
+    public const float SIZE_HALF_INVERSE    = 1f    / SIZE_HALF;
+    public const float SIZE_QUATER          = 0.25f * SIZE;
+    public const float SIZE_QUATER_INVERSE  = 1f    / SIZE_QUATER;
 
     //// get
     public static Vector3 GetPivot(int key, float size)
@@ -69,7 +72,9 @@ public static class PTile
             case TileSize.Half:              size = SIZE_HALF;           break;
             case TileSize.Default_Inverse:   size = SIZE_INVERSE;        break;
             case TileSize.Half_inverse:      size = SIZE_HALF_INVERSE;   break;
-            default: return -1f;
+            case TileSize.Quater:            size = SIZE_QUATER;         break;
+            case TileSize.Quater_inverse:    size = SIZE_QUATER_INVERSE; break;
+            default: return 0f;
         }
         if (type > TileSize.Inverse)
         {
@@ -84,9 +89,9 @@ public static class PTile
         float y = p.y;
         float z = p.z;
         float diff;
-        diff = x % dist;
 
         //Similar to rounding, but the standard is different for each dist, not 0.5f.
+        diff = x % dist;
         if (0 < diff & diff <= dist * 0.1f)
         {
             x -= diff;
@@ -118,6 +123,33 @@ public static class PTile
 
         return CMath.FloorToVector(new Vector3(x, y, z), exponent);
     }
+
+    public static int GetRightLinkedKey(int key, int indexLink)
+    {
+        int keyNeighbor = -1;
+        switch (indexLink)
+        {
+            case 1:
+            case 2:
+                keyNeighbor = key + (0 << 16) - (1 << 0);
+                break;
+            case 4:
+            case 5:
+                keyNeighbor = key + (1 << 16) + (0 << 0);
+                break;
+            case 7:
+            case 8:
+                keyNeighbor = key + (0 << 16) + (1 << 0);
+                break;
+            case 10:
+            case 11:
+                keyNeighbor = key - (1 << 16) + (0 << 0);
+                break;
+        }
+
+        return keyNeighbor;
+    }
+
 
     ////maybe use later 
     /*

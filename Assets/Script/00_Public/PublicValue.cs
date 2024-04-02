@@ -1,6 +1,5 @@
 using System;
-using System.Collections.Generic;
-using UnityEngine;
+using CMathf;
 
 public static class Public
 {
@@ -132,6 +131,8 @@ namespace DevDataType
             }
         }
         public int Info { get => (int)info; }
+        public TileFeature Status { get => (TileFeature)(info >> 24); }
+
         public int Move { get => move; }
         public int Height { get => (int)height; }
 
@@ -139,29 +140,15 @@ namespace DevDataType
         {
             return 0 != (move & (1 << quarant));
         }
-        public int GetHeightMask(int index)
+        public float GetYValue(int key, int index)
         {
-            return ((int)height >> (index * 3)) & 0b111;
-        }
-        public void GetHeightMask(int quarant, out int mask00, out int mask01)
-        {
-            int p0 = -1, p1 = -1;
-            switch (quarant)
-            {
-                case  0: p0 = 0; p1 = 1; break;
-                case  4: p0 = 1; p1 = 2; break;
-                case  5: p0 = 2; p1 = 5; break;
-                case 13: p0 = 5; p1 = 8; break;
-                case 14: p0 = 8; p1 = 7; break;
-                case 10: p0 = 7; p1 = 6; break;
-                case 11: p0 = 6; p1 = 3; break;
-                case  3: p0 = 3; p1 = 0; break;
-            }
-#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-            Debug.Assert(-1 != p0 && -1 != p1);
-#endif
-            mask00 = ((int)height >> p0 * 3) & 0b111;
-            mask01 = ((int)height >> p1 * 3) & 0b111;
+            float y = (key & 0x00_FF_00) >> 8;
+            y = CMath.Floor(y * Scale, 2);
+
+            float mask = (Height >> (index * 3)) & 0b111;
+            mask = CMath.Floor(mask * PTile.GetScale(TileSize.Quater, Scale), 2);
+
+            return y + mask;
         }
 
         public Tile_t(int info, int move, int height)
