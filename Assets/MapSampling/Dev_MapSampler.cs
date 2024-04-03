@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using DataType;
 using CMathf;
@@ -24,7 +24,7 @@ public class Dev_MapSampler : MonoBehaviour
         int[] triangles = new int[] { 0, 4, 5, 13, 14, 10, 11, 3 };
         foreach (int key in keys)
         {
-            //Vector3 pivot = PTile.GetPivot(key, map[key].Scale);
+            Vector3 pivot = PTile.GetPivot(key, map[key].Scale);
 
             for (int t = 0; t < 8; ++t)
             {
@@ -366,6 +366,10 @@ public class Dev_MapSampler : MonoBehaviour
             {
                 return false;
             }
+
+            //TODO: y값 차이를 반영하지 않고 비교함;
+            //이거 통으로 들고 오지 말고 하나씩 비교해야 맞을 듯
+            //PTile로 넘깁시다.
 
             Tile_t tileMy = map[key];
             if (tileMy.GetTriangleHeightMask(triangleMy)
