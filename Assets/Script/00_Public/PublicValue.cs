@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using CMathf;
 
 public static class Public
@@ -151,7 +152,7 @@ namespace DataType
 
             return y + mask;
         }
-        public int GetTriangleHeightMask(int triangle)
+        public int GetTriangleHeightMask(int triangle, int y)
         {
             int h0, h1;
             int mask;
@@ -176,12 +177,11 @@ namespace DataType
 
             shift = h0 * 3;
             mask = (int)((Height >> shift) & 0b111);
-            h0 = mask << 3;
+            h0 = (mask + y) << 3 ;
 
             shift = h1 * 3;
             mask = (int)((Height >> shift) & 0b111);
-            h1 = mask;
-
+            h1 = mask + y;
 
             return h0 | h1;
         }

@@ -20,7 +20,6 @@ public class Dev_MapSampler : MonoBehaviour
         }
 
         //// set links
-        //TODO: add Dynamic Programming;
         int[] triangles = new int[] { 0, 4, 5, 13, 14, 10, 11, 3 };
         foreach (int key in keys)
         {
@@ -367,13 +366,14 @@ public class Dev_MapSampler : MonoBehaviour
                 return false;
             }
 
-            //TODO: y값 차이를 반영하지 않고 비교함;
-            //이거 통으로 들고 오지 말고 하나씩 비교해야 맞을 듯
-            //PTile로 넘깁시다.
-
             Tile_t tileMy = map[key];
-            if (tileMy.GetTriangleHeightMask(triangleMy)
-                == tileNext.GetTriangleHeightMask(triangleNext))
+
+            //int m1 = tileMy.GetTriangleHeightMask(triangleMy, -y * 4);
+            //int m2 = tileNext.GetTriangleHeightMask(triangleNext, 0);
+            //Debug.Log($"[{y}] my:({m1 >> 3}, {m1 & 0b111}), next:({m2 >> 3}, {m2 & 0b111})");
+
+            if (tileMy.GetTriangleHeightMask(triangleMy, -y * 4)
+                    == tileNext.GetTriangleHeightMask(triangleNext, 0))
             {
                 keyNext += y * (1 << 8);
                 return true;
@@ -402,7 +402,6 @@ public class Dev_MapSampler : MonoBehaviour
 
         //Debug.Log($"{PTile.GetPivot(key, tile.Scale)} {y} << {indexLink}*2");
     }
-
     private void DebugLog(int key)
     {
         Tile_t tile = map[key];
@@ -410,7 +409,7 @@ public class Dev_MapSampler : MonoBehaviour
         string move = System.Convert.ToString(tile.Move, 2).ToString();
         string height = System.Convert.ToString(tile.Height, 2).ToString();
         string link = System.Convert.ToString(tile.Info & 0xFFFFFF, 2);
-        Debug.Log($"{PTile.GetPivot(key, tile.Scale)} m:{move} l:{link}\nh:{height}");
+        Debug.Log($"{PTile.GetPivot(key, tile.Scale)}(scale:{tile.Scale}, status:{tile.Status}) m:{move} l:{link}\nh:{height}");
     }
 }
 #endif
