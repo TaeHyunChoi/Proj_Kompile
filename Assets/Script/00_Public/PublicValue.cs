@@ -132,20 +132,14 @@ namespace DataType
             }
         }
         public TileFeature Status { get => (TileFeature)(info >> 24); }
-        public int Link { get => (int)(info & 0xFFFFFF); }
-        public int Move { get => (int)(movement & 0xFFFF); }
-        public long Height { get => (long)(movement >> 16); }
+        public  int Link   { get => (int)(info & 0xFFFFFF);   }
+        public  int Move   { get => (int)(movement & 0xFFFF); }
+        public long Height { get => (long)(movement >> 16);   }
 
 
         public bool IsMovable(int quarant)
         {
             return 0 != (Move & (1 << quarant));
-        }
-        public bool IsLinked(int indexLink)
-        {
-            uint mask = info >> (indexLink * 2);
-            mask &= 0b11;
-            return 0 != mask;
         }
         public float GetYValue(int key, int index)
         {
@@ -156,6 +150,40 @@ namespace DataType
             mask = CMath.Floor(mask * PTile.GetSize(TileSize.Quater, Scale), 2);
 
             return y + mask;
+        }
+        public int GetTriangleHeightMask(int triangle)
+        {
+            int h0, h1;
+            int mask;
+            int shift;
+
+            switch (triangle)
+            {
+                case  0: h0 = 0; h1 = 1; break;
+                case 10: h0 = 6; h1 = 7; break;
+
+                case  4: h0 = 1; h1 = 2; break;
+                case 14: h0 = 7; h1 = 8; break;
+
+                case  3: h0 = 0; h1 = 3; break;
+                case  5: h0 = 2; h1 = 5; break;
+
+                case 11: h0 = 3; h1 = 6; break;
+                case 13: h0 = 5; h1 = 8; break;
+
+                default: return -1;
+            }
+
+            shift = h0 * 3;
+            mask = (int)((Height >> shift) & 0b111);
+            h0 = mask << 3;
+
+            shift = h1 * 3;
+            mask = (int)((Height >> shift) & 0b111);
+            h1 = mask;
+
+
+            return h0 | h1;
         }
 
         public Tile_t(int info, long movement)
