@@ -3,7 +3,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
-using CDataStructure;
+using DataType;
 
 /// <summary>
 /// [목표] CSV 데이터 불러오기 최적화 (속도 향상을 위하여 안정성은 상대적으로 낮춤)
@@ -104,7 +104,7 @@ public class DataTable
     public static void WriteBinaryMappingData<T>(Dictionary<int, T> data, string fileName) where T:struct
     {
         BinaryFormatter binaryFormatter = new BinaryFormatter();
-        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
+        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapData", fileName + ".dat");
         FileStream fileStream = File.Create(filePath);
 
         // Dictionary 직렬화

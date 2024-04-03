@@ -1,17 +1,20 @@
 using System;
-using UnityEngine;
+using System.Diagnostics;
+using CMathf;
 
 public static class Public
 {
     public const float SPEED_FADE = 1.25f;
     public const float SPEED_MOVE = 4f;
 
-    public const int    TILE_BIT_HEIGHT     = 4;
-    public const float  TILE_SIZE           = 1f;
-    public const float  TILE_INVERSE         = 1f    / TILE_SIZE;
-    public const float  TILE_HALF           = 0.5f  * TILE_SIZE;
-    public const float  TILE_HALF_INVERSE    = 1f    / TILE_HALF;
-    public const float  TILE_QUATER         = 0.25f * TILE_SIZE;
+    public const int    TILE_SHIFT_HEIGHT   = 8;
+
+    //public const float  TILE_SIZE           = 1f;
+    //public const float  TILE_INVERSE        = 1f    / TILE_SIZE;
+    //public const float  TILE_HALF           = 0.5f  * TILE_SIZE;
+    //public const float  TILE_HALF_INVERSE   = 1f    / TILE_HALF;
+    //public const float  TILE_QUATER         = 0.25f * TILE_SIZE;
+    //public const float  TILE_QUATER_INVERSE = 1f    / TILE_QUATER;
 
     public static void BlockInput(int input) { ;}
 }
@@ -103,109 +106,95 @@ public enum InteractType
     Door,
     Talk,
 }
-public enum TileFeature
-{ 
-    None = 0,
-    Inner
-}
 
-
-//Currently there was no need to use a separate namespace... but I wanted to try it.
-namespace CDataStructure
+namespace DataType
 {
-    using static Public;
-
     [Serializable]
     public struct Tile_t
     {
-        private int dataFlag;
-        private int linkFlag;
+        //total 12 bytes
+        private uint  info;     // 32: status(6), link(24, 12*2)
+        private ulong movement; // 55: height(13*3), move(16)
 
-        public int DataFlag { get => dataFlag; }
+        public int Info { get => (int)info; }
+        public long Movement { get => (long)movement; }
+
+        public float Scale
+        {
+            get
+            {
+                float scale = 1f;
+                if (0 != ((byte)(TileFeature.Small) & (info >> 24)))
+                {
+                    scale = 0.5f;
+                }
+
+                return PTile.GetSize(TileSize.Default, scale);
+            }
+        }
+        public TileFeature Status { get => (TileFeature)(info >> 24); }
+        public  int Link   { get => (int)(info & 0xFFFFFF);   }
+        public  int Move   { get => (int)(movement & 0xFFFF); }
+        public long Height { get => (long)(movement >> 16);   }
+
 
         public bool IsMovable(int quarant)
         {
-            return 0 != (dataFlag & (1 << quarant));
+            return 0 != (Move & (1 << quarant));
         }
-        public bool IsMovable(Vector3 point)
+        public float GetYValue(int key, int index)
         {
-            Vector3 diff = point - PVoxel.GetPivot(point);
-            int quarant = PVoxel.GetMoveQuarant(diff);
+            float y = (key & 0x00_FF_00) >> 8;
+            y = CMath.Floor(y * Scale, 2);
 
-            return IsMovable(quarant);
+            float mask = (Height >> (index * 3)) & 0b111;
+            mask = CMath.Floor(mask * PTile.GetSize(TileSize.Quater, Scale), 2);
+
+            return y + mask;
         }
-        public bool IsLinkedWith(int fromKey, int toKey)
+        public int GetTriangleHeightMask(int triangle, int y)
         {
-            if (fromKey == toKey)
+            int h0, h1;
+            int mask;
+            int shift;
+
+            switch (triangle)
             {
-                return true;
-            }
+                case  0: h0 = 0; h1 = 1; break;
+                case 10: h0 = 6; h1 = 7; break;
 
-            int flag = 0b_00_00_00;
-            int mask = 0xFF;
-            int nowMask, targetMask;
+                case  4: h0 = 1; h1 = 2; break;
+                case 14: h0 = 7; h1 = 8; break;
 
-            for (int i = 2; i >= 0; --i)
-            {
-                nowMask = fromKey & (mask << 8 * i);
-                targetMask = toKey & (mask << 8 * i);
+                case  3: h0 = 0; h1 = 3; break;
+                case  5: h0 = 2; h1 = 5; break;
 
-                if (nowMask == targetMask)
-                {
-                    flag |= 0b_01 << (2 * i);
-                }
-                else if (nowMask > targetMask)
-                {
-                    flag |= 0b_10 << (2 * i);
-                }
-            }
+                case 11: h0 = 3; h1 = 6; break;
+                case 13: h0 = 5; h1 = 8; break;
 
-            int relative = (flag >> 4) + 3 * (flag & 0b_11);
-            flag &= 0b_00_11_00;
-            switch (flag >> 2)
-            {
-                case 0: relative += 18; break;
-                case 1: /* y is same; */ break;
-                case 2: relative += 9; break;
-            }
-
-            return 0 != (linkFlag & (1 << relative));
-        }
-
-        public int GetHeightCode(int index)
-        {
-            //Written with bit operations and binary notation instead of calculation formulas so that it can be read intuitively
-            int value;
-            switch (index)
-            {
-                case 0: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11; break;
-                case 1: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00; break;
-                case 2: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00; break;
-                case 3: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00_00; break;
-                case 4: value = (dataFlag >> TILE_BIT_HEIGHT) & 0b_11_00_00_00_00; break;
                 default: return -1;
             }
 
-            value >>= index * 2;
-            return value;
-        }
-        public float GetYValue(int index)
-        {
-            int code = (dataFlag >> TILE_BIT_HEIGHT) & (0b11 << index * 2);
-            code >>= (index * 2);
+            shift = h0 * 3;
+            mask = (int)((Height >> shift) & 0b111);
+            h0 = (mask + y) << 3 ;
 
-            return code * TILE_HALF;
+            shift = h1 * 3;
+            mask = (int)((Height >> shift) & 0b111);
+            h1 = mask + y;
+
+            return h0 | h1;
         }
 
-        public Tile_t(int data)
+        public Tile_t(int info, long movement)
         {
-            dataFlag = data;
-            linkFlag = 0;
+            this.info = (uint)info;
+            this.movement = (ulong)movement;
         }
-        public Tile_t(int data, int link)
+        public Tile_t(int info, int move, long height)
         {
-            dataFlag = data;
-            linkFlag = link;
+            this.info   = (uint)info;
+            this.movement = (ulong)((height << 16) | (long)move);
         }
     }
 }

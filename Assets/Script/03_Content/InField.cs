@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using CDataStructure;
+using DataType;
 
 internal class InField : ISequenceUpdater
 {
@@ -86,7 +86,8 @@ internal class InField : ISequenceUpdater
 
         if (dir != Vector3.zero)
         {
-            player.Move(map, dir);
+            Debug.Log("Need to dev");
+            //player.Move(map, dir);
         }
     }
 }
