@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public class UIManager
@@ -23,7 +20,6 @@ public class UIManager
     {
         currentType = type;
         this.uiBucket[(int)currentType].Open();
-        Main.InputMgr.Set(uiBucket[(int)currentType].Input);
     }
     public void Update()
     {

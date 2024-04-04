@@ -56,8 +56,6 @@ public static class IDxInput
     }
 }
 
-public delegate void InputDele(int input);
-
 // enum
 public enum SceneState : byte
 { 
@@ -81,6 +79,28 @@ public enum Stat
     LUK,
     CNT
 }
+
+[Flags]
+public enum GameState : byte
+{ 
+    None    = 0,
+    Opening = 1 << 4,
+    Field   = 1 << 5,
+    Battle  = 1 << 6,
+    Event   = 1 << 7,
+}
+
+//TODO: sub-state 느낌으로 각 layer의 state를 저장(0~9)
+//byte: [4:game-state][4:sub-state]
+//잘 안되는데..
+public enum OpeningState : byte
+{
+    None = 0,
+    Play = 1 << 0,
+    Skip = 1 << 1,
+    End  = 1 << 2
+}
+
 public enum ContentType
 {
     None    = -1,

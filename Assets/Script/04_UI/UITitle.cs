@@ -37,7 +37,6 @@ public class UITitle : UIBase
     }
     public override void Input(int input)
     {
-        // using static IDxInput;
         if (Compare(input, UP))
         {
             SetItemColor(select, 0f);
@@ -59,14 +58,12 @@ public class UITitle : UIBase
             {
                 case 0:
                     Debug.Log("New game For Test (map code: 100)");
-                    Main.SceneMgr.LoadSceneAsync(ContentType.Field, 100);
+                    Main.SceneMgr.LoadSceneAsync(100);
                     break;
                 case 1:
-                    //寃뚯엫 ???UI ?몄텧
                     Debug.Log("Saved Data List");
                     break;
                 case 2:
-                    //?듭뀡李??몄텧
                     Debug.Log("Option window");
                     break;
                 case 3:

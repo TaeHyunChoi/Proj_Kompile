@@ -36,19 +36,6 @@ public class GameManager
     {
         sequence.Update();
     }
-    public InputDele GetInputDele(ContentType type)
-    {
-        InputDele dele = null;
-        switch (type)
-        {
-            case ContentType.Opening:   return OnOpening.Input;
-            case ContentType.Field:     dele = InField  .Input;     break;
-            case ContentType.Battle:    dele = InBattle .Input;     break;
-        }
-
-        //dele += SystemOption.Input;
-        return dele;
-    }
     public void Dispose()
     {
         if(sequence != null)

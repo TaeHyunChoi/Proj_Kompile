@@ -123,14 +123,13 @@ public struct UnitData : IDataSetter
 [Serializable]
 public struct MapData : IDataSetter
 {
-    private ushort code;
-    private ushort battleMapCode;
-    private ushort[] mapNearby;
-    private byte minCount;
-    private byte maxCount;
-    private byte[] mob;
-
-    private string name;
+    private ushort      code;
+    private ushort      battleMapCode;
+    private ushort[]    mapNearby;
+    private byte        minCount;
+    private byte        maxCount;
+    private byte[]      mob;
+    private string      name;
 
     public ushort Code { get => code; }
     public string Name { get => name; }

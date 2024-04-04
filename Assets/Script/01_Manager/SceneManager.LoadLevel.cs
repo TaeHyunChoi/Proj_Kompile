@@ -4,17 +4,15 @@ using UnityEngine.SceneManagement;
 
 public partial class SceneManager // .LoadLevel
 {
-    public class LoadLevel : IUpdateRoutine
+    public class LoadScene : IUpdateRoutine
     {
         private AsyncOperation loadAsync;
         private CanvasGroup curtain;
-        private ContentType contentType;
         private MapData mapData;
 
-        public LoadLevel(CanvasGroup curtain, ContentType type, MapData map)
+        public LoadScene(CanvasGroup curtain, MapData map)
         {
             this.curtain = curtain;
-            contentType = type;
             mapData = map;
         }
 
@@ -23,9 +21,8 @@ public partial class SceneManager // .LoadLevel
             switch (index)
             {
                 case 0:
-                    Main.GameMgr.SetMap(mapData);
-                    Main.InputMgr.Set(null);
                     Main.SceneMgr.state = SceneState.Load;
+                    Main.GameMgr.SetMap(mapData);
                     curtain.alpha = 0;
                     curtain.gameObject.SetActive(true);
                     break;
@@ -36,8 +33,6 @@ public partial class SceneManager // .LoadLevel
                         return index;
                     }
                     curtain.alpha = 1;
-                    Main.Get.Dispose();
-                    GC.Collect();
                     break;
                 case 2:
                     string sceneName = string.Empty;
@@ -47,7 +42,6 @@ public partial class SceneManager // .LoadLevel
                         case 0: sceneName = "010_OpeningScene"; break;
                         case 1: sceneName = "020_FieldTestScene"; break;
                     }
-
                     loadAsync = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
                     break;
                 case 3:
@@ -57,13 +51,14 @@ public partial class SceneManager // .LoadLevel
                     }
                     break;
                 case 4:
-                    Main.Get.SetContent(contentType);
+                    Main.Get.EnterState();
                     break;
                 case 5:
                     if (SceneState.Play != Main.SceneMgr.state)
                     {
                         return index;
                     }
+                    Main.Get.Dispose();
                     break;
                 case 6:
                     if (curtain.alpha > 0)
@@ -82,5 +77,4 @@ public partial class SceneManager // .LoadLevel
             return index + 1;
         }
     }
-
 }

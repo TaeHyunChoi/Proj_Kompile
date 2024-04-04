@@ -1,8 +1,4 @@
-using System.Collections;
 using UnityEngine;
-using System.Threading.Tasks;
-using static Public;
-using System.Collections.Generic;
 
 public partial class Main : MonoBehaviour
 {
@@ -19,6 +15,7 @@ public partial class Main : MonoBehaviour
     public static SceneManager  SceneMgr { get => instance.mgrScene; }
     
     private ContentType current;
+    private GameState state;
 
     private void Awake()
     {
@@ -34,6 +31,7 @@ public partial class Main : MonoBehaviour
         //++Load Player Data
 
         current = ContentType.None;
+        state = GameState.None;
 
         mgrInput = new InputManager();
         mgrGame  = new GameManager(transform.Find("Ingame"));
@@ -42,24 +40,22 @@ public partial class Main : MonoBehaviour
     }
     private void Start()
     {
-        mgrScene.LoadSceneAsync(ContentType.Opening, -1);
-        enabled = false;
+        Init(GameState.Opening);
     }
     private void Update()
     {
-        mgrInput.Update();
+        int input = mgrInput.Update();
+        mgrUI.Update();
         mgrGame .Update();
-        mgrUI   .Update();
     }
-
     public void StartContent()
     {
         mgrGame.Start();
-        mgrInput.Set(mgrGame.GetInputDele(current));
     }
     public void Dispose()
     {
         mgrGame.Dispose();
         mgrUI.Dispose(current);
+        System.GC.Collect();
     }
 }

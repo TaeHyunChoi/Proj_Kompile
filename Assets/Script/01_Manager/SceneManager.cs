@@ -6,13 +6,12 @@ public partial class SceneManager
     private SceneState state;
     public SceneState State { get => state; }
 
-    public void LoadSceneAsync(ContentType type, int code)
+    public void LoadSceneAsync(int code)
     {
         MapData map = DataTable.MapTable.Find(x => x.Code == code);
-        LoadLevel level = new LoadLevel(loadingCurtain, type, map);
-        CoroutineUpdater.Get.SetHandler(new CCoroutine<LoadLevel>(level));
+        LoadScene level = new LoadScene(loadingCurtain, map);
+        CoroutineUpdater.Get.SetHandler(new CCoroutine<LoadScene>(level));
     }
-
     public void SetState(SceneState state)
     {
         this.state = state;
@@ -20,8 +19,7 @@ public partial class SceneManager
 
     public SceneManager()
     {
-        loadingCurtain = Main.UIMgr.GetOverlayCanvas().transform.GetChild(0).GetComponent<CanvasGroup>(); ;
-        loadingCurtain.alpha = 0;
+        loadingCurtain = Main.UIMgr.GetOverlayCanvas().transform.GetChild(0).GetComponent<CanvasGroup>();
         loadingCurtain.gameObject.SetActive(false);
     }
 }

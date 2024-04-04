@@ -4,21 +4,26 @@ using UnityEngine;
 
 public partial class Main // .SetContent
 {
-    public void SetContent(ContentType type)
+    public void Init(GameState state)
     {
-        switch (type)
+        this.state = state;
+        mgrScene.LoadSceneAsync(-1);
+    }
+    public void EnterState()
+    {
+        switch (state)
         {
-            case ContentType.Opening:
-                LoadOpening opening = new LoadOpening();
-                CoroutineUpdater.Get.SetHandler(new CCoroutine<LoadOpening>(opening));
+            case GameState.Opening:
+                EnterOpening opening = new EnterOpening();
+                CoroutineUpdater.Get.SetHandler(new CCoroutine<EnterOpening>(opening));
                 break;
-            case ContentType.Field:
-                LoadField field = new LoadField();
-                CoroutineUpdater.Get.SetHandler(new CCoroutine<LoadField>(field));
+            case GameState.Field:
+                EnterField field = new EnterField();
+                CoroutineUpdater.Get.SetHandler(new CCoroutine<EnterField>(field));
                 break;
         }
     }
-    private class LoadOpening : IUpdateRoutine
+    private class EnterOpening : IUpdateRoutine
     {
         Task<OnOpening> taskOpening;
         Task<UITitle>   taskTitle;
@@ -41,17 +46,19 @@ public partial class Main // .SetContent
                     GameMgr.SetSequence(taskOpening.Result);
                     UIMgr.SetBucket((int)UIType.Title, taskTitle.Result);
                     break;
-                default:
-                    SceneMgr.SetState(SceneState.Play);
+                case 2:
                     taskOpening.Dispose();
                     taskTitle.Dispose();
+                    break;
+                default:
+                    SceneMgr.SetState(SceneState.Play);
                     return -1;
             }
 
             return index + 1;
         }
     }
-    private class LoadField : IUpdateRoutine
+    private class EnterField : IUpdateRoutine
     {
         Task<bool> taskInitField;
         InField field;
@@ -72,9 +79,11 @@ public partial class Main // .SetContent
                     }
                     GameMgr.SetSequence(field);
                     break;
+                case 2:
+                    taskInitField.Dispose();
+                    break;
                 default:
                     SceneMgr.SetState(SceneState.Play);
-                    taskInitField.Dispose();
                     return -1;
             }
 
