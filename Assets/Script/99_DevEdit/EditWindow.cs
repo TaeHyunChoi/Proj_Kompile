@@ -16,10 +16,10 @@ public class EditWindow : EditorWindow
     private void OnGUI()
     {
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("[.csv] ¡æ [.bin]"))
+        if (GUILayout.Button("[.csv] â†’ [.bin]"))
         {
-            DataTable.LoadCSVTable();         //CSV ÆÄÀÏ ÀĞ¾î¼­
-            DataTable.WriteBinaryFiles();     //Binary ÆÄÀÏ·Î ÀúÀå
+            DataTable.LoadCSVTable();         //CSV íŒŒì¼ ì½ì–´ì„œ
+            DataTable.WriteBinaryFiles();     //Binary íŒŒì¼ë¡œ ì €ì¥
         }
         EditorGUILayout.EndHorizontal();
     }

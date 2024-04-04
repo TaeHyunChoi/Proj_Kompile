@@ -63,11 +63,11 @@ public class UITitle : UIBase
                     Main.LevelMgr.LoadSceneAsync(ContentType.Field, map);
                     break;
                 case 1:
-                    //게임 저장 UI 호출
+                    //寃뚯엫 ???UI ?몄텧
                     Debug.Log("Saved Data List");
                     break;
                 case 2:
-                    //옵션창 호출
+                    //?듭뀡李??몄텧
                     Debug.Log("Option window");
                     break;
                 case 3:
@@ -82,7 +82,7 @@ public class UITitle : UIBase
         }
         else if (Compare(input, CANCEL))
         {
-            //메뉴가 비활성화 == 무언가를 Enter한 상태
+            //硫붾돱媛 鍮꾪솢?깊솕 == 臾댁뼵媛瑜?Enter???곹깭
             if (!enabled)
             {
                 enabled = true;

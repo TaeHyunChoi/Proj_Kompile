@@ -7,9 +7,9 @@ using UnityEngine.SceneManagement;
 public class LevelManager
 {
     private CanvasGroup loadingCurtain;
-    public LevelManager(CanvasGroup curtain)
+    public LevelManager()
     {
-        loadingCurtain = curtain;
+        loadingCurtain = Main.UIMgr.GetOverlayCanvas().transform.GetChild(0).GetComponent<CanvasGroup>(); ;
         loadingCurtain.alpha = 0;
         loadingCurtain.gameObject.SetActive(false);
     }
@@ -33,7 +33,7 @@ public class LevelManager
             yield return loadingCurtain.alpha += Time.fixedDeltaTime * 0.75f;
         }
 
-        Main.Instance.Dispose();
+        Main.Get.Dispose();
         GC.Collect();
 
         string sceneName = string.Empty;
@@ -45,13 +45,12 @@ public class LevelManager
         }
 
         AsyncOperation loadAsync = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
-        
         while (!loadAsync.isDone)
         {
             yield return null;
         }
         
-        yield return Main.Instance.SetContent(type);
+        yield return Main.Get.SetContent(type);
 
         while(loadingCurtain.alpha > 0)
         {
@@ -59,6 +58,6 @@ public class LevelManager
         }
         loadingCurtain.gameObject.SetActive(false);
 
-        Main.Instance.StartContent();
+        Main.Get.StartContent();
     }
 }

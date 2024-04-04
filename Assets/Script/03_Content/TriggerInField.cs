@@ -7,7 +7,7 @@ public class TriggerInField : MonoBehaviour
     [SerializeField] InteractType type;
     private bool isInTrigger;
 
-    //ÀÌ°Å ¼³°è ÇÊ¿äÇÏ´Ù. ÀÏ´Ü ±¸¼º¸¸ Á» µé°í °¡ÀÚ.
+    //ì´ê±° ì„¤ê³„ í•„ìš”í•˜ë‹¤. ì¼ë‹¨ êµ¬ì„±ë§Œ ì¢€ ë“¤ê³  ê°€ì.
     private void Call()
     {
         switch (type)

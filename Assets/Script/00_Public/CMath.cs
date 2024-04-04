@@ -10,7 +10,7 @@ namespace CMathf
         {
             float d = (int)Mathf.Pow(10, exponent);
 
-            //exponent가 대부분 2 또는 3이므로 캐싱
+            //exponent媛 ?遺遺?2 ?먮뒗 3?대?濡?罹먯떛
             float d_invert;
             switch (exponent)
             {

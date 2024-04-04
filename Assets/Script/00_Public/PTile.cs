@@ -151,8 +151,8 @@ public static class PTile
     public static byte GetMoveQuarant(Vector3 diff)
     {
         byte q = 0;
-        q |= (byte)((diff.z > diff.x) ? 0b_10 : 0);                 // y =  x �������� ��
-        q |= (byte)((diff.z > -diff.x + SIZE) ? 0b_01 : 0);    // y = -x �������� ��
+        q |= (byte)((diff.z > diff.x) ? 0b_10 : 0);                 // y =  x 占쏙옙占쏙옙占쏙옙占쏙옙 占쏙옙
+        q |= (byte)((diff.z > -diff.x + SIZE) ? 0b_01 : 0);    // y = -x 占쏙옙占쏙옙占쏙옙占쏙옙 占쏙옙
 
         switch (q)
         {

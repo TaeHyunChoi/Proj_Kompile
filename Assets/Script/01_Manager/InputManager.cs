@@ -39,7 +39,7 @@ public class InputManager
 
     private void Blocked(int input)
     { 
-        /* 입력을 막음 */
+        /* ?낅젰??留됱쓬 */
     }
     public void BlockInput()
     {

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public abstract class UIBase
 {
-    protected Transform  transform;
+    protected Transform transform;
     protected GameObject gameObject;
 
     public abstract void Init(GameObject go);

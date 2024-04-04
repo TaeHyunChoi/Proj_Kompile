@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -242,7 +242,7 @@ public class OnOpening : ISequenceUpdater
 
     public void Start()
     {
-        Main.Instance.enabled = true;
+        Main.Get.enabled = true;
         NextSequence();
     }
     public void Update()

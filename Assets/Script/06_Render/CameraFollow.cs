@@ -12,7 +12,7 @@ public class CameraFollow : MonoBehaviour
     {
         enabled = false;
     }
-    //Camera.main.GetComponent<CameraFollow> ¶ó°í ÇÑ ¹ø¸¸ ¾²°í ³¯¸®´Â °Ô ÁÁÀ¸·Á³ª
+    //Camera.main.GetComponent<CameraFollow> ë¼ê³  í•œ ë²ˆë§Œ ì“°ê³  ë‚ ë¦¬ëŠ” ê²Œ ì¢‹ìœ¼ë ¤ë‚˜
     public void SetFollow(Transform target)
     {
         this.target = target;
