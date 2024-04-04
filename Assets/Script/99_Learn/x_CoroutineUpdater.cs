@@ -2,16 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CoroutineUpdater : MonoBehaviour
+public class x_CoroutineUpdater : MonoBehaviour
 {
-    private List<CoroutineHandlerBase> handlers = new List<CoroutineHandlerBase>();
+    private List<x_CoroutineHandlerBase> handlers = new List<x_CoroutineHandlerBase>();
     private List<bool> finished = new List<bool>();
 
     private void Awake()
     {
-        handlers.Add(new CoroutineHander_1(new TestFunc(Func01), 0));
+        handlers.Add(new x_CoroutineHander_1(new x_TestFunc(Func01), 0));
         //finished.Add(false);
-        handlers.Add(new CoroutineHander_1(new TestFunc(Func02), 0));
+        handlers.Add(new x_CoroutineHander_1(new x_TestFunc(Func02), 0));
         //finished.Add(false);
     }
     private void Update()

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CoroutineHandlerBase
+public class x_CoroutineHandlerBase
 {
     protected int index;
     public virtual bool Update()
@@ -11,13 +11,13 @@ public class CoroutineHandlerBase
     }
 }
 
-public delegate int TestFunc(int index, int count, out int countNext);
-public class CoroutineHander_1 : CoroutineHandlerBase
+public delegate int x_TestFunc(int index, int count, out int countNext);
+public class x_CoroutineHander_1 : x_CoroutineHandlerBase
 {
-    private TestFunc function;
+    private x_TestFunc function;
     private int count;
 
-    public CoroutineHander_1(TestFunc func, int count)
+    public x_CoroutineHander_1(x_TestFunc func, int count)
     {
         index = 0;
         this.count = count;

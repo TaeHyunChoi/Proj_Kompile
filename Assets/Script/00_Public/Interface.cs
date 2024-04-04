@@ -10,3 +10,7 @@ public interface ISequenceUpdater
     public void Update();
     public void Close();
 }
+public interface IUpdateRoutine
+{
+    public int Update(int index);
+}

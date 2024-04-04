@@ -42,7 +42,7 @@ public class Main : MonoBehaviour
     }
     private void Start()
     {
-        mgrLevel.LoadOpeningSceneAsync();
+        mgrLevel.LoadSceneAsync(ContentType.Opening, -1);
         enabled = false;
     }
     private void Update()
