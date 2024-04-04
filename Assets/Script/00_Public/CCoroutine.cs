@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CoroutineHandler
+public class CCoroutineHandler
 {
     protected int index;
     public virtual bool MoveNext()
@@ -10,13 +10,13 @@ public class CoroutineHandler
         return false;
     }
 }
-public class CoroutineLoad<T> : CoroutineHandler where T: class, IUpdateRoutine
+public class CCoroutine<T> : CCoroutineHandler where T: class, IUpdateRoutine
 {
     private T routine;
 
-    public CoroutineLoad(T level)
+    public CCoroutine(T data)
     {
-        this.routine = level;
+        this.routine = data;
         index = 0;
     }
     public override bool MoveNext()

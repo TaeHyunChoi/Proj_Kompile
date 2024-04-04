@@ -8,14 +8,6 @@ public static class Public
     public const float SPEED_MOVE = 4f;
 
     public const int    TILE_SHIFT_HEIGHT   = 8;
-
-    //public const float  TILE_SIZE           = 1f;
-    //public const float  TILE_INVERSE        = 1f    / TILE_SIZE;
-    //public const float  TILE_HALF           = 0.5f  * TILE_SIZE;
-    //public const float  TILE_HALF_INVERSE   = 1f    / TILE_HALF;
-    //public const float  TILE_QUATER         = 0.25f * TILE_SIZE;
-    //public const float  TILE_QUATER_INVERSE = 1f    / TILE_QUATER;
-
     public static void BlockInput(int input) { ;}
 }
 public static class IDxInput
@@ -67,6 +59,13 @@ public static class IDxInput
 public delegate void InputDele(int input);
 
 // enum
+public enum SceneState : byte
+{ 
+    None,
+    Load,
+    Play,
+    Pause,
+}
 public enum Stat
 { 
     HP = 0,

@@ -12,5 +12,16 @@ public interface ISequenceUpdater
 }
 public interface IUpdateRoutine
 {
-    public int Update(int index);
+    public int Update(int index)
+    {
+        switch (index)
+        {
+            case 0:
+                break;
+            default:
+                return -1;
+        }
+
+        return index + 1;
+    }
 }

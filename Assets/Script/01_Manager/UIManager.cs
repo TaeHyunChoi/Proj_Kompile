@@ -19,30 +19,6 @@ public class UIManager
         currentType = UIType.None;
     }
 
-    public void Set(ContentType type)
-    {
-        Coroutiner.PlayCoroutine(IEInitUIAsync(type));
-    }
-
-    private IEnumerator IEInitUIAsync(ContentType contentType)
-    {
-        switch (contentType)
-        {
-            case ContentType.Opening:
-                {
-                    Task<UITitle> task_Title = AssetManager.CreateUIAsync<UITitle>("UITitle", canvas_camera.transform, false);
-                    yield return new WaitUntil(() => task_Title.IsCompletedSuccessfully);
-                    uiBucket[(int)UIType.Title] = task_Title.Result;
-                    task_Title.Dispose();
-                }
-                break;
-            case ContentType.Field:
-                {
-
-                }
-                break;
-        }
-    }
     public void OpenUI(UIType type)
     {
         currentType = type;

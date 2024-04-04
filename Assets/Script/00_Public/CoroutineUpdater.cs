@@ -5,8 +5,9 @@ using UnityEngine;
 public class CoroutineUpdater : MonoBehaviour
 {
     private static CoroutineUpdater instance;
+    public static CoroutineUpdater Get { get => instance; }
 
-    private List<CoroutineHandler> handlers = new List<CoroutineHandler>();
+    private List<CCoroutineHandler> handlers = new List<CCoroutineHandler>();
     private List<bool> isFinished = new List<bool>();
 
     private void Awake()
@@ -45,7 +46,7 @@ public class CoroutineUpdater : MonoBehaviour
             enabled = false;
         }
     }
-    public static void SetHandler(CoroutineHandler handler)
+    public void SetHandler(CCoroutineHandler handler)
     {
         if (null == handler)
         {
@@ -53,10 +54,10 @@ public class CoroutineUpdater : MonoBehaviour
             return;
         }
 
-        if (0 == instance.handlers.Count)
+        if (0 == handlers.Count)
         {
-            instance.enabled = true;
+            enabled = true;
         }
-        instance.handlers.Add(handler);
+        handlers.Add(handler);
     }
 }
