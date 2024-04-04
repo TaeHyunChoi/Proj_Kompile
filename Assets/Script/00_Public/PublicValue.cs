@@ -87,12 +87,9 @@ public enum GameState : byte
     Opening = 1 << 4,
     Field   = 1 << 5,
     Battle  = 1 << 6,
-    Event   = 1 << 7,
+    Event   = 1 << 7
 }
 
-//TODO: sub-state 느낌으로 각 layer의 state를 저장(0~9)
-//byte: [4:game-state][4:sub-state]
-//잘 안되는데..
 public enum OpeningState : byte
 {
     None = 0,
@@ -110,14 +107,14 @@ public enum ContentType
     Event,
     Count,
 }
-public enum UIType
+
+public enum UIType : byte
 { 
     None   = 0,
     Option,
     Title,
     SaveData,
-
-    Count,
+    Count
 }
 public enum InteractType
 { 

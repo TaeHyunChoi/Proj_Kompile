@@ -9,7 +9,7 @@ public partial class Main // .SetContent
         this.state = state;
         mgrScene.LoadSceneAsync(-1);
     }
-    public void EnterState()
+    public void Enter()
     {
         switch (state)
         {
@@ -44,7 +44,7 @@ public partial class Main // .SetContent
                         return index;
                     }
                     GameMgr.SetSequence(taskOpening.Result);
-                    UIMgr.SetBucket((int)UIType.Title, taskTitle.Result);
+                    UIMgr.SetBucket(UIType.Title, taskTitle.Result);
                     break;
                 case 2:
                     taskOpening.Dispose();

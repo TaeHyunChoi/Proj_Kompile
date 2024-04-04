@@ -5,6 +5,7 @@ public class UIManager
     private Canvas canvas_overlay;
     private Canvas canvas_camera;
 
+    //얘도 코드 직관성이 떨어지네. 수정합시다.
     private UIBase[] uiBucket;
     private UIType currentType;
 
@@ -37,15 +38,15 @@ public class UIManager
         return canvas_camera;
     }
 
-    public void SetBucket(int index, UIBase ui)
+    public void SetBucket(UIType type, UIBase ui)
     {
-        uiBucket[index] = ui;
+        uiBucket[(byte)type] = ui;
     }
-    public void Dispose(ContentType type)
+    public void Dispose(GameState state)
     { 
-        switch(type)
+        switch(state)
         {
-            case ContentType.Opening:
+            case GameState.Opening:
                 uiBucket[(int)UIType.Title].Close();
                 uiBucket[(int)UIType.Title] = null;
                 break;

@@ -8,13 +8,12 @@ public partial class Main : MonoBehaviour
     private GameManager  mgrGame;
     private SceneManager mgrScene;
 
-    public static Main          Get { get => instance; }
+    public static Main          Get      { get => instance; }
     public static UIManager     UIMgr    { get => instance.mgrUI; }
     public static InputManager  InputMgr { get => instance.mgrInput; }
     public static GameManager   GameMgr  { get => instance.mgrGame; }
     public static SceneManager  SceneMgr { get => instance.mgrScene; }
     
-    private ContentType current;
     private GameState state;
 
     private void Awake()
@@ -30,7 +29,6 @@ public partial class Main : MonoBehaviour
         DataTable.LoadTable();
         //++Load Player Data
 
-        current = ContentType.None;
         state = GameState.None;
 
         mgrInput = new InputManager();
@@ -40,7 +38,8 @@ public partial class Main : MonoBehaviour
     }
     private void Start()
     {
-        Init(GameState.Opening);
+        state = GameState.Opening;
+        mgrScene.LoadSceneAsync(0);
     }
     private void Update()
     {
@@ -55,7 +54,7 @@ public partial class Main : MonoBehaviour
     public void Dispose()
     {
         mgrGame.Dispose();
-        mgrUI.Dispose(current);
+        mgrUI.Dispose(state);
         System.GC.Collect();
     }
 }

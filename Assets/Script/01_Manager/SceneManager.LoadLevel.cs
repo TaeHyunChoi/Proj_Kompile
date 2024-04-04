@@ -51,7 +51,7 @@ public partial class SceneManager // .LoadLevel
                     }
                     break;
                 case 4:
-                    Main.Get.EnterState();
+                    Main.Get.Enter();
                     break;
                 case 5:
                     if (SceneState.Play != Main.SceneMgr.state)
