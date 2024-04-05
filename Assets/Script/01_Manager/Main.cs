@@ -2,14 +2,13 @@ using UnityEngine;
 
 public partial class Main : MonoBehaviour
 {
-    private static Main     instance;
-    private UIMgr         mgrUI;
-    private SceneMgr        mgrScene;
+    private static Main instance;
+    private UIMgr       mgrUI;
+    private SceneMgr    mgrScene;
 
-    //하 이거 뭔가 마음에 안 드네 진짜...
-    public static Main          Instance         { get => instance; }
-    public static UIMgr       UIMgr       { get => instance.mgrUI; }
-    public static SceneMgr      SceneMgr    { get => instance.mgrScene; }
+    public static Main     Instance { get => instance; }
+    public static UIMgr    UIMgr    { get => instance.mgrUI; }
+    public static SceneMgr SceneMgr { get => instance.mgrScene; }
 
     private GameState state;
     public GameState State { get => state; }
@@ -34,9 +33,6 @@ public partial class Main : MonoBehaviour
 
         mgrUI = new UIMgr(transform.Find("UI"));
         mgrScene = new SceneMgr(transform.Find("Scene"));
-
-        //mgrInput = new x_InputMgr();
-        //mgrGame = new x_GameManager(transform.Find("Ingame"));
     }
     private void Start()
     {

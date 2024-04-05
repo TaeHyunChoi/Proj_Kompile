@@ -8,10 +8,6 @@ public partial class Main // .SetContent
     {
         switch (state)
         {
-            case GameState.Opening:
-                EnterOpening opening = new EnterOpening();
-                CoroutineUpdater.Get.SetHandler(new CCoroutine<EnterOpening>(opening));
-                break;
             case GameState.Field:
                 EnterField field = new EnterField();
                 CoroutineUpdater.Get.SetHandler(new CCoroutine<EnterField>(field));
@@ -23,32 +19,27 @@ public partial class Main // .SetContent
     private class EnterOpening : IUpdateRoutine
     {
         Task<OnOpening> taskOpening;
-        Task<UITitle>   taskTitle;
+        //Task<UITitle>   taskTitle;
 
-        public int Update(int index)
+        public int MoveNext(int index)
         {
             switch (index)
             {
                 case 0:
                     Transform transformCameraCanvas = UIMgr.CameraCanvas.transform;
                     taskOpening = OnOpening.InitAsync(transformCameraCanvas);
-                    taskTitle = AssetManager.CreateUIAsync<UITitle>("UITitle", transformCameraCanvas, false);
                     break;
                 case 1:
-                    if (false == taskOpening.IsCompletedSuccessfully
-                        || false == taskTitle.IsCompletedSuccessfully)
+                    if (false == taskOpening.IsCompletedSuccessfully)
                     {
                         return index;
                     }
-                    taskOpening.Result.MoveNext();
-                    //UIMgr.Set(UIType.Title, taskTitle.Result);
+                    taskOpening.Result.Set();
                     break;
                 case 2:
                     taskOpening.Dispose();
-                    taskTitle.Dispose();
                     break;
                 default:
-                    SceneMgr.SetState(SceneState.Play);
                     return -1;
             }
 
@@ -60,7 +51,7 @@ public partial class Main // .SetContent
         Task<bool> taskInitField;
         InField field;
 
-        public int Update(int index)
+        public int MoveNext(int index)
         {
             switch (index)
             {

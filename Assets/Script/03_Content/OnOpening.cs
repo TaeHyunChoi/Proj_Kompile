@@ -1,89 +1,16 @@
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class OnOpening : ContentBase
+public partial class OnOpening : ContentBase
 {
-    private class PlayLogo : IUpdateRoutine, IGetInput
-    {
-        private Image imageLogo;
-        private float wait;
-        private float alpha;
-        private int state;
-
-        public int Update(int index)
-        {
-            if (state != index)
-            {
-                index = state;
-            }
-
-            switch (index)
-            {
-                case 0:
-                    if (alpha < 1)
-                    {
-                        alpha += Time.unscaledDeltaTime;
-                        imageLogo.color = new Color(1f, 1f, 1f, alpha);
-                        return index;
-                    }
-                    alpha = 1f;
-                    break;
-                case 1:
-                    if (wait < 1f)
-                    {
-                        wait += Time.unscaledDeltaTime;
-                        return index;
-                    }
-                    break;
-                case 2:
-                    if (alpha > 0)
-                    {
-                        alpha -= Time.unscaledDeltaTime * 2f;
-                        imageLogo.color = new Color(1f, 1f, 1f, alpha);
-                        return index;
-                    }
-                    break;
-                default:
-                    Main.Instance.SetInputGetter(null);
-                    instance.MoveNext();
-                    return -1;
-            }
-            return state = index + 1;
-        }
-
-        public void Input(int input)
-        {
-            //TODO: compare input (any action key)
-
-            if (0 == state)
-            {
-                alpha = 1f;
-                imageLogo.color = new Color(1f, 1f, 1f, alpha);
-                state = 2;
-            }
-            // In other cases, input doesn`t processed.
-        }
-
-        public PlayLogo(Transform transform)
-        {
-            transform.gameObject.SetActive(true);
-            imageLogo = transform.GetComponent<Image>();
-            imageLogo.color = new Color(1f, 1f, 1f, 0f);
-            alpha = 0;
-            wait = 0;
-            state = 0;
-
-            Main.Instance.SetInputGetter(this);
-        }
-    }
-
     private static OnOpening instance;
     private Transform transform;
 
-    public static async Task<OnOpening> InitAsync(Transform canvas_ui)
+    public static async Task<OnOpening> InitAsync(Transform canvas_camera)
     {
-        GameObject go = await AssetManager.InstantiateAsync("OpeningGame", canvas_ui, true);
+        GameObject go = await AssetManager.InstantiateAsync("OpeningGame", canvas_camera, true);
         OnOpening opening = new OnOpening(go.transform);
         return opening;
     }
@@ -92,20 +19,34 @@ public class OnOpening : ContentBase
         instance = this;
         this.transform = transform;
         state = 0;
+
+        Image[] img = transform.GetComponentsInChildren<Image>();
+        for (int i = 0; i < img.Length; ++i)
+        {
+            img[i].color = new Color(1f, 1f, 1f, 0f);
+        }
     }
 
-    public void MoveNext()
+    public void Set()
     {
         switch (state)
         {
             case 0:
                 Main.Instance.SetContent(this);
-                PlayLogo logo = new PlayLogo(transform.GetChild(0));
-                CoroutineUpdater.Get.SetHandler(new CCoroutine<PlayLogo>(logo));
+                OpeningLogo logo = new OpeningLogo(transform.GetChild(0));
+                CoroutineUpdater.Get.SetHandler(new CCoroutine<OpeningLogo>(logo));
+                break;
+            case 1:
+                OpeningDemo demo = new OpeningDemo(transform.GetChild(1));
+                CoroutineUpdater.Get.SetHandler(new CCoroutine<OpeningDemo>(demo));
+                break;
+            case 2:
+                OpeningTitle title = new OpeningTitle(transform.GetChild(2));
+                CoroutineUpdater.Get.SetHandler(new CCoroutine<OpeningTitle>(title));
                 break;
             default:
-                state = -1;
-                break;
+                //UIMgr.Show(Title);을 호출
+                return;
         }
 
         state += 1;

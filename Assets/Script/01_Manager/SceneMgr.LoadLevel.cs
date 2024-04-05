@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,54 +9,40 @@ public partial class SceneMgr // .LoadScene
     {
         private AsyncOperation loadAsync;
         private CanvasGroup curtain;
-        private GameState before;
+        private Task<OnOpening> taskOpening;
 
-        public int Update(int index)
+        public int MoveNext(int index)
         {
             switch (index)
             {
                 case 0:
-                    Main.SceneMgr.state = SceneState.Load;
-                    curtain.alpha = 0;
+                    Main.SceneMgr.SetState(SceneState.Load);
                     curtain.gameObject.SetActive(true);
                     break;
                 case 1:
-                    if (curtain.alpha < 1)
-                    {
-                        curtain.alpha += Time.fixedDeltaTime * 0.75f;
-                        return index;
-                    }
-                    curtain.alpha = 1;
-                    break;
-                case 2:
                     loadAsync = SceneManager.LoadSceneAsync("010_OpeningScene", LoadSceneMode.Single);
                     break;
-                case 3:
+                case 2:
                     if (false == loadAsync.isDone)
                     {
                         return index;
                     }
-                    // Init
-                    Main.Instance.Enter(GameState.Opening);
+                    break;
+                case 3:
+                    Transform transformCameraCanvas = Main.UIMgr.CameraCanvas.transform;
+                    taskOpening = OnOpening.InitAsync(transformCameraCanvas);
                     break;
                 case 4:
-                    if (SceneState.Play != Main.SceneMgr.state)
+                    if (false == taskOpening.IsCompletedSuccessfully)
                     {
                         return index;
                     }
-                    break;
-                case 6:
-                    if (curtain.alpha > 0)
-                    {
-                        curtain.alpha -= Time.fixedDeltaTime;
-                        return index;
-                    }
-                    break;
-                case 7:
-                    // Close Curtain and Start;
-                    //Main.Get.StartContent();
+                    curtain.gameObject.SetActive(false);
+                    taskOpening.Result.Set();
                     break;
                 default:
+                    taskOpening.Dispose();
+                    Main.SceneMgr.SetState(SceneState.Play);
                     return -1;
             }
 
@@ -65,7 +52,6 @@ public partial class SceneMgr // .LoadScene
         public LoadOpeningScene(CanvasGroup curtain, GameState state)
         {
             this.curtain = curtain;
-            before = state;
         }
     }
 
@@ -76,7 +62,7 @@ public partial class SceneMgr // .LoadScene
         private MapData mapData;
         private GameState before;
 
-        public int Update(int index)
+        public int MoveNext(int index)
         {
             switch (index)
             {

@@ -17,7 +17,7 @@ public class CCoroutine<T> : CCoroutineHandler where T: class, IUpdateRoutine
     }
     public override bool MoveNext()
     {
-        index = routine.Update(index);
+        index = routine.MoveNext(index);
 
         if (-1 == index)
         {

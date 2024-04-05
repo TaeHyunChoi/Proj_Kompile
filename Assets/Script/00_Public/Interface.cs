@@ -11,10 +11,12 @@ public interface ISequenceUpdater
     public void Update();
     public void Close();
 }
+
 public interface IUpdateRoutine
 {
-    public int Update(int index);
+    public int MoveNext(int index);
 }
+
 public interface IGetInput
 {
     public void Input(int input);
@@ -45,7 +47,7 @@ public class InputHandler
 
     private void HandleInput(int input)
     {
-        // ÀÔ·Â Ã³¸® ·ÎÁ÷
+        // ï¿½Ô·ï¿½ Ã³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     }
 }
 //*/
