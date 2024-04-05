@@ -54,8 +54,10 @@ public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
         }
         public void Input(int input)
         {
-            //TODO: compare input (any action key)
-
+            if (false == IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ACTION))
+            {
+                return;
+            }
             if (0 == state)
             {
                 alpha = 1f;

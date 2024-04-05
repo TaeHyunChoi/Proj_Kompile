@@ -5,14 +5,14 @@ public class x_UIMgr
     private Canvas canvas_overlay;
     private Canvas canvas_camera;
 
-    private UIBase[] uiBucket;
+    private x_UIBase[] uiBucket;
     private UIType currentType;
 
     public x_UIMgr(Transform transform)
     {
         canvas_overlay = transform.GetChild(0).GetComponent<Canvas>();
         canvas_camera = transform.GetChild(1).GetComponent<Canvas>();
-        uiBucket = new UIBase[(int)UIType.Count];
+        uiBucket = new x_UIBase[(int)UIType.Count];
         currentType = UIType.None;
     }
 
@@ -37,7 +37,7 @@ public class x_UIMgr
         return canvas_camera;
     }
 
-    public void Set(UIType type, UIBase ui)
+    public void Set(UIType type, x_UIBase ui)
     {
         uiBucket[(byte)type] = ui;
     }

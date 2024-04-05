@@ -5,18 +5,18 @@ public partial class SceneMgr
     private CanvasGroup loadingCurtain;
     private SceneState state;
 
-    public void LoadSceneAsync(GameState current, GameState next, int code = -1)
+    public void LoadSceneAsync(GameState next, int code = -1)
     {
         switch (next)
         {
             case GameState.Opening:
-                LoadOpeningScene opening = new LoadOpeningScene(loadingCurtain, current);
+                LoadOpeningScene opening = new LoadOpeningScene(loadingCurtain);
                 CoroutineUpdater.Get.SetHandler(new CCoroutine<LoadOpeningScene>(opening));
                 break;
             case GameState.Field:
                 if (true == DataTable.TryGetMapData(code, out MapData map))
                 {
-                    LoadFieldScene level = new LoadFieldScene(loadingCurtain, map, current);
+                    LoadFieldScene level = new LoadFieldScene(loadingCurtain, map);
                     CoroutineUpdater.Get.SetHandler(new CCoroutine<LoadFieldScene>(level));
                 }
                 else

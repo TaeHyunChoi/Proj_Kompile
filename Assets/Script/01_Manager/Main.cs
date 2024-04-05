@@ -10,10 +10,9 @@ public partial class Main : MonoBehaviour
     public static UIMgr    UIMgr    { get => instance.mgrUI; }
     public static SceneMgr SceneMgr { get => instance.mgrScene; }
 
-    private GameState state;
-    public GameState State { get => state; }
-
+    //current;
     private ContentBase content;
+    private UIBase      ui;
     private IGetInput inputGetter;
 
     private void Awake()
@@ -29,27 +28,21 @@ public partial class Main : MonoBehaviour
         DataTable.LoadTable();
         //++Load Player Data
 
-        state = GameState.None;
-
         mgrUI = new UIMgr(transform.Find("UI"));
         mgrScene = new SceneMgr(transform.Find("Scene"));
     }
     private void Start()
     {
-        mgrScene.LoadSceneAsync(state, GameState.Opening);
+        mgrScene.LoadSceneAsync(GameState.Opening);
     }
     private void Update()
     {
+        //TODO: not Update(), but event?
         if (true == InputMgr.TryGetInput(out int input)
             && null != inputGetter)
         {
             inputGetter.Input(input);
         }
-    }
-    public void Dispose(GameState state)
-    {
-        content.Dispose();
-        //mgrUI.Dispose(state);
     }
 
     public void SetContent(ContentBase content)
@@ -59,5 +52,13 @@ public partial class Main : MonoBehaviour
     public void SetInputGetter(IGetInput getter)
     {
         inputGetter = getter;
+    }
+    public void Dispose()
+    {
+        //TODO: Dispose() timing?
+        if (content != null)
+        {
+            content.Dispose();
+        }
     }
 }

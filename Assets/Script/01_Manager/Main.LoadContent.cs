@@ -13,38 +13,6 @@ public partial class Main // .SetContent
                 CoroutineUpdater.Get.SetHandler(new CCoroutine<EnterField>(field));
                 break;
         }
-
-        this.state = state;
-    }
-    private class EnterOpening : IUpdateRoutine
-    {
-        Task<OnOpening> taskOpening;
-        //Task<UITitle>   taskTitle;
-
-        public int MoveNext(int index)
-        {
-            switch (index)
-            {
-                case 0:
-                    Transform transformCameraCanvas = UIMgr.CameraCanvas.transform;
-                    taskOpening = OnOpening.InitAsync(transformCameraCanvas);
-                    break;
-                case 1:
-                    if (false == taskOpening.IsCompletedSuccessfully)
-                    {
-                        return index;
-                    }
-                    taskOpening.Result.Set();
-                    break;
-                case 2:
-                    taskOpening.Dispose();
-                    break;
-                default:
-                    return -1;
-            }
-
-            return index + 1;
-        }
     }
     private class EnterField : IUpdateRoutine
     {

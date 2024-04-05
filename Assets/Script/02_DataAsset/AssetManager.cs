@@ -20,7 +20,7 @@ public class AssetManager
         return go;
     }
 
-    public static async Task<T> CreateUIAsync<T>(string address, Transform parent, bool isOn) where T: UIBase, new()
+    public static async Task<T> CreateUIAsync<T>(string address, Transform parent, bool isOn) where T: x_UIBase, new()
     {
         AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
         GameObject go = await handle.Task;

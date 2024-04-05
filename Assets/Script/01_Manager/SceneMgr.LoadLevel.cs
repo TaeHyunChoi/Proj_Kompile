@@ -7,8 +7,8 @@ public partial class SceneMgr // .LoadScene
 {
     public class LoadOpeningScene : IUpdateRoutine
     {
-        private AsyncOperation loadAsync;
-        private CanvasGroup curtain;
+        private AsyncOperation  loadAsync;
+        private CanvasGroup     curtain;
         private Task<OnOpening> taskOpening;
 
         public int MoveNext(int index)
@@ -49,18 +49,16 @@ public partial class SceneMgr // .LoadScene
             return index + 1;
         }
 
-        public LoadOpeningScene(CanvasGroup curtain, GameState state)
+        public LoadOpeningScene(CanvasGroup curtain)
         {
             this.curtain = curtain;
         }
     }
-
     public class LoadFieldScene : IUpdateRoutine
     {
         private AsyncOperation loadAsync;
         private CanvasGroup curtain;
         private MapData mapData;
-        private GameState before;
 
         public int MoveNext(int index)
         {
@@ -104,7 +102,6 @@ public partial class SceneMgr // .LoadScene
                     {
                         return index;
                     }
-                    Main.Instance.Dispose(before);
                     break;
                 case 6:
                     if (curtain.alpha > 0)
@@ -123,11 +120,10 @@ public partial class SceneMgr // .LoadScene
             return index + 1;
         }
 
-        public LoadFieldScene(CanvasGroup curtain, MapData map, GameState state)
+        public LoadFieldScene(CanvasGroup curtain, MapData map)
         {
             this.curtain = curtain;
             mapData = map;
-            before = state;
         }
     }
 }

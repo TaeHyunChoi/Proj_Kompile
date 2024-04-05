@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UISaveData : UIBase
+public class UISaveData : x_UIBase
 {
     public override void Close()
     {

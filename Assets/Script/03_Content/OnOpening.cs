@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -14,6 +15,8 @@ public partial class OnOpening : ContentBase
         OnOpening opening = new OnOpening(go.transform);
         return opening;
     }
+
+
     public OnOpening(Transform transform)
     {
         instance = this;
@@ -26,7 +29,6 @@ public partial class OnOpening : ContentBase
             img[i].color = new Color(1f, 1f, 1f, 0f);
         }
     }
-
     public void Set()
     {
         switch (state)
@@ -55,6 +57,9 @@ public partial class OnOpening : ContentBase
     {
         GameObject obj = transform.gameObject;
         GameObject.Destroy(obj);
-        AssetManager.ReleaseAsset(obj.GetInstanceID());
+        if (false == AssetManager.ReleaseAsset(obj.GetInstanceID()))
+        {
+            Debug.LogError($"Can`t Release Asset: {obj.name}({obj.GetInstanceID()})");
+        }
     }
 }

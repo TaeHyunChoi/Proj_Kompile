@@ -1,13 +1,8 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class UIBase
+public abstract class UIBase : MonoBehaviour
 {
-    protected Transform transform;
-    protected GameObject gameObject;
-
-    public abstract void Init(GameObject go);
-    public abstract void Open();
-    public abstract void Update();
-    public abstract void Input(int input);
-    public abstract void Close();
+    public abstract void Dispose();
 }
