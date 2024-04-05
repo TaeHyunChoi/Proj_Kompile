@@ -2,19 +2,20 @@ using UnityEngine;
 
 public partial class Main : MonoBehaviour
 {
-    private static Main  instance;
-    private UIManager    mgrUI;
-    private InputManager mgrInput;
-    private GameManager  mgrGame;
-    private SceneManager mgrScene;
+    private static Main     instance;
+    private UIMgr         mgrUI;
+    private SceneMgr        mgrScene;
 
-    public static Main          Get      { get => instance; }
-    public static UIManager     UIMgr    { get => instance.mgrUI; }
-    public static InputManager  InputMgr { get => instance.mgrInput; }
-    public static GameManager   GameMgr  { get => instance.mgrGame; }
-    public static SceneManager  SceneMgr { get => instance.mgrScene; }
-    
+    //하 이거 뭔가 마음에 안 드네 진짜...
+    public static Main          Instance         { get => instance; }
+    public static UIMgr       UIMgr       { get => instance.mgrUI; }
+    public static SceneMgr      SceneMgr    { get => instance.mgrScene; }
+
     private GameState state;
+    public GameState State { get => state; }
+
+    private ContentBase content;
+    private IGetInput inputGetter;
 
     private void Awake()
     {
@@ -31,30 +32,36 @@ public partial class Main : MonoBehaviour
 
         state = GameState.None;
 
-        mgrInput = new InputManager();
-        mgrGame  = new GameManager(transform.Find("Ingame"));
-        mgrUI    = new UIManager(transform.Find("UI"));
-        mgrScene = new SceneManager();
+        mgrUI = new UIMgr(transform.Find("UI"));
+        mgrScene = new SceneMgr(transform.Find("Scene"));
+
+        //mgrInput = new x_InputMgr();
+        //mgrGame = new x_GameManager(transform.Find("Ingame"));
     }
     private void Start()
     {
-        state = GameState.Opening;
-        mgrScene.LoadSceneAsync(0);
+        mgrScene.LoadSceneAsync(state, GameState.Opening);
     }
     private void Update()
     {
-        int input = mgrInput.Update();
-        mgrUI.Update();
-        mgrGame .Update();
+        if (true == InputMgr.TryGetInput(out int input)
+            && null != inputGetter)
+        {
+            inputGetter.Input(input);
+        }
     }
-    public void StartContent()
+    public void Dispose(GameState state)
     {
-        mgrGame.Start();
+        content.Dispose();
+        //mgrUI.Dispose(state);
     }
-    public void Dispose()
+
+    public void SetContent(ContentBase content)
     {
-        mgrGame.Dispose();
-        mgrUI.Dispose(state);
-        System.GC.Collect();
+        this.content = content;
+    }
+    public void SetInputGetter(IGetInput getter)
+    {
+        inputGetter = getter;
     }
 }

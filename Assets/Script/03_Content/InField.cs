@@ -23,22 +23,26 @@ internal class InField : ISequenceUpdater
     }
     public async Task<bool> InitMap()
     {
-        try
-        {
-            GameObject obj = await AssetManager.InstantiateAsync("UnitBase", Main.GameMgr.GetTransform(), true);
-            player = obj.AddComponent<UnitPlayer>();
-            player.transform.position = new Vector3(0.5f, 0, 0.5f);
+        Debug.Log("Need to dev");
+        await Task.Delay(0);
+        return false;
 
-            CameraFollow camFollow = Camera.main.GetComponent<CameraFollow>();
-            camFollow.SetFollow(player.transform);
-        }
-        catch (Exception e)
-        {
-            Debug.LogError(e.Message);
-            return false;
-        }
+        //try
+        //{
+        //    GameObject obj = await AssetManager.InstantiateAsync("UnitBase", Main.GameMgr.GetTransform(), true);
+        //    player = obj.AddComponent<UnitPlayer>();
+        //    player.transform.position = new Vector3(0.5f, 0, 0.5f);
 
-        return true;
+        //    CameraFollow camFollow = Camera.main.GetComponent<CameraFollow>();
+        //    camFollow.SetFollow(player.transform);
+        //}
+        //catch (Exception e)
+        //{
+        //    Debug.LogError(e.Message);
+        //    return false;
+        //}
+
+        //return true;
     }
 
 

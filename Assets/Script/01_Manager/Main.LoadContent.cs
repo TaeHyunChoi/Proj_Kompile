@@ -1,15 +1,10 @@
-﻿using System.Collections;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using UnityEngine;
 
 public partial class Main // .SetContent
 {
-    public void Init(GameState state)
-    {
-        this.state = state;
-        mgrScene.LoadSceneAsync(-1);
-    }
-    public void Enter()
+    //TODO: seperate Enter from "Init"
+    public void Enter(GameState state)
     {
         switch (state)
         {
@@ -22,6 +17,8 @@ public partial class Main // .SetContent
                 CoroutineUpdater.Get.SetHandler(new CCoroutine<EnterField>(field));
                 break;
         }
+
+        this.state = state;
     }
     private class EnterOpening : IUpdateRoutine
     {
@@ -33,9 +30,9 @@ public partial class Main // .SetContent
             switch (index)
             {
                 case 0:
-                    Transform cameraCanvasTransform = UIMgr.GetCameraCanvas().transform;
-                    taskOpening = OnOpening.InitAsync(cameraCanvasTransform);
-                    taskTitle = AssetManager.CreateUIAsync<UITitle>("UITitle", cameraCanvasTransform, false);
+                    Transform transformCameraCanvas = UIMgr.CameraCanvas.transform;
+                    taskOpening = OnOpening.InitAsync(transformCameraCanvas);
+                    taskTitle = AssetManager.CreateUIAsync<UITitle>("UITitle", transformCameraCanvas, false);
                     break;
                 case 1:
                     if (false == taskOpening.IsCompletedSuccessfully
@@ -43,8 +40,8 @@ public partial class Main // .SetContent
                     {
                         return index;
                     }
-                    GameMgr.SetSequence(taskOpening.Result);
-                    UIMgr.SetBucket(UIType.Title, taskTitle.Result);
+                    taskOpening.Result.MoveNext();
+                    //UIMgr.Set(UIType.Title, taskTitle.Result);
                     break;
                 case 2:
                     taskOpening.Dispose();
@@ -77,7 +74,7 @@ public partial class Main // .SetContent
                     {
                         return index;
                     }
-                    GameMgr.SetSequence(field);
+                    //GameMgr.Set(field);
                     break;
                 case 2:
                     taskInitField.Dispose();

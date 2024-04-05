@@ -63,6 +63,7 @@ public enum SceneState : byte
     Load,
     Play,
     Pause,
+    Leave,
 }
 public enum Stat
 { 

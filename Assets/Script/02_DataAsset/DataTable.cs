@@ -20,7 +20,7 @@ public class DataTable
     public static List<SkillData> SkillTable { get => skillTable; }
     public static List<ItemData>  ItemTable  { get => itemTable; }
     public static List<UnitData>  UnitTable  { get => unitTalbe; }
-    public static List<MapData>   MapTable     { get => mapTable; }
+    public static List<MapData>   MapTable   { get => mapTable; }
 
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
@@ -99,7 +99,6 @@ public class DataTable
         return list;
     }
 
-
     // map sampling
     public static void WriteBinaryMappingData<T>(Dictionary<int, T> data, string fileName) where T:struct
     {
@@ -176,7 +175,6 @@ public class DataTable
         unitTalbe = ReadBinary<UnitData>("UnitData.bin");
         mapTable = ReadBinary<MapData>("MapData.bin");
     }
-
     public static List<T> ReadBinary<T>(string fileName) where T : struct, IDataSetter
     {
         string path = Application.dataPath + "/Resources/bin/" + fileName;
@@ -203,5 +201,21 @@ public class DataTable
         FileStream stream = new FileStream(path, FileMode.Create);
         formatter.Serialize(stream, table);
         stream.Close();
+    }
+
+    // get
+    public static bool TryGetMapData(int code, out MapData map)
+    {
+        for (int i = 0; i < mapTable.Count; ++i)
+        {
+            map = mapTable[i];
+            if (code == map.Code)
+            {
+                return true;
+            }
+        }
+
+        map = default(MapData);
+        return false;
     }
 }

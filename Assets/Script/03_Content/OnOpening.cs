@@ -1,285 +1,119 @@
-using System;
 using System.Threading.Tasks;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class OnOpening : ISequenceUpdater
+public class OnOpening : ContentBase
 {
-    //Inherit: ContentOpening
-    private class OpeningLogo : ContentOpening
+    private class PlayLogo : IUpdateRoutine, IGetInput
     {
-        private Image   logoImage;
+        private Image imageLogo;
+        private float wait;
+        private float alpha;
+        private int state;
 
-        private float   endTime;
-        private float   waitTime;
-
-        public override void Begin()
+        public int Update(int index)
         {
-            canSkip = true;
-            enabled = false;
-            gameObject.SetActive(false);
-
-            logoImage = transform.GetComponent<Image>();
-            endTime = 0f;
-            waitTime = 1.5f;
-            state = -1;
-
-            Next();
-        }
-        public override void Next()
-        {
-            switch (++state)
+            if (state != index)
             {
-                case 0:
-                    gameObject.SetActive(true);
-                    enabled = true;
-                    break;
-                case 1:
-                    endTime = Time.time + waitTime;
-                    break;
-                case 2:
-                    logoImage.color = Color.white;
-                    break;
-                case 3:
-                    enabled = false;
-                    gameObject.SetActive(false);
-                    instance.NextSequence();
-                    break;
+                index = state;
             }
-        }
-        public override void Playing()
-        {
-            switch (state)
+
+            switch (index)
             {
                 case 0:
-                    float cValue = logoImage.color.r + Time.deltaTime * Public.SPEED_FADE;
-                    logoImage.color = new Color(cValue, cValue, cValue, 1f);
-                    if (cValue >= 1)
+                    if (alpha < 1)
                     {
-                        Next();
+                        alpha += Time.unscaledDeltaTime;
+                        imageLogo.color = new Color(1f, 1f, 1f, alpha);
+                        return index;
                     }
+                    alpha = 1f;
                     break;
                 case 1:
-                    if (endTime < Time.time)
+                    if (wait < 1f)
                     {
-                        Next();
+                        wait += Time.unscaledDeltaTime;
+                        return index;
                     }
                     break;
                 case 2:
-                    cValue = logoImage.color.r - Time.deltaTime * Public.SPEED_FADE;
-                    logoImage.color = new Color(cValue, cValue, cValue, 1f);
-                    if (cValue <= 0)
+                    if (alpha > 0)
                     {
-                        Next();
+                        alpha -= Time.unscaledDeltaTime * 2f;
+                        imageLogo.color = new Color(1f, 1f, 1f, alpha);
+                        return index;
                     }
                     break;
+                default:
+                    Main.Instance.SetInputGetter(null);
+                    instance.MoveNext();
+                    return -1;
             }
+            return state = index + 1;
         }
-    }
-    private class OpeningDemo : ContentOpening
-    {
-        public override void Begin()
-        {
-            canSkip = true;
-            enabled = false;
-            gameObject.SetActive(false);
 
+        public void Input(int input)
+        {
+            //TODO: compare input (any action key)
+
+            if (0 == state)
+            {
+                alpha = 1f;
+                imageLogo.color = new Color(1f, 1f, 1f, alpha);
+                state = 2;
+            }
+            // In other cases, input doesn`t processed.
+        }
+
+        public PlayLogo(Transform transform)
+        {
+            transform.gameObject.SetActive(true);
+            imageLogo = transform.GetComponent<Image>();
+            imageLogo.color = new Color(1f, 1f, 1f, 0f);
+            alpha = 0;
+            wait = 0;
             state = 0;
 
-            Next();
-        }
-        public override void Next()
-        {
-            switch (state++)
-            {
-                case 0:
-                    Debug.Log("Not yet Play Demo => OnOpening.MoveNext();");
-                    instance.NextSequence();
-                    break;
-            }
-        }
-        public override void Playing()
-        {
-
-        }
-    }
-    private class OpeningTitle : ContentOpening
-    {
-        private Image[] images;
-        private RectTransform[] rect;
-        private Vector2[] pos;
-
-        private float logoSpeed  = 4000f;
-        private float passedtime = 0f;
-        private float movingTime = 0.75f;
-        private float flashSpeed = 5f;
-        private float dist;
-
-        public override void Begin()
-        {
-            state = -1;
-            canSkip = false;
-            enabled = false;
-            gameObject.SetActive(false);
-
-            images = transform.GetComponentsInChildren<Image>();
-            rect = new RectTransform[2];
-            pos = new Vector2[2];
-            dist = logoSpeed * movingTime;
-
-            rect[0] = images[1].GetComponent<RectTransform>();
-            rect[0].anchoredPosition = new Vector3(rect[0].anchoredPosition.x, rect[0].anchoredPosition.y + dist);
-            pos[0] = rect[0].anchoredPosition;
-
-            rect[1] = images[2].GetComponent<RectTransform>();
-            rect[1].anchoredPosition = new Vector3(rect[1].anchoredPosition.x, rect[1].anchoredPosition.y - dist);
-            pos[1] = rect[1].anchoredPosition;
-
-            images[3].enabled = false;
-            Next();
-        }
-        public override void Next()
-        {
-            switch (++state)
-            {
-                case 0:
-                    passedtime = 0;
-                    enabled = true;
-                    gameObject.SetActive(true);
-                    break;
-                case 1:
-                    images[3].enabled = true;
-                    images[3].color = new Color(1, 1, 1, 0);
-                    break;
-                case 2:
-                    images[3].color = new Color(1, 1, 1, 1);
-                    break;
-                case 3:
-                    enabled = false;
-                    images[3].enabled = false;
-                    instance.NextSequence();
-                    break;
-            }
-        }
-        public override void Playing()
-        {
-            switch (state)
-            {
-                case 0:
-                    float ratio = passedtime / movingTime;
-                    rect[0].anchoredPosition = new Vector3(pos[0].x, pos[0].y - dist * ratio);
-                    rect[1].anchoredPosition = new Vector3(pos[1].x, pos[1].y + dist * ratio);
-
-                    if (passedtime > movingTime)
-                    {
-                        rect = null;
-                        pos = null;
-
-                        Next();
-                    }
-                    else
-                    {
-                        passedtime += Time.deltaTime;
-                    }
-
-                    break;
-                case 1:
-                    float alpha = images[3].color.a + Time.deltaTime * flashSpeed;
-                    images[3].color = new Color(1, 1, 1, alpha);
-                    if (alpha >= 1)
-                    {
-                        Next();
-                    }
-
-                    break;
-                case 2:
-                    alpha = images[3].color.a - Time.deltaTime * (flashSpeed * 0.6f);
-                    images[3].color = new Color(1, 1, 1, alpha);
-                    if (alpha <= 0)
-                    {
-                        Next();
-                    }
-
-                    break;
-            }
+            Main.Instance.SetInputGetter(this);
         }
     }
 
     private static OnOpening instance;
-
-    private ContentOpening   current;
-    private GameObject       gameObject;
-    private Transform        transform;
-
-    private int state = 0;
+    private Transform transform;
 
     public static async Task<OnOpening> InitAsync(Transform canvas_ui)
     {
-        if (instance != null)
-        {
-            return null;
-        }
-
-        try
-        {
-            GameObject go = await AssetManager.InstantiateAsync("OpeningGame", canvas_ui, true);
-            instance = new OnOpening(go);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError("Error loading assets: " + ex.Message);
-            return null;
-        }
-
-        return instance;
+        GameObject go = await AssetManager.InstantiateAsync("OpeningGame", canvas_ui, true);
+        OnOpening opening = new OnOpening(go.transform);
+        return opening;
     }
-    public OnOpening(GameObject go)
+    public OnOpening(Transform transform)
     {
-        gameObject = go;
-        transform = go.transform;
+        instance = this;
+        this.transform = transform;
+        state = 0;
     }
 
-    public void Start()
+    public void MoveNext()
     {
-        Main.Get.enabled = true;
-        NextSequence();
-    }
-    public void Update()
-    {
-        current.Playing();
-    }
-    public static void Input(int input)
-    {
-        if (IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ACTION))
-        {
-            instance.current.NextState();
-        }
-    }
-    private void NextSequence()
-    {
-        switch (state++)
+        switch (state)
         {
             case 0:
-                current = transform.GetChild(0).AddComponent<OpeningLogo>();
-                current.Begin();
+                Main.Instance.SetContent(this);
+                PlayLogo logo = new PlayLogo(transform.GetChild(0));
+                CoroutineUpdater.Get.SetHandler(new CCoroutine<PlayLogo>(logo));
                 break;
-            case 1:
-                current = transform.GetChild(1).AddComponent<OpeningDemo>();
-                current.Begin();         
-                break;
-            case 2:
-                current = transform.GetChild(2).AddComponent<OpeningTitle>();
-                current.Begin();
-                break;
-            case 3:
-                Main.UIMgr.OpenUI(UIType.Title);
+            default:
+                state = -1;
                 break;
         }
+
+        state += 1;
     }
-    public void Close()
+    public override void Dispose()
     {
-        GameObject.Destroy(gameObject);
-        AssetManager.ReleaseAsset(gameObject.GetInstanceID());
+        GameObject obj = transform.gameObject;
+        GameObject.Destroy(obj);
+        AssetManager.ReleaseAsset(obj.GetInstanceID());
     }
 }

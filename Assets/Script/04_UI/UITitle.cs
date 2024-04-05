@@ -58,7 +58,7 @@ public class UITitle : UIBase
             {
                 case 0:
                     Debug.Log("New game For Test (map code: 100)");
-                    Main.SceneMgr.LoadSceneAsync(100);
+                    Main.SceneMgr.LoadSceneAsync(Main.Instance.State, GameState.Field, 100);
                     break;
                 case 1:
                     Debug.Log("Saved Data List");

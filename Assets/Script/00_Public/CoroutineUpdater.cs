@@ -27,23 +27,18 @@ public class CoroutineUpdater : MonoBehaviour
         {
             isFinished.Add(!handlers[i].MoveNext());
         }
+        if (0 == isFinished.Count)
+        {
+            enabled = false;
+            return;
+        }
 
-        bool setoff = true;
         for (int i = isFinished.Count - 1; i >= 0; --i)
         {
             if (true == isFinished[i])
             {
                 handlers.RemoveAt(i);
             }
-            else if (true == setoff)
-            {
-                setoff = false;
-            }
-        }
-
-        if (true == setoff)
-        {
-            enabled = false;
         }
     }
     public void SetHandler(CCoroutineHandler handler)

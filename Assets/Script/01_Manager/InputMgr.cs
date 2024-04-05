@@ -1,10 +1,10 @@
 using UnityEngine;
 
-public class InputManager
+public class InputMgr
 {
-    public int Update()
+    public static bool TryGetInput(out int input)
     {
-        int input = 0;
+        input = 0;
 
         //Button Down
         if (Input.GetButtonDown("DOWN"))    { input |= IDxInput.DOWN;   }
@@ -23,6 +23,6 @@ public class InputManager
         if (Input.GetButton("RIGHT"))       { input |= IDxInput.RIGHT_HOLD;  }
         if (Input.GetButton("ACTION"))      { input |= IDxInput.ACTION_HOLD; }
 
-        return input;
+        return 0 != input;
     }
 }

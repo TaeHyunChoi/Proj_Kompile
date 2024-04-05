@@ -1,15 +1,14 @@
 using UnityEngine;
 
-public class UIManager
+public class x_UIMgr
 {
     private Canvas canvas_overlay;
     private Canvas canvas_camera;
 
-    //얘도 코드 직관성이 떨어지네. 수정합시다.
     private UIBase[] uiBucket;
     private UIType currentType;
 
-    public UIManager(Transform transform)
+    public x_UIMgr(Transform transform)
     {
         canvas_overlay = transform.GetChild(0).GetComponent<Canvas>();
         canvas_camera = transform.GetChild(1).GetComponent<Canvas>();
@@ -20,7 +19,7 @@ public class UIManager
     public void OpenUI(UIType type)
     {
         currentType = type;
-        this.uiBucket[(int)currentType].Open();
+        uiBucket[(int)currentType].Open();
     }
     public void Update()
     {
@@ -38,7 +37,7 @@ public class UIManager
         return canvas_camera;
     }
 
-    public void SetBucket(UIType type, UIBase ui)
+    public void Set(UIType type, UIBase ui)
     {
         uiBucket[(byte)type] = ui;
     }

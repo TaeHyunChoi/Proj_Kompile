@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 public interface IDataSetter
@@ -12,16 +13,39 @@ public interface ISequenceUpdater
 }
 public interface IUpdateRoutine
 {
-    public int Update(int index)
-    {
-        switch (index)
-        {
-            case 0:
-                break;
-            default:
-                return -1;
-        }
+    public int Update(int index);
+}
+public interface IGetInput
+{
+    public void Input(int input);
+}
 
-        return index + 1;
+// This is the code recommended by Chat-GPT, but it is not well understood.
+/*
+public interface IGetInput
+{
+    event Action<int> OnInputReceived;
+    void UpdateInput(int input);
+}
+public class InputGetter : IGetInput
+{
+    public event Action<int> OnInputReceived;
+
+    public void UpdateInput(int input)
+    {
+        OnInputReceived?.Invoke(input);
     }
 }
+public class InputHandler
+{
+    public InputHandler(IGetInput inputGetter)
+    {
+        inputGetter.OnInputReceived += HandleInput;
+    }
+
+    private void HandleInput(int input)
+    {
+        // 입력 처리 로직
+    }
+}
+//*/
