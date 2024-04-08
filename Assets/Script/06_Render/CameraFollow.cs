@@ -12,7 +12,6 @@ public class CameraFollow : MonoBehaviour
     {
         enabled = false;
     }
-    //Camera.main.GetComponent<CameraFollow> 라고 한 번만 쓰고 날리는 게 좋으려나
     public void SetFollow(Transform target)
     {
         this.target = target;

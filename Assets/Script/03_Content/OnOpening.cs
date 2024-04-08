@@ -15,9 +15,7 @@ public partial class OnOpening : ContentBase
         OnOpening opening = new OnOpening(go.transform);
         return opening;
     }
-
-
-    public OnOpening(Transform transform)
+    private OnOpening(Transform transform)
     {
         instance = this;
         this.transform = transform;
@@ -29,6 +27,7 @@ public partial class OnOpening : ContentBase
             img[i].color = new Color(1f, 1f, 1f, 0f);
         }
     }
+
     public void Set()
     {
         switch (state)

@@ -17,7 +17,7 @@ public partial class Main // .SetContent
     private class EnterField : IUpdateRoutine
     {
         Task<bool> taskInitField;
-        InField field;
+        x_InField field;
 
         public int MoveNext(int index)
         {
@@ -25,7 +25,7 @@ public partial class Main // .SetContent
             {
                 case 0:
                     GameObject mapObj = GameObject.FindWithTag("Field");
-                    field = new InField(mapObj);
+                    field = new x_InField(mapObj);
                     taskInitField = field.InitMap();
                     break;
                 case 1:

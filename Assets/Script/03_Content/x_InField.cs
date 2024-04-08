@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using DataType;
 
-internal class InField : ISequenceUpdater
+internal class x_InField : ISequenceUpdater
 {
     private GameObject gameObject;
     private Transform transform;
@@ -14,7 +14,7 @@ internal class InField : ISequenceUpdater
     private static UnitPlayer player;
 
 
-    public InField(GameObject obj)
+    public x_InField(GameObject obj)
     {
         gameObject = obj;
         transform  = obj.transform;
@@ -23,7 +23,7 @@ internal class InField : ISequenceUpdater
     }
     public async Task<bool> InitMap()
     {
-        Debug.Log("Need to dev");
+        Debug.Log("Need to dev: InitMap");
         await Task.Delay(0);
         return false;
 

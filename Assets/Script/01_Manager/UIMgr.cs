@@ -11,7 +11,7 @@ public class UIMgr
     public Canvas OverlayCanvas { get => canvasOverlay; }
     public Canvas CameraCanvas  { get => canvasCamera; }
 
-    public async Task InitUIAsync(GameState state)
+    public async Task InitAsync(GameState state)
     {
         switch (state)
         {
@@ -20,11 +20,27 @@ public class UIMgr
                 UITitle title = await AssetManager.CreateUIAsync<UITitle>("UITitle", CameraCanvas.transform, false);
                 cache[(byte)UIType.Title] = title;
                 break;
+            case GameState.Field:
+                Debug.Log("Need to dev: UI.InitAsync(Field)");
+                break;
         }
     }
     public void Pop(UIType type, bool isOn)
     {
         cache[(byte)type].Pop(isOn);
+    }
+    public void Release()
+    {
+        if (null == cache)
+        {
+            return;
+        }
+
+        for (int i = 0; i < cache.Length; ++i)
+        {
+            cache[i].Dispose();
+        }
+        cache = null;
     }
 
     public UIMgr(Transform transform)

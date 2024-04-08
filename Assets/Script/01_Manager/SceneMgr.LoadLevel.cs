@@ -30,9 +30,10 @@ public partial class SceneMgr // .LoadScene
                     }
                     break;
                 case 3:
+                    Main.Instance.Release();
                     Transform transformCameraCanvas = Main.UIMgr.CameraCanvas.transform;
                     taskOpening = OnOpening.InitAsync(transformCameraCanvas);
-                    taskUI = Main.UIMgr.InitUIAsync(GameState.Opening);
+                    taskUI = Main.UIMgr.InitAsync(GameState.Opening);
                     break;
                 case 4:
                     if (false == taskOpening.IsCompletedSuccessfully)
@@ -65,6 +66,8 @@ public partial class SceneMgr // .LoadScene
     {
         private AsyncOperation loadAsync;
         private CanvasGroup curtain;
+        private Task<OnField> taskField;
+        private Task taskUI;
         private MapData mapData;
 
         public int MoveNext(int index)
@@ -73,7 +76,6 @@ public partial class SceneMgr // .LoadScene
             {
                 case 0:
                     Main.SceneMgr.state = SceneState.Load;
-                    //Main.GameMgr.SetMap(mapData);
                     curtain.alpha = 0;
                     curtain.gameObject.SetActive(true);
                     break;
@@ -86,6 +88,7 @@ public partial class SceneMgr // .LoadScene
                     curtain.alpha = 1;
                     break;
                 case 2:
+                    //TODO: dev Mapdata (using grid?)
                     string sceneName = string.Empty;
                     int chapter = mapData.Code / 100;
                     switch (chapter)
@@ -93,7 +96,7 @@ public partial class SceneMgr // .LoadScene
                         case 0: sceneName = "010_OpeningScene"; break;
                         case 1: sceneName = "020_FieldTestScene"; break;
                     }
-                    loadAsync = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+                    loadAsync = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
                     break;
                 case 3:
                     if (false == loadAsync.isDone)
@@ -102,10 +105,14 @@ public partial class SceneMgr // .LoadScene
                     }
                     break;
                 case 4:
-                    Main.Instance.Enter(GameState.Field);
+                    Main.Instance.Release();
+                    Transform level = GameObject.FindWithTag("Field").transform;
+                    taskField = OnField.InitAsync(level, mapData);
+                    taskUI    = Main.UIMgr.InitAsync(GameState.Field);
                     break;
                 case 5:
-                    if (SceneState.Play != Main.SceneMgr.state)
+                    if (false == taskField.IsCompletedSuccessfully
+                        || false == taskUI.IsCompletedSuccessfully)
                     {
                         return index;
                     }
@@ -116,9 +123,6 @@ public partial class SceneMgr // .LoadScene
                         curtain.alpha -= Time.fixedDeltaTime;
                         return index;
                     }
-                    break;
-                case 7:
-                    //Main.Get.StartContent();
                     break;
                 default:
                     return -1;
