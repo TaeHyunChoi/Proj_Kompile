@@ -112,7 +112,7 @@ namespace DataType
                     scale = 0.5f;
                 }
 
-                return PTile.GetSize(TileSize.Default, scale);
+                return PTile.GetScale(TileSize.Default, scale);
             }
         }
         public TileFeature Status { get => (TileFeature)(info >> 24); }
@@ -120,6 +120,16 @@ namespace DataType
         public  int Move   { get => (int)(movement & 0xFFFF); }
         public long Height { get => (long)(movement >> 16);   }
 
+        public float GetScale(TileSize type)
+        {
+            float scale = 1f;
+            if (0 != ((byte)(TileFeature.Small) & (info >> 24)))
+            {
+                scale = 0.5f;
+            }
+
+            return PTile.GetScale(type, scale);
+        }
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
         public bool IsMovable(int quarant)
@@ -138,8 +148,40 @@ namespace DataType
         public bool IsLinked(int keyMy, Vector3 pointTarget)
         {
             //TODO: IsLinked();
+            Vector3 pivot = PTile.GetPivot(keyMy, Scale);
+            Vector3 diff = pointTarget - pivot;
 
-            return false;
+            float half_size_inverse = GetScale(TileSize.Half_inverse);
+            int x;
+            if (diff.x < 0) { x = 0b111; }
+            else            { x = CMath.FloorToInt(diff.x * half_size_inverse, 2); }
+            //x = (-1 == x) ? 0b111 : x;
+            x <<= 3;
+
+            int z;
+            if (diff.z < 0) { z = 0b111; }
+            else            { z = CMath.FloorToInt(diff.z * half_size_inverse, 2); }
+            //z = (-1 == z) ? 0b111 : z;
+
+            int index;
+            switch (x + z)
+            {
+                case 0b111_111: index =  0; break;
+                case 0b111_000: index = 11; break;
+                case 0b111_001: index = 10; break;
+                case 0b111_010: index =  9; break;
+                case 0b000_111: index =  1; break;
+                case 0b001_111: index =  2; break;
+                case 0b010_111: index =  3; break;
+                case 0b010_000: index =  4; break;
+                case 0b010_001: index =  5; break;
+                case 0b010_010: index =  6; break;
+                case 0b001_010: index =  7; break;
+                case 0b000_010: index =  8; break;
+                default: return false;
+            }
+
+            return 0 != (Link & (0b11 << index * 2));
         }
 
         public float GetYValue(int key, int index)
@@ -148,7 +190,7 @@ namespace DataType
             y = CMath.Floor(y * Scale, 2);
 
             float mask = (Height >> (index * 3)) & 0b111;
-            mask = CMath.Floor(mask * PTile.GetSize(TileSize.Quater, Scale), 2);
+            mask = CMath.Floor(mask * PTile.GetScale(TileSize.Quater, Scale), 2);
 
             return y + mask;
         }

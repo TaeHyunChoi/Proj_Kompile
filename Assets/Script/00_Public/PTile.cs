@@ -61,7 +61,7 @@ public static class PTile
         scale = 1 / scale;
         return (int)(pivot.x * scale) << 16 | (int)(pivot.y * scale) << 8 | (int)(pivot.z * scale);
     }
-    public static float GetSize(TileSize type, float scale)
+    public static float GetScale(TileSize type, float scale)
     {
         // for using cache data
 
@@ -165,9 +165,9 @@ public static class PTile
     public static Vector3 GetDirection(int input)
     {
         Vector3 dir = Vector3.zero;
-        if (true == Compare(input, UP)    || true == Compare(input, UP_HOLD))    { dir += Vector3.up; }
-        if (true == Compare(input, DOWN)  || true == Compare(input, DOWN_HOLD))  { dir += Vector3.down; }
-        if (true == Compare(input, LEFT)  || true == Compare(input, LEFT_HOLD)) { dir += Vector3.left; }
+        if (true == Compare(input, UP)    || true == Compare(input, UP_HOLD))    { dir += Vector3.forward; }
+        if (true == Compare(input, DOWN)  || true == Compare(input, DOWN_HOLD))  { dir += Vector3.back; }
+        if (true == Compare(input, LEFT)  || true == Compare(input, LEFT_HOLD))  { dir += Vector3.left; }
         if (true == Compare(input, RIGHT) || true == Compare(input, RIGHT_HOLD)) { dir += Vector3.right; }
 
         dir.Normalize();

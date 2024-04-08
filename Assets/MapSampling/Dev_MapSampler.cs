@@ -94,11 +94,12 @@ public class Dev_MapSampler : MonoBehaviour
                 SetTile(key, linkOther, y);
             }
 
-            DebugLog(key);
+            //DebugLog(key);
         }
 
         //// save data
         DataTable.WriteBinaryMappingData<Tile_t>(map, transformRsc.GetChild(0).gameObject.name);
+        Debug.Log($"Sampling Done.");
     }
 
     public static void InitTile(Transform transform, Mesh mesh, float scale, byte layer, byte status)
@@ -129,7 +130,7 @@ public class Dev_MapSampler : MonoBehaviour
                 continue;
             }
 
-            float size_half = PTile.GetSize(TileSize.Half, scale);
+            float size_half = PTile.GetScale(TileSize.Half, scale);
             Vector3 A = PTile.SnappingPoint(transform.TransformPoint(vertices[t0]), size_half, 3);
             Vector3 B = PTile.SnappingPoint(transform.TransformPoint(vertices[t1]), size_half, 3);
             Vector3 C = PTile.SnappingPoint(transform.TransformPoint(vertices[t2]), size_half, 3);
@@ -302,8 +303,8 @@ public class Dev_MapSampler : MonoBehaviour
             diagonal = v0to2;
         }
 
-        float size_half = PTile.GetSize(TileSize.Half, scale);
-        float size_quater = PTile.GetSize(TileSize.Quater, scale);
+        float size_half = PTile.GetScale(TileSize.Half, scale);
+        float size_quater = PTile.GetScale(TileSize.Quater, scale);
 
         if (size_half < diagonal)
         {
@@ -313,7 +314,7 @@ public class Dev_MapSampler : MonoBehaviour
         }
         else
         {
-            float size = PTile.GetSize(TileSize.Default, scale);
+            float size = PTile.GetScale(TileSize.Default, scale);
 
             //get point, get pivot
             Vector3 pointCenter = PTile.SnappingPoint((p0 + p1 + p2) * 0.333f, size_half, 3);
@@ -323,7 +324,7 @@ public class Dev_MapSampler : MonoBehaviour
             int move = PTile.GetMoveFlag(pointCenter - pivot, size);
 
             long height = 0;
-            float size_quater_inverse = PTile.GetSize(TileSize.Quater_inverse, scale);
+            float size_quater_inverse = PTile.GetScale(TileSize.Quater_inverse, scale);
             height |= GetHeightFlag(p0 - pivot, size_quater, size_quater_inverse);
             height |= GetHeightFlag(p1 - pivot, size_quater, size_quater_inverse);
             height |= GetHeightFlag(p2 - pivot, size_quater, size_quater_inverse);

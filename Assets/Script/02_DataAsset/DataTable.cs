@@ -103,12 +103,11 @@ public class DataTable
     public static void WriteBinaryMappingData<T>(Dictionary<int, T> data, string fileName) where T:struct
     {
         BinaryFormatter binaryFormatter = new BinaryFormatter();
-        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapData", fileName + ".dat");
+        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapTileData", fileName + ".dat");
         FileStream fileStream = File.Create(filePath);
 
         // Dictionary 직렬화
         binaryFormatter.Serialize(fileStream, data);
-
         fileStream.Close();
     }
     public static Dictionary<int, T> LoadMappingData<T>(string fileName) where T:struct
