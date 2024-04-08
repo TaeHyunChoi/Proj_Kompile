@@ -3,12 +3,15 @@
 public partial class Main : MonoBehaviour
 {
     private static Main instance;
+    private static UnitPlayer player;
+
     private UnitMgr     unitMgr;
     private UIMgr       mgrUI;
     private SceneMgr    mgrScene;
     private CameraFollow camera;
 
     public static Main     Instance { get => instance; }
+    public static UnitPlayer Player { get => player; }
     public static SceneMgr SceneMgr { get => instance.mgrScene; }
     public static UnitMgr  UnitMgr  { get => instance.unitMgr; }
     public static UIMgr    UIMgr    { get => instance.mgrUI; }
@@ -72,6 +75,11 @@ public partial class Main : MonoBehaviour
     public void ReleaseInputGetter()
     {
         inputGetter = null;
+    }
+
+    public void SetPlayer(UnitPlayer unit)
+    {
+        player = unit;
     }
 
     public void Dispose()

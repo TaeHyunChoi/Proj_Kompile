@@ -4,6 +4,7 @@ using CMathf;
 using DataType;
 using System;
 using System.Collections.Generic;
+using static IDxInput;
 
 [Flags]
 public enum TileFeature : byte
@@ -45,20 +46,20 @@ public static class PTile
 
         return new Vector3(x, y, z) * size;
     }
-    public static Vector3 GetPivot(Vector3 point, float size)
+    public static Vector3 GetPivot(Vector3 point, float scale)
     {
-        float size_inverse = 1 / size;
-        float cx = CMath.FloorToInt(point.x * size_inverse, 2) * size;
-        float cy = CMath.FloorToInt(point.y * size_inverse, 2) * size;
-        float cz = CMath.FloorToInt(point.z * size_inverse, 2) * size;
+        float size_inverse = 1 / scale;
+        float cx = CMath.FloorToInt(point.x * size_inverse, 2) * scale;
+        float cy = CMath.FloorToInt(point.y * size_inverse, 2) * scale;
+        float cz = CMath.FloorToInt(point.z * size_inverse, 2) * scale;
 
         return new Vector3(cx, cy, cz);
     }
-    public static int GetKey(Vector3 point, float size)
+    public static int GetKey(Vector3 point, float scale)
     {
-        Vector3 pivot = GetPivot(point, size);
-        size = 1 / size;
-        return (int)(pivot.x * size) << 16 | (int)(pivot.y * size) << 8 | (int)(pivot.z * size);
+        Vector3 pivot = GetPivot(point, scale);
+        scale = 1 / scale;
+        return (int)(pivot.x * scale) << 16 | (int)(pivot.y * scale) << 8 | (int)(pivot.z * scale);
     }
     public static float GetSize(TileSize type, float scale)
     {
@@ -123,6 +124,57 @@ public static class PTile
 
         return CMath.FloorToVector(new Vector3(x, y, z), exponent);
     }
+
+    public static int GetMoveFlag(Vector3 diff, float size)
+    {
+        float size_half = size * 0.5f;
+
+        int quarant = 0;
+        if (diff.x >= size_half)
+        {
+            quarant |= 0b_01;
+            diff -= new Vector3(size_half, 0, 0);
+        }
+        if (diff.z >= size_half)
+        {
+            quarant |= 0b_10;
+            diff -= new Vector3(0, 0, size_half);
+        }
+        quarant *= 4;
+
+        int equation = 0;
+        if (diff.z >= diff.x)
+        {
+            equation |= 0b01;
+        }
+        if (diff.z >= -diff.x + size_half)
+        {
+            equation |= 0b10;
+        }
+
+        switch (equation)
+        {
+            case 0b00: return 1 << (0 + quarant);
+            case 0b10: return 1 << (1 + quarant);
+            case 0b11: return 1 << (2 + quarant);
+            case 0b01: return 1 << (3 + quarant);
+        }
+
+        return -1;
+    }
+    public static Vector3 GetDirection(int input)
+    {
+        Vector3 dir = Vector3.zero;
+        if (true == Compare(input, UP)    || true == Compare(input, UP_HOLD))    { dir += Vector3.up; }
+        if (true == Compare(input, DOWN)  || true == Compare(input, DOWN_HOLD))  { dir += Vector3.down; }
+        if (true == Compare(input, LEFT)  || true == Compare(input, LEFT_HOLD)) { dir += Vector3.left; }
+        if (true == Compare(input, RIGHT) || true == Compare(input, RIGHT_HOLD)) { dir += Vector3.right; }
+
+        dir.Normalize();
+        return CMath.FloorToVector(dir, 3);
+    }
+
+
 
 
     ////maybe use later 

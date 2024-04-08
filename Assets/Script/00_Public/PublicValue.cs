@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using CMathf;
+using UnityEngine;
 
 public static class IDxInput
 {
@@ -119,10 +121,27 @@ namespace DataType
         public long Height { get => (long)(movement >> 16);   }
 
 
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
         public bool IsMovable(int quarant)
         {
             return 0 != (Move & (1 << quarant));
         }
+#endif
+        public bool IsMovable(int keyMy, Vector3 point)
+        {
+            float   scale = Scale;
+            Vector3 pivot = PTile.GetPivot(keyMy, scale);
+            int     flag  = PTile.GetMoveFlag(point - pivot, scale);
+
+            return 0 != (flag & Move);
+        }
+        public bool IsLinked(int keyMy, Vector3 pointTarget)
+        {
+            //TODO: IsLinked();
+
+            return false;
+        }
+
         public float GetYValue(int key, int index)
         {
             float y = (key & 0x00_FF_00) >> 8;

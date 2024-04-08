@@ -11,7 +11,7 @@ internal class x_InField : ISequenceUpdater
 
     //private static Dictionary<int, Voxel_t> voxel;
     private static Dictionary<int, Tile_t> map;
-    private static UnitPlayer player;
+    private static x_UnitPlayer player;
 
 
     public x_InField(GameObject obj)

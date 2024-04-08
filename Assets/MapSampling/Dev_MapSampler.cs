@@ -23,7 +23,7 @@ public class Dev_MapSampler : MonoBehaviour
         int[] triangles = new int[] { 0, 4, 5, 13, 14, 10, 11, 3 };
         foreach (int key in keys)
         {
-            Vector3 pivot = PTile.GetPivot(key, map[key].Scale);
+            //Vector3 pivot = PTile.GetPivot(key, map[key].Scale);
 
             for (int t = 0; t < 8; ++t)
             {
@@ -139,43 +139,7 @@ public class Dev_MapSampler : MonoBehaviour
     }
 
     // get
-    private static int GetMoveFlag(Vector3 diff, float size)
-    {
-        float size_half = size * 0.5f;
 
-        int quarant = 0;
-        if (diff.x >= size_half)
-        {
-            quarant |= 0b_01;
-            diff -= new Vector3(size_half, 0, 0);
-        }
-        if (diff.z >= size_half)
-        {
-            quarant |= 0b_10;
-            diff -= new Vector3(0, 0, size_half);
-        }
-        quarant *= 4;
-
-        int equation = 0;
-        if (diff.z >= diff.x)
-        {
-            equation |= 0b01;
-        }
-        if (diff.z >= -diff.x + size_half)
-        {
-            equation |= 0b10;
-        }
-
-        switch (equation)
-        {
-            case 0b00: return 1 << (0 + quarant);
-            case 0b10: return 1 << (1 + quarant);
-            case 0b11: return 1 << (2 + quarant);
-            case 0b01: return 1 << (3 + quarant);
-        }
-
-        return -1;
-    }
     private static long GetHeightFlag(Vector3 diff, float size_quater, float size_quater_inverse)
     {
         diff = PTile.SnappingPoint(diff, size_quater, 3);
@@ -356,7 +320,7 @@ public class Dev_MapSampler : MonoBehaviour
             Vector3 pivot = PTile.GetPivot(pointCenter, size);
 
             //set flag
-            int move = GetMoveFlag(pointCenter - pivot, size);
+            int move = PTile.GetMoveFlag(pointCenter - pivot, size);
 
             long height = 0;
             float size_quater_inverse = PTile.GetSize(TileSize.Quater_inverse, scale);

@@ -6,28 +6,24 @@ using UnityEngine;
 
 public class UnitMgr
 {
-    private List<Unit> pool;
-    
+    private List<UnitBase> pool;
     private Transform transform;
 
 
-    public Unit Player { get => pool[0]; }
-
     public UnitMgr(Transform transform)
     {
-        pool = new List<Unit>();
+        pool = new List<UnitBase>();
         this.transform = transform;
     }
     public async Task InitAsync(Transform level)
     {
         GameObject obj = await AssetManager.InstantiateAsync("UnitBase", transform, true);
-        Unit player = obj.GetComponent<Unit>();
+        UnitPlayer player = obj.AddComponent<UnitPlayer>();
         player.transform.position = new Vector3(0.5f, 0f, 0.5f);
+        Main.Instance.SetPlayer(player);
         Main.Camera.SetFollow(player.transform);
 
         pool.Add(player);
-
-
-        Unit[] npc = level.GetComponentsInChildren<Unit>(true);
+        UnitBase[] npc = level.GetComponentsInChildren<UnitBase>(true);
     }
 }

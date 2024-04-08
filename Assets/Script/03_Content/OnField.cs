@@ -7,6 +7,7 @@ using DataType;
 public class OnField : ContentBase, IGetInput
 {
     private Dictionary<int, Tile_t> tileMap;
+    private float tileScale;
 
     public static async Task<OnField> InitAsync(Transform level, MapData data)
     {
@@ -34,8 +35,8 @@ public class OnField : ContentBase, IGetInput
 
     public void Input(int input)
     {
-        //control player
-        Debug.Log($"TODO: Field.Input({System.Convert.ToString(input, 2)})");
+        Vector3 dir = PTile.GetDirection(input);
+        Main.Player.Move(tileMap, dir, tileScale);
     }
     public override void Dispose()
     {
@@ -45,5 +46,6 @@ public class OnField : ContentBase, IGetInput
     private OnField(MapData data)
     {
         tileMap = DataTable.LoadMappingData<Tile_t>("020_FieldTest");
+        tileScale = PTile.SIZE;
     }
 }
