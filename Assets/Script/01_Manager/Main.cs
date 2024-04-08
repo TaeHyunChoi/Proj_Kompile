@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public partial class Main : MonoBehaviour
 {
@@ -12,7 +12,6 @@ public partial class Main : MonoBehaviour
 
     //current;
     private ContentBase content;
-    private UIBase      ui;
     private IGetInput inputGetter;
 
     private void Awake()
@@ -48,6 +47,10 @@ public partial class Main : MonoBehaviour
     public void SetContent(ContentBase content)
     {
         this.content = content;
+    }
+    public void ReleaseInputGetter()
+    {
+        inputGetter = null;
     }
     public void SetInputGetter(IGetInput getter)
     {

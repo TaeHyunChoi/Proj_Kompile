@@ -10,6 +10,7 @@ public partial class SceneMgr // .LoadScene
         private AsyncOperation  loadAsync;
         private CanvasGroup     curtain;
         private Task<OnOpening> taskOpening;
+        private Task   taskUI;
 
         public int MoveNext(int index)
         {
@@ -31,14 +32,20 @@ public partial class SceneMgr // .LoadScene
                 case 3:
                     Transform transformCameraCanvas = Main.UIMgr.CameraCanvas.transform;
                     taskOpening = OnOpening.InitAsync(transformCameraCanvas);
+                    taskUI = Main.UIMgr.InitUIAsync(GameState.Opening);
                     break;
                 case 4:
                     if (false == taskOpening.IsCompletedSuccessfully)
                     {
                         return index;
                     }
-                    curtain.gameObject.SetActive(false);
+                    if (false == taskUI.IsCompletedSuccessfully)
+                    {
+                        return index;
+                    }
+
                     taskOpening.Result.Set();
+                    curtain.gameObject.SetActive(false);
                     break;
                 default:
                     taskOpening.Dispose();

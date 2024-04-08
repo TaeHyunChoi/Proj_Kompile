@@ -1,25 +1,18 @@
-using System;
-using System.Threading.Tasks;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using static IDxInput;
 
-public class UITitle : x_UIBase
+public class UITitle : UIBase, IGetInput
 {
-    private Image[]   items;
+    private Image[] items;
 
     private int select;
     private int itemCount;
     private float delta;
-    private float alphaMax = 0.7f, alphaMin = 0.3f;
-    private bool enabled;
+    private float alphaMax = 0.6f, alphaMin = 0.3f;
 
-    public override void Init(GameObject go)
+    private void Awake()
     {
-        this.transform = go.transform;
-        this.gameObject = go;
-
         Image[] images = transform.GetChild(0).GetComponentsInChildren<Image>(true);
         items = new Image[images.Length - 1];
         itemCount = images.Length - 1;
@@ -27,26 +20,45 @@ public class UITitle : x_UIBase
         {
             items[i - 1] = images[i];
         }
+
         select = 0;
     }
-    public override void Open()
+    private void Start()
+    {
+        Main.Instance.SetInputGetter(this);
+    }
+    public override void Pop(bool isOn)
     {
         transform.SetAsLastSibling();
-        gameObject.SetActive(true);
-        enabled = true;
+        gameObject.SetActive(isOn);
     }
-    public override void Input(int input)
+
+    private void Update()
+    {
+        if (items[select].color.a <= alphaMin)
+        {
+            delta = Time.deltaTime;
+        }
+        else if (items[select].color.a >= alphaMax)
+        {
+            delta = -Time.deltaTime;
+        }
+
+        items[select].color += new Color(0, 0, 0, delta * 0.75f);
+    }
+    public void Input(int input)
     {
         if (Compare(input, UP))
         {
-            SetItemColor(select, 0f);
-            select = (--select < 0) ? itemCount - 1 : select;
-            SetItemColor(select, alphaMin);
+            SetItemColor(select, 0f); //prev
+            select = (select - 1 + itemCount) % itemCount;
+
+            SetItemColor(select, alphaMin); //next
         }
         else if (Compare(input, DOWN))
         {
             SetItemColor(select, 0f);
-            select = (++select >= itemCount) ? 0 : select;
+            select = (select + 1 + itemCount) % itemCount;
             SetItemColor(select, alphaMin);
         }
         else if (Compare(input, ENTER, ACTION))
@@ -68,9 +80,9 @@ public class UITitle : x_UIBase
                     break;
                 case 3:
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-                    EditorApplication.isPlaying = false;
+                    UnityEditor.EditorApplication.isPlaying = false;
 #else
-                    Application.Quit();
+                        Application.Quit();
 #endif
                     break;
             }
@@ -78,7 +90,6 @@ public class UITitle : x_UIBase
         }
         else if (Compare(input, CANCEL))
         {
-            //硫붾돱媛 鍮꾪솢?깊솕 == 臾댁뼵媛瑜?Enter???곹깭
             if (!enabled)
             {
                 enabled = true;
@@ -90,27 +101,9 @@ public class UITitle : x_UIBase
         Color target = items[index].color;
         items[index].color = new Color(target.r, target.g, target.b, alpha);
     }
-    public override void Update()
-    {
-        if (!enabled)
-        {
-            return;
-        }
 
-        if (items[select].color.a <= alphaMin)
-        {
-            delta = Time.deltaTime;
-        }
-        else if (items[select].color.a >= alphaMax)
-        {
-            delta = -Time.deltaTime;
-        }
-
-        items[select].color += new Color(0, 0, 0, delta * 0.75f);
-    }
-    public override void Close()
+    public override void Dispose()
     {
-        GameObject.Destroy(this.gameObject);
         AssetManager.ReleaseAsset(gameObject.GetInstanceID());
     }
 }

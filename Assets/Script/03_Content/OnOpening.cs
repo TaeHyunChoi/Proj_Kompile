@@ -46,8 +46,11 @@ public partial class OnOpening : ContentBase
                 OpeningTitle title = new OpeningTitle(transform.GetChild(2));
                 CoroutineUpdater.Get.SetHandler(new CCoroutine<OpeningTitle>(title));
                 break;
+            case 3:
+                Main.Instance.ReleaseInputGetter();
+                Main.UIMgr.Pop(UIType.Title, true);
+                break;
             default:
-                //UIMgr.Show(Title);을 호출
                 return;
         }
 

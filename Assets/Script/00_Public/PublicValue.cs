@@ -2,14 +2,6 @@ using System;
 using System.Diagnostics;
 using CMathf;
 
-public static class Public
-{
-    public const float SPEED_FADE = 1.25f;
-    public const float SPEED_MOVE = 4f;
-
-    public const int    TILE_SHIFT_HEIGHT   = 8;
-    public static void BlockInput(int input) { ;}
-}
 public static class IDxInput
 {
     public const int DOWN   = 1 << 0;
@@ -90,39 +82,11 @@ public enum GameState : byte
     Battle  = 1 << 6,
     Event   = 1 << 7
 }
-
-public enum OpeningState : byte
-{
-    None = 0,
-    Play = 1 << 0,
-    Skip = 1 << 1,
-    End  = 1 << 2
-}
-
-public enum ContentType
-{
-    None    = -1,
-    Opening =  0,
-    Field,
-    Battle,
-    Event,
-    Count,
-}
-
 public enum UIType : byte
-{ 
-    None   = 0,
-    Option,
-    Title,
-    SaveData,
-    Count
+{
+    Title = 0,
 }
-public enum InteractType
-{ 
-    None = 0,
-    Door,
-    Talk,
-}
+
 
 namespace DataType
 {

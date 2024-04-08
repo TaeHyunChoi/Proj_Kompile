@@ -46,7 +46,7 @@ public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
                     }
                     break;
                 default:
-                    Main.Instance.SetInputGetter(null);
+                    Main.Instance.ReleaseInputGetter();
                     instance.Set();
                     return -1;
             }
