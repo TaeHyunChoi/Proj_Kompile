@@ -1,19 +1,11 @@
 using UnityEngine;
 
-public class InputManager
+public class InputMgr
 {
-    private static InputDele inputFunc;
-    private static int input;
-
-    public InputManager()
-    {
-        inputFunc = Blocked;
-    }
-
-    public void Update()
+    public static bool TryGetInput(out int input)
     {
         input = 0;
-        
+
         //Button Down
         if (Input.GetButtonDown("DOWN"))    { input |= IDxInput.DOWN;   }
         if (Input.GetButtonDown("UP"))      { input |= IDxInput.UP;     }
@@ -31,26 +23,6 @@ public class InputManager
         if (Input.GetButton("RIGHT"))       { input |= IDxInput.RIGHT_HOLD;  }
         if (Input.GetButton("ACTION"))      { input |= IDxInput.ACTION_HOLD; }
 
-        if (input != 0)
-        {
-            inputFunc(input);
-        }
-    }
-
-    private void Blocked(int input)
-    { 
-        /* 입력을 막음 */
-    }
-    public void BlockInput()
-    {
-        inputFunc = Blocked;
-    }
-    public void Set(InputDele func)
-    {
-        inputFunc = func;
-        if (inputFunc == null)
-        {
-            inputFunc = Blocked;
-        }
+        return 0 != input;
     }
 }

@@ -1,0 +1,49 @@
+﻿using System.Threading.Tasks;
+using UnityEngine;
+
+public partial class Main // .SetContent
+{
+    //TODO: seperate Enter from "Init"
+    public void Enter(GameState state)
+    {
+        switch (state)
+        {
+            case GameState.Field:
+                EnterField field = new EnterField();
+                CoroutineUpdater.Get.SetHandler(new CCoroutine<EnterField>(field));
+                break;
+        }
+    }
+    private class EnterField : IUpdateRoutine
+    {
+        Task<bool> taskInitField;
+        x_InField field;
+
+        public int MoveNext(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    GameObject mapObj = GameObject.FindWithTag("Field");
+                    field = new x_InField(mapObj);
+                    taskInitField = field.InitMap();
+                    break;
+                case 1:
+                    if (false == taskInitField.IsCompletedSuccessfully)
+                    {
+                        return index;
+                    }
+                    //GameMgr.Set(field);
+                    break;
+                case 2:
+                    taskInitField.Dispose();
+                    break;
+                default:
+                    SceneMgr.SetState(SceneState.Play);
+                    return -1;
+            }
+
+            return index + 1;
+        }
+    }
+}

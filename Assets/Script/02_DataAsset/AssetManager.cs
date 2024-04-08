@@ -24,11 +24,9 @@ public class AssetManager
     {
         AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
         GameObject go = await handle.Task;
+        T ui = go.AddComponent<T>();
+
         go.SetActive(isOn);
-
-        T ui = new T();
-        ui.Init(go);
-
         Handlers.Add(go.GetInstanceID(), handle);
         return ui;
     }

@@ -1,30 +1,28 @@
-using System.Collections;
-using UnityEngine;
-using System.Threading.Tasks;
-using static Public;
-using System.Collections.Generic;
+﻿using UnityEngine;
 
-public class Main : MonoBehaviour
+public partial class Main : MonoBehaviour
 {
-    private static Main         instance;
-    private UIManager    uiMgr;
-    private InputManager inputMgr;
-    private GameManager  gameMgr;
-    private LevelManager levelMgr;
+    private static Main instance;
+    private UnitMgr     unitMgr;
+    private UIMgr       mgrUI;
+    private SceneMgr    mgrScene;
+    private CameraFollow camera;
 
-    public static Main   Instance { get => instance; }
-    public static UIManager     UIMgr    { get => instance.uiMgr; }
-    public static InputManager  InputMgr { get => instance.inputMgr; }
-    public static GameManager   GameMgr  { get => instance.gameMgr; }
-    public static LevelManager  LevelMgr { get => instance.levelMgr; }
-    
-    private ContentType current;
+    public static Main     Instance { get => instance; }
+    public static SceneMgr SceneMgr { get => instance.mgrScene; }
+    public static UnitMgr  UnitMgr  { get => instance.unitMgr; }
+    public static UIMgr    UIMgr    { get => instance.mgrUI; }
+    public static CameraFollow Camera { get => instance.camera; }
+
+    //current;
+    private ContentBase content;
+    private IGetInput inputGetter;
 
     private void Awake()
     {
         if (instance != null)
         {
-            Destroy(this.gameObject);
+            Destroy(gameObject);
             return;
         }
         instance = this;
@@ -33,82 +31,55 @@ public class Main : MonoBehaviour
         DataTable.LoadTable();
         //++Load Player Data
 
-        inputMgr = new InputManager();
-        gameMgr = new GameManager(transform.Find("Ingame"));
-        uiMgr = new UIManager(transform.Find("UI"));
-        CanvasGroup loadingCurtain = uiMgr.GetOverlayCanvas().transform.GetChild(0).GetComponent<CanvasGroup>();
-        levelMgr = new LevelManager(loadingCurtain);
-
-        current = ContentType.None;
+        mgrUI    = new UIMgr   (transform.Find("UI"));
+        unitMgr  = new UnitMgr (transform.Find("Unit"));
+        mgrScene = new SceneMgr(transform.Find("Scene"));
+        camera   = UnityEngine.Camera.main.transform.GetComponent<CameraFollow>();
     }
     private void Start()
     {
-        levelMgr.LoadOpeningSceneAsync();
-        enabled = false;
+        mgrScene.LoadSceneAsync(GameState.Opening);
     }
     private void Update()
     {
-        inputMgr.Update();
-        uiMgr   .Update();
-        gameMgr .Update();
-    }
-    public Coroutine SetContent(ContentType type)
-    {
-        current = type;
-        IEnumerator ie;
-        
-        switch (type)
+        //TODO: not Update(), but event?
+        if (true == InputMgr.TryGetInput(out int input)
+            && null != inputGetter)
         {
-            case ContentType.Opening:   ie = SetOpening();  break;
-            case ContentType.Field:     ie = SetField();    break;
+            inputGetter.Input(input);
+        }
+    }
 
-            default: return null;
+
+    public void SetContent(ContentBase content)
+    {
+        this.content = content;
+    }
+    public void Release()
+    {
+        if (null != content)
+        {
+            content.Dispose();
         }
 
-        return Coroutiner.PlayCoroutine(ie);
+        UIMgr.Release();
     }
-    private IEnumerator SetOpening()
+
+    public void SetInputGetter(IGetInput getter)
     {
-        // task
-        Transform cameraCanvasTransform = uiMgr.GetCameraCanvas().transform;
-        Task<OnOpening> task_opening = OnOpening.InitAsync(cameraCanvasTransform);
-        Task<UITitle> task_title = AssetManager.CreateUIAsync<UITitle>("UITitle", cameraCanvasTransform, false);
-
-        // wait unil task.isDone
-        yield return new WaitUntil(() => task_opening.IsCompletedSuccessfully);
-        yield return new WaitUntil(() => task_title.IsCompletedSuccessfully);
-
-        // content
-        OnOpening opening = task_opening.Result;
-        gameMgr.SetSequence(opening);
-
-        // ui
-        uiMgr.SetBucket((int)UIType.Title, task_title.Result);
-
-        // dispose
-        task_opening.Dispose();
-        task_title.Dispose();
+        inputGetter = getter;
     }
-    private IEnumerator SetField()
+    public void ReleaseInputGetter()
     {
-        // init content
-        GameObject mapObj = GameObject.FindWithTag("Field");
-        InField field = new InField(mapObj);
-        Task<bool> taskInitField = field.InitMap();
-        yield return new WaitUntil(() => taskInitField.IsCompletedSuccessfully);
-
-        gameMgr.SetSequence(field);
-
-        taskInitField.Dispose();
+        inputGetter = null;
     }
-    public void StartContent()
-    {
-        gameMgr.Start();
-        inputMgr.Set(gameMgr.GetInputDele(current));
-    }
+
     public void Dispose()
     {
-        gameMgr.Dispose();
-        uiMgr.Dispose(current);
+        //TODO: Dispose() timing?
+        if (content != null)
+        {
+            content.Dispose();
+        }
     }
 }

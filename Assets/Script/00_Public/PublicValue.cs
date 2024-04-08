@@ -2,22 +2,6 @@ using System;
 using System.Diagnostics;
 using CMathf;
 
-public static class Public
-{
-    public const float SPEED_FADE = 1.25f;
-    public const float SPEED_MOVE = 4f;
-
-    public const int    TILE_SHIFT_HEIGHT   = 8;
-
-    //public const float  TILE_SIZE           = 1f;
-    //public const float  TILE_INVERSE        = 1f    / TILE_SIZE;
-    //public const float  TILE_HALF           = 0.5f  * TILE_SIZE;
-    //public const float  TILE_HALF_INVERSE   = 1f    / TILE_HALF;
-    //public const float  TILE_QUATER         = 0.25f * TILE_SIZE;
-    //public const float  TILE_QUATER_INVERSE = 1f    / TILE_QUATER;
-
-    public static void BlockInput(int input) { ;}
-}
 public static class IDxInput
 {
     public const int DOWN   = 1 << 0;
@@ -64,9 +48,15 @@ public static class IDxInput
     }
 }
 
-public delegate void InputDele(int input);
-
 // enum
+public enum SceneState : byte
+{ 
+    None,
+    Load,
+    Play,
+    Pause,
+    Leave,
+}
 public enum Stat
 { 
     HP = 0,
@@ -82,30 +72,21 @@ public enum Stat
     LUK,
     CNT
 }
-public enum ContentType
-{
-    None    = -1,
-    Opening =  0,
-    Field,
-    Battle,
-    Event,
-    Count,
-}
-public enum UIType
-{ 
-    None   = 0,
-    Option,
-    Title,
-    SaveData,
 
-    Count,
-}
-public enum InteractType
+[Flags]
+public enum GameState : byte
 { 
-    None = 0,
-    Door,
-    Talk,
+    None    = 0,
+    Opening = 1 << 4,
+    Field   = 1 << 5,
+    Battle  = 1 << 6,
+    Event   = 1 << 7
 }
+public enum UIType : byte
+{
+    Title = 0,
+}
+
 
 namespace DataType
 {

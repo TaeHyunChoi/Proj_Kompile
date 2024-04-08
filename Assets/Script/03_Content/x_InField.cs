@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using DataType;
 
-internal class InField : ISequenceUpdater
+internal class x_InField : ISequenceUpdater
 {
     private GameObject gameObject;
     private Transform transform;
@@ -14,7 +14,7 @@ internal class InField : ISequenceUpdater
     private static UnitPlayer player;
 
 
-    public InField(GameObject obj)
+    public x_InField(GameObject obj)
     {
         gameObject = obj;
         transform  = obj.transform;
@@ -23,22 +23,26 @@ internal class InField : ISequenceUpdater
     }
     public async Task<bool> InitMap()
     {
-        try
-        {
-            GameObject obj = await AssetManager.InstantiateAsync("UnitBase", Main.GameMgr.GetTransform(), true);
-            player = obj.AddComponent<UnitPlayer>();
-            player.transform.position = new Vector3(0.5f, 0, 0.5f);
+        Debug.Log("Need to dev: InitMap");
+        await Task.Delay(0);
+        return false;
 
-            CameraFollow camFollow = Camera.main.GetComponent<CameraFollow>();
-            camFollow.SetFollow(player.transform);
-        }
-        catch (Exception e)
-        {
-            Debug.LogError(e.Message);
-            return false;
-        }
+        //try
+        //{
+        //    GameObject obj = await AssetManager.InstantiateAsync("UnitBase", Main.GameMgr.GetTransform(), true);
+        //    player = obj.AddComponent<UnitPlayer>();
+        //    player.transform.position = new Vector3(0.5f, 0, 0.5f);
 
-        return true;
+        //    CameraFollow camFollow = Camera.main.GetComponent<CameraFollow>();
+        //    camFollow.SetFollow(player.transform);
+        //}
+        //catch (Exception e)
+        //{
+        //    Debug.LogError(e.Message);
+        //    return false;
+        //}
+
+        //return true;
     }
 
 

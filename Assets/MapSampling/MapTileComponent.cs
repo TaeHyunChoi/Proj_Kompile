@@ -3,13 +3,15 @@ using UnityEngine;
 
 public class MapTileComponent : MonoBehaviour
 {
+    private Mesh mesh;
     [SerializeField]
     private TileFeature status;
     [SerializeField]
     private byte layer;
-
-    private Mesh  mesh;
     private int key; //Field에서 mesh를 on/off할 때에 사용
+
+    public byte Layer { get => layer; }
+    public int Key { get => key; }
 
     private void Awake()
     {

@@ -6,9 +6,9 @@ using UnityEngine;
 using DataType;
 
 /// <summary>
-/// [¸ñÇ¥] CSV µ¥ÀÌÅÍ ºÒ·¯¿À±â ÃÖÀûÈ­ (¼Óµµ Çâ»óÀ» À§ÇÏ¿© ¾ÈÁ¤¼ºÀº »ó´ëÀûÀ¸·Î ³·Ãã)
-/// [¹æ¹ı] (1)±âÁ¸ string ¡æ byte[] ·Î ÀĞ¾î¿À±â (2)Generic<T> È°¿ëÇÏ¿© ÄÚµå Àç»ç¿ë¼º ³ôÀÌ±â
-/// [ºñ°í] Job SystemÀ» »ç¿ëÇÏ¿© ¸ÖÆ¼ ½º·¹µùÀ¸·Î CSV¸¦ ºÒ·¯¿À·Á ÇßÀ¸³ª 'reference typeÀº Job struct¿¡¼­ »ç¿ëÇÒ ¼ö ¾ø´Ù'´Â Á¦ÇÑÀÌ ÀÖ¾î ±â°¢.
+/// [ëª©í‘œ] CSV ë°ì´í„° ë¶ˆëŸ¬ì˜¤ê¸° ìµœì í™” (ì†ë„ í–¥ìƒì„ ìœ„í•˜ì—¬ ì•ˆì •ì„±ì€ ìƒëŒ€ì ìœ¼ë¡œ ë‚®ì¶¤)
+/// [ë°©ë²•] (1)ê¸°ì¡´ string â†’ byte[] ë¡œ ì½ì–´ì˜¤ê¸° (2)Generic<T> í™œìš©í•˜ì—¬ ì½”ë“œ ì¬ì‚¬ìš©ì„± ë†’ì´ê¸°
+/// [ë¹„ê³ ] Job Systemì„ ì‚¬ìš©í•˜ì—¬ ë©€í‹° ìŠ¤ë ˆë”©ìœ¼ë¡œ CSVë¥¼ ë¶ˆëŸ¬ì˜¤ë ¤ í–ˆìœ¼ë‚˜ 'reference typeì€ Job structì—ì„œ ì‚¬ìš©í•  ìˆ˜ ì—†ë‹¤'ëŠ” ì œí•œì´ ìˆì–´ ê¸°ê°.
 /// </summary>
 public class DataTable
 {
@@ -20,11 +20,11 @@ public class DataTable
     public static List<SkillData> SkillTable { get => skillTable; }
     public static List<ItemData>  ItemTable  { get => itemTable; }
     public static List<UnitData>  UnitTable  { get => unitTalbe; }
-    public static List<MapData>   MapTable     { get => mapTable; }
+    public static List<MapData>   MapTable   { get => mapTable; }
 
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-    //.csv (±âÈ¹ÀÚ, ¿¡µğÅÍ¿¡¼­ .bin ÆÄÀÏ·Î º¯È¯ ÇÊ¿ä)
+    //.csv (ê¸°íšì, ì—ë””í„°ì—ì„œ .bin íŒŒì¼ë¡œ ë³€í™˜ í•„ìš”)
     public static void LoadCSVTable()
     {
         skillTable = LoadTable<SkillData>("SkillData");
@@ -40,14 +40,14 @@ public class DataTable
         StringBuilder sb = new StringBuilder();
 
         //Setting
-        string[] columns;   //Ä®·³¸í
-        int index;          //Ä®·³¸í[] ÀÎµ¦½º
-        string line;        //°¢ ÁÙ
-        char[] chars;       //°¢ ÁÙÀ» char ÇüÅÂ·Î ÂÉ°· (Áß°£ ,¸¦ ¹ß¶ó³»±â À§ÇÔ)
-        bool isSplit;       //ºĞ·ù ¿©ºÎ (´ë»ç µî º»¹®ÀÇ ,¿Í CSV ±¸ºĞ½°Ç¥¸¦ ±¸ºĞÇÏ±â À§ÇÔ)
+        string[] columns;   //ì¹¼ëŸ¼ëª…
+        int index;          //ì¹¼ëŸ¼ëª…[] ì¸ë±ìŠ¤
+        string line;        //ê° ì¤„
+        char[] chars;       //ê° ì¤„ì„ char í˜•íƒœë¡œ ìª¼ê°¬ (ì¤‘ê°„ ,ë¥¼ ë°œë¼ë‚´ê¸° ìœ„í•¨)
+        bool isSplit;       //ë¶„ë¥˜ ì—¬ë¶€ (ëŒ€ì‚¬ ë“± ë³¸ë¬¸ì˜ ,ì™€ CSV êµ¬ë¶„ì‰¼í‘œë¥¼ êµ¬ë¶„í•˜ê¸° ìœ„í•¨)
 
         //Column Index
-        line = reader.ReadLine(); //Ã¹ÁÙ ³¯¸®±â
+        line = reader.ReadLine(); //ì²«ì¤„ ë‚ ë¦¬ê¸°
         columns = line.Split(',');
 
         //Content
@@ -64,15 +64,15 @@ public class DataTable
 
             for (int i = 0; i < chars.Length; ++i)
             {
-                //µ¥ÀÌÅÍ Áß°£ÀÇ ,·Î ³ª´©Áö ¾Ê±â À§ÇØ ÆÇº° Á¶°Ç Ãß°¡
-                if (chars[i] == '\u0022') //Å«µû¿ÈÇ¥(")ÀÇ À¯´ÏÄÚµå
+                //ë°ì´í„° ì¤‘ê°„ì˜ ,ë¡œ ë‚˜ëˆ„ì§€ ì•Šê¸° ìœ„í•´ íŒë³„ ì¡°ê±´ ì¶”ê°€
+                if (chars[i] == '\u0022') //í°ë”°ì˜´í‘œ(")ì˜ ìœ ë‹ˆì½”ë“œ
                 {
                     isSplit = !isSplit;
                     continue;
                 }
 
                 if (isSplit
-                    && chars[i] == '\u002C') //½°Ç¥(,) À¯´ÏÄÚµå
+                    && chars[i] == '\u002C') //ì‰¼í‘œ(,) ìœ ë‹ˆì½”ë“œ
                 {
                     data.Add(columns[++index], sb.ToString());
                     sb.Clear();
@@ -82,7 +82,7 @@ public class DataTable
                 sb.Append(chars[i]);
             }
 
-            //¸¶Áö¸· µ¥ÀÌÅÍ Ãß°¡ (,°¡ ¾ø¾î¼­ À§¿¡¼­ ¾È°É¸²)
+            //ë§ˆì§€ë§‰ ë°ì´í„° ì¶”ê°€ (,ê°€ ì—†ì–´ì„œ ìœ„ì—ì„œ ì•ˆê±¸ë¦¼)
             data.Add(columns[++index], sb.ToString());
             table.Add(data);
             sb.Clear();
@@ -99,7 +99,6 @@ public class DataTable
         return list;
     }
 
-
     // map sampling
     public static void WriteBinaryMappingData<T>(Dictionary<int, T> data, string fileName) where T:struct
     {
@@ -107,20 +106,20 @@ public class DataTable
         string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapData", fileName + ".dat");
         FileStream fileStream = File.Create(filePath);
 
-        // Dictionary Á÷·ÄÈ­
+        // Dictionary ì§ë ¬í™”
         binaryFormatter.Serialize(fileStream, data);
 
         fileStream.Close();
     }
     public static Dictionary<int, T> LoadMappingData<T>(string fileName) where T:struct
     {
-        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
+        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapTileData", fileName + ".dat");
         if (File.Exists(filePath))
         {
             BinaryFormatter binaryFormatter = new BinaryFormatter();
             FileStream fileStream = File.Open(filePath, FileMode.Open);
 
-            // ÆÄÀÏ¿¡¼­ µ¥ÀÌÅÍ¸¦ ¿ªÁ÷·ÄÈ­ÇÏ¿© Dictionary¿¡ ·Îµå
+            // íŒŒì¼ì—ì„œ ë°ì´í„°ë¥¼ ì—­ì§ë ¬í™”í•˜ì—¬ Dictionaryì— ë¡œë“œ
             Dictionary<int, T> map = (Dictionary<int, T>)binaryFormatter.Deserialize(fileStream);
 
             fileStream.Close();
@@ -128,7 +127,7 @@ public class DataTable
         }
         else
         {
-            Debug.LogError("ÆÄÀÏÀÌ Á¸ÀçÇÏÁö ¾Ê½À´Ï´Ù.");
+            Debug.LogError("íŒŒì¼ì´ ì¡´ì¬í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.");
         }
 
         return null;
@@ -139,7 +138,7 @@ public class DataTable
     //    string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
     //    FileStream fileStream = File.Create(filePath);
 
-    //    // Dictionary Á÷·ÄÈ­
+    //    // Dictionary ì§ë ¬í™”
     //    binaryFormatter.Serialize(fileStream, data);
 
     //    fileStream.Close();
@@ -152,7 +151,7 @@ public class DataTable
     //        BinaryFormatter binaryFormatter = new BinaryFormatter();
     //        FileStream fileStream = File.Open(filePath, FileMode.Open);
 
-    //        // ÆÄÀÏ¿¡¼­ µ¥ÀÌÅÍ¸¦ ¿ªÁ÷·ÄÈ­ÇÏ¿© Dictionary¿¡ ·Îµå
+    //        // íŒŒì¼ì—ì„œ ë°ì´í„°ë¥¼ ì—­ì§ë ¬í™”í•˜ì—¬ Dictionaryì— ë¡œë“œ
     //        Dictionary<int, Voxel_t> data = (Dictionary<int, Voxel_t>)binaryFormatter.Deserialize(fileStream);
 
     //        fileStream.Close();
@@ -160,7 +159,7 @@ public class DataTable
     //    }
     //    else
     //    {
-    //        Debug.LogError("ÆÄÀÏÀÌ Á¸ÀçÇÏÁö ¾Ê½À´Ï´Ù.");
+    //        Debug.LogError("íŒŒì¼ì´ ì¡´ì¬í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.");
     //    }
 
     //    return null;
@@ -168,7 +167,7 @@ public class DataTable
 
 #endif
 
-    //.bin (ÇÁ·Î±×·¡¸Ó, .bin ÆÄÀÏ·Î µ¥ÀÌÅÍÅ×ÀÌºí ÀĞ±â)
+    //.bin (í”„ë¡œê·¸ë˜ë¨¸, .bin íŒŒì¼ë¡œ ë°ì´í„°í…Œì´ë¸” ì½ê¸°)
     public static void LoadTable()
     {
         skillTable = ReadBinary<SkillData>("SkillData.bin");
@@ -176,7 +175,6 @@ public class DataTable
         unitTalbe = ReadBinary<UnitData>("UnitData.bin");
         mapTable = ReadBinary<MapData>("MapData.bin");
     }
-
     public static List<T> ReadBinary<T>(string fileName) where T : struct, IDataSetter
     {
         string path = Application.dataPath + "/Resources/bin/" + fileName;
@@ -203,5 +201,21 @@ public class DataTable
         FileStream stream = new FileStream(path, FileMode.Create);
         formatter.Serialize(stream, table);
         stream.Close();
+    }
+
+    // get
+    public static bool TryGetMapData(int code, out MapData map)
+    {
+        for (int i = 0; i < mapTable.Count; ++i)
+        {
+            map = mapTable[i];
+            if (code == map.Code)
+            {
+                return true;
+            }
+        }
+
+        map = default(MapData);
+        return false;
     }
 }
