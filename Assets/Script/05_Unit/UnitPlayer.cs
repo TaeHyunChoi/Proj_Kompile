@@ -8,7 +8,7 @@ using static PTile;
 public class UnitPlayer : UnitBase
 {
     private readonly int[] intervalRot = new int[] { 0, 1, -1, 2, -2 }; //시계 방향을 우선 탐색하는 기준
-    private readonly float SPEED_MOVE = 4f;
+    private readonly float SPEED_MOVE = 1f;
 
     private Vector3 dirBefore;
 
@@ -26,7 +26,6 @@ public class UnitPlayer : UnitBase
         int keyNow = PTile.GetKey(pointNow, scale);
         float dist = CMath.Floor(Time.deltaTime * SPEED_MOVE, 3);
 
-
         //CHECK_INPUT_DIR:
         for (int c = 0; c < 3; ++c)
         {
@@ -37,6 +36,11 @@ public class UnitPlayer : UnitBase
             Vector3 pointCollide = CMath.FloorToVector(pointNow + dirCollide, 3);
             int keyCollide = PTile.GetKey(pointCollide, scale);
 
+            //최소, 최대 범위 안에 있는가
+            if (false == PTile.IsInGrid(pointCollide.x, pointCollide.z))
+            {
+                goto CHECK_OTHER_DIRS;
+            }
 
             //같은 타일 + 해당 분면으로 이동 불가하다면 다른 타일 탐색
             if (keyCollide == keyNow)
@@ -46,7 +50,6 @@ public class UnitPlayer : UnitBase
                     goto CHECK_OTHER_DIRS;
                 }
             }
-
             //다른 타일로 이동 가능? link 여부 확인
             else if (true == map.ContainsKey(keyCollide))
             {
@@ -55,16 +58,13 @@ public class UnitPlayer : UnitBase
                     goto CHECK_OTHER_DIRS;
                 }
             }
-
             //다른 타일로 이동도 불가능? 다른 타일 알아봐라.
             else
             {
                 goto CHECK_OTHER_DIRS;
             }
         }
-
         goto SET_POSITION;
-
 
     CHECK_OTHER_DIRS:
         float rotY = Mathf.Sign(Vector3.Cross(dirInput, dirBefore).y);
@@ -74,7 +74,20 @@ public class UnitPlayer : UnitBase
     SET_POSITION:
         dirInput.Normalize();
         dir = CMath.FloorToVector(dirInput * dist, 3);
-        transform.position = CMath.FloorToVector(pointNow + dir, 3);
+
+        //목적지 타일 정보를 가져와서 + y값을 꺼내야 한다.
+        Vector3 pointGoal = CMath.FloorToVector(pointNow + dir, 3);
+        int keyGoal = PTile.GetKey(pointGoal, scale);
+
+        if (false == map.TryGetValue(keyGoal, out Tile_t tileGoal))
+        {
+            Debug.LogError("No Tile goal position");
+            return;
+        }
+
+        float y = tileGoal.GetYValue(keyGoal, pointGoal);
+        transform.position = new Vector3(pointGoal.x, y, pointGoal.z);
+        //transform.position = CMath.FloorToVector(pointNow + dir, 3);
         dirBefore = dir;
     }
 }

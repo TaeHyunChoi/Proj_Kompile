@@ -303,12 +303,12 @@ public class Dev_MapSampler : MonoBehaviour
             diagonal = v0to2;
         }
 
-        float size_half = PTile.GetScale(TileSize.Half, scale);
-        float size_quater = PTile.GetScale(TileSize.Quater, scale);
+        float scale_half = PTile.GetScale(TileSize.Half, scale);
+        float scale_quater = PTile.GetScale(TileSize.Quater, scale);
 
-        if (size_half < diagonal)
+        if (scale_half < diagonal)
         {
-            Vector3 midPoint = PTile.SnappingPoint((p1 + p2) * 0.5f, size_quater, 3);
+            Vector3 midPoint = PTile.SnappingPoint((p1 + p2) * 0.5f, scale_quater, 3);
             SetTileData(p0, p1, midPoint, scale, layer, info);
             SetTileData(p0, p2, midPoint, scale, layer, info);
         }
@@ -317,17 +317,17 @@ public class Dev_MapSampler : MonoBehaviour
             float size = PTile.GetScale(TileSize.Default, scale);
 
             //get point, get pivot
-            Vector3 pointCenter = PTile.SnappingPoint((p0 + p1 + p2) * 0.333f, size_half, 3);
+            Vector3 pointCenter = PTile.SnappingPoint((p0 + p1 + p2) * 0.333f, scale_half, 3);
             Vector3 pivot = PTile.GetPivot(pointCenter, size);
 
             //set flag
-            int move = PTile.GetMoveFlag(pointCenter - pivot, size);
+            int move = 1 << PTile.GetQuarant(pointCenter - pivot, scale_half);
 
             long height = 0;
             float size_quater_inverse = PTile.GetScale(TileSize.Quater_inverse, scale);
-            height |= GetHeightFlag(p0 - pivot, size_quater, size_quater_inverse);
-            height |= GetHeightFlag(p1 - pivot, size_quater, size_quater_inverse);
-            height |= GetHeightFlag(p2 - pivot, size_quater, size_quater_inverse);
+            height |= GetHeightFlag(p0 - pivot, scale_quater, size_quater_inverse);
+            height |= GetHeightFlag(p1 - pivot, scale_quater, size_quater_inverse);
+            height |= GetHeightFlag(p2 - pivot, scale_quater, size_quater_inverse);
 
             //set tile data
             int key = (layer << 24) | PTile.GetKey(pointCenter, size);

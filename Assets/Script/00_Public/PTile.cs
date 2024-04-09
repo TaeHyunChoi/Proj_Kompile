@@ -125,20 +125,18 @@ public static class PTile
         return CMath.FloorToVector(new Vector3(x, y, z), exponent);
     }
 
-    public static int GetMoveFlag(Vector3 diff, float size)
+    public static int GetQuarant(Vector3 diff, float scale_half)
     {
-        float size_half = size * 0.5f;
-
         int quarant = 0;
-        if (diff.x >= size_half)
+        if (diff.x >= scale_half)
         {
             quarant |= 0b_01;
-            diff -= new Vector3(size_half, 0, 0);
+            diff -= new Vector3(scale_half, 0, 0);
         }
-        if (diff.z >= size_half)
+        if (diff.z >= scale_half)
         {
             quarant |= 0b_10;
-            diff -= new Vector3(0, 0, size_half);
+            diff -= new Vector3(0, 0, scale_half);
         }
         quarant *= 4;
 
@@ -147,17 +145,17 @@ public static class PTile
         {
             equation |= 0b01;
         }
-        if (diff.z >= -diff.x + size_half)
+        if (diff.z >= -diff.x + scale_half)
         {
             equation |= 0b10;
         }
 
         switch (equation)
         {
-            case 0b00: return 1 << (0 + quarant);
-            case 0b10: return 1 << (1 + quarant);
-            case 0b11: return 1 << (2 + quarant);
-            case 0b01: return 1 << (3 + quarant);
+            case 0b00: return quarant;
+            case 0b10: return quarant + 1;
+            case 0b11: return quarant + 2;
+            case 0b01: return quarant + 3;
         }
 
         return -1;
@@ -173,186 +171,81 @@ public static class PTile
         dir.Normalize();
         return CMath.FloorToVector(dir, 3);
     }
-
-
-
-
-    ////maybe use later 
-    /*
-    public static Vector3 GetPivot(int key, float size)
+    public static bool IsInGrid(float x, float z)
     {
-        float x = (key & 0xFF_00_00) >> 16;
-        float y = (key & 0x00_FF_00) >> 8;
-        float z = (key & 0x00_00_FF) >> 0;
-
-        return new Vector3(x, y, z) * size;
-    }
-    public static Vector3 GetPivot(Vector3 point, int exponent = 2)
-    {
-        float cx = CMath.FloorToInt(point.x * SIZE_INVERSE, exponent) * SIZE;
-        float cy = CMath.FloorToInt(point.y * SIZE_INVERSE, exponent) * SIZE;
-        float cz = CMath.FloorToInt(point.z * SIZE_INVERSE, exponent) * SIZE;
-
-        return new Vector3(cx, cy, cz);
-    }
-    public static int GetKey(Vector3 point)
-    {
-        Vector3 pivot = GetPivot(point);
-        return (int)(pivot.x * SIZE_INVERSE) << 16 | (int)(pivot.y * SIZE_INVERSE) << 8 | (int)(pivot.z * SIZE_INVERSE);
-    }
-    public static byte GetMoveQuarant(Vector3 diff)
-    {
-        byte q = 0;
-        q |= (byte)((diff.z > diff.x) ? 0b_10 : 0);                 // y =  x 占쏙옙占쏙옙占쏙옙占쏙옙 占쏙옙
-        q |= (byte)((diff.z > -diff.x + SIZE) ? 0b_01 : 0);    // y = -x 占쏙옙占쏙옙占쏙옙占쏙옙 占쏙옙
-
-        switch (q)
-        {
-            case 0b_01: q = 1; break;
-            case 0b_11: q = 2; break;
-            case 0b_10: q = 3; break;
-            case 0b_00: q = 0; break;
-        }
-
-        return q;
-    }
-    public static float GetYValue(Tile_t voxel, Vector3 point)
-    {
-        Debug.Log("Need to dev");
-        return 0f;
-        //Vector3 pivot = GetPivot(point);
-        //int quarant = GetMoveQuarant(point - pivot);
-
-        ////set y value
-        //Vector3 p0   = pivot + new Vector3(0, voxel.GetYValue((quarant + 4) % 4), 0) * TILE_SIZE;
-        //Vector3 p1   = pivot + new Vector3(0, voxel.GetYValue((quarant + 5) % 4), 0) * TILE_SIZE;
-        //Vector3 pMid = pivot + new Vector3(TILE_HALF, voxel.GetYValue(4) * TILE_SIZE, TILE_HALF);
-
-        ////set x,z value
-        //switch (quarant)
-        //{
-        //    case 0:
-        //        p0 += new Vector3(1, 0, 0) * TILE_SIZE;
-        //        p1 += new Vector3(1, 0, 1) * TILE_SIZE;
-        //        break;
-        //    case 1:
-        //        p0 += new Vector3(1, 0, 1) * TILE_SIZE;
-        //        p1 += new Vector3(0, 0, 1) * TILE_SIZE;
-        //        break;
-        //    case 2:
-        //        p0 += new Vector3(0, 0, 1) * TILE_SIZE;
-        //        //p1 += Vector3.zero;
-        //        break;
-        //    case 3:
-        //        //p0 += Vector3.zero;
-        //        p1 += new Vector3(1, 0, 0) * TILE_SIZE;
-        //        break;
-        //}
-
-        ////get normal
-        //p0 = CMath.FloorToVector(p0, 3);
-        //p1 = CMath.FloorToVector(p1, 3);
-        //pMid = CMath.FloorToVector(pMid, 3);
-
-        //Vector3 normal = Vector3.Cross(p1 - pMid, p0 - pMid);
-        //normal.Normalize();
-        //normal = CMath.FloorToVector(normal, 3);
-
-        ////(cached) vector equation of the plane
-        //float y_inverse = 1f;
-        //switch (normal.y)
-        //{
-        //    case 0.577f: y_inverse = 1.733f; break;
-        //    case 0.707f: y_inverse = 1.414f; break;
-        //    case 1.000f: return pivot.y;
-        //}
-
-        //float y = -(normal.x * point.x + normal.z * point.z - Vector3.Dot(normal, pMid)) * y_inverse;
-
-        ////The y value may be out of range due to floating point, etc., so process it again
-        //if (y < pivot.y)
-        //    y = pivot.y;
-        //else if (y > pivot.y + TILE_SIZE)
-        //    y = pivot.y + TILE_SIZE;
-
-        //return CMath.Floor(y, 3);
-    }
-        public static bool IsLinkedOrNot(Dictionary<int, Tile_t> sample, int keyMy, int indexLink, int y)
-    {
-        //init quarant
-        int quarantMy, quarantTarget;
-        int keyTarget;
-
-        switch (indexLink)
-        {
-            case 1:
-                quarantMy = 0;
-                quarantTarget = 10;
-                keyTarget = keyMy + (0 << 16) + y * (1 << 8) - (1 << 0);
-                break;
-            case 2:
-                quarantMy = 4;
-                quarantTarget = 14;
-                keyTarget = keyMy + (0 << 16) + y * (1 << 8) - (1 << 0);
-                break;
-            case 4:
-                quarantMy = 5;
-                quarantTarget = 3;
-                keyTarget = keyMy + (1 << 16) + y * (1 << 8) + (0 << 0);
-                break;
-            case 5:
-                quarantMy = 13;
-                quarantTarget = 11;
-                keyTarget = keyMy + (1 << 16) + y * (1 << 8) + (0 << 0);
-                break;
-            case 7:
-                quarantMy = 14;
-                quarantTarget = 4;
-                keyTarget = keyMy + (0 << 16) + y * (1 << 8) + (1 << 0);
-                break;
-            case 8:
-                quarantMy = 10;
-                quarantTarget = 0;
-                keyTarget = keyMy + (0 << 16) + y * (1 << 8) + (1 << 0);
-                break;
-            case 10:
-                quarantMy = 11;
-                quarantTarget = 13;
-                keyTarget = keyMy - (1 << 16) + y * (1 << 8) + (0 << 0);
-                break;
-            case 11:
-                quarantMy = 3;
-                quarantTarget = 5;
-                keyTarget = keyMy - (1 << 16) + y * (1 << 8) + (0 << 0);
-                break;
-            default:
-                return false;
-        }
-
-        //check my tile
-        if (false == sample.TryGetValue(keyMy, out Tile_t tileMy)
-            || false == tileMy.IsMovable(quarantMy))
-        {
-            return false;
-        }
-
-        //check target tile
-        if (false == sample.TryGetValue(keyTarget, out Tile_t tileTarget)
-            || false == tileTarget.IsMovable(quarantTarget))
-        {
-            return false;
-        }
-
-        //compare height
-        int diff = y * 4;
-        tileMy.GetHeightMask(quarantMy, out int p00, out int p01);
-        tileTarget.GetHeightMask(quarantTarget, out int p10, out int p11);
-        if (p00 != p10 + diff || p01 != p11 + diff)
+        if (0 > x || 128 < x
+            || 0 > z || 128 < z)
         {
             return false;
         }
 
         return true;
     }
-    //*/
+
+    public static Vector3[] GetQuarantPoints(Vector3 pivot, float scale, long flagHeight, int quarant)
+    {
+        //인덱스를 미숙하게+많이 짜서 고생하는구만..
+        //왼손 좌표계...
+        int i0, i1, i2;
+        switch (quarant)
+        {
+            case  0: i0 = 0; i1 = 9; i2 = 1; break;
+            case  1: i0 = 1; i1 = 9; i2 = 4; break;
+            case  2: i0 = 3; i1 = 4; i2 = 9; break;
+            case  3: i0 = 0; i1 = 3; i2 = 9; break;
+
+            case  4: i0 = 1; i1 = 10; i2 = 2; break;
+            case  5: i0 = 2; i1 = 10; i2 = 5; break;
+            case  6: i0 = 4; i1 = 5; i2 = 10; break;
+            case  7: i0 = 1; i1 = 4; i2 = 10; break;
+
+            case  8: i0 = 3; i1 = 11; i2 = 4; break;
+            case  9: i0 = 4; i1 = 11; i2 = 7; break;
+            case 10: i0 = 6; i1 = 7; i2 = 11; break;
+            case 11: i0 = 3; i1 = 6; i2 = 11; break;
+
+            case 12: i0 = 4; i1 = 12; i2 = 5; break;
+            case 13: i0 = 5; i1 = 12; i2 = 8; break;
+            case 14: i0 = 7; i1 = 8; i2 = 12; break;
+            case 15: i0 = 4; i1 = 7; i2 = 12; break;
+
+            default: return null;
+        }
+
+        Vector3 p0 = GetPoint(pivot, flagHeight, i0, scale);
+        Vector3 p1 = GetPoint(pivot, flagHeight, i1, scale);
+        Vector3 p2 = GetPoint(pivot, flagHeight, i2, scale);
+
+        return new Vector3[3] { p0, p1, p2 };
+    }
+    private static Vector3 GetPoint(Vector3 pivot, long flagHeight, int index, float scale)
+    {
+        float scale_half    = scale * 0.5f;
+        float scale_quater  = scale * 0.25f;
+
+        float y = (flagHeight >> (index * 3)) & 0b111;
+        y = pivot.y + (y * scale_quater);
+
+        switch (index)
+        {
+            case  0: return pivot;
+            case  1: return pivot + new Vector3(scale_half, y, 0);
+            case  2: return pivot + new Vector3(scale, y, 0);
+
+            case  3: return pivot + new Vector3(0, y, scale_half);
+            case  4: return pivot + new Vector3(scale_half, y, scale_half);
+            case  5: return pivot + new Vector3(scale, y, scale_half);
+
+            case  6: return pivot + new Vector3(0, y, scale);
+            case  7: return pivot + new Vector3(scale_half, y, scale);
+            case  8: return pivot + new Vector3(scale, y, scale);
+
+            case  9: return pivot + new Vector3(scale_quater, y, scale_quater);
+            case 10: return pivot + new Vector3(scale_half + scale_quater, y, scale_quater);
+            case 11: return pivot + new Vector3(scale_quater, y, scale_half + scale_quater);
+            case 12: return pivot + new Vector3(scale_half + scale_quater, y, scale_half + scale_quater);
+        }
+
+        return Vector3.zero;
+    }
 }

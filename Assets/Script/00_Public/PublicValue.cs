@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using CMathf;
 using UnityEngine;
 
@@ -130,24 +129,16 @@ namespace DataType
 
             return PTile.GetScale(type, scale);
         }
-
-#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-        public bool IsMovable(int quarant)
-        {
-            return 0 != (Move & (1 << quarant));
-        }
-#endif
         public bool IsMovable(int keyMy, Vector3 point)
         {
             float   scale = Scale;
             Vector3 pivot = PTile.GetPivot(keyMy, scale);
-            int     flag  = PTile.GetMoveFlag(point - pivot, scale);
+            int     flag  = 1 << PTile.GetQuarant(point - pivot, GetScale(TileSize.Half));
 
             return 0 != (flag & Move);
         }
         public bool IsLinked(int keyMy, Vector3 pointTarget)
         {
-            //TODO: IsLinked();
             Vector3 pivot = PTile.GetPivot(keyMy, Scale);
             Vector3 diff = pointTarget - pivot;
 
@@ -155,13 +146,11 @@ namespace DataType
             int x;
             if (diff.x < 0) { x = 0b111; }
             else            { x = CMath.FloorToInt(diff.x * half_size_inverse, 2); }
-            //x = (-1 == x) ? 0b111 : x;
             x <<= 3;
 
             int z;
             if (diff.z < 0) { z = 0b111; }
             else            { z = CMath.FloorToInt(diff.z * half_size_inverse, 2); }
-            //z = (-1 == z) ? 0b111 : z;
 
             int index;
             switch (x + z)
@@ -183,16 +172,29 @@ namespace DataType
 
             return 0 != (Link & (0b11 << index * 2));
         }
-
-        public float GetYValue(int key, int index)
+        public float GetYValue(int keyMy, Vector3 point)
         {
-            float y = (key & 0x00_FF_00) >> 8;
-            y = CMath.Floor(y * Scale, 2);
+            //point가 속한 분면을 구해서
+            Vector3 pivot    = PTile.GetPivot(keyMy, GetScale(TileSize.Default));
+            float scale_half = GetScale(TileSize.Half);
+            int quarant      = PTile.GetQuarant(point - pivot, scale_half);
 
-            float mask = (Height >> (index * 3)) & 0b111;
-            mask = CMath.Floor(mask * PTile.GetScale(TileSize.Quater, Scale), 2);
+            //각 포인트에 해당하는 높이 구해서...
+            Vector3[] points = PTile.GetQuarantPoints(pivot, Scale, Height, quarant);
 
-            return y + mask;
+            //평면의 방정식에 대입하면 y값을 구할 수 있다. (유의: 왼손 좌표계)
+            Vector3 normal = Vector3.Cross(points[1] - points[0], points[2] - points[0]);
+            normal.Normalize();
+            normal = CMath.FloorToVector(normal, 3);
+            float d = Vector3.Dot(normal, points[0]);
+
+            return -(normal.x * point.x + normal.z * point.z - d) / normal.y;
+        }
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+        //Tile Map Sampling에서만 사용
+        public bool IsMovable(int quarant)
+        {
+            return 0 != (Move & (1 << quarant));
         }
         public int GetTriangleHeightMask(int triangle, int y)
         {
@@ -202,14 +204,14 @@ namespace DataType
 
             switch (triangle)
             {
-                case  0: h0 = 0; h1 = 1; break;
+                case 0: h0 = 0; h1 = 1; break;
                 case 10: h0 = 6; h1 = 7; break;
 
-                case  4: h0 = 1; h1 = 2; break;
+                case 4: h0 = 1; h1 = 2; break;
                 case 14: h0 = 7; h1 = 8; break;
 
-                case  3: h0 = 0; h1 = 3; break;
-                case  5: h0 = 2; h1 = 5; break;
+                case 3: h0 = 0; h1 = 3; break;
+                case 5: h0 = 2; h1 = 5; break;
 
                 case 11: h0 = 3; h1 = 6; break;
                 case 13: h0 = 5; h1 = 8; break;
@@ -219,7 +221,7 @@ namespace DataType
 
             shift = h0 * 3;
             mask = (int)((Height >> shift) & 0b111);
-            h0 = (mask + y) << 3 ;
+            h0 = (mask + y) << 3;
 
             shift = h1 * 3;
             mask = (int)((Height >> shift) & 0b111);
@@ -227,6 +229,7 @@ namespace DataType
 
             return h0 | h1;
         }
+#endif
 
         public Tile_t(int info, long movement)
         {
