@@ -48,12 +48,5 @@ public class OnField : ContentBase, IGetInput
     {
         tileMap = DataTable.LoadMappingData<Tile_t>("020_FieldTest");
         tileScale = PTile.SIZE;
-
-        //궁금하니까 체크
-        foreach (int key in tileMap.Keys)
-        {
-            float scale = tileMap[key].Scale;
-            Debug.Log($"[{key}] {PTile.GetPivot(key, scale)} (scale:{scale})");
-        }
     }
 }

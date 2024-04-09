@@ -24,6 +24,7 @@ public class UnitMgr
         Main.Camera.SetFollow(player.transform);
 
         pool.Add(player);
-        UnitBase[] npc = level.GetComponentsInChildren<UnitBase>(true);
+
+        //UnitBase[] npc = level.GetComponentsInChildren<UnitBase>(true);
     }
 }
