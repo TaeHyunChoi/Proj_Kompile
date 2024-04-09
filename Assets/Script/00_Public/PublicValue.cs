@@ -188,7 +188,7 @@ namespace DataType
             normal = CMath.FloorToVector(normal, 3);
             float d = Vector3.Dot(normal, points[0]);
 
-            return -(normal.x * point.x + normal.z * point.z - d) / normal.y;
+            return - (normal.x * point.x + normal.z * point.z - d) / normal.y;
         }
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
         //Tile Map Sampling에서만 사용

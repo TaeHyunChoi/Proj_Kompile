@@ -224,7 +224,7 @@ public static class PTile
         float scale_quater  = scale * 0.25f;
 
         float y = (flagHeight >> (index * 3)) & 0b111;
-        y = pivot.y + (y * scale_quater);
+        y *= scale_quater;
 
         switch (index)
         {

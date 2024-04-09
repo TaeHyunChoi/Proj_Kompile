@@ -14,7 +14,7 @@ public class UnitPlayer : UnitBase
 
     public void Move(Dictionary<int, Tile_t> map, Vector3 dirInput, float scale)
     {
-        Vector3 pointNow = transform.position;
+        Vector3 pointNow = CMath.FloorToVector(transform.position, 3);
         if (false == map.TryGetValue(GetKey(pointNow, scale), out Tile_t tileNow))
         {
             Debug.LogAssertion("Impossible position " + pointNow);
@@ -41,7 +41,6 @@ public class UnitPlayer : UnitBase
             {
                 goto CHECK_OTHER_DIRS;
             }
-
             //같은 타일 + 해당 분면으로 이동 불가하다면 다른 타일 탐색
             if (keyCollide == keyNow)
             {
@@ -51,15 +50,7 @@ public class UnitPlayer : UnitBase
                 }
             }
             //다른 타일로 이동 가능? link 여부 확인
-            else if (true == map.ContainsKey(keyCollide))
-            {
-                if (false == tileNow.IsLinked(keyNow, pointCollide))
-                {
-                    goto CHECK_OTHER_DIRS;
-                }
-            }
-            //다른 타일로 이동도 불가능? 다른 타일 알아봐라.
-            else
+            else if (false == tileNow.IsLinked(keyNow, pointCollide))
             {
                 goto CHECK_OTHER_DIRS;
             }
@@ -75,19 +66,19 @@ public class UnitPlayer : UnitBase
         dirInput.Normalize();
         dir = CMath.FloorToVector(dirInput * dist, 3);
 
-        //목적지 타일 정보를 가져와서 + y값을 꺼내야 한다.
         Vector3 pointGoal = CMath.FloorToVector(pointNow + dir, 3);
         int keyGoal = PTile.GetKey(pointGoal, scale);
 
-        if (false == map.TryGetValue(keyGoal, out Tile_t tileGoal))
+        for (int sign = 1; sign >= -1; --sign)
         {
-            Debug.LogError("No Tile goal position");
-            return;
+            int key = keyGoal + sign * (1 << 8);
+            if (true == map.TryGetValue(key, out Tile_t tileGoal))
+            {
+                float y = tileGoal.GetYValue(key, pointGoal);
+                transform.position = CMath.FloorToVector(new Vector3(pointGoal.x, y, pointGoal.z), 3);
+                dirBefore = dir;
+                return;
+            }
         }
-
-        float y = tileGoal.GetYValue(keyGoal, pointGoal);
-        transform.position = new Vector3(pointGoal.x, y, pointGoal.z);
-        //transform.position = CMath.FloorToVector(pointNow + dir, 3);
-        dirBefore = dir;
     }
 }
