@@ -8,14 +8,14 @@ public partial class Main : MonoBehaviour
     private UnitMgr     unitMgr;
     private UIMgr       mgrUI;
     private SceneMgr    mgrScene;
-    private CameraFollow camera;
+    private CameraFollow cam;
 
     public static Main     Instance { get => instance; }
     public static UnitPlayer Player { get => player; }
     public static SceneMgr SceneMgr { get => instance.mgrScene; }
     public static UnitMgr  UnitMgr  { get => instance.unitMgr; }
     public static UIMgr    UIMgr    { get => instance.mgrUI; }
-    public static CameraFollow Camera { get => instance.camera; }
+    public static CameraFollow Cam { get => instance.cam; }
 
     //current;
     private ContentBase content;
@@ -37,7 +37,7 @@ public partial class Main : MonoBehaviour
         mgrUI    = new UIMgr   (transform.Find("UI"));
         unitMgr  = new UnitMgr (transform.Find("Unit"));
         mgrScene = new SceneMgr(transform.Find("Scene"));
-        camera   = UnityEngine.Camera.main.transform.GetComponent<CameraFollow>();
+        cam   = UnityEngine.Camera.main.transform.GetComponent<CameraFollow>();
     }
     private void Start()
     {
@@ -57,6 +57,10 @@ public partial class Main : MonoBehaviour
     public void SetContent(ContentBase content)
     {
         this.content = content;
+    }
+    public T GetContent<T>() where T:ContentBase
+    {
+        return (T)content;
     }
     public void Release()
     {
@@ -80,14 +84,5 @@ public partial class Main : MonoBehaviour
     public void SetPlayer(UnitPlayer unit)
     {
         player = unit;
-    }
-
-    public void Dispose()
-    {
-        //TODO: Dispose() timing?
-        if (content != null)
-        {
-            content.Dispose();
-        }
     }
 }

@@ -23,8 +23,6 @@ public class Dev_MapSampler : MonoBehaviour
         int[] triangles = new int[] { 0, 4, 5, 13, 14, 10, 11, 3 };
         foreach (int key in keys)
         {
-            //Vector3 pivot = PTile.GetPivot(key, map[key].Scale);
-
             for (int t = 0; t < 8; ++t)
             {
                 int triangle = triangles[t];
@@ -94,7 +92,7 @@ public class Dev_MapSampler : MonoBehaviour
                 SetTile(key, linkOther, y);
             }
 
-            //DebugLog(key);
+            DebugLog(key);
         }
 
         //// save data

@@ -724,10 +724,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: 020_FieldTest
       objectReference: {fileID: 0}
-    - target: {fileID: 1549666831473289859, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 1549666831473289868, guid: 52a6a75bd236a3a4b81734948fa2da8f, type: 3}
       propertyPath: m_RootOrder
       value: 0
