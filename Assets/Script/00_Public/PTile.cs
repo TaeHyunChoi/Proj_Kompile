@@ -51,17 +51,16 @@ public static class PTile
 
         return pivot;
     }
+    //public static Vector3 GetPivot(Vector3 point, float scale)
+    //{
+    //    float scale_inverse = 1 / scale;
+    //    float cx = CMath.FloorToInt(point.x * scale_inverse, 3);
+    //    float cy = CMath.FloorToInt(point.y * scale_inverse, 3);
+    //    float cz = CMath.FloorToInt(point.z * scale_inverse, 3);
+    //    return new Vector3(cx,cy,cz) * scale;
+    //}
     public static Vector3 GetPivot(Vector3 point, float scale)
     {
-        float scale_inverse = 1 / scale;
-        float cx = CMath.FloorToInt(point.x * scale_inverse, 3);
-        float cy = CMath.FloorToInt(point.y * scale_inverse, 3);
-        float cz = CMath.FloorToInt(point.z * scale_inverse, 3);
-        return new Vector3(cx,cy,cz) * scale;
-    }
-    public static Vector3 GetPivot(Vector3 point, bool isSmall)
-    {
-        float scale = GetScale(isSmall ? TileSize.Half : TileSize.Default, 1f);
         float scale_inverse = GetScale(TileSize.Default_Inverse, scale);
 
         int cx = CMath.FloorToInt(point.x * scale_inverse, 3);
@@ -69,7 +68,7 @@ public static class PTile
         int cz = CMath.FloorToInt(point.z * scale_inverse, 3);
         Vector3 pivot = new Vector3(cx, cy, cz) * scale;
 
-        if (true == isSmall)
+        if (1f != scale)
         {
             float scale_quater = scale * 0.25f;
             float x = CMath.FloorToInt((point.x - scale_quater) * scale_inverse, 3);

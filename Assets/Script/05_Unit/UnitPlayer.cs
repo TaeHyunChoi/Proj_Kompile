@@ -19,7 +19,7 @@ public class UnitPlayer : UnitBase
             return;
         }
 
-        scale = tileNow.Scale;
+        scale = tileNow.GetScale();
         int keyNow = PTile.GetKey(pointNow, scale);
         float dist = CMath.Floor(Time.deltaTime * SPEED_MOVE, 3);
         float rotY = Mathf.Sign(Vector3.Cross(dirInput, dirBefore).y);
@@ -84,7 +84,7 @@ public class UnitPlayer : UnitBase
             return false;
         }
 
-        int keyTarget = PTile.GetKey(point, tileMy.Scale);
+        int keyTarget = PTile.GetKey(point, tileMy.GetScale());
         for (int sign = -1; sign <= 1; ++sign)
         {
             int key = keyTarget + sign * (1 << 8);

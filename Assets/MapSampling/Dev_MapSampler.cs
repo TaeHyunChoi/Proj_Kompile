@@ -99,6 +99,10 @@ public class Dev_MapSampler : MonoBehaviour
     public static void InitTile(Transform transform, Mesh mesh, float scale, byte layer, byte trigger, byte triggerValue)
     {
         int info = ((trigger << 6) | triggerValue) << 12;
+        if (1f != scale)
+        {
+            info |= 1 << 21;
+        }
 
         Quaternion rot = transform.rotation;
         Vector3[] vertices = mesh.vertices;
@@ -123,10 +127,6 @@ public class Dev_MapSampler : MonoBehaviour
             {
                 continue;
             }
-
-            //Vector3 A = CMath.FloorToVector(transform.TransformPoint(vertices[t0]),3);
-            //Vector3 B = CMath.FloorToVector(transform.TransformPoint(vertices[t1]), 3);
-            //Vector3 C = CMath.FloorToVector(transform.TransformPoint(vertices[t2]), 3);
 
             Vector3 A = PTile.SnappingPoint(transform.TransformPoint(vertices[t0]), 0.125f, 3);
             Vector3 B = PTile.SnappingPoint(transform.TransformPoint(vertices[t1]), 0.125f, 3);
@@ -310,16 +310,10 @@ public class Dev_MapSampler : MonoBehaviour
         }
         else
         {
-            scale = PTile.GetScale(TileSize.Default, scale);
-
             //get point, get pivot
-            //Vector3 pointCenter = CMath.FloorToVector((p0 + p1 + p2) * 0.333f, 3);
+            //scale = PTile.GetScale(TileSize.Default, scale);
             Vector3 pointCenter = PTile.SnappingPoint((p0 + p1 + p2) * 0.333f, scale_quater * 0.5f, 3);
-            bool isSmall = 0 != ((TileTrigger)(info >> 18) & TileTrigger.Small);
-            Vector3 pivot = PTile.GetPivot(pointCenter, isSmall);
-
-            //Debug.Log($"center:{pointCenter:F3} => pivot:{pivot:F3}\n0:{p0:F3}, 1:{p1:F3}, 2:{p2:F3}");
-            //Debug.Log($"pivot:{pivot:F3} << center:{pointCenter:F3}");
+            Vector3 pivot = PTile.GetPivot(pointCenter, scale);
 
             //set flag
             int move = 1 << PTile.GetQuarant(pointCenter - pivot, scale_half);
@@ -362,7 +356,8 @@ public class Dev_MapSampler : MonoBehaviour
         string move   = System.Convert.ToString(tile.Move, 2).ToString();
         string height = System.Convert.ToString(tile.Height, 2).ToString();
         string link   = System.Convert.ToString(tile.Info & 0xFFF, 2);
-        Debug.Log($"{PTile.GetPivot(key, tile.Scale):F3}(scale:{tile.Scale}, trigger:{trigger},{triggerValue}) m:{move} l:{link}\nh:{height}");
+        float scale = tile.GetScale(TileSize.Default);
+        Debug.Log($"{PTile.GetPivot(key, scale):F3}(scale:{scale}, trigger:{trigger},{triggerValue}) m:{move} l:{link}\nh:{height}");
     }
 }
 #endif

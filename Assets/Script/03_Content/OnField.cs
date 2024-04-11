@@ -43,7 +43,7 @@ public class OnField : ContentBase, IGetInput
         foreach (int key in tileMap.Keys)
         {
             Tile_t tile = tileMap[key];
-            Debug.Log($"[{PTile.GetPivot(key, tile.Scale)}] {System.Convert.ToString(tile.Move, 2)}");
+            Debug.Log($"[{PTile.GetPivot(key, tile.GetScale())}] {System.Convert.ToString(tile.Move, 2)}");
         }
 
         //Task.Run()을 고려했으나 .SetActive()가 Unity API라서 사용 불가

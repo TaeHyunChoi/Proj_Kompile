@@ -95,43 +95,25 @@ namespace DataType
     public struct Tile_t
     {
         //total 12 bytes
-        private uint  info;     // 21: trigger(3), trigger_value(6), link(12)
+        private uint  info;     // 22: scale(1), trigger(3), trigger_value(6), link(12)
         private ulong movement; // 55: height(13*3), move(16)
 
         public int Info { get => (int)info; }
         public long Movement { get => (long)movement; }
-
-        public float Scale
-        {
-            get
-            {
-                float scale = 1f;
-                if (0 != ((byte)(TileTrigger.Small) & (info >> 18)))
-                {
-                    scale = 0.5f;
-                }
-
-                return PTile.GetScale(TileSize.Default, scale);
-            }
-        }
         public int  Trigger { get => (int)(info >> 12); }
         public int  Link   { get => (int)(info & 0xFFFFFF);   }
         public int  Move   { get => (int)(movement & 0xFFFF); }
         public long Height { get => (long)(movement >> 16);   }
 
-        public float GetScale(TileSize type)
+        public float GetScale(TileSize type = TileSize.Default)
         {
-            float scale = 1f;
-            if (0 != ((byte)(TileTrigger.Small) & (info >> 18)))
-            {
-                scale = 0.5f;
-            }
+            float scale = 0 != (info >> 21) ? 0.5f : 1f;
 
             return PTile.GetScale(type, scale);
         }
         public bool IsMovable(int keyMy, Vector3 point)
         {
-            float   scale = Scale;
+            float   scale = GetScale();
             Vector3 pivot = PTile.GetPivot(keyMy, scale);
             int     flag  = 1 << PTile.GetQuarant(point - pivot, GetScale(TileSize.Half));
 
@@ -139,7 +121,7 @@ namespace DataType
         }
         public bool IsLinked(int keyMy, Vector3 pointTarget)
         {
-            Vector3 pivot = PTile.GetPivot(keyMy, Scale);
+            Vector3 pivot = PTile.GetPivot(keyMy, GetScale());
             Vector3 diff = pointTarget - pivot;
 
             float half_size_inverse = GetScale(TileSize.Half_inverse);
@@ -175,12 +157,12 @@ namespace DataType
         public float GetYValue(int keyMy, Vector3 point)
         {
             //point가 속한 분면을 구해서
-            Vector3 pivot    = PTile.GetPivot(keyMy, GetScale(TileSize.Default));
+            Vector3 pivot    = PTile.GetPivot(keyMy, GetScale());
             float scale_half = GetScale(TileSize.Half);
             int quarant      = PTile.GetQuarant(point - pivot, scale_half);
 
             //각 포인트에 해당하는 높이 구해서...
-            Vector3[] points = PTile.GetQuarantPoints(pivot, Scale, Height, quarant);
+            Vector3[] points = PTile.GetQuarantPoints(pivot, GetScale(), Height, quarant);
 
             //평면의 방정식에 대입하면 y값을 구할 수 있다. (유의: 왼손 좌표계)
             Vector3 normal = Vector3.Cross(points[1] - points[0], points[2] - points[0]);
