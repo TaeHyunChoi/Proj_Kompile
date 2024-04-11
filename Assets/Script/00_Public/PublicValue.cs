@@ -107,8 +107,7 @@ namespace DataType
 
         public float GetScale(TileSize type = TileSize.Default)
         {
-            float scale = 0 != (info >> 21) ? 0.5f : 1f;
-
+            float scale = (0 != (info >> 21)) ? 0.5f : 1f;
             return PTile.GetScale(type, scale);
         }
         public bool IsMovable(int keyMy, Vector3 point)
@@ -152,7 +151,7 @@ namespace DataType
                 default: return false;
             }
 
-            return 0 != (Link & (0b11 << index * 2));
+            return 0 != (Link & (1 << index));
         }
         public float GetYValue(int keyMy, Vector3 point)
         {

@@ -325,7 +325,11 @@ public class Dev_MapSampler : MonoBehaviour
             height |= GetHeightFlag(p2 - pivot, scale_quater, size_quater_inverse);
 
             //set tile data
-            int key = (layer << 24) | PTile.GetKey(pivot, scale);
+            int key = (layer << 30) | PTile.GetKey(pivot, scale);
+            Vector3 pv = PTile.GetPivot(key, scale);
+
+            Debug.Log($"pivot:{pivot:F3} => key:{key} => pv:{pv:F3}");
+
             if (false == map.TryGetValue(key, out Tile_t tile))
             {
                 map.Add(key, new Tile_t(info, move, height));

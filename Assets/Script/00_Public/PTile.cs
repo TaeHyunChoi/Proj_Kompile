@@ -39,26 +39,16 @@ public static class PTile
     //// get
     public static Vector3 GetPivot(int key, float scale)
     {
-        float x = (key & 0xFF_00_00) >> 16;
-        float y = (key & 0x00_FF_00) >> 8;
-        float z = (key & 0x00_00_FF) >> 0;
+        float x = (key >> 14) & 0xFF;
+        byte xf = (byte)((key >> 12) & 0b11);
+        if (xf == 0b01) { x += 0.125f; }
+        else if (xf == 0b10) { x += 0.625f; }
 
-        Vector3 pivot = new Vector3(x, y, z) * scale;
-        if (1f != scale)
-        {
-            pivot += new Vector3(scale * 0.25f, 0, 0);
-        }
+        int y = (key >> 8) & 0xF;
+        int z = key & 0xFF;
 
-        return pivot;
+        return new Vector3(x, y, z);
     }
-    //public static Vector3 GetPivot(Vector3 point, float scale)
-    //{
-    //    float scale_inverse = 1 / scale;
-    //    float cx = CMath.FloorToInt(point.x * scale_inverse, 3);
-    //    float cy = CMath.FloorToInt(point.y * scale_inverse, 3);
-    //    float cz = CMath.FloorToInt(point.z * scale_inverse, 3);
-    //    return new Vector3(cx,cy,cz) * scale;
-    //}
     public static Vector3 GetPivot(Vector3 point, float scale)
     {
         float scale_inverse = GetScale(TileSize.Default_Inverse, scale);
@@ -81,12 +71,25 @@ public static class PTile
 
         return pivot;
     }
-
     public static int GetKey(Vector3 point, float scale)
     {
         Vector3 pivot = GetPivot(point, scale);
-        scale = 1 / scale;
-        return (int)(pivot.x * scale) << 16 | (int)(pivot.y * scale) << 8 | (int)(pivot.z * scale);
+        int key = 0;
+        if (1f != scale)
+        {
+            key |= 1 << 22;
+        }
+        //float scale_inverse = GetScale(TileSize.Default_Inverse, scale);
+
+        key |= (int)(pivot.x) << 14;
+        if      (pivot.x % 1f == 0.125f) { key |= 0b01 << 12; }
+        else if (pivot.x % 1f == 0.625f) { key |= 0b10 << 12; }
+
+        key |= (int)(pivot.y) << 8;
+        key |= (int)(pivot.z);
+
+        //key |= (int)(pivot.x * scale_inverse) << 19 | (int)(pivot.y * scale_inverse) << 11 | (int)(pivot.z * scale_inverse);
+        return key;
     }
     public static float GetScale(TileSize type, float scale)
     {
@@ -233,7 +236,6 @@ public static class PTile
 
         return Vector3.zero;
     }
-
 
     public static Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
     {
