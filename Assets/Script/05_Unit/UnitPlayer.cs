@@ -15,9 +15,7 @@ public class UnitPlayer : UnitBase
     public void Move(Dictionary<int, Tile_t> map, Vector3 dirInput)
     {
         Vector3 pointNow = CMath.FloorToVector(transform.position, 3);
-
-        int keyMy = layer << 24;
-        keyMy |= GetKey(pointNow, scale);
+        int keyMy = GetKey(layer, pointNow, scale);
         if (false == map.TryGetValue(keyMy, out Tile_t tileNow))
         {
             Debug.LogAssertion("Impossible position " + pointNow);
@@ -25,9 +23,9 @@ public class UnitPlayer : UnitBase
         }
 
         scale = tileNow.GetScale();
-        Debug.Log($"{pointNow:F3}, key:{GetKey(pointNow, scale)}, flag:{tileNow.Info >> 12} => scale:{scale}");
+        Debug.Log($"{pointNow:F3}, key:{GetKey(layer, pointNow, scale)}, flag:{tileNow.Info >> 12} => scale:{scale}");
 
-        int keyNow = (layer << 24) | PTile.GetKey(pointNow, scale);
+        int keyNow = PTile.GetKey(layer, pointNow, scale);
         float dist = CMath.Floor(Time.deltaTime * SPEED_MOVE, 3);
         float rotY = Mathf.Sign(Vector3.Cross(dirInput, dirBefore).y);
         int sign = (rotY >= 0) ? 1 : -1;
@@ -68,7 +66,7 @@ public class UnitPlayer : UnitBase
         dirInput = CMath.FloorToVector(dirInput * dist, 3);
 
         Vector3 pointGoal = CMath.FloorToVector(pointNow + dirInput * scale, 3);
-        int keyGoal = (layer << 24) | PTile.GetKey(pointGoal, scale);
+        int keyGoal = PTile.GetKey(layer, pointGoal, scale);
 
         for (sign = 1; sign >= -1; --sign)
         {
@@ -99,7 +97,7 @@ public class UnitPlayer : UnitBase
             return false;
         }
 
-        int keyTarget = layer << 24 | PTile.GetKey(point, tileMy.GetScale());
+        int keyTarget = PTile.GetKey(layer, point, tileMy.GetScale());
         for (int sign = -1; sign <= 1; ++sign)
         {
             int key = keyTarget + sign * (1 << 8);

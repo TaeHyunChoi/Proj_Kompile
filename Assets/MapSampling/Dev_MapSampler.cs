@@ -2,6 +2,7 @@
 using UnityEngine;
 using DataType;
 using CMathf;
+using static PTile;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
 public class Dev_MapSampler : MonoBehaviour
@@ -23,6 +24,9 @@ public class Dev_MapSampler : MonoBehaviour
         int[] triangles = new int[] { 0, 4, 5, 13, 14, 10, 11, 3 };
         foreach (int key in keys)
         {
+            float scale = 1 == (key >> SHIFT_SCALE & 0x1) ? 0.5f : 1f;
+            Vector3 pivot = GetPivot(key, scale);
+
             for (int t = 0; t < 8; ++t)
             {
                 int triangle = triangles[t];
@@ -95,7 +99,6 @@ public class Dev_MapSampler : MonoBehaviour
         DataTable.WriteBinaryMappingData<Tile_t>(map, transformRsc.GetChild(0).gameObject.name);
         Debug.Log($"Sampling Done.");
     }
-
     public static void InitTile(Transform transform, Mesh mesh, float scale, byte layer, byte trigger, byte triggerValue)
     {
         int info = ((trigger << 6) | triggerValue) << 12;
@@ -192,38 +195,38 @@ public class Dev_MapSampler : MonoBehaviour
         switch (triangleMy)
         {
             case 0:
-                keyNext = key + (0 << 16) - (1 << 0);
+                keyNext = key + (0 << SHIFT_COORD_X) - (1 << SHIFT_COORD_Z);
                 triangleNext = 10;
                 break;
             case 10:
-                keyNext = key + (0 << 16) + (1 << 0);
+                keyNext = key + (0 << SHIFT_COORD_X) + (1 << SHIFT_COORD_Z);
                 triangleNext = 0;
                 break;
 
             case 4:
-                keyNext = key + (0 << 16) - (1 << 0);
+                keyNext = key + (0 << SHIFT_COORD_X) - (1 << SHIFT_COORD_Z);
                 triangleNext = 14;
                 break;
             case 14:
-                keyNext = key + (0 << 16) + (1 << 0);
+                keyNext = key + (0 << SHIFT_COORD_X) + (1 << SHIFT_COORD_Z);
                 triangleNext = 4;
                 break;
 
             case 3:
-                keyNext = key - (1 << 16) + (0 << 0);
+                keyNext = key - (1 << SHIFT_COORD_X) + (0 << SHIFT_COORD_Z);
                 triangleNext = 5;
                 break;
             case 5:
-                keyNext = key + (1 << 16) + (0 << 0);
+                keyNext = key + (1 << SHIFT_COORD_X) + (0 << SHIFT_COORD_Z);
                 triangleNext = 3;
                 break;
 
             case 11:
-                keyNext = key - (1 << 16) + (0 << 0);
+                keyNext = key - (1 << SHIFT_COORD_X) + (0 << SHIFT_COORD_Z);
                 triangleNext = 13;
                 break;
             case 13:
-                keyNext = key + (1 << 16) + (0 << 0);
+                keyNext = key + (1 << SHIFT_COORD_X) + (0 << SHIFT_COORD_Z);
                 triangleNext = 11;
                 break;
 
@@ -232,7 +235,7 @@ public class Dev_MapSampler : MonoBehaviour
 
         for (int sign = -1; sign <= 1; ++sign)
         {
-            if (false == map.TryGetValue(keyNext + sign * (1 << 8), out Tile_t tileNext))
+            if (false == map.TryGetValue(keyNext + sign * (1 << SHIFT_COORD_Y), out Tile_t tileNext))
             {
                 continue;
             }
@@ -245,7 +248,7 @@ public class Dev_MapSampler : MonoBehaviour
             if (tileMy.GetTriangleHeightMask(triangleMy, -sign * 4)
                     == tileNext.GetTriangleHeightMask(triangleNext, 0))
             {
-                keyNext += sign * (1 << 8);
+                keyNext += sign * (1 << SHIFT_COORD_Y);
                 return true;
             }
         }
@@ -325,7 +328,7 @@ public class Dev_MapSampler : MonoBehaviour
             height |= GetHeightFlag(p2 - pivot, scale_quater, size_quater_inverse);
 
             //set tile data
-            int key = (layer << 30) | PTile.GetKey(pivot, scale);
+            int key = PTile.GetKey(layer, pivot, scale);
             if (false == map.TryGetValue(key, out Tile_t tile))
             {
                 map.Add(key, new Tile_t(info, move, height));

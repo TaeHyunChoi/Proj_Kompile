@@ -36,18 +36,23 @@ public static class PTile
     public const float SIZE_QUATER_INVERSE  = 1f     / SIZE_QUATER;
     public const float SIZE_EIGHTH          = 0.125f * SIZE;
 
+    public const byte SHIFT_LAYER   = 30;
+    public const byte SHIFT_SCALE   = 20;
+    public const byte SHIFT_COORD_X = 12;
+    public const byte SHIFT_COORD_Y =  8;
+    public const byte SHIFT_COORD_Z =  0;
+
+
     //// get
     public static Vector3 GetPivot(int key, float scale)
     {
-        float x = ((key >> 14) & 0xFF) * scale;
-
-        //소수점 있으면 그냥 붙이면 된다는건가?
-        if (0 != (key & (1 << 13)))
+        float x = ((key >> SHIFT_COORD_X) & 0xFF) * scale;
+        if (0 != ((key >> SHIFT_SCALE) & 0x1))
         {
             x += 0.125f;
         }
 
-        float y = ((key >> 8) & 0xF) * scale;
+        float y = ((key >> SHIFT_COORD_Y) & 0x0F) * scale;
         float z = (key & 0xFF) * scale;
 
         return new Vector3(x, y, z);
@@ -74,25 +79,21 @@ public static class PTile
 
         return pivot;
     }
-    public static int GetKey(Vector3 point, float scale)
+    public static int GetKey(byte layer, Vector3 point, float scale)
     {
         Vector3 pivot = GetPivot(point, scale);
-        int key = 0;
-        if (1f != scale)
-        {
-            key |= 1 << 23;
-        }
         float scale_inverse = GetScale(TileSize.Default_Inverse, scale);
 
-        key |= (int)(pivot.x * scale_inverse) << 14;
-        if (0 != pivot.x % 1f) { key |= 1 << 13; }
-        //if      (pivot.x % 1f == 0.125f) { key |= 0b01 << 13; }
-        //else if (pivot.x % 1f == 0.625f) { key |= 0b10 << 13; }
+        int key = layer << SHIFT_LAYER;
+        if (0 != pivot.x % 1f) 
+        { 
+            key |= 1 << SHIFT_SCALE; 
+        }
 
-        key |= (int)(pivot.y * scale_inverse) << 8;
+        key |= (int)(pivot.x * scale_inverse) << SHIFT_COORD_X;
+        key |= (int)(pivot.y * scale_inverse) << SHIFT_COORD_Y;
         key |= (int)(pivot.z * scale_inverse);
 
-        //key |= (int)(pivot.x * scale_inverse) << 19 | (int)(pivot.y * scale_inverse) << 11 | (int)(pivot.z * scale_inverse);
         return key;
     }
     public static float GetScale(TileSize type, float scale)
