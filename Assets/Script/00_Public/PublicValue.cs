@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using CMathf;
 using UnityEngine;
@@ -95,7 +95,7 @@ namespace DataType
     public struct Tile_t
     {
         //total 12 bytes
-        private uint  info;     // 32: status(6), link(24, 12*2)
+        private uint  info;     // 21: trigger(3), trigger_value(6), link(12)
         private ulong movement; // 55: height(13*3), move(16)
 
         public int Info { get => (int)info; }
@@ -106,7 +106,7 @@ namespace DataType
             get
             {
                 float scale = 1f;
-                if (0 != ((byte)(TileFeature.Small) & (info >> 24)))
+                if (0 != ((byte)(TileTrigger.Small) & (info >> 18)))
                 {
                     scale = 0.5f;
                 }
@@ -114,15 +114,15 @@ namespace DataType
                 return PTile.GetScale(TileSize.Default, scale);
             }
         }
-        public TileFeature Status { get => (TileFeature)(info >> 24); }
-        public  int Link   { get => (int)(info & 0xFFFFFF);   }
-        public  int Move   { get => (int)(movement & 0xFFFF); }
+        public int  Trigger { get => (int)(info >> 12); }
+        public int  Link   { get => (int)(info & 0xFFFFFF);   }
+        public int  Move   { get => (int)(movement & 0xFFFF); }
         public long Height { get => (long)(movement >> 16);   }
 
         public float GetScale(TileSize type)
         {
             float scale = 1f;
-            if (0 != ((byte)(TileFeature.Small) & (info >> 24)))
+            if (0 != ((byte)(TileTrigger.Small) & (info >> 18)))
             {
                 scale = 0.5f;
             }
@@ -174,15 +174,15 @@ namespace DataType
         }
         public float GetYValue(int keyMy, Vector3 point)
         {
-            //point°¡ ¼ÓÇÑ ºĞ¸éÀ» ±¸ÇØ¼­
+            //pointê°€ ì†í•œ ë¶„ë©´ì„ êµ¬í•´ì„œ
             Vector3 pivot    = PTile.GetPivot(keyMy, GetScale(TileSize.Default));
             float scale_half = GetScale(TileSize.Half);
             int quarant      = PTile.GetQuarant(point - pivot, scale_half);
 
-            //°¢ Æ÷ÀÎÆ®¿¡ ÇØ´çÇÏ´Â ³ôÀÌ ±¸ÇØ¼­...
+            //ê° í¬ì¸íŠ¸ì— í•´ë‹¹í•˜ëŠ” ë†’ì´ êµ¬í•´ì„œ...
             Vector3[] points = PTile.GetQuarantPoints(pivot, Scale, Height, quarant);
 
-            //Æò¸éÀÇ ¹æÁ¤½Ä¿¡ ´ëÀÔÇÏ¸é y°ªÀ» ±¸ÇÒ ¼ö ÀÖ´Ù. (À¯ÀÇ: ¿Ş¼Õ ÁÂÇ¥°è)
+            //í‰ë©´ì˜ ë°©ì •ì‹ì— ëŒ€ì…í•˜ë©´ yê°’ì„ êµ¬í•  ìˆ˜ ìˆë‹¤. (ìœ ì˜: ì™¼ì† ì¢Œí‘œê³„)
             Vector3 normal = Vector3.Cross(points[1] - points[0], points[2] - points[0]);
             normal.Normalize();
             normal = CMath.FloorToVector(normal, 3);
@@ -191,7 +191,7 @@ namespace DataType
             return - (normal.x * point.x + normal.z * point.z - d) / normal.y;
         }
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-        //Tile Map Sampling¿¡¼­¸¸ »ç¿ë
+        //Tile Map Samplingì—ì„œë§Œ ì‚¬ìš©
         public bool IsMovable(int quarant)
         {
             return 0 != (Move & (1 << quarant));

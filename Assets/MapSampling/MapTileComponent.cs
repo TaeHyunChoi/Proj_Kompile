@@ -9,27 +9,15 @@ public class MapTileComponent : MonoBehaviour
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
     [SerializeField]
-    private TileFeature status;
-#endif
-
-    //private Mesh mesh;
-    //private int key;
-    //public int Key { get => key; }
-
+    private TileTrigger trigger;
+    [SerializeField]
+    private byte triggerValue;
     private void Awake()
     {
-        Set(0 == layer);
-        //key = (layer << 24) | PTile.GetKey(position, scale);
-
-#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
         Mesh mesh = transform.GetComponent<MeshFilter>().mesh;
-        float scale = (0 != (byte)(TileFeature.Small & status)) ? 0.5f : 1f;
-        Vector3 position = PTile.SnappingPoint(transform.position, scale, 2);
-        Dev_MapSampler.InitTile(transform, mesh, scale, layer, (byte)status);
+        float scale = (0 != (byte)(TileTrigger.Small & trigger)) ? 0.5f : 1f;
+        //transform.position = PTile.SnappingPoint(transform.position, scale, 2);
+        Dev_MapSampler.InitTile(transform, mesh, scale, layer, (byte)trigger, triggerValue);
 #endif
-    }
-    public void Set(bool isOn)
-    {
-        gameObject.SetActive(isOn);
     }
 }

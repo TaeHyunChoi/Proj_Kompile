@@ -7,14 +7,12 @@ using System.Collections.Generic;
 using static IDxInput;
 
 [Flags]
-public enum TileFeature : byte
+public enum TileTrigger : byte
 {
-    None = 0,
-    Inner = 1 << 0,
-    Small = 1 << 1,
-
-
-    Trans = 1 << 5
+    None     = 0,
+    Small    = 1 << 3,
+    Layer    = 1 << 2,
+    Interact = 1 << 1
 }
 public enum TileSize
 {
@@ -31,30 +29,60 @@ public enum TileSize
 public static class PTile
 {
     public const float SIZE                 = 1f;
-    public const float SIZE_INVERSE         = 1f    / SIZE;
-    public const float SIZE_HALF            = 0.5f  * SIZE;
-    public const float SIZE_HALF_INVERSE    = 1f    / SIZE_HALF;
-    public const float SIZE_QUATER          = 0.25f * SIZE;
-    public const float SIZE_QUATER_INVERSE  = 1f    / SIZE_QUATER;
+    public const float SIZE_INVERSE         = 1f     / SIZE;
+    public const float SIZE_HALF            = 0.5f   * SIZE;
+    public const float SIZE_HALF_INVERSE    = 1f     / SIZE_HALF;
+    public const float SIZE_QUATER          = 0.25f  * SIZE;
+    public const float SIZE_QUATER_INVERSE  = 1f     / SIZE_QUATER;
+    public const float SIZE_EIGHTH          = 0.125f * SIZE;
 
     //// get
-    public static Vector3 GetPivot(int key, float size)
+    public static Vector3 GetPivot(int key, float scale)
     {
         float x = (key & 0xFF_00_00) >> 16;
         float y = (key & 0x00_FF_00) >> 8;
         float z = (key & 0x00_00_FF) >> 0;
 
-        return new Vector3(x, y, z) * size;
+        Vector3 pivot = new Vector3(x, y, z) * scale;
+        if (1f != scale)
+        {
+            pivot += new Vector3(scale * 0.25f, 0, 0);
+        }
+
+        return pivot;
     }
     public static Vector3 GetPivot(Vector3 point, float scale)
     {
-        float size_inverse = 1 / scale;
-        float cx = CMath.FloorToInt(point.x * size_inverse, 2) * scale;
-        float cy = CMath.FloorToInt(point.y * size_inverse, 2) * scale;
-        float cz = CMath.FloorToInt(point.z * size_inverse, 2) * scale;
-
-        return new Vector3(cx, cy, cz);
+        float scale_inverse = 1 / scale;
+        float cx = CMath.FloorToInt(point.x * scale_inverse, 3);
+        float cy = CMath.FloorToInt(point.y * scale_inverse, 3);
+        float cz = CMath.FloorToInt(point.z * scale_inverse, 3);
+        return new Vector3(cx,cy,cz) * scale;
     }
+    public static Vector3 GetPivot(Vector3 point, bool isSmall)
+    {
+        float scale = GetScale(isSmall ? TileSize.Half : TileSize.Default, 1f);
+        float scale_inverse = GetScale(TileSize.Default_Inverse, scale);
+
+        int cx = CMath.FloorToInt(point.x * scale_inverse, 3);
+        int cy = CMath.FloorToInt(point.y * scale_inverse, 3);
+        int cz = CMath.FloorToInt(point.z * scale_inverse, 3);
+        Vector3 pivot = new Vector3(cx, cy, cz) * scale;
+
+        if (true == isSmall)
+        {
+            float scale_quater = scale * 0.25f;
+            float x = CMath.FloorToInt((point.x - scale_quater) * scale_inverse, 3);
+            x *= scale;
+            x += scale_quater;
+
+            pivot = new Vector3(x, pivot.y, pivot.z);
+            //Debug.Log($"{pivot:F3}");
+        }
+
+        return pivot;
+    }
+
     public static int GetKey(Vector3 point, float scale)
     {
         Vector3 pivot = GetPivot(point, scale);
@@ -64,7 +92,6 @@ public static class PTile
     public static float GetScale(TileSize type, float scale)
     {
         // for using cache data
-
         float size;
         
         switch (type)
@@ -84,47 +111,6 @@ public static class PTile
 
         return size * scale;
     }
-    public static Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
-    {
-        float x = p.x;
-        float y = p.y;
-        float z = p.z;
-        float diff;
-
-        //Similar to rounding, but the standard is different for each dist, not 0.5f.
-        diff = x % dist;
-        if (0 < diff & diff <= dist * 0.1f)
-        {
-            x -= diff;
-        }
-        else if (dist * 0.9f <= diff && diff < dist)
-        {
-            x += (dist - diff);
-        }
-
-        diff = y % dist;
-        if (0 < diff & diff <= dist * 0.1f)
-        {
-            y -= diff;
-        }
-        else if (dist * 0.9f <= diff && diff < dist)
-        {
-            y += (dist - diff);
-        }
-
-        diff = z % dist;
-        if (0 < diff & diff <= dist * 0.1f)
-        {
-            z -= diff;
-        }
-        else if (dist * 0.9f <= diff && diff < dist)
-        {
-            z += (dist - diff);
-        }
-
-        return CMath.FloorToVector(new Vector3(x, y, z), exponent);
-    }
-
     public static int GetQuarant(Vector3 diff, float scale_half)
     {
         int quarant = 0;
@@ -247,5 +233,47 @@ public static class PTile
         }
 
         return Vector3.zero;
+    }
+
+
+    public static Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
+    {
+        float x = p.x;
+        float y = p.y;
+        float z = p.z;
+        float diff;
+
+        //Similar to rounding, but the standard is different for each dist, not 0.5f.
+        diff = x % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            x -= diff;
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            x += (dist - diff);
+        }
+
+        diff = y % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            y -= diff;
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            y += (dist - diff);
+        }
+
+        diff = z % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            z -= diff;
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            z += (dist - diff);
+        }
+
+        return CMath.FloorToVector(new Vector3(x, y, z), exponent);
     }
 }

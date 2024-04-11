@@ -6,11 +6,10 @@ using static PTile;
 
 public class UnitPlayer : UnitBase
 {
-    private readonly int[] intervalRot = new int[] { 0, 1, -1, 2, -2 }; //clock-wise
+    private readonly float[] intervalRot = new float[] { 0, 1, -1, 2, -2 }; //clock-wise
     private readonly float SPEED_MOVE = 2f;
     private Vector3 dirBefore;
 
-    //TODO: 불필요한 연산이 보인다;
     public void Move(Dictionary<int, Tile_t> map, Vector3 dirInput, float scale)
     {
         Vector3 pointNow = CMath.FloorToVector(transform.position, 3);
