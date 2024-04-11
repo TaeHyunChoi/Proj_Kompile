@@ -326,10 +326,6 @@ public class Dev_MapSampler : MonoBehaviour
 
             //set tile data
             int key = (layer << 30) | PTile.GetKey(pivot, scale);
-            Vector3 pv = PTile.GetPivot(key, scale);
-
-            Debug.Log($"pivot:{pivot:F3} => key:{key} => pv:{pv:F3}");
-
             if (false == map.TryGetValue(key, out Tile_t tile))
             {
                 map.Add(key, new Tile_t(info, move, height));
