@@ -1,18 +1,16 @@
 using UnityEngine;
-//using static Public;
 using CMathf;
-using DataType;
 using System;
-using System.Collections.Generic;
 using static IDxInput;
+using static Index.IDxTile;
 
 [Flags]
 public enum TileTrigger : byte
 {
     None     = 0,
-    Small    = 1 << 3,
-    Layer    = 1 << 2,
-    Interact = 1 << 1
+    Small    = 1 << 2,
+    Layer    = 1 << 1,
+    Interact = 1 << 0
 }
 public enum TileSize
 {
@@ -28,32 +26,17 @@ public enum TileSize
 /// <summary> Parser related to Tile </summary> /// 
 public static class PTile
 {
-    public const float SIZE                 = 1f;
-    public const float SIZE_INVERSE         = 1f     / SIZE;
-    public const float SIZE_HALF            = 0.5f   * SIZE;
-    public const float SIZE_HALF_INVERSE    = 1f     / SIZE_HALF;
-    public const float SIZE_QUATER          = 0.25f  * SIZE;
-    public const float SIZE_QUATER_INVERSE  = 1f     / SIZE_QUATER;
-    public const float SIZE_EIGHTH          = 0.125f * SIZE;
-
-    public const byte SHIFT_LAYER   = 30;
-    public const byte SHIFT_SCALE   = 20;
-    public const byte SHIFT_COORD_X = 12;
-    public const byte SHIFT_COORD_Y =  8;
-    public const byte SHIFT_COORD_Z =  0;
-
-
     //// get
     public static Vector3 GetPivot(int key, float scale)
     {
-        float x = ((key >> SHIFT_COORD_X) & 0xFF) * scale;
-        if (0 != ((key >> SHIFT_SCALE) & 0x1))
+        float x = ((key >> SHIFT_KEY_X) & 0xFF) * scale;
+        if (0 != ((key >> SHIFT_KEY_SCALE) & 0x1))
         {
             x += 0.125f;
         }
 
-        float y = ((key >> SHIFT_COORD_Y) & 0x0F) * scale;
-        float z = (key & 0xFF) * scale;
+        float y = ((key >> SHIFT_KEY_Y) & 0x0F) * scale;
+        float z = ((key >> SHIFT_KEY_Z) & 0xFF) * scale;
 
         return new Vector3(x, y, z);
     }
@@ -84,15 +67,15 @@ public static class PTile
         Vector3 pivot = GetPivot(point, scale);
         float scale_inverse = GetScale(TileSize.Default_Inverse, scale);
 
-        int key = layer << SHIFT_LAYER;
+        int key = layer << SHIFT_KEY_LAYER;
         if (0 != pivot.x % 1f) 
         { 
-            key |= 1 << SHIFT_SCALE; 
+            key |= 1 << SHIFT_KEY_SCALE; 
         }
 
-        key |= (int)(pivot.x * scale_inverse) << SHIFT_COORD_X;
-        key |= (int)(pivot.y * scale_inverse) << SHIFT_COORD_Y;
-        key |= (int)(pivot.z * scale_inverse);
+        key |= (int)(pivot.x * scale_inverse) << SHIFT_KEY_X;
+        key |= (int)(pivot.y * scale_inverse) << SHIFT_KEY_Y;
+        key |= (int)(pivot.z * scale_inverse) << SHIFT_KEY_Z;
 
         return key;
     }

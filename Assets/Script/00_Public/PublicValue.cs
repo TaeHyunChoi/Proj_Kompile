@@ -89,8 +89,31 @@ public enum UIType : byte
 }
 
 
+namespace Index
+{
+    public static class IDxTile
+    {
+        public const float SIZE = 1f;
+        public const float SIZE_INVERSE = 1f / SIZE;
+        public const float SIZE_HALF = 0.5f * SIZE;
+        public const float SIZE_HALF_INVERSE = 1f / SIZE_HALF;
+        public const float SIZE_QUATER = 0.25f * SIZE;
+        public const float SIZE_QUATER_INVERSE = 1f / SIZE_QUATER;
+        public const float SIZE_EIGHTH = 0.125f * SIZE;
+
+        public const byte SHIFT_KEY_LAYER = 30;
+        public const byte SHIFT_KEY_SCALE = 20;
+        public const byte SHIFT_KEY_X = 12;
+        public const byte SHIFT_KEY_Y = 8;
+        public const byte SHIFT_KEY_Z = 0;
+
+        public const byte SHIFT_INFO_SCALE = 21;
+    }
+}
 namespace DataType
 {
+    using static Index.IDxTile;
+
     [Serializable]
     public struct Tile_t
     {
@@ -98,16 +121,15 @@ namespace DataType
         private uint  info;     // 22: scale(1), trigger(3), trigger_value(6), link(12)
         private ulong movement; // 55: height(13*3), move(16)
 
-        public int Info { get => (int)info; }
-        public long Movement { get => (long)movement; }
-        public int  Trigger { get => (int)(info >> 12); }
+        public TileTrigger Trigger { get => (TileTrigger)((info >> 18) & 0b111); }
+        public byte TriggerValue { get => (byte)((info >> 12) & 0b_11_1111); }
         public int  Link   { get => (int)(info & 0xFFFFFF);   }
         public int  Move   { get => (int)(movement & 0xFFFF); }
         public long Height { get => (long)(movement >> 16);   }
 
         public float GetScale(TileSize type = TileSize.Default)
         {
-            float scale = (0 != (info >> 21)) ? 0.5f : 1f;
+            float scale = (0 != (info >> SHIFT_INFO_SCALE)) ? 0.5f : 1f;
             return PTile.GetScale(type, scale);
         }
         public bool IsMovable(int keyMy, Vector3 point)
@@ -120,7 +142,8 @@ namespace DataType
         }
         public bool IsLinked(int keyMy, Vector3 pointTarget)
         {
-            Vector3 pivot = PTile.GetPivot(keyMy, GetScale());
+            float scale = GetScale();
+            Vector3 pivot = PTile.GetPivot(keyMy, scale);
             Vector3 diff = pointTarget - pivot;
 
             float half_size_inverse = GetScale(TileSize.Half_inverse);
@@ -171,8 +194,12 @@ namespace DataType
 
             return - (normal.x * point.x + normal.z * point.z - d) / normal.y;
         }
-#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+
+
         //Tile Map Sampling에서만 사용
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+        public int Info { get => (int)info; }
+        public long Movement { get => (long)movement; }
         public bool IsMovable(int quarant)
         {
             return 0 != (Move & (1 << quarant));
@@ -210,8 +237,6 @@ namespace DataType
 
             return h0 | h1;
         }
-#endif
-
         public Tile_t(int info, long movement)
         {
             this.info = (uint)info;
@@ -219,8 +244,9 @@ namespace DataType
         }
         public Tile_t(int info, int move, long height)
         {
-            this.info   = (uint)info;
+            this.info = (uint)info;
             this.movement = (ulong)((height << 16) | (long)move);
         }
+#endif
     }
 }

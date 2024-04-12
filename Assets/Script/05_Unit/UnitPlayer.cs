@@ -3,11 +3,12 @@ using UnityEngine;
 using DataType;
 using CMathf;
 using static PTile;
+using static Index.IDxTile;
 
 public class UnitPlayer : UnitBase
 {
     private readonly float[] intervalRot = new float[] { 0, 1, -1, 2, -2 }; //clock-wise
-    private readonly float SPEED_MOVE = 2f;
+    private readonly float SPEED_MOVE = 4f;
     private Vector3 dirBefore;
     private float scale = 1f;
     private byte layer = 0;
@@ -21,9 +22,6 @@ public class UnitPlayer : UnitBase
             Debug.LogAssertion("Impossible position " + pointNow);
             return;
         }
-
-        scale = tileNow.GetScale();
-        Debug.Log($"{pointNow:F3}, key:{GetKey(layer, pointNow, scale)}, flag:{tileNow.Info >> 12} => scale:{scale}");
 
         int keyNow = PTile.GetKey(layer, pointNow, scale);
         float dist = CMath.Floor(Time.deltaTime * SPEED_MOVE, 3);
@@ -77,11 +75,15 @@ public class UnitPlayer : UnitBase
                 transform.position = CMath.FloorToVector(new Vector3(pointGoal.x, y, pointGoal.z), 3);
                 dirBefore = dirInput;
 
-                if (0 != (tileGoal.Info >> 21))
+                TileTrigger trigger = tileGoal.Trigger;
+                if (TileTrigger.None != trigger)
                 {
-                    //여기서 트리거 발동시켜야 한다.
-                    layer = 1;
-                    scale = 0.5f;
+                    //call trigger;
+                    scale = (0 != (TileTrigger.Small & trigger)) ? 0.5f : 1f;
+                    layer = (0 != (TileTrigger.Layer & trigger)) ? tileGoal.TriggerValue : (byte)0;
+
+                    //TODO: field에 layer값 받아서 날려야 하나?
+
                     transform.localScale = Vector3.one * scale;
                 }
                 return;
@@ -97,10 +99,12 @@ public class UnitPlayer : UnitBase
             return false;
         }
 
-        int keyTarget = PTile.GetKey(layer, point, tileMy.GetScale());
+        int keyTarget = PTile.GetKey(layer, point, scale);
+        Vector3 pivot = PTile.GetPivot(keyTarget, scale);
+
         for (int sign = -1; sign <= 1; ++sign)
         {
-            int key = keyTarget + sign * (1 << 8);
+            int key = keyTarget + sign * (1 << SHIFT_KEY_Y);
 
             //유효한 타일?
             if (false == map.ContainsKey(key))

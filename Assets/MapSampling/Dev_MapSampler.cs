@@ -2,7 +2,7 @@
 using UnityEngine;
 using DataType;
 using CMathf;
-using static PTile;
+using static Index.IDxTile;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
 public class Dev_MapSampler : MonoBehaviour
@@ -10,6 +10,7 @@ public class Dev_MapSampler : MonoBehaviour
     [SerializeField]
     private Transform transformRsc;
     private static Dictionary<int, Tile_t> map = new Dictionary<int, Tile_t>();
+    private readonly int[] triangles = new int[] { 0, 4, 5, 13, 14, 10, 11, 3 };
 
     private void Start()
     {
@@ -21,24 +22,19 @@ public class Dev_MapSampler : MonoBehaviour
         }
 
         //// set links
-        int[] triangles = new int[] { 0, 4, 5, 13, 14, 10, 11, 3 };
         foreach (int key in keys)
         {
-            float scale = 1 == (key >> SHIFT_SCALE & 0x1) ? 0.5f : 1f;
-            Vector3 pivot = GetPivot(key, scale);
-
             for (int t = 0; t < 8; ++t)
             {
                 int triangle = triangles[t];
                 int linkMy = GetLinkIndex(triangle);
-
                 if (false == SetLink(key, triangle, linkMy, out int keyNext, out int triangleNext))
                 {
                     continue;
                 }
 
-                int linkToLeft = (linkMy + 11) % 12;
-                int linkToRight = (linkMy + 1) % 12;
+                int linkToLeft  = (linkMy + 11) % 12;
+                int linkToRight = (linkMy +  1) % 12;
                 int linkOther;
 
                 //differnet tile
@@ -49,7 +45,7 @@ public class Dev_MapSampler : MonoBehaviour
                     int linkNext = GetLinkIndex(triangleNext);
                     linkOther = linkToRight;
 
-                    if (true == SetLink(keyNext, triangleNext, linkNext, out int keyNextNext, out int not_used))
+                    if (true == SetLink(keyNext, triangleNext, linkNext))
                     {
                         SetTile(key, linkToLeft);
                     }
@@ -60,7 +56,7 @@ public class Dev_MapSampler : MonoBehaviour
                     int linkNext = GetLinkIndex(triangleNext);
                     linkOther = linkToLeft;
 
-                    if (true == SetLink(keyNext, triangleNext, linkNext, out int keyNextNext, out int not_used))
+                    if (true == SetLink(keyNext, triangleNext, linkNext))
                     {
                         SetTile(key, linkToRight);
                     }
@@ -72,14 +68,14 @@ public class Dev_MapSampler : MonoBehaviour
 
                 switch (linkMy)
                 {
-                    case 1: index0 = 9; index1 = 7; break;
-                    case 2: index0 = 15; index1 = 9; break;
-                    case 4: index0 = 2; index1 = 8; break;
-                    case 5: index0 = 8; index1 = 2; break;
-                    case 7: index0 = 7; index1 = 1; break;
-                    case 8: index0 = 1; index1 = 7; break;
-                    case 10: index0 = 12; index1 = 6; break;
-                    case 11: index0 = 6; index1 = 12; break;
+                    case  1: index0 =  9; index1 =  7; break;
+                    case  2: index0 = 15; index1 =  9; break;
+                    case  4: index0 =  2; index1 =  8; break;
+                    case  5: index0 =  8; index1 =  2; break;
+                    case  7: index0 =  7; index1 =  1; break;
+                    case  8: index0 =  1; index1 =  7; break;
+                    case 10: index0 = 12; index1 =  6; break;
+                    case 11: index0 =  6; index1 = 12; break;
                     default: continue;
                 }
 
@@ -101,11 +97,8 @@ public class Dev_MapSampler : MonoBehaviour
     }
     public static void InitTile(Transform transform, Mesh mesh, float scale, byte layer, byte trigger, byte triggerValue)
     {
-        int info = ((trigger << 6) | triggerValue) << 12;
-        if (1f != scale)
-        {
-            info |= 1 << 21;
-        }
+        int info = (1f != scale) ? 1 << SHIFT_INFO_SCALE : 0;
+        info |= ((trigger << 6) | triggerValue) << 12;
 
         Quaternion rot = transform.rotation;
         Vector3[] vertices = mesh.vertices;
@@ -195,38 +188,38 @@ public class Dev_MapSampler : MonoBehaviour
         switch (triangleMy)
         {
             case 0:
-                keyNext = key + (0 << SHIFT_COORD_X) - (1 << SHIFT_COORD_Z);
+                keyNext = key + (0 << SHIFT_KEY_X) - (1 << SHIFT_KEY_Z);
                 triangleNext = 10;
                 break;
             case 10:
-                keyNext = key + (0 << SHIFT_COORD_X) + (1 << SHIFT_COORD_Z);
+                keyNext = key + (0 << SHIFT_KEY_X) + (1 << SHIFT_KEY_Z);
                 triangleNext = 0;
                 break;
 
             case 4:
-                keyNext = key + (0 << SHIFT_COORD_X) - (1 << SHIFT_COORD_Z);
+                keyNext = key + (0 << SHIFT_KEY_X) - (1 << SHIFT_KEY_Z);
                 triangleNext = 14;
                 break;
             case 14:
-                keyNext = key + (0 << SHIFT_COORD_X) + (1 << SHIFT_COORD_Z);
+                keyNext = key + (0 << SHIFT_KEY_X) + (1 << SHIFT_KEY_Z);
                 triangleNext = 4;
                 break;
 
             case 3:
-                keyNext = key - (1 << SHIFT_COORD_X) + (0 << SHIFT_COORD_Z);
+                keyNext = key - (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
                 triangleNext = 5;
                 break;
             case 5:
-                keyNext = key + (1 << SHIFT_COORD_X) + (0 << SHIFT_COORD_Z);
+                keyNext = key + (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
                 triangleNext = 3;
                 break;
 
             case 11:
-                keyNext = key - (1 << SHIFT_COORD_X) + (0 << SHIFT_COORD_Z);
+                keyNext = key - (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
                 triangleNext = 13;
                 break;
             case 13:
-                keyNext = key + (1 << SHIFT_COORD_X) + (0 << SHIFT_COORD_Z);
+                keyNext = key + (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
                 triangleNext = 11;
                 break;
 
@@ -235,7 +228,7 @@ public class Dev_MapSampler : MonoBehaviour
 
         for (int sign = -1; sign <= 1; ++sign)
         {
-            if (false == map.TryGetValue(keyNext + sign * (1 << SHIFT_COORD_Y), out Tile_t tileNext))
+            if (false == map.TryGetValue(keyNext + sign * (1 << SHIFT_KEY_Y), out Tile_t tileNext))
             {
                 continue;
             }
@@ -248,7 +241,72 @@ public class Dev_MapSampler : MonoBehaviour
             if (tileMy.GetTriangleHeightMask(triangleMy, -sign * 4)
                     == tileNext.GetTriangleHeightMask(triangleNext, 0))
             {
-                keyNext += sign * (1 << SHIFT_COORD_Y);
+                keyNext += sign * (1 << SHIFT_KEY_Y);
+                return true;
+            }
+        }
+
+        return false;
+    }
+    private bool HasLinkedTile(int key, int triangleMy)
+    {
+        int keyNext, triangleNext;
+        switch (triangleMy)
+        {
+            case 0:
+                keyNext = key + (0 << SHIFT_KEY_X) - (1 << SHIFT_KEY_Z);
+                triangleNext = 10;
+                break;
+            case 10:
+                keyNext = key + (0 << SHIFT_KEY_X) + (1 << SHIFT_KEY_Z);
+                triangleNext = 0;
+                break;
+
+            case 4:
+                keyNext = key + (0 << SHIFT_KEY_X) - (1 << SHIFT_KEY_Z);
+                triangleNext = 14;
+                break;
+            case 14:
+                keyNext = key + (0 << SHIFT_KEY_X) + (1 << SHIFT_KEY_Z);
+                triangleNext = 4;
+                break;
+
+            case 3:
+                keyNext = key - (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
+                triangleNext = 5;
+                break;
+            case 5:
+                keyNext = key + (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
+                triangleNext = 3;
+                break;
+
+            case 11:
+                keyNext = key - (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
+                triangleNext = 13;
+                break;
+            case 13:
+                keyNext = key + (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
+                triangleNext = 11;
+                break;
+
+            default: return false;
+        }
+
+        for (int sign = -1; sign <= 1; ++sign)
+        {
+            if (false == map.TryGetValue(keyNext + sign * (1 << SHIFT_KEY_Y), out Tile_t tileNext))
+            {
+                continue;
+            }
+            if (false == tileNext.IsMovable(triangleNext))
+            {
+                return false;
+            }
+
+            Tile_t tileMy = map[key];
+            if (tileMy.GetTriangleHeightMask(triangleMy, -sign * 4)
+                    == tileNext.GetTriangleHeightMask(triangleNext, 0))
+            {
                 return true;
             }
         }
@@ -269,6 +327,23 @@ public class Dev_MapSampler : MonoBehaviour
         }
 
         if (false == HasLinkedTile(key, triangle, out keyNext, out trinagleNext))
+        {
+            return false;
+        }
+
+        SetTile(key, indexLink);
+        return true;
+    }
+    private bool SetLink(int key, int triangle, int indexLink)
+    {
+        Tile_t tileMy = map[key];
+
+        if (false == tileMy.IsMovable(triangle))
+        {
+            return false;
+        }
+
+        if (false == HasLinkedTile(key, triangle))
         {
             return false;
         }
@@ -302,8 +377,8 @@ public class Dev_MapSampler : MonoBehaviour
             diagonal = v0to2;
         }
 
-        float scale_half = PTile.GetScale(TileSize.Half, scale);
-        float scale_quater = PTile.GetScale(TileSize.Quater, scale);
+        float scale_half   = PTile.GetScale(TileSize.Half, scale);
+        float scale_quater = scale_half * 0.5f;
 
         if (scale_half < diagonal)
         {
@@ -314,7 +389,6 @@ public class Dev_MapSampler : MonoBehaviour
         else
         {
             //get point, get pivot
-            //scale = PTile.GetScale(TileSize.Default, scale);
             Vector3 pointCenter = PTile.SnappingPoint((p0 + p1 + p2) * 0.333f, scale_quater * 0.5f, 3);
             Vector3 pivot = PTile.GetPivot(pointCenter, scale);
 
@@ -335,8 +409,8 @@ public class Dev_MapSampler : MonoBehaviour
             }
             else
             {
-                info |= tile.Info;
-                move |= tile.Move;
+                info   |= tile.Info;
+                move   |= tile.Move;
                 height |= tile.Height;
                 map[key] = new Tile_t(info, move, height);
             }
@@ -354,8 +428,8 @@ public class Dev_MapSampler : MonoBehaviour
     {
         Tile_t tile = map[key];
 
-        string trigger = ((TileTrigger)(tile.Trigger >> 6)).ToString();
-        string triggerValue = System.Convert.ToString(tile.Trigger & 0b_111111, 2).ToString();
+        string trigger = tile.Trigger.ToString();
+        string triggerValue = System.Convert.ToString(tile.TriggerValue, 2).ToString();
         string move   = System.Convert.ToString(tile.Move, 2).ToString();
         string height = System.Convert.ToString(tile.Height, 2).ToString();
         string link   = System.Convert.ToString(tile.Info & 0xFFF, 2);
