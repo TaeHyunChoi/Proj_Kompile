@@ -7,21 +7,26 @@ using static Index.IDxTile;
 
 public class UnitPlayer : UnitBase
 {
-    private readonly float[] intervalRot = new float[] { 0, 1, -1, 2, -2 }; //clock-wise
-    private readonly float SPEED_MOVE = 4f;
-    private Vector3 dirBefore;
-    private float scale = 1f;
-    private int layer = 0;
+    private readonly float[] intervalRot  = new float[] { 0, 45f, -45f, 90f, -90f }; //clock-wise
+    private readonly float[] collisionRot = new float[] { 0, 15f, -15f, 30f, -30f, 45f, -45f, 60f, -60f, 75f, -75f };
+    private readonly float SPEED_MOVE = 3f;
+
+    private Vector3 dirBefore = new Vector3(-1f, 0, -1f);
+    private float   scale = 1f;
+    private int     layer = 0;
 
     public void Move(Dictionary<int, Tile_t> map, Vector3 dirInput)
     {
         Vector3 pointNow = CMath.FloorToVector(transform.position, 3);
         int keyMy = GetKey(layer, pointNow, scale);
+
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
         if (false == map.TryGetValue(keyMy, out Tile_t tileNow))
         {
             Debug.LogAssertion("Impossible position " + pointNow);
             return;
         }
+#endif
 
         int keyNow = PTile.GetKey(layer, pointNow, scale);
         float dist = CMath.Floor(Time.deltaTime * SPEED_MOVE, 3);
@@ -30,19 +35,19 @@ public class UnitPlayer : UnitBase
 
         for (int d = 0; d < 5; ++d)
         {
-            Vector3 dirRotated = Quaternion.Euler(0f, sign * intervalRot[d] * 45f, 0f) * dirInput;
-            dirRotated.Normalize();
-            dirRotated = CMath.FloorToVector(dirRotated * (SIZE_QUATER + dist) * scale, 3);
+            Vector3 dirRotated = Quaternion.Euler(0f, sign * intervalRot[d], 0f) * dirInput;
+            //dirRotated.Normalize();
+            //dirRotated = CMath.FloorToVector(dirRotated * (SIZE_QUATER + dist) * scale, 3);
 
             //collide?
-            for (int c = 0; c < 3; ++c)
+            for (int c = 0; c < collisionRot.Length; ++c)
             {
-                Vector3 dirCollide = Quaternion.Euler(0f, intervalRot[c] * 45f, 0f) * dirRotated;
-                dirCollide.Normalize();
-                dirCollide = CMath.FloorToVector(dirCollide * (SIZE_QUATER + dist) * scale, 3);
+                Vector3 dirCollision = Quaternion.Euler(0f, collisionRot[c], 0f) * dirRotated;
+                dirCollision.Normalize();
+                dirCollision = CMath.FloorToVector(dirCollision * (SIZE_QUATER + dist) * scale, 3);
 
-                Vector3 pointCollide = CMath.FloorToVector(pointNow + dirCollide, 3);
-                if (false == CanMoveTo(map, pointCollide, keyNow, tileNow))
+                Vector3 pointCollision = CMath.FloorToVector(pointNow + dirCollision, 3);
+                if (false == CanMoveTo(map, pointCollision, keyNow, tileNow))
                 {
                     goto CONTINUE;
                 }
@@ -55,8 +60,7 @@ public class UnitPlayer : UnitBase
             continue;
         }
 
-        Debug.Log("Can`t Move...");
-        //TODO: Need to dev: Can`t move, diagonal direction;
+        //Stop without looking in another direction.
         return;
 
     SET_POSITION:
@@ -72,8 +76,12 @@ public class UnitPlayer : UnitBase
             if (true == map.TryGetValue(key, out Tile_t tileGoal))
             {
                 float y = tileGoal.GetYValue(key, pointGoal);
-                transform.position = CMath.FloorToVector(new Vector3(pointGoal.x, y, pointGoal.z), 3);
-                dirBefore = dirInput;
+                pointGoal = new Vector3(pointGoal.x, y, pointGoal.z);
+                transform.position = CMath.FloorToVector(pointGoal, 3);
+
+                float x = (0 != dirInput.x) ? dirInput.x : dirBefore.x;
+                float z = (0 != dirInput.z) ? dirInput.z : dirBefore.z;
+                dirBefore = new Vector3(x, y, z);
 
                 if (false == tileGoal.IsTriggerNone())
                 {
@@ -108,8 +116,6 @@ public class UnitPlayer : UnitBase
         }
 
         int keyTarget = PTile.GetKey(layer, point, scale);
-        Vector3 pivot = PTile.GetPivot(keyTarget, scale);
-
         for (int sign = -1; sign <= 1; ++sign)
         {
             int key = keyTarget + sign * (1 << SHIFT_KEY_Y);

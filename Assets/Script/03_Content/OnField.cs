@@ -45,12 +45,6 @@ public class OnField : ContentBase, IGetInput
     {
         tileMap = DataTable.LoadMappingData<Tile_t>("020_FieldTest");
 
-        foreach (int key in tileMap.Keys)
-        {
-            Tile_t tile = tileMap[key];
-            Debug.Log($"[{PTile.GetPivot(key, tile.GetScale())}] {System.Convert.ToString(tile.Move, 2)}");
-        }
-
         //Task.Run()을 고려했으나 .SetActive()가 Unity API라서 사용 불가
         tiles = level.GetComponentsInChildren<MapTileComponent>();
         for (int i = 0; i < tiles.Length; ++i)
