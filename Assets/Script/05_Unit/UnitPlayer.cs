@@ -11,7 +11,7 @@ public class UnitPlayer : UnitBase
     private readonly float SPEED_MOVE = 4f;
     private Vector3 dirBefore;
     private float scale = 1f;
-    private byte layer = 0;
+    private int layer = 0;
 
     public void Move(Dictionary<int, Tile_t> map, Vector3 dirInput)
     {
@@ -75,28 +75,23 @@ public class UnitPlayer : UnitBase
                 transform.position = CMath.FloorToVector(new Vector3(pointGoal.x, y, pointGoal.z), 3);
                 dirBefore = dirInput;
 
-                TileTrigger trigger = tileGoal.Trigger;
-
-                if (TileTrigger.None != trigger)
+                if (false == tileGoal.IsTriggerNone())
                 {
-                    //TODO: small 처리가 애매하다? (회색 지대 있음)
-                    if (0 != (TileTrigger.Small & trigger))
+                    if (true == tileGoal.HasTrigger(TileTrigger.ScaleDown, out int isScaleDown))
                     {
-                        scale = 0.5f;
+                        scale = (0 != isScaleDown) ? 0.5f : 1f;
+                        transform.localScale = Vector3.one * scale;
+                        Main.Cam.SetFOV(scale);
                     }
-                    else
+                    if (true == tileGoal.HasTrigger(TileTrigger.Layer, out int indexLayer))
                     {
-                        scale = 1f;
-                    }
-
-                    if (0 != (TileTrigger.Layer & trigger))
-                    {
-                        layer = tileGoal.TriggerValue;
+                        layer = indexLayer;
                         Main.Instance.GetContent<OnField>().SetLayer(layer);
                     }
-
-                    transform.localScale = Vector3.one * scale;
-                    Main.Cam.SetFOV(scale);
+                    if (true == tileGoal.HasTrigger(TileTrigger.Interact, out int codeInteract))
+                    {
+                        Debug.Log("Need to dev: interact trigger");
+                    }
                 }
 
                 return;

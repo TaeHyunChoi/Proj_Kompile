@@ -99,7 +99,9 @@ MonoBehaviour:
   layer: 1
   scale: 0.5
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &340580781441320234
 GameObject:
   m_ObjectHideFlags: 0
@@ -199,7 +201,9 @@ MonoBehaviour:
   layer: 0
   scale: 1
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &521780041630070278
 GameObject:
   m_ObjectHideFlags: 0
@@ -298,8 +302,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   layer: 0
   scale: 1
-  trigger: 6
-  triggerValue: 1
+  trigger: 671088640
+  booleanScaleDown: 1
+  valueLayer: 1
+  valueInteract: 0
 --- !u!1 &1249953281128170245
 GameObject:
   m_ObjectHideFlags: 0
@@ -399,7 +405,9 @@ MonoBehaviour:
   layer: 1
   scale: 0.5
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &1549666831473289859
 GameObject:
   m_ObjectHideFlags: 0
@@ -532,7 +540,9 @@ MonoBehaviour:
   layer: 1
   scale: 0.5
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &2749566881064760735
 GameObject:
   m_ObjectHideFlags: 0
@@ -632,7 +642,9 @@ MonoBehaviour:
   layer: 1
   scale: 0.5
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &3194613581976507535
 GameObject:
   m_ObjectHideFlags: 0
@@ -732,7 +744,9 @@ MonoBehaviour:
   layer: 1
   scale: 0.5
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &3692270113164894837
 GameObject:
   m_ObjectHideFlags: 0
@@ -746,7 +760,7 @@ GameObject:
   - component: {fileID: 2892352248932281290}
   - component: {fileID: 7005858149524974490}
   m_Layer: 0
-  m_Name: Quad
+  m_Name: 0_floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -832,7 +846,9 @@ MonoBehaviour:
   layer: 0
   scale: 1
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &3986795871876283896
 GameObject:
   m_ObjectHideFlags: 0
@@ -932,7 +948,9 @@ MonoBehaviour:
   layer: 1
   scale: 0.5
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &4860032981194671258
 GameObject:
   m_ObjectHideFlags: 0
@@ -1063,7 +1081,9 @@ MonoBehaviour:
   layer: 0
   scale: 1
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &6817984546881891196
 GameObject:
   m_ObjectHideFlags: 0
@@ -1163,7 +1183,9 @@ MonoBehaviour:
   layer: 0
   scale: 1
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &7250260716648946791
 GameObject:
   m_ObjectHideFlags: 0
@@ -1262,8 +1284,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   layer: 1
   scale: 0.5
-  trigger: 2
-  triggerValue: 0
+  trigger: 671088640
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &8112265431013674279
 GameObject:
   m_ObjectHideFlags: 0
@@ -1415,7 +1439,9 @@ MonoBehaviour:
   layer: 0
   scale: 1
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1 &8662800174529945962
 GameObject:
   m_ObjectHideFlags: 0
@@ -1515,7 +1541,9 @@ MonoBehaviour:
   layer: 0
   scale: 1
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1001 &149988708
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1622,7 +1650,9 @@ MonoBehaviour:
   layer: 1
   scale: 0.5
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1001 &2148269989372757943
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1716,7 +1746,9 @@ MonoBehaviour:
   layer: 1
   scale: 0.5
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!4 &4605970317522328652 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2466707839395781627, guid: 72968b7156c811f4cb772dd8d353e6ab, type: 3}
@@ -1823,7 +1855,9 @@ MonoBehaviour:
   layer: 1
   scale: 0.5
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!4 &4219098840350756718 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2846093994108002278, guid: 6a64bff58ac29b249a175a91c2f3d19f, type: 3}
@@ -1931,7 +1965,9 @@ MonoBehaviour:
   layer: 0
   scale: 1
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1001 &6008200238119962894
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2042,7 +2078,9 @@ MonoBehaviour:
   layer: 0
   scale: 1
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!1001 &6513097894826297596
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2148,7 +2186,9 @@ MonoBehaviour:
   layer: 1
   scale: 0.5
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0
 --- !u!4 &5406670979282268328 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1255227329949415508, guid: b703c1e8c50b8aa48bafc40938c309e1, type: 3}
@@ -2240,4 +2280,6 @@ MonoBehaviour:
   layer: 0
   scale: 1
   trigger: 0
-  triggerValue: 0
+  booleanScaleDown: 0
+  valueLayer: 0
+  valueInteract: 0

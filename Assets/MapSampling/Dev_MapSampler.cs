@@ -95,11 +95,8 @@ public class Dev_MapSampler : MonoBehaviour
         DataTable.WriteBinaryMappingData<Tile_t>(map, transformRsc.GetChild(0).gameObject.name);
         Debug.Log($"Sampling Done.");
     }
-    public static void InitTile(Transform transform, Mesh mesh, float scale, byte layer, byte trigger, byte triggerValue)
+    public static void InitTile(Transform transform, Mesh mesh, float scale, byte layer, int info)
     {
-        int info = (1f != scale) ? 1 << SHIFT_INFO_SCALE : 0;
-        info |= ((trigger << 6) | triggerValue) << 12;
-
         Quaternion rot = transform.rotation;
         Vector3[] vertices = mesh.vertices;
         Vector3[] normals = mesh.normals;
@@ -428,13 +425,26 @@ public class Dev_MapSampler : MonoBehaviour
     {
         Tile_t tile = map[key];
 
-        string trigger = tile.Trigger.ToString();
-        string triggerValue = System.Convert.ToString(tile.TriggerValue, 2).ToString();
+        string trigger = string.Empty;
+
+        if (true == tile.HasTrigger(TileTrigger.ScaleDown, out int not_used))
+        {
+            trigger += "Scale Down, ";
+        }
+        if (true == tile.HasTrigger(TileTrigger.Layer, out not_used))
+        {
+            trigger += "Layer, ";
+        }
+        if (true == tile.HasTrigger(TileTrigger.Interact, out not_used))
+        {
+            trigger += "Interact, ";
+        }
+
         string move   = System.Convert.ToString(tile.Move, 2).ToString();
         string height = System.Convert.ToString(tile.Height, 2).ToString();
         string link   = System.Convert.ToString(tile.Info & 0xFFF, 2);
         float scale = tile.GetScale(TileSize.Default);
-        Debug.Log($"{PTile.GetPivot(key, scale):F3}(scale:{scale}, trigger:{trigger},{triggerValue}) m:{move} l:{link}\nh:{height}");
+        Debug.Log($"{PTile.GetPivot(key, scale):F3}(scale:{scale}, trigger:{trigger}) m:{move} l:{link}\nh:{height}");
     }
 }
 #endif

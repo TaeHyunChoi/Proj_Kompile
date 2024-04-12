@@ -107,7 +107,15 @@ namespace Index
         public const byte SHIFT_KEY_Y = 8;
         public const byte SHIFT_KEY_Z = 0;
 
-        public const byte SHIFT_INFO_SCALE = 21;
+        public const byte SHIFT_TRIGGER_SCALE          = 29;
+        public const byte SHIFT_TRIGGER_SCALE_VALUE    = 28;
+        public const byte SHIFT_TRIGGER_LAYER          = 27;
+        public const byte SHIFT_TRIGGER_LAYER_VALUE    = 23;
+        public const byte SHIFT_TRIGGER_INTERACT       = 22;
+        public const byte SHIFT_TRIGGER_INTERACT_VALUE = 12;
+
+        public const byte SHIFT_INFO_LINK  = 0;
+        public const byte SHIFT_INFO_SCALE = 30;
     }
 }
 namespace DataType
@@ -121,12 +129,34 @@ namespace DataType
         private uint  info;     // 22: scale(1), trigger(3), trigger_value(6), link(12)
         private ulong movement; // 55: height(13*3), move(16)
 
-        public TileTrigger Trigger { get => (TileTrigger)((info >> 18) & 0b111); }
-        public byte TriggerValue { get => (byte)((info >> 12) & 0b_11_1111); }
         public int  Link   { get => (int)(info & 0xFFFFFF);   }
         public int  Move   { get => (int)(movement & 0xFFFF); }
         public long Height { get => (long)(movement >> 16);   }
 
+        public bool IsTriggerNone()
+        {
+            return 0 == (info >> 12);
+        }
+        public bool HasTrigger(TileTrigger type, out int value)
+        {
+            value = 0;
+            bool hasTrigger = (0 != (info & (int)type));
+
+            switch (type)
+            {
+                case TileTrigger.ScaleDown:
+                    value = (int)((info >> SHIFT_TRIGGER_SCALE_VALUE) & 0b_0001);
+                    break;
+                case TileTrigger.Layer:
+                    value = (int)((info >> SHIFT_TRIGGER_LAYER_VALUE) & 0b_1111);
+                    break;
+                case TileTrigger.Interact:
+                    value = (int)((info >> SHIFT_TRIGGER_INTERACT_VALUE) & 0b_0011_1111_1111);
+                    break;
+            }
+
+            return hasTrigger;
+        }
         public float GetScale(TileSize type = TileSize.Default)
         {
             float scale = (0 != (info >> SHIFT_INFO_SCALE)) ? 0.5f : 1f;
@@ -194,7 +224,6 @@ namespace DataType
 
             return - (normal.x * point.x + normal.z * point.z - d) / normal.y;
         }
-
 
         //Tile Map Sampling에서만 사용
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN

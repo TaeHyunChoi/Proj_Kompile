@@ -24,7 +24,7 @@ public class OnField : ContentBase, IGetInput
         return field;
     }
 
-    public void SetLayer(byte layer)
+    public void SetLayer(int layer)
     {
         for (int i = 0; i < tiles.Length; ++i)
         {

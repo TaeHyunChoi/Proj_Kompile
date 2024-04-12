@@ -5,12 +5,12 @@ using static IDxInput;
 using static Index.IDxTile;
 
 [Flags]
-public enum TileTrigger : byte
+public enum TileTrigger : int
 {
-    None     = 0,
-    Small    = 1 << 2,
-    Layer    = 1 << 1,
-    Interact = 1 << 0
+    None      = 0,
+    ScaleDown = 1 << SHIFT_TRIGGER_SCALE,
+    Layer     = 1 << SHIFT_TRIGGER_LAYER,
+    Interact  = 1 << SHIFT_TRIGGER_INTERACT
 }
 public enum TileSize
 {
@@ -62,7 +62,7 @@ public static class PTile
 
         return pivot;
     }
-    public static int GetKey(byte layer, Vector3 point, float scale)
+    public static int GetKey(int layer, Vector3 point, float scale)
     {
         Vector3 pivot = GetPivot(point, scale);
         float scale_inverse = GetScale(TileSize.Default_Inverse, scale);
