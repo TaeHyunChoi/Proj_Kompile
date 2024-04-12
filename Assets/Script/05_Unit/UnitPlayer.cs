@@ -71,21 +71,34 @@ public class UnitPlayer : UnitBase
             int key = keyGoal + sign * (1 << 8);
             if (true == map.TryGetValue(key, out Tile_t tileGoal))
             {
-                float y = tileGoal.GetYValue(key, pointGoal); //3차원이니까 제곱으로?
+                float y = tileGoal.GetYValue(key, pointGoal);
                 transform.position = CMath.FloorToVector(new Vector3(pointGoal.x, y, pointGoal.z), 3);
                 dirBefore = dirInput;
 
                 TileTrigger trigger = tileGoal.Trigger;
+
                 if (TileTrigger.None != trigger)
                 {
-                    //call trigger;
-                    scale = (0 != (TileTrigger.Small & trigger)) ? 0.5f : 1f;
-                    layer = (0 != (TileTrigger.Layer & trigger)) ? tileGoal.TriggerValue : (byte)0;
+                    //TODO: small 처리가 애매하다? (회색 지대 있음)
+                    if (0 != (TileTrigger.Small & trigger))
+                    {
+                        scale = 0.5f;
+                    }
+                    else
+                    {
+                        scale = 1f;
+                    }
 
-                    //TODO: field에 layer값 받아서 날려야 하나?
+                    if (0 != (TileTrigger.Layer & trigger))
+                    {
+                        layer = tileGoal.TriggerValue;
+                        Main.Instance.GetContent<OnField>().SetLayer(layer);
+                    }
 
                     transform.localScale = Vector3.one * scale;
+                    Main.Cam.SetFOV(scale);
                 }
+
                 return;
             }
         }

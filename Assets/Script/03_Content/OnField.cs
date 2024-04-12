@@ -24,6 +24,13 @@ public class OnField : ContentBase, IGetInput
         return field;
     }
 
+    public void SetLayer(byte layer)
+    {
+        for (int i = 0; i < tiles.Length; ++i)
+        {
+            tiles[i].gameObject.SetActive(layer == tiles[i].Layer);
+        }
+    }
     public void Input(int input)
     {
         Vector3 dir = PTile.GetDirection(input);
