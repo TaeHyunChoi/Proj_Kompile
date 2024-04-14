@@ -15,6 +15,11 @@ public class UnitPlayer : UnitBase
     private float   scale = 1f;
     private int     layer = 0;
 
+    public void Move2nd(Dictionary<int, Tile_t> map, Vector3 dirInput)
+    { 
+        
+    }
+
     public void Move(Dictionary<int, Tile_t> map, Vector3 dirInput)
     {
         Vector3 pointNow = CMath.FloorToVector(transform.position, 3);
@@ -106,7 +111,6 @@ public class UnitPlayer : UnitBase
             }
         }
     }
-
     private bool CanMoveTo(Dictionary<int, Tile_t> map, Vector3 point, int keyMy, Tile_t tileMy)
     {
         //최소, 최대 범위 안에 있는가
