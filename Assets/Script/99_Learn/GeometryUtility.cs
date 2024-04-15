@@ -2,41 +2,58 @@ using UnityEngine;
 using Unity.Jobs;
 using Unity.Burst;
 using Unity.Collections;
+using System.Collections.Generic;
+using DataType;
 
-public struct Circle
+public struct IsPossibleToMove
 {
-    public Vector2 Center;
-    public float Radius;
+    //public Vector3 pivot;
+    public int   key;
+    public byte  triangle;
+    public short movement;
+    public float scale;
+
+    public Vector3 position;
+    public float   radius;
 }
 
-public struct Triangle
-{
-    public Vector2 VertexA;
-    public Vector2 VertexB;
-    public Vector2 VertexC;
-}
 [BurstCompile]
-public struct CircleTriangleIntersectionJob : IJobParallelFor
+public struct CheckTriangleCollsion : IJobParallelFor
 {
-    public Circle Circle;
-    [ReadOnly] public NativeArray<Triangle> Triangles;
-    [WriteOnly] public NativeArray<bool> Results;
+    [ReadOnly] public NativeArray<IsPossibleToMove> Targets;
+    [WriteOnly] public NativeArray<bool> Collision;
 
     public void Execute(int index)
     {
-        Triangle triangle = Triangles[index];
-        Results[index] = IsCircleTriangleIntersect(Circle, triangle);
+        IsPossibleToMove data = Targets[index];
+
+        bool result = true; // 상태값 (not_collided, movable, not_movable이 더 정확한 표현이긴 함;)
+        if (true == IsCircleTriangleIntersect(data))
+        {
+            result = (0 != (data.movement & (1 << data.triangle)));
+        }
+
+        Collision[index] = result;
     }
-
-    private bool IsCircleTriangleIntersect(Circle circle, Triangle triangle)
+    private bool IsCircleTriangleIntersect(IsPossibleToMove data)
     {
-        Vector3 circleCenter = circle.Center;
-        float radius = circle.Radius;
+        Vector3 circleCenter = data.position;
+        float radius = data.radius;
+        float size = Index.IDxTile.SIZE_QUATER * data.scale;
 
-        Vector3 A = triangle.VertexA;
-        Vector3 B = triangle.VertexB;
-        Vector3 C = triangle.VertexC;
-
+        //Vector3 pivot = data.pivot;
+        Vector3 pivot = PTile.GetPivot(data.key, data.scale);
+        Vector3 A, B, C;
+        switch (data.triangle)
+        {
+            case 0:
+                A = pivot;
+                B = pivot + new Vector3(1, 0, 0) * size;
+                C = pivot + new Vector3(0.5f, 0, 0.5f) * size;
+                break;
+            default:
+                return false;
+        }
 
         // 원의 중심이 삼각형 내부에 있는지 확인
         if (PointInTriangle(circleCenter, A, B, C))
@@ -117,57 +134,198 @@ public struct CircleTriangleIntersectionJob : IJobParallelFor
     }
 }
 
-
 public class GeometryUtility : MonoBehaviour
 {
+    private NativeArray<IsPossibleToMove> targets;
+    private NativeArray<bool>  isCollided;
+    private int   layer = 0;
+    private float scale = 1f;
 
-    NativeArray<Triangle> triangles;
-    NativeArray<bool> results;
-    int numTriangles = 16; // 예시로 16개의 삼각형
+    public bool CanMove(Dictionary<int, Tile_t> map, Vector3 dir, out Vector3 goal)
+    {
+        int length;
+        bool canMove = false;
+        Vector3 position = transform.position;
+        dir *= Time.fixedDeltaTime;
 
-    private void Awake()
-    {
-        triangles = new NativeArray<Triangle>(numTriangles, Allocator.TempJob);
-        results = new NativeArray<bool>(numTriangles, Allocator.TempJob);
-    }
-    public void CheckIntersections()
-    {
-        for (int i = 0; i < triangles.Length; i++)
+        //목표 위치점 정보 얻기
+        goal = position + dir;
+
+        Vector3 pivot = PTile.GetPivot(goal, scale);
+        Tile_t tileMy = map[PTile.GetKey(layer, goal, scale)];
+        int keyMy = PTile.GetKey(layer, pivot, scale);
+        int indexTriangle = PTile.GetTriangleIndex(goal - pivot, scale * 0.5f);
+
+        //get triangle index
+        byte index;
+        short move;
+        float radius;
+
+        length = 15;
+        targets = new NativeArray<IsPossibleToMove>(length, Allocator.TempJob);
+        isCollided = new NativeArray<bool>(length, Allocator.TempJob);
+
+        switch (indexTriangle)
         {
-            // 임의의 삼각형 데이터를 생성하여 할당
-            triangles[i] = new Triangle
-            {
-                VertexA = new Vector2(Random.value, Random.value),
-                VertexB = new Vector2(Random.value, Random.value),
-                VertexC = new Vector2(Random.value, Random.value)
-            };
-            Debug.Log($"[{i}] {triangles[i].VertexA},{triangles[i].VertexB},{triangles[i].VertexC}");
+            case 0:
+                {
+                    //본인 타일
+                    move = (short)tileMy.Move;
+                    index = 0;
+                    radius = tileMy.GetScale(TileSize.Quater);
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 0, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 1, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 2, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 3, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 4, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 7, position = position, scale = scale, radius = radius };
+
+                    //주변 타일
+                    int keyTarget;
+                    if (true == tileMy.IsLinked(11))
+                    {
+                        keyTarget = keyMy - (1 << 16);
+                        index = SetJob(map, keyTarget, position, 4, index);
+                        index = SetJob(map, keyTarget, position, 5, index);
+                    }
+                    else
+                    {
+                        goto DISPOSE;
+                    }
+
+                    if (true == tileMy.IsLinked(0))
+                    {
+                        keyTarget = keyMy - (1 << 16) - (1 << 0);
+                        index = SetJob(map, keyTarget, position, 13, index);
+                        index = SetJob(map, keyTarget, position, 14, index);
+                    }
+                    else
+                    {
+                        goto DISPOSE;
+                    }
+
+                    if (true == tileMy.IsLinked(1))
+                    {
+                        keyTarget = keyMy - (1 << 0);
+                        index = SetJob(map, keyTarget, position, 9, index);
+                        index = SetJob(map, keyTarget, position, 10, index);
+                        index = SetJob(map, keyTarget, position, 11, index);
+                    }
+                    else
+                    {
+                        goto DISPOSE;
+                    }
+
+                    if (true == tileMy.IsLinked(2))
+                    {
+                        keyTarget = keyMy + (1 << 16) - (1 << 0);
+                        index = SetJob(map, keyTarget, position, 14, index);
+                        index = SetJob(map, keyTarget, position, 15, index);
+                    }
+                    else
+                    {
+                        goto DISPOSE;
+                    }
+
+                    length = index;
+                }
+                break;
+            case 2:
+                {
+                    //본인 타일
+                    move = (short)tileMy.Move;
+                    index = 0;
+                    radius = tileMy.GetScale(TileSize.Quater);
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  0, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  1, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  2, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  3, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  6, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  7, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  8, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  9, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 11, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 12, position = position, scale = scale, radius = radius };
+                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 15, position = position, scale = scale, radius = radius };
+
+                    //주변 타일
+                    int keyTarget;
+                    if (true == tileMy.IsLinked(10))
+                    {
+                        keyTarget = keyMy - (1 << 16);
+                        index = SetJob(map, keyTarget, position, 12, index);
+                        index = SetJob(map, keyTarget, position, 13, index);
+                    }
+                    if (true == tileMy.IsLinked(11))
+                    {
+                        keyTarget = keyMy - (1 << 16);
+                        index = SetJob(map, keyTarget, position,  5, index);
+                        index = SetJob(map, keyTarget, position,  6, index);
+                    }
+                    length = index;
+                }
+                break;
+            default:
+                canMove = false;
+                goto DISPOSE;
         }
-        Circle circle = new Circle { Center = new Vector2(1, 1), Radius = 0.5f };
-        CircleTriangleIntersectionJob job = new CircleTriangleIntersectionJob
+
+        CheckTriangleCollsion job = new CheckTriangleCollsion
         {
-            Circle = circle,
-            Triangles = triangles,
-            Results = results
+            Targets = targets,
+            Collision = isCollided
         };
-        JobHandle handle = job.Schedule(numTriangles, 4); // 4개의 삼각형 단위로 분할하여 처리
+        JobHandle handle = job.Schedule(8, 4);
         handle.Complete();
 
-        // 결과 처리
-        for (int i = 0; i < numTriangles; i++)
+        for (int i = 0; i < length; i++)
         {
-            if (results[i])
+            //is collided
+            if (true == isCollided[i])
             {
-                Debug.Log("Intersection found at triangle: " + i);
+                IsPossibleToMove data = targets[i];
+
+                if (false == Dev_MapSampler.Map.ContainsKey(data.key))
+                {
+                    Debug.Log($"NULL_TILE: [{data.triangle}:{PTile.GetPivot(data.key, data.scale)}] {System.Convert.ToString(data.movement, 2)}");
+                    goto DISPOSE;
+                }
+                if (0 == (data.movement & (1 << data.triangle)))
+                {
+                    Debug.Log($"NOT_MOVE: [{data.triangle}:{PTile.GetPivot(data.key, data.scale)}] {System.Convert.ToString(data.movement, 2)}");
+                    goto DISPOSE;
+                }
             }
         }
 
-        triangles.Dispose();
-        results.Dispose();
+        //이동 처리 ㄱㄱ
+        transform.position = goal;
+        canMove = true;
+
+    DISPOSE:
+        targets.Dispose();
+        isCollided.Dispose();
+
+        return canMove;
     }
 
-    private void Start()
+    private byte SetJob(Dictionary<int, Tile_t> map, int key, Vector3 center, byte triangle, byte indexJob)
     {
-        CheckIntersections();
+        short  move;
+        float radius;
+
+        for (int y = 1; y >= -1; ++y)
+        {
+            int keyTarget = key + y * (1 << 8);
+            if (true == map.TryGetValue(keyTarget, out Tile_t tileTarget))
+            {
+                move = (short)tileTarget.Move;
+                radius = tileTarget.GetScale(TileSize.Quater);
+                targets[indexJob++] = new IsPossibleToMove { key = keyTarget, movement = move, triangle = triangle, position = center, radius = radius };
+                break;
+            }
+        }
+
+        return indexJob;
     }
 }

@@ -101,7 +101,7 @@ public static class PTile
 
         return size * scale;
     }
-    public static int GetQuarant(Vector3 diff, float scale_half)
+    public static int GetTriangleIndex(Vector3 diff, float scale_half)
     {
         int quarant = 0;
         if (diff.x >= scale_half)

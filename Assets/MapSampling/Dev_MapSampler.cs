@@ -7,10 +7,13 @@ using static Index.IDxTile;
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
 public class Dev_MapSampler : MonoBehaviour
 {
-    [SerializeField]
-    private Transform transformRsc;
+    [SerializeField] private Transform transformRsc;
+    [SerializeField] private GeometryUtility tester;
     private static Dictionary<int, Tile_t> map = new Dictionary<int, Tile_t>();
+    public static Dictionary<int, Tile_t> Map { get => map; }
     private readonly int[] triangles = new int[] { 0, 4, 5, 13, 14, 10, 11, 3 };
+
+    private Vector3 dir;
 
     private void Start()
     {
@@ -390,7 +393,7 @@ public class Dev_MapSampler : MonoBehaviour
             Vector3 pivot = PTile.GetPivot(pointCenter, scale);
 
             //set flag
-            int move = 1 << PTile.GetQuarant(pointCenter - pivot, scale_half);
+            int move = 1 << PTile.GetTriangleIndex(pointCenter - pivot, scale_half);
 
             long height = 0;
             float size_quater_inverse = PTile.GetScale(TileSize.Quater_inverse, scale);
@@ -418,6 +421,29 @@ public class Dev_MapSampler : MonoBehaviour
         Tile_t tile = map[key];
         int info = tile.Info | (1 << indexLink);
         map[key] = new Tile_t(info, tile.Movement);
+    }
+
+    // test
+    private void Update()
+    {
+        if (true == Input.GetKeyDown(KeyCode.UpArrow)    || true == Input.GetKey(KeyCode.UpArrow))    { dir += Vector3.forward; }
+        if (true == Input.GetKeyDown(KeyCode.DownArrow)  || true == Input.GetKey(KeyCode.DownArrow))  { dir += Vector3.back; }
+        if (true == Input.GetKeyDown(KeyCode.LeftArrow)  || true == Input.GetKey(KeyCode.LeftArrow))  { dir += Vector3.left; }
+        if (true == Input.GetKeyDown(KeyCode.RightArrow) || true == Input.GetKey(KeyCode.RightArrow)) { dir += Vector3.right; }
+    }
+    private void FixedUpdate()
+    {
+        if (Vector3.zero != dir)
+        {
+            dir.Normalize();
+
+            if (true == tester.CanMove(map, dir, out Vector3 pos))
+            {
+                tester.transform.position = pos;
+            }
+        }
+
+        dir = Vector3.zero;
     }
 
     // utility

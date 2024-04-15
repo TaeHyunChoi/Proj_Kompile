@@ -166,9 +166,13 @@ namespace DataType
         {
             float   scale = GetScale();
             Vector3 pivot = PTile.GetPivot(keyMy, scale);
-            int     flag  = 1 << PTile.GetQuarant(point - pivot, GetScale(TileSize.Half));
+            int     flag  = 1 << PTile.GetTriangleIndex(point - pivot, GetScale(TileSize.Half));
 
             return 0 != (flag & Move);
+        }
+        public bool IsLinked(int indexLink)
+        {
+            return 0 != (Link & (1 << indexLink));
         }
         public bool IsLinked(int keyMy, Vector3 pointTarget)
         {
@@ -211,7 +215,7 @@ namespace DataType
             //point가 속한 분면을 구해서
             Vector3 pivot    = PTile.GetPivot(keyMy, GetScale());
             float scale_half = GetScale(TileSize.Half);
-            int quarant      = PTile.GetQuarant(point - pivot, scale_half);
+            int quarant      = PTile.GetTriangleIndex(point - pivot, scale_half);
 
             //각 포인트에 해당하는 높이 구해서...
             Vector3[] points = PTile.GetQuarantPoints(pivot, GetScale(), Height, quarant);
