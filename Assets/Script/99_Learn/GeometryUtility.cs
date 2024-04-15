@@ -323,94 +323,547 @@ public struct Triangle
 
 public class GeometryUtility : MonoBehaviour
 {
-    private List<Triangle> triangles = new List<Triangle>();
-    private NativeArray<IsPossibleToMove> targets;
-    private NativeArray<bool> isCollided;
+    private Triangle[] triangles;
     private int layer = 0;
     private float scale = 1f;
     private float speed = 2f;
-
+    private void Awake()
+    {
+        triangles = new Triangle[15];
+    }
     public bool CanMove(Dictionary<int, Tile_t> map, Vector3 dir, out Vector3 goal)
     {
         Vector3 position = transform.position;
         dir *= Time.fixedDeltaTime * speed;
 
-        //목표 위치점 정보 얻기
         goal = position + dir;
         if (scale * 0.25f > goal.x || scale * 0.25f > goal.z)
         {
             return false;
         }
 
-        Vector3 pivot = PTile.GetPivot(goal, scale);
-        Tile_t tileMy = map[PTile.GetKey(layer, goal, scale)];
         int keyMy = PTile.GetKey(layer, goal, scale);
-        int indexTriangle = PTile.GetTriangleIndex(goal - pivot, scale * 0.5f);
+        if (false == map.TryGetValue(keyMy, out Tile_t tileMy))
+        {
+            return false;
+        }
+
+        Vector3 pivot = PTile.GetPivot(goal, scale);
+        int triangleTarget = PTile.GetTriangleIndex(goal - pivot, scale * 0.5f);
         float radius = tileMy.GetScale(TileSize.Quater);
+        int index = 0;
         int keyTarget, shiftKey;
 
-        switch (indexTriangle)
+        switch (triangleTarget)
         {
             case 0:
                 {
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 1, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 2, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 3, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 4, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 7, goal, radius));
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 3, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 4, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
 
                     if (true == tileMy.IsLinked(0, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        AddLinked(map, triangles, keyTarget, goal, 13);
-                        AddLinked(map, triangles, keyTarget, goal, 14);
+                        index = AddLinked(map, triangles, keyTarget, goal, 13, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 14, index);
                     }
                     if (true == tileMy.IsLinked(1, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        AddLinked(map, triangles, keyTarget, goal, 9);
-                        AddLinked(map, triangles, keyTarget, goal, 10);
-                        AddLinked(map, triangles, keyTarget, goal, 11);
+                        index = AddLinked(map, triangles, keyTarget, goal, 9, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 10, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 11, index);
                     }
                     if (true == tileMy.IsLinked(2, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        AddLinked(map, triangles, keyTarget, goal, 14);
-                        AddLinked(map, triangles, keyTarget, goal, 15);
+                        index = AddLinked(map, triangles, keyTarget, goal, 14, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 15, index);
                     }
                     if (true == tileMy.IsLinked(11, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        AddLinked(map, triangles, keyTarget, goal, 4);
-                        AddLinked(map, triangles, keyTarget, goal, 5);
+                        index = AddLinked(map, triangles, keyTarget, goal, 4, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 5, index);
+                    }
+                }
+                break;
+            case 1:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 0, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 3, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 4, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
+
+                    if (true == tileMy.IsLinked(1, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 9, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 10, index);
+                    }
+                    if (true == tileMy.IsLinked(2, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 14, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 15, index);
                     }
                 }
                 break;
             case 2:
                 {
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 0, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 1, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 2, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 3, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 6, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 7, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 8, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 9, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 11, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 12, goal, radius));
-                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 15, goal, radius));
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 0, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 3, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 11, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
 
                     if (true == tileMy.IsLinked(10, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        AddLinked(map, triangles, keyTarget, goal, 12);
-                        AddLinked(map, triangles, keyTarget, goal, 13);
+                        index = AddLinked(map, triangles, keyTarget, goal, 12, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 13, index);
                     }
                     if (true == tileMy.IsLinked(11, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        AddLinked(map, triangles, keyTarget, goal, 5);
-                        AddLinked(map, triangles, keyTarget, goal, 6);
+                        index = AddLinked(map, triangles, keyTarget, goal, 5, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 6, index);
+                    }
+                }
+                break;
+            case 3:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 0, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 3, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 11, goal, radius);
+
+                    if (true == tileMy.IsLinked(0, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 13, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 14, index);
+                    }
+                    if (true == tileMy.IsLinked(1, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 10, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 11, index);
+                    }
+                    if (true == tileMy.IsLinked(10, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 12, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 13, index);
+                    }
+                    if (true == tileMy.IsLinked(11, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 4, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 5, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 6, index);
+                    }
+                }
+                break;
+            case 4:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 4, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 5, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 0, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+
+                    if (true == tileMy.IsLinked(0, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 9, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 10, index);
+                    }
+                    if (true == tileMy.IsLinked(1, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 13, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 14, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 15, index);
+                    }
+                    if (true == tileMy.IsLinked(2, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 4, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 5, index);
+                    }
+                    if (true == tileMy.IsLinked(3, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 0, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 3, index);
+                    }
+                }
+                break;
+            case 5:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 4, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 5, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 13, goal, radius);
+
+                    if (true == tileMy.IsLinked(2, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 13, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 14, index);
+                    }
+                    if (true == tileMy.IsLinked(3, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 10, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 11, index);
+                    }
+                    if (true == tileMy.IsLinked(4, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 0, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 2, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 3, index);
+                    }
+                    if (true == tileMy.IsLinked(5, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 8, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 11, index);
+                    }
+                }
+                break;
+            case 6:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 4, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 5, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 13, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
+
+                    if (true == tileMy.IsLinked(4, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 2, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 3, index);
+                    }
+                    if (true == tileMy.IsLinked(5, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 8, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 11, index);
+                    }
+                }
+                break;
+            case 7:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 4, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 5, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
+
+                    if (true == tileMy.IsLinked(1, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 9, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 10, index);
+
+                    }
+                    if (true == tileMy.IsLinked(2, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 14, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 15, index);
+                    }
+                }
+                break;
+            case 8:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 10, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 11, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 3, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
+
+                    if (true == tileMy.IsLinked(10, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 12, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 13, index);
+                    }
+                    if (true == tileMy.IsLinked(11, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 5, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 6, index);
+                    }
+                }
+                break;
+            case 9:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 10, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 11, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 14, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
+
+                    if (true == tileMy.IsLinked(7, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 4, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 7, index);
+                    }
+                    if (true == tileMy.IsLinked(8, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 0, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 1, index);
+                    }
+                }
+                break;
+            case 10:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 10, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 11, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 14, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
+
+                    if (true == tileMy.IsLinked(7, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 4, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 7, index);
+                    }
+                    if (true == tileMy.IsLinked(8, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 0, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 1, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 3, index);
+                    }
+                    if (true == tileMy.IsLinked(9, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 4, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 5, index);
+                    }
+                    if (true == tileMy.IsLinked(10, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 13, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 14, index);
+                    }
+                }
+                break;
+            case 11:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 10, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 11, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 3, goal, radius);
+
+                    if (true == tileMy.IsLinked(8, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 0, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 3, index);
+                    }
+                    if (true == tileMy.IsLinked(9, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 4, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 5, index);
+                    }
+                    if (true == tileMy.IsLinked(10, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 11, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 12, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 13, index);
+                    }
+                    if (true == tileMy.IsLinked(11, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 5, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 6, index);
+                    }
+                }
+                break;
+            case 12:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 13, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 14, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 5, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
+
+                    if (true == tileMy.IsLinked(4, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 2, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 3, index);
+                    }
+                    if (true == tileMy.IsLinked(5, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 8, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 11, index);
+                    }
+                }
+                break;
+            case 13:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 13, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 14, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 5, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+
+                    if (true == tileMy.IsLinked(4, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 2, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 3, index);
+                    }
+                    if (true == tileMy.IsLinked(5, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 8, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 10, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 11, index);
+                    }
+                    if (true == tileMy.IsLinked(6, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 0, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 3, index);
+                    }
+                    if (true == tileMy.IsLinked(7, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 4, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 5, index);
+                    }
+                }
+                break;
+            case 14:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 13, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 14, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 10, goal, radius);
+
+                    if (true == tileMy.IsLinked(5, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 10, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 11, index);
+                    }
+                    if (true == tileMy.IsLinked(6, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 0, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 3, index);
+                    }
+                    if (true == tileMy.IsLinked(7, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 4, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 5, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 7, index);
+                    }
+                    if (true == tileMy.IsLinked(8, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 0, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 1, index);
+                    }
+                }
+                break;
+            case 15:
+                {
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 12, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 13, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 14, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 15, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 6, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 7, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 1, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 2, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 8, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 9, goal, radius);
+                    triangles[index++] = new Triangle(keyMy, tileMy, pivot, 10, goal, radius);
+
+                    if (true == tileMy.IsLinked(7, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 4, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 7, index);
+                    }
+                    if (true == tileMy.IsLinked(8, out shiftKey))
+                    {
+                        keyTarget = keyMy + shiftKey;
+                        index = AddLinked(map, triangles, keyTarget, goal, 0, index);
+                        index = AddLinked(map, triangles, keyTarget, goal, 1, index);
                     }
                 }
                 break;
@@ -419,7 +872,7 @@ public class GeometryUtility : MonoBehaviour
         }
 
         bool canMove = false;
-        for (int i = 0; i < triangles.Count; ++i)
+        for (int i = 0; i < index; ++i)
         {
             Triangle triangle = triangles[i];
 
@@ -428,12 +881,12 @@ public class GeometryUtility : MonoBehaviour
                 if (false == Dev_MapSampler.Map.ContainsKey(triangle.key))
                 {
                     Debug.Log($"NULL_TILE: [{triangle.triangle}:{PTile.GetPivot(triangle.key, triangle.scale)}] {System.Convert.ToString(triangle.movement, 2)}");
-                    goto DISPOSE;
+                    goto CLOSE;
                 }
                 if (0 == (triangle.movement & (1 << triangle.triangle)))
                 {
                     Debug.Log($"NOT_MOVE: [{triangle.triangle}:{PTile.GetPivot(triangle.key, triangle.scale)}] {System.Convert.ToString(triangle.movement, 2)}");
-                    goto DISPOSE;
+                    goto CLOSE;
                 }
             }
         }
@@ -441,11 +894,11 @@ public class GeometryUtility : MonoBehaviour
         canMove = true;
         goal = CMathf.CMath.FloorToVector(goal, 3);
 
-    DISPOSE:
-        triangles.Clear();
+    CLOSE:
+        //어차피 index, length를 매번 갱신하니 Clear 할 필요도 없음. (포인터스럽게..)
         return canMove;
     }
-    private void AddLinked(Dictionary<int, Tile_t> map, List<Triangle> list, int key, Vector3 center, int triangle)
+    private int AddLinked(Dictionary<int, Tile_t> map, Triangle[] array, int key, Vector3 center, int triangle, int index)
     {
         for (int y = 1; y >= -1; --y)
         {
@@ -454,9 +907,11 @@ public class GeometryUtility : MonoBehaviour
             if (true == map.TryGetValue(keyTarget, out Tile_t tileTarget))
             {
                 float radius = tileTarget.GetScale(TileSize.Quater);
-                list.Add(new Triangle(keyTarget, tileTarget, pivot, triangle, center, radius));
+                array[index++] = new Triangle(keyTarget, tileTarget, pivot, triangle, center, radius);
                 break;
             }
         }
+
+        return index;
     }
 }

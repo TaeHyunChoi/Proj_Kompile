@@ -436,8 +436,6 @@ public class Dev_MapSampler : MonoBehaviour
         if (Vector3.zero != dir)
         {
             dir.Normalize();
-
-            Debug.Log($"Input: " + dir);
             if (true == tester.CanMove(map, dir, out Vector3 pos))
             {
                 tester.transform.position = pos;
