@@ -170,9 +170,36 @@ namespace DataType
 
             return 0 != (flag & Move);
         }
-        public bool IsLinked(int indexLink)
+        public bool IsLinked(int indexLink, out int shiftLink)
         {
-            return 0 != (Link & (1 << indexLink));
+            shiftLink = 0;
+            bool isLinked = 0 != (Link & (1 << indexLink));
+
+            if (false == isLinked)
+            {
+                return false;
+            }
+
+            int x = 1 << 16;
+            int z = 1 << 0;
+
+            switch (indexLink)
+            {
+                case  0: shiftLink = -x -z; break;
+                case  1: shiftLink =    -z; break;
+                case  2: shiftLink =    -z; break;
+                case  3: shiftLink = +x -z; break;
+                case  4: shiftLink = +x;    break;
+                case  5: shiftLink = +x;    break;
+                case  6: shiftLink = +x +z; break;
+                case  7: shiftLink =    +z; break;
+                case  8: shiftLink =    +z; break;
+                case  9: shiftLink = -x +z; break;
+                case 10: shiftLink = -x;    break;
+                case 11: shiftLink = -x;    break;
+            }
+
+            return true;
         }
         public bool IsLinked(int keyMy, Vector3 pointTarget)
         {

@@ -437,13 +437,14 @@ public class Dev_MapSampler : MonoBehaviour
         {
             dir.Normalize();
 
+            Debug.Log($"Input: " + dir);
             if (true == tester.CanMove(map, dir, out Vector3 pos))
             {
                 tester.transform.position = pos;
             }
-        }
 
-        dir = Vector3.zero;
+            dir = Vector3.zero;
+        }
     }
 
     // utility

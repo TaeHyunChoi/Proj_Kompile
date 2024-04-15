@@ -64,6 +64,11 @@ public static class PTile
     }
     public static int GetKey(int layer, Vector3 point, float scale)
     {
+        if (false == IsInGrid(point.x, point.z))
+        { 
+            return -1;
+        }
+
         Vector3 pivot = GetPivot(point, scale);
         float scale_inverse = GetScale(TileSize.Default_Inverse, scale);
 
