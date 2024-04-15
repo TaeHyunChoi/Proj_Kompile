@@ -15,11 +15,6 @@ public class UnitPlayer : UnitBase
     private float   scale = 1f;
     private int     layer = 0;
 
-    public void Move2nd(Dictionary<int, Tile_t> map, Vector3 dirInput)
-    { 
-        
-    }
-
     public void Move(Dictionary<int, Tile_t> map, Vector3 dirInput)
     {
         Vector3 pointNow = CMath.FloorToVector(transform.position, 3);

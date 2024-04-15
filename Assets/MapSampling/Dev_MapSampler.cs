@@ -431,14 +431,26 @@ public class Dev_MapSampler : MonoBehaviour
         if (true == Input.GetKeyDown(KeyCode.LeftArrow)  || true == Input.GetKey(KeyCode.LeftArrow))  { dir += Vector3.left; }
         if (true == Input.GetKeyDown(KeyCode.RightArrow) || true == Input.GetKey(KeyCode.RightArrow)) { dir += Vector3.right; }
     }
+
+    private readonly float[] intervalRot = new float[] { 0, 45f, -45f, 90f, -90f }; //clock-wise
+    private Vector3 dirBefore = new Vector3(-1f, 0, -1f);
+
     private void FixedUpdate()
     {
         if (Vector3.zero != dir)
         {
-            dir.Normalize();
-            if (true == tester.CanMove(map, dir, out Vector3 pos))
+            for (int i = 0; i < intervalRot.Length; ++i)
             {
-                tester.transform.position = pos;
+                Vector3 dirRotated = Quaternion.Euler(0f, intervalRot[i], 0f) * dir;
+                dirRotated.Normalize();
+
+                int sign = 1;
+                if (true == tester.CanMove(map, sign * dirRotated, out Vector3 pos))
+                {
+                    tester.transform.position = pos;
+                    dirBefore = dirRotated;
+                    break;
+                }
             }
 
             dir = Vector3.zero;

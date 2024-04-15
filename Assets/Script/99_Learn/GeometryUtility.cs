@@ -199,23 +199,23 @@ public struct Triangle
         switch (triangle % 4)
         {
             case 0:
-                A += new Vector3(0.25f, 0f, 0.25f) * scale_quater;
-                B += new Vector3(0.5f, 0f, 0f) * scale_quater;
+                A += new Vector3(1f, 0f, 1f) * scale_quater;
+                B += new Vector3(2f, 0f, 0f) * scale_quater;
 
                 break;
             case 1:
-                A += new Vector3(0.25f, 0f, 0.25f) * scale_quater;
-                B += new Vector3(0.5f, 0, 0) * scale_quater;
-                C += new Vector3(0.5f, 0, 0.5f) * scale_quater;
+                A += new Vector3(1f, 0f, 1f) * scale_quater;
+                B += new Vector3(2f, 0, 0) * scale_quater;
+                C += new Vector3(2f, 0, 2f) * scale_quater;
                 break;
             case 2:
-                A += new Vector3(0.25f, 0f, 0.25f) * scale_quater;
-                B += new Vector3(0, 0, 0.5f) * scale_quater;
-                C += new Vector3(0.5f, 0, 0.5f) * scale_quater;
+                A += new Vector3(1f, 0f, 1f) * scale_quater;
+                B += new Vector3(0, 0, 2f) * scale_quater;
+                C += new Vector3(2f, 0, 2f) * scale_quater;
                 break;
             case 3:
-                A += new Vector3(0.25f, 0f, 0.25f) * scale_quater;
-                B += new Vector3(0, 0, 0.5f);
+                A += new Vector3(1f, 0f, 1f) * scale_quater;
+                B += new Vector3(0, 0, 2f);
 
                 break;
             default:
@@ -224,21 +224,21 @@ public struct Triangle
 
         if (1 <= triangle * 0.25f)
         {
-            A += new Vector3(0.5f, 0, 0) * scale_quater;
-            B += new Vector3(0.5f, 0, 0) * scale_quater;
-            C += new Vector3(0.5f, 0, 0) * scale_quater;
+            A += new Vector3(2f, 0, 0) * scale_quater;
+            B += new Vector3(2f, 0, 0) * scale_quater;
+            C += new Vector3(2f, 0, 0) * scale_quater;
         }
         else if (2 <= triangle * 0.25f)
         {
-            A += new Vector3(0, 0, 0.5f) * scale_quater;
-            B += new Vector3(0, 0, 0.5f) * scale_quater;
-            C += new Vector3(0, 0, 0.5f) * scale_quater;
+            A += new Vector3(0, 0, 2f) * scale_quater;
+            B += new Vector3(0, 0, 2f) * scale_quater;
+            C += new Vector3(0, 0, 2f) * scale_quater;
         }
         else if (3 <= triangle * 0.25f)
         {
-            A += new Vector3(0.5f, 0, 0.5f) * scale_quater;
-            B += new Vector3(0.5f, 0, 0.5f) * scale_quater;
-            C += new Vector3(0.5f, 0, 0.5f) * scale_quater;
+            A += new Vector3(2f, 0, 2f) * scale_quater;
+            B += new Vector3(2f, 0, 2f) * scale_quater;
+            C += new Vector3(2f, 0, 2f) * scale_quater;
         }
 
 
@@ -343,16 +343,32 @@ public class GeometryUtility : MonoBehaviour
         }
 
         int keyMy = PTile.GetKey(layer, goal, scale);
-        if (false == map.TryGetValue(keyMy, out Tile_t tileMy))
+        if (true == map.TryGetValue(keyMy, out Tile_t tileMy))
         {
-            return false;
+            goto CHECK;
+        }
+        if (true == map.TryGetValue(keyMy + (1 << 8), out tileMy))
+        {
+            keyMy += (1 << 8);
+            goto CHECK;
+        }
+        if (true == map.TryGetValue(keyMy - (1 << 8), out tileMy))
+        {
+            keyMy -= (1 << 8);
+            goto CHECK;
         }
 
+        //목적 지점에서 tile_t 정보를 찾을 수 없다면 return false;
+        return false;
+
+    CHECK:
         Vector3 pivot = PTile.GetPivot(goal, scale);
         int triangleTarget = PTile.GetTriangleIndex(goal - pivot, scale * 0.5f);
+        Debug.Log("triangle index:" + triangleTarget);
         float radius = tileMy.GetScale(TileSize.Quater);
         int index = 0;
         int keyTarget, shiftKey;
+        bool canMove = false;
 
         switch (triangleTarget)
         {
@@ -871,7 +887,6 @@ public class GeometryUtility : MonoBehaviour
                 return false;
         }
 
-        bool canMove = false;
         for (int i = 0; i < index; ++i)
         {
             Triangle triangle = triangles[i];
@@ -892,7 +907,8 @@ public class GeometryUtility : MonoBehaviour
         }
 
         canMove = true;
-        goal = CMathf.CMath.FloorToVector(goal, 3);
+        float y = tileMy.GetYValue(keyMy, goal);
+        goal = CMathf.CMath.FloorToVector(new Vector3(goal.x, y, goal.z), 3);
 
     CLOSE:
         //어차피 index, length를 매번 갱신하니 Clear 할 필요도 없음. (포인터스럽게..)
