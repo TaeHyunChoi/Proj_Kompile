@@ -8,13 +8,13 @@ using DataType;
 public struct IsPossibleToMove
 {
     //public Vector3 pivot;
-    public int   key;
-    public byte  triangle;
+    public int key;
+    public byte triangle;
     public short movement;
     public float scale;
 
     public Vector3 position;
-    public float   radius;
+    public float radius;
 }
 
 [BurstCompile]
@@ -169,25 +169,174 @@ public struct CheckTriangleCollsion : IJobParallelFor
     }
 }
 
+public struct Triangle
+{
+    public int key;
+    public Vector3 pivot;
+    public int triangle;
+    public short movement;
+    public float scale;
+
+    public Vector3 center;
+    public float radius;
+
+    public Triangle(int key, Tile_t tile, Vector3 pivot, int triangle, Vector3 pos, float radius)
+    {
+        this.key = key;
+        this.triangle = triangle;
+        this.pivot = pivot;
+        movement = (short)tile.Move;
+        scale = tile.GetScale();
+        center = pos;
+        this.radius = radius;
+    }
+
+    public bool IsIntersected()
+    {
+        Vector3 A = pivot, B = pivot, C = pivot;
+        float scale_quater = scale * 0.25f;
+
+        switch (triangle % 4)
+        {
+            case 0:
+                A += new Vector3(0.25f, 0f, 0.25f) * scale_quater;
+                B += new Vector3(0.5f, 0f, 0f) * scale_quater;
+
+                break;
+            case 1:
+                A += new Vector3(0.25f, 0f, 0.25f) * scale_quater;
+                B += new Vector3(0.5f, 0, 0) * scale_quater;
+                C += new Vector3(0.5f, 0, 0.5f) * scale_quater;
+                break;
+            case 2:
+                A += new Vector3(0.25f, 0f, 0.25f) * scale_quater;
+                B += new Vector3(0, 0, 0.5f) * scale_quater;
+                C += new Vector3(0.5f, 0, 0.5f) * scale_quater;
+                break;
+            case 3:
+                A += new Vector3(0.25f, 0f, 0.25f) * scale_quater;
+                B += new Vector3(0, 0, 0.5f);
+
+                break;
+            default:
+                return false;
+        }
+
+        if (1 <= triangle * 0.25f)
+        {
+            A += new Vector3(0.5f, 0, 0) * scale_quater;
+            B += new Vector3(0.5f, 0, 0) * scale_quater;
+            C += new Vector3(0.5f, 0, 0) * scale_quater;
+        }
+        else if (2 <= triangle * 0.25f)
+        {
+            A += new Vector3(0, 0, 0.5f) * scale_quater;
+            B += new Vector3(0, 0, 0.5f) * scale_quater;
+            C += new Vector3(0, 0, 0.5f) * scale_quater;
+        }
+        else if (3 <= triangle * 0.25f)
+        {
+            A += new Vector3(0.5f, 0, 0.5f) * scale_quater;
+            B += new Vector3(0.5f, 0, 0.5f) * scale_quater;
+            C += new Vector3(0.5f, 0, 0.5f) * scale_quater;
+        }
+
+
+        // 원의 중심이 삼각형 내부에 있는지 확인
+        if (PointInTriangle(center, A, B, C))
+            return true;
+
+        // 삼각형의 각 꼭짓점이 원 내부에 있는지 확인
+        if (IsPointInsideCircle(A, center, radius) ||
+            IsPointInsideCircle(B, center, radius) ||
+            IsPointInsideCircle(C, center, radius))
+            return true;
+
+        // 삼각형의 각 변과 원의 교차 확인
+        if (IsCircleLineIntersect(center, radius, A, B) ||
+            IsCircleLineIntersect(center, radius, B, C) ||
+            IsCircleLineIntersect(center, radius, C, A))
+            return true;
+
+        return false;
+    }
+    private bool IsPointInsideCircle(Vector2 point, Vector2 circleCenter, float radius)
+    {
+        return (point - circleCenter).sqrMagnitude < radius * radius;
+    }
+    private bool PointInTriangle(Vector2 p, Vector2 p0, Vector2 p1, Vector2 p2)
+    {
+        var s = p0.y * p2.x - p0.x * p2.y + (p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y;
+        var t = p0.x * p1.y - p0.y * p1.x + (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y;
+
+        if ((s < 0) != (t < 0))
+            return false;
+
+        var A = -p1.y * p2.x + p0.y * (p2.x - p1.x) + p0.x * (p1.y - p2.y) + p1.x * p2.y;
+        if (A < 0.0)
+        {
+            s = -s;
+            t = -t;
+            A = -A;
+        }
+        return s > 0 && t > 0 && (s + t) < A;
+    }
+    private bool IsCircleLineIntersect(Vector2 circleCenter, float radius, Vector2 A, Vector2 B)
+    {
+        // 선분 AB의 방향 벡터를 계산합니다.
+        Vector2 d = B - A;
+
+        // 원의 중심에서 점 A까지의 벡터를 계산합니다.
+        Vector2 f = A - circleCenter;
+
+        // 2차 방정식의 계수 a, b, c를 계산합니다. 이 방정식은 선분과 원의 교차 조건을 나타냅니다.
+        float a = Vector2.Dot(d, d); // d 벡터의 길이의 제곱
+        float b = 2 * Vector2.Dot(f, d); // f와 d 벡터의 내적을 2배 한 값
+        float c = Vector2.Dot(f, f) - radius * radius; // f 벡터의 길이의 제곱에서 원의 반지름 제곱을 뺀 값
+
+        // 판별식을 계산합니다. 이 값이 양수라면 근이 실수로 존재함을 의미합니다.
+        float discriminant = b * b - 4 * a * c;
+
+        if (discriminant < 0)
+        {
+            // 판별식이 음수이면, 선분과 원은 서로 교차하지 않습니다.
+            return false;
+        }
+        else
+        {
+            // 판별식의 제곱근을 구하여 실제 근을 찾습니다.
+            discriminant = Mathf.Sqrt(discriminant);
+
+            // 근의 공식을 사용하여 두 근을 계산합니다.
+            float t1 = (-b - discriminant) / (2 * a);
+            float t2 = (-b + discriminant) / (2 * a);
+
+            // 두 근 중 하나라도 선분의 파라미터 0과 1 사이에 있으면, 선분이 원과 교차합니다.
+            if (t1 >= 0 && t1 <= 1 || t2 >= 0 && t2 <= 1)
+                return true;
+
+            // 그렇지 않다면 교차하지 않습니다.
+            return false;
+        }
+    }
+}
+
 public class GeometryUtility : MonoBehaviour
 {
+    private List<Triangle> triangles = new List<Triangle>();
     private NativeArray<IsPossibleToMove> targets;
-    private NativeArray<bool>  isCollided;
-    private int   layer = 0;
+    private NativeArray<bool> isCollided;
+    private int layer = 0;
     private float scale = 1f;
     private float speed = 2f;
 
     public bool CanMove(Dictionary<int, Tile_t> map, Vector3 dir, out Vector3 goal)
     {
-        int length;
-        bool canMove = false;
         Vector3 position = transform.position;
         dir *= Time.fixedDeltaTime * speed;
 
         //목표 위치점 정보 얻기
         goal = position + dir;
-
-        //여기서 is in grid 잡는 게 나을 듯.
         if (scale * 0.25f > goal.x || scale * 0.25f > goal.z)
         {
             return false;
@@ -197,381 +346,117 @@ public class GeometryUtility : MonoBehaviour
         Tile_t tileMy = map[PTile.GetKey(layer, goal, scale)];
         int keyMy = PTile.GetKey(layer, goal, scale);
         int indexTriangle = PTile.GetTriangleIndex(goal - pivot, scale * 0.5f);
-
-        //get triangle index
-        byte index;
-        short move;
-        float radius;
-
-        length = 15;
-        targets    = new NativeArray<IsPossibleToMove>(length, Allocator.TempJob);
-        isCollided = new NativeArray<bool>(length, Allocator.TempJob);
-
+        float radius = tileMy.GetScale(TileSize.Quater);
         int keyTarget, shiftKey;
 
-        //어쩌다 이렇게 되었는가ㅠ..
-        //오히려 오버헤드가 걸리고 있는 것 같다? 프레임이 이렇게 떨어지다니
         switch (indexTriangle)
         {
             case 0:
                 {
-                    //본인 타일
-                    move = (short)tileMy.Move;
-                    index = 0;
-                    radius = tileMy.GetScale(TileSize.Quater);
-
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 0, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 1, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 2, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 3, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 4, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 7, position = position, scale = scale, radius = radius };
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 1, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 2, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 3, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 4, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 7, goal, radius));
 
                     if (true == tileMy.IsLinked(0, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 13, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 14, index);
+                        AddLinked(map, triangles, keyTarget, goal, 13);
+                        AddLinked(map, triangles, keyTarget, goal, 14);
                     }
                     if (true == tileMy.IsLinked(1, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 9, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 10, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 11, index);
+                        AddLinked(map, triangles, keyTarget, goal, 9);
+                        AddLinked(map, triangles, keyTarget, goal, 10);
+                        AddLinked(map, triangles, keyTarget, goal, 11);
                     }
                     if (true == tileMy.IsLinked(2, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 14, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 15, index);
+                        AddLinked(map, triangles, keyTarget, goal, 14);
+                        AddLinked(map, triangles, keyTarget, goal, 15);
                     }
                     if (true == tileMy.IsLinked(11, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 4, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 5, index);
+                        AddLinked(map, triangles, keyTarget, goal, 4);
+                        AddLinked(map, triangles, keyTarget, goal, 5);
                     }
-
-                    length = index;
-                }
-                break;
-            case 1:
-                {
-                    move = (short)tileMy.Move;
-                    index = 0;
-                    radius = tileMy.GetScale(TileSize.Quater);
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 0, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 1, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 2, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 3, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 4, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 6, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 7, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 8, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 9, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 12, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 15, position = position, scale = scale, radius = radius };
-
-                    if (true == tileMy.IsLinked(1, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 9, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 10, index);
-                    }
-                    if (true == tileMy.IsLinked(2, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 14, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 15, index);
-                    }
-                    length = index;
                 }
                 break;
             case 2:
                 {
-                    move = (short)tileMy.Move;
-                    index = 0;
-                    radius = tileMy.GetScale(TileSize.Quater);
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  0, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  1, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  2, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  3, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  6, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  7, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  8, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle =  9, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 11, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 12, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 15, position = position, scale = scale, radius = radius };
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 0, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 1, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 2, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 3, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 6, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 7, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 8, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 9, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 11, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 12, goal, radius));
+                    triangles.Add(new Triangle(keyMy, tileMy, pivot, 15, goal, radius));
 
                     if (true == tileMy.IsLinked(10, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 12, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 13, index);
+                        AddLinked(map, triangles, keyTarget, goal, 12);
+                        AddLinked(map, triangles, keyTarget, goal, 13);
                     }
                     if (true == tileMy.IsLinked(11, out shiftKey))
                     {
                         keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 5, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 6, index);
+                        AddLinked(map, triangles, keyTarget, goal, 5);
+                        AddLinked(map, triangles, keyTarget, goal, 6);
                     }
-                    length = index;
-                }
-                break;
-            case 3:
-                {
-                    move = (short)tileMy.Move;
-                    index = 0;
-                    radius = tileMy.GetScale(TileSize.Quater);
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 0, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 1, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 2, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 3, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 8, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 11, position = position, scale = scale, radius = radius };
-
-                    if (true == tileMy.IsLinked(0, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 13, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 14, index);
-                    }
-                    if (true == tileMy.IsLinked(1, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 10, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 11, index);
-                    }
-                    if (true == tileMy.IsLinked(10, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 12, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 13, index);
-                    }
-                    if (true == tileMy.IsLinked(11, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 4, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 5, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 6, index);
-                    }
-
-                    length = index;
-                }
-                break;
-            case 4:
-                {
-                    move = (short)tileMy.Move;
-                    index = 0;
-                    radius = tileMy.GetScale(TileSize.Quater);
-
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 4, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 5, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 6, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 7, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 0, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 1, position = position, scale = scale, radius = radius };
-
-                    if (true == tileMy.IsLinked(0, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 9, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 10, index);
-                    }
-
-                    if (true == tileMy.IsLinked(1, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 13, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 14, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 15, index);
-                    }
-
-                    if (true == tileMy.IsLinked(2, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 10, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 11, index);
-                    }
-
-                    if (true == tileMy.IsLinked(3, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 0, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 3, index);
-                    }
-
-                    length = index;
-                }
-                break;
-            case 5:
-                {
-                    move = (short)tileMy.Move;
-                    index = 0;
-                    radius = tileMy.GetScale(TileSize.Quater);
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 4, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 5, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 6, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 7, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 12, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 13, position = position, scale = scale, radius = radius };
-
-                    if (true == tileMy.IsLinked(2, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 13, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 14, index);
-                    }
-                    if (true == tileMy.IsLinked(3, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 10, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 11, index);
-                    }
-                    if (true == tileMy.IsLinked(4, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 0, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 2, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 3, index);
-                    }
-                    if (true == tileMy.IsLinked(5, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 8, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 11, index);
-                    }
-
-                    length = index;
-                }
-                break;
-            case 6:
-                {
-                    move = (short)tileMy.Move;
-                    index = 0;
-                    radius = tileMy.GetScale(TileSize.Quater);
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 4, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 5, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 6, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 7, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 1, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 2, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 8, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 9, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 12, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 13, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 15, position = position, scale = scale, radius = radius };
-
-                    if (true == tileMy.IsLinked(4, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 2, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 3, index);
-                    }
-                    if (true == tileMy.IsLinked(5, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 8, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 11, index);
-                    }
-                    length = index;
-                }
-                break;
-            case 7:
-                {
-                    move = (short)tileMy.Move;
-                    index = 0;
-                    radius = tileMy.GetScale(TileSize.Quater);
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 4, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 5, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 6, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 7, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 0, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 1, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 2, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 8, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 9, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 12, position = position, scale = scale, radius = radius };
-                    targets[index++] = new IsPossibleToMove { key = keyMy, movement = move, triangle = 15, position = position, scale = scale, radius = radius };
-
-                    if (true == tileMy.IsLinked(1, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 9, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 10, index);
-                    }
-                    if (true == tileMy.IsLinked(2, out shiftKey))
-                    {
-                        keyTarget = keyMy + shiftKey;
-                        index = SetCheckCollisionJob(map, keyTarget, position, 14, index);
-                        index = SetCheckCollisionJob(map, keyTarget, position, 15, index);
-                    }
-
-                    length = index;
                 }
                 break;
             default:
-                canMove = false;
-                goto DISPOSE;
+                return false;
         }
 
-        CheckTriangleCollsion job = new CheckTriangleCollsion
+        bool canMove = false;
+        for (int i = 0; i < triangles.Count; ++i)
         {
-            Targets = targets,
-            Collision = isCollided
-        };
-        JobHandle handle = job.Schedule(length, length);
-        handle.Complete();
+            Triangle triangle = triangles[i];
 
-        for (int i = 0; i < length; i++)
-        {
-            //is collided
-            if (true == isCollided[i])
+            if (true == triangle.IsIntersected())
             {
-                IsPossibleToMove data = targets[i];
-
-                if (false == Dev_MapSampler.Map.ContainsKey(data.key))
+                if (false == Dev_MapSampler.Map.ContainsKey(triangle.key))
                 {
-                    Debug.Log($"NULL_TILE: [{data.triangle}:{PTile.GetPivot(data.key, data.scale)}] {System.Convert.ToString(data.movement, 2)}");
+                    Debug.Log($"NULL_TILE: [{triangle.triangle}:{PTile.GetPivot(triangle.key, triangle.scale)}] {System.Convert.ToString(triangle.movement, 2)}");
                     goto DISPOSE;
                 }
-                if (0 == (data.movement & (1 << data.triangle)))
+                if (0 == (triangle.movement & (1 << triangle.triangle)))
                 {
-                    Debug.Log($"NOT_MOVE: [{data.triangle}:{PTile.GetPivot(data.key, data.scale)}] {System.Convert.ToString(data.movement, 2)}");
+                    Debug.Log($"NOT_MOVE: [{triangle.triangle}:{PTile.GetPivot(triangle.key, triangle.scale)}] {System.Convert.ToString(triangle.movement, 2)}");
                     goto DISPOSE;
                 }
             }
         }
 
-        //TODO: 여기서 y축도 챙겨야 한다.
         canMove = true;
+        goal = CMathf.CMath.FloorToVector(goal, 3);
 
     DISPOSE:
-        targets.Dispose();
-        isCollided.Dispose();
-
-        Debug.Log("Result: " + canMove);
+        triangles.Clear();
         return canMove;
     }
-    private byte SetCheckCollisionJob(Dictionary<int, Tile_t> map, int key, Vector3 center, byte triangle, byte indexJob)
+    private void AddLinked(Dictionary<int, Tile_t> map, List<Triangle> list, int key, Vector3 center, int triangle)
     {
-        short  move;
-        float radius;
-
         for (int y = 1; y >= -1; --y)
         {
             int keyTarget = key + y * (1 << 8);
+            Vector3 pivot = PTile.GetPivot(keyTarget, scale);
             if (true == map.TryGetValue(keyTarget, out Tile_t tileTarget))
             {
-                move = (short)tileTarget.Move;
-                radius = tileTarget.GetScale(TileSize.Quater);
-                targets[indexJob++] = new IsPossibleToMove { key = keyTarget, movement = move, triangle = triangle, position = center, radius = radius };
+                float radius = tileTarget.GetScale(TileSize.Quater);
+                list.Add(new Triangle(keyTarget, tileTarget, pivot, triangle, center, radius));
                 break;
             }
         }
-
-        return indexJob;
     }
 }
