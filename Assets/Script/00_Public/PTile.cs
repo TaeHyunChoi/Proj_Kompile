@@ -163,6 +163,30 @@ public static class PTile
         return true;
     }
 
+    public static int GetLinkedKey(int fromKey, int toIndex)
+    {
+        int x = 1 << 16;
+        int z = 1 << 0;
+
+        switch (toIndex)
+        {
+            case 0: return fromKey - x - z;
+            case 1: return fromKey - z;
+            case 2: return fromKey - z;
+            case 3: return fromKey + x - z;
+            case 4: return fromKey + x;
+            case 5: return fromKey + x;
+            case 6: return fromKey + x + z;
+            case 7: return fromKey + z;
+            case 8: return fromKey + z;
+            case 9: return fromKey - x + z;
+            case 10: return fromKey - x;
+            case 11: return fromKey - x;
+        }
+
+        return -1;
+    }
+
     public static Vector3[] GetQuarantPoints(Vector3 pivot, float scale, long flagHeight, int quarant)
     {
         //인덱스를 미숙하게+많이 짜서 고생하는구만..

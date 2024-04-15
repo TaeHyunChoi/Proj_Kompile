@@ -260,9 +260,9 @@ namespace DataType
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
         public int Info { get => (int)info; }
         public long Movement { get => (long)movement; }
-        public bool IsMovable(int quarant)
+        public bool IsMovable(int indexTriangle)
         {
-            return 0 != (Move & (1 << quarant));
+            return 0 != (Move & (1 << indexTriangle));
         }
         public int GetTriangleHeightMask(int triangle, int y)
         {
