@@ -5,7 +5,7 @@ using UnityEngine;
 using DataType;
 using System;
 
-public class OnField : ContentBase, IGetInput
+public class OnField : ContentBase, IGetInput, IGetFixedInput
 {
     private Dictionary<int, Tile_t> tileMap;
     private MapTileComponent[] tiles;
@@ -20,6 +20,7 @@ public class OnField : ContentBase, IGetInput
 
         Main.Instance.SetContent(field);
         Main.Instance.SetInputGetter(field);
+        Main.Instance.SetFixedInputGetter(field);
 
         return field;
     }
@@ -33,9 +34,14 @@ public class OnField : ContentBase, IGetInput
     }
     public void Input(int input)
     {
-        Vector3 dir = PTile.GetDirection(input);
+
+    }
+    public void FixedInput(int input)
+    {
+        Vector3 dir = TileUtility.GetDirection(input);
         Main.Player.Move(tileMap, dir);
     }
+
     public override void Dispose()
     {
 

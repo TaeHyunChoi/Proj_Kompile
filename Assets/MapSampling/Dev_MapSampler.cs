@@ -124,9 +124,9 @@ public class Dev_MapSampler : MonoBehaviour
                 continue;
             }
 
-            Vector3 A = PTile.SnappingPoint(transform.TransformPoint(vertices[t0]), 0.125f, 3);
-            Vector3 B = PTile.SnappingPoint(transform.TransformPoint(vertices[t1]), 0.125f, 3);
-            Vector3 C = PTile.SnappingPoint(transform.TransformPoint(vertices[t2]), 0.125f, 3);
+            Vector3 A = TileUtility.SnappingPoint(transform.TransformPoint(vertices[t0]), 0.125f, 3);
+            Vector3 B = TileUtility.SnappingPoint(transform.TransformPoint(vertices[t1]), 0.125f, 3);
+            Vector3 C = TileUtility.SnappingPoint(transform.TransformPoint(vertices[t2]), 0.125f, 3);
 
             SetTileData(A, B, C, scale, layer, info);
         }
@@ -377,7 +377,7 @@ public class Dev_MapSampler : MonoBehaviour
             diagonal = v0to2;
         }
 
-        float scale_half   = PTile.GetScale(TileSize.Half, scale);
+        float scale_half   = TileUtility.GetScale(TileSize.Half, scale);
         float scale_quater = scale_half * 0.5f;
 
         if (scale_half < diagonal)
@@ -389,20 +389,20 @@ public class Dev_MapSampler : MonoBehaviour
         else
         {
             //get point, get pivot
-            Vector3 pointCenter = PTile.SnappingPoint((p0 + p1 + p2) * 0.333f, scale_quater * 0.5f, 3);
-            Vector3 pivot = PTile.GetPivot(pointCenter, scale);
+            Vector3 pointCenter = TileUtility.SnappingPoint((p0 + p1 + p2) * 0.333f, scale_quater * 0.5f, 3);
+            Vector3 pivot = TileUtility.GetPivot(pointCenter, scale);
 
             //set flag
-            int move = 1 << PTile.GetTriangleIndex(pointCenter - pivot, scale_half);
+            int move = 1 << TileUtility.GetTriangleIndex(pointCenter - pivot, scale_half);
 
             long height = 0;
-            float size_quater_inverse = PTile.GetScale(TileSize.Quater_inverse, scale);
+            float size_quater_inverse = TileUtility.GetScale(TileSize.Quater_inverse, scale);
             height |= GetHeightFlag(p0 - pivot, scale_quater, size_quater_inverse);
             height |= GetHeightFlag(p1 - pivot, scale_quater, size_quater_inverse);
             height |= GetHeightFlag(p2 - pivot, scale_quater, size_quater_inverse);
 
             //set tile data
-            int key = PTile.GetKey(layer, pivot, scale);
+            int key = TileUtility.GetKey(layer, pivot, scale);
             if (false == map.TryGetValue(key, out Tile_t tile))
             {
                 map.Add(key, new Tile_t(info, move, height));
@@ -458,7 +458,6 @@ public class Dev_MapSampler : MonoBehaviour
 
     private readonly float[] intervalRot = new float[] { 0, 45f, -45f, 90f, -90f }; //clock-wise
     private Vector3 dirBefore = new Vector3(-1f, 0, -1f);
-
     private void FixedUpdate()
     {
         if (Vector3.zero != dirInput)
@@ -473,6 +472,7 @@ public class Dev_MapSampler : MonoBehaviour
                 if (true == tester.CanMove(map, dirRotated, out Vector3 pos))
                 {
                     tester.transform.position = pos;
+
                     float x = (0 != dirRotated.x) ? dirRotated.x : dirBefore.x;
                     float z = (0 != dirRotated.z) ? dirRotated.z : dirBefore.z;
                     dirBefore = new Vector3(x, pos.y, z);
@@ -508,7 +508,7 @@ public class Dev_MapSampler : MonoBehaviour
         string height = System.Convert.ToString(tile.Height, 2).ToString();
         string link   = System.Convert.ToString(tile.Info & 0xFFF, 2);
         float scale = tile.GetScale(TileSize.Default);
-        Debug.Log($"{key}:{PTile.GetPivot(key, scale):F3}(scale:{scale}, trigger:{trigger}) m:{move} l:{link}\nh:{height}");
+        Debug.Log($"{key}:{TileUtility.GetPivot(key, scale):F3}(scale:{scale}, trigger:{trigger}) m:{move} l:{link}\nh:{height}");
     }
 }
 #endif

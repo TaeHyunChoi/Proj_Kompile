@@ -160,13 +160,13 @@ namespace DataType
         public float GetScale(TileSize type = TileSize.Default)
         {
             float scale = (0 != (info >> SHIFT_INFO_SCALE)) ? 0.5f : 1f;
-            return PTile.GetScale(type, scale);
+            return TileUtility.GetScale(type, scale);
         }
         public bool IsMovable(int keyMy, Vector3 point)
         {
             float   scale = GetScale();
-            Vector3 pivot = PTile.GetPivot(keyMy, scale);
-            int     flag  = 1 << PTile.GetTriangleIndex(point - pivot, GetScale(TileSize.Half));
+            Vector3 pivot = TileUtility.GetPivot(keyMy, scale);
+            int     flag  = 1 << TileUtility.GetTriangleIndex(point - pivot, GetScale(TileSize.Half));
 
             return 0 != (flag & Move);
         }
@@ -204,7 +204,7 @@ namespace DataType
         public bool IsLinked(int keyMy, Vector3 pointTarget)
         {
             float scale = GetScale();
-            Vector3 pivot = PTile.GetPivot(keyMy, scale);
+            Vector3 pivot = TileUtility.GetPivot(keyMy, scale);
             Vector3 diff = pointTarget - pivot;
 
             float half_size_inverse = GetScale(TileSize.Half_inverse);
@@ -240,12 +240,12 @@ namespace DataType
         public float GetYValue(int keyMy, Vector3 point)
         {
             //point가 속한 분면을 구해서
-            Vector3 pivot    = PTile.GetPivot(keyMy, GetScale());
+            Vector3 pivot    = TileUtility.GetPivot(keyMy, GetScale());
             float scale_half = GetScale(TileSize.Half);
-            int quarant      = PTile.GetTriangleIndex(point - pivot, scale_half);
+            int quarant      = TileUtility.GetTriangleIndex(point - pivot, scale_half);
 
             //각 포인트에 해당하는 높이 구해서...
-            Vector3[] points = PTile.GetQuarantPoints(pivot, GetScale(), Height, quarant);
+            Vector3[] points = TileUtility.GetQuarantPoints(pivot, GetScale(), Height, quarant);
 
             //평면의 방정식에 대입하면 y값을 구할 수 있다. (유의: 왼손 좌표계)
             Vector3 normal = Vector3.Cross(points[1] - points[0], points[2] - points[0]);

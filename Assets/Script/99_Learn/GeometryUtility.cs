@@ -172,17 +172,17 @@ public class GeometryUtility : MonoBehaviour
         dir *= Time.fixedDeltaTime * speed;
         goal = transform.position + dir;
 
-        int keyMy = PTile.GetKey(layer, goal, scale);
-        keyMy = PTile.GetKey_FromRelativeCoord(map, keyMy, 0, 0);
+        int keyMy = TileUtility.GetKey(layer, goal, scale);
+        keyMy = TileUtility.GetKey_FromRelativeCoord(map, keyMy, 0, 0);
         if (-1 == keyMy)
         {
             //목적 지점에서 tile_t 정보를 찾을 수 없다면 return false;
             return false;
         }
 
-        Vector3 pivot = PTile.GetPivot(goal, scale);
+        Vector3 pivot = TileUtility.GetPivot(goal, scale);
         Vector3 pivotNeighbor;
-        int triangleTarget = PTile.GetTriangleIndex(goal - pivot, scale * 0.5f);
+        int triangleTarget = TileUtility.GetTriangleIndex(goal - pivot, scale * 0.5f);
         int index = 0;
         bool canMove = false;
 
@@ -198,7 +198,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 7, scale);
 
                 //neighbor: z-1
-                int keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                int keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
@@ -207,13 +207,13 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 15, scale);
 
                 //neighbor: x-1, z-1
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: -1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: -1);
                 pivotNeighbor = pivot + new Vector3(-1, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
 
                 //neighbor: x-1
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
@@ -232,12 +232,12 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: -1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: -1);
                 pivotNeighbor = pivot + new Vector3(+1, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 15, scale);
@@ -256,7 +256,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 6, scale);
@@ -272,14 +272,14 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 8, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 11, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
@@ -296,7 +296,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 0, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 1, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
@@ -304,12 +304,12 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 15, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: -1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: -1);
                 pivotNeighbor = pivot + new Vector3(1, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
@@ -323,17 +323,17 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 13, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: -1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: -1);
                 pivotNeighbor = pivot + new Vector3(+1, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 2, scale);
@@ -355,7 +355,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 13, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 2, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
@@ -374,7 +374,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
@@ -394,7 +394,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 6, scale);
@@ -414,7 +414,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 14, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
@@ -429,7 +429,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 14, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
@@ -437,12 +437,12 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 7, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: +1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: +1);
                 pivotNeighbor = pivot + new Vector3(-1, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
@@ -455,17 +455,17 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 2, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 3, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: +1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: +1);
                 pivotNeighbor = pivot + new Vector3(-1, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 6, scale);
@@ -486,7 +486,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot,  6, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot,  7, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor,  2, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor,  3, scale);
@@ -501,7 +501,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 5, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 6, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 2, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
@@ -509,12 +509,12 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: +1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: +1);
                 pivotNeighbor = pivot + new Vector3(+1, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
@@ -527,17 +527,17 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 9, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 10, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: +1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: +1);
                 pivotNeighbor = pivot + new Vector3(+1, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
@@ -558,7 +558,7 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 9, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 10, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                keyLink = TileUtility.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);

@@ -20,6 +20,7 @@ public partial class Main : MonoBehaviour
     //current;
     private ContentBase content;
     private IGetInput inputGetter;
+    private IGetFixedInput fixedInputGetter;
 
     private void Awake()
     {
@@ -52,6 +53,14 @@ public partial class Main : MonoBehaviour
             inputGetter.Input(input);
         }
     }
+    private void FixedUpdate()
+    {
+        if (true == InputMgr.TryGetInput(out int input)
+            && null != fixedInputGetter)
+        {
+            fixedInputGetter.FixedInput(input);
+        }
+    }
 
 
     public void SetContent(ContentBase content)
@@ -75,6 +84,10 @@ public partial class Main : MonoBehaviour
     public void SetInputGetter(IGetInput getter)
     {
         inputGetter = getter;
+    }
+    public void SetFixedInputGetter(IGetFixedInput fixedGetter)
+    {
+        fixedInputGetter = fixedGetter;
     }
     public void ReleaseInputGetter()
     {
