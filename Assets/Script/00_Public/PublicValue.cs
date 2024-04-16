@@ -133,10 +133,6 @@ namespace DataType
         public int  Move   { get => (int)(movement & 0xFFFF); }
         public long Height { get => (long)(movement >> 16);   }
 
-        public bool IsTriggerNone()
-        {
-            return 0 == (info >> 12);
-        }
         public bool HasTrigger(TileTrigger type, out int value)
         {
             value = 0;
@@ -162,45 +158,6 @@ namespace DataType
             float scale = (0 != (info >> SHIFT_INFO_SCALE)) ? 0.5f : 1f;
             return TileUtility.GetScale(type, scale);
         }
-        public bool IsMovable(int keyMy, Vector3 point)
-        {
-            float   scale = GetScale();
-            Vector3 pivot = TileUtility.GetPivot(keyMy, scale);
-            int     flag  = 1 << TileUtility.GetTriangleIndex(point - pivot, GetScale(TileSize.Half));
-
-            return 0 != (flag & Move);
-        }
-        public bool IsLinked(int indexLink, out int shiftLink)
-        {
-            shiftLink = 0;
-            bool isLinked = 0 != (Link & (1 << indexLink));
-
-            if (false == isLinked)
-            {
-                return false;
-            }
-
-            int x = 1 << 16;
-            int z = 1 << 0;
-
-            switch (indexLink)
-            {
-                case  0: shiftLink = -x -z; break;
-                case  1: shiftLink =    -z; break;
-                case  2: shiftLink =    -z; break;
-                case  3: shiftLink = +x -z; break;
-                case  4: shiftLink = +x;    break;
-                case  5: shiftLink = +x;    break;
-                case  6: shiftLink = +x +z; break;
-                case  7: shiftLink =    +z; break;
-                case  8: shiftLink =    +z; break;
-                case  9: shiftLink = -x +z; break;
-                case 10: shiftLink = -x;    break;
-                case 11: shiftLink = -x;    break;
-            }
-
-            return true;
-        }
         public bool IsLinked(int keyMy, Vector3 pointTarget)
         {
             float scale = GetScale();
@@ -218,7 +175,7 @@ namespace DataType
             else            { z = CMath.FloorToInt(diff.z * half_size_inverse, 2); }
 
             int index;
-            switch (x + z)
+            switch (x | z)
             {
                 case 0b111_111: index =  0; break;
                 case 0b111_000: index = 11; break;
@@ -232,7 +189,8 @@ namespace DataType
                 case 0b010_010: index =  6; break;
                 case 0b001_010: index =  7; break;
                 case 0b000_010: index =  8; break;
-                default: return false;
+                case 0b000_000: return true;
+                default:        return false;
             }
 
             return 0 != (Link & (1 << index));

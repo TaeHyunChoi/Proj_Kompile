@@ -14,6 +14,7 @@ public class UnitPlayer : UnitBase
 
     public void Move(Dictionary<int, Tile_t> map, Vector3 dirInput)
     {
+        Vector3 position = transform.position;
         float sign = Mathf.Sign(Vector3.Cross(dirInput, dirBefore).y) >= 0 ? 1f : -1f;
 
         for (int i = 0; i < intervalRot.Length; ++i)
@@ -22,7 +23,7 @@ public class UnitPlayer : UnitBase
             dirRotated.Normalize();
 
             dirRotated *= Time.fixedDeltaTime * SPEED_MOVE * scale;
-            Vector3 goal = transform.position + dirRotated;
+            Vector3 goal = position + dirRotated;
 
             int keyMy = TileUtility.GetKey(layer, goal, scale);
             keyMy = TileUtility.GetKey_FromRelativeCoord(map, keyMy, 0, 0);
@@ -40,10 +41,12 @@ public class UnitPlayer : UnitBase
             if (TriangleUtility.IsMovable(goal, scale)
                 && true == map.TryGetValue(keyMy, out Tile_t tileMy))
             {
+                //set position
                 float y = tileMy.GetYValue(keyMy, goal);
-                transform.position = CMath.FloorToVector(new Vector3(goal.x, y, goal.z), 3);
+                goal = new Vector3(goal.x, y, goal.z);
+                transform.position = CMath.FloorToVector(goal, 3);
 
-                //trigger
+                //call trigger
                 if (true == tileMy.HasTrigger(TileTrigger.ScaleDown, out int flagScale))
                 {
                     scale = (flagScale == 1) ? 0.5f : 1f;
@@ -60,6 +63,7 @@ public class UnitPlayer : UnitBase
                 //  //call interaction
                 //}
 
+                //update before dir
                 float x = (0 != dirRotated.x) ? dirRotated.x : dirBefore.x;
                 float z = (0 != dirRotated.z) ? dirRotated.z : dirBefore.z;
                 dirBefore = new Vector3(x, y, z);
