@@ -6,83 +6,90 @@ using System;
 
 public struct TriangleCollision
 {
-    public Vector3  pivot;
-    public int      index;
-    public float    scale;
+    public Vector2 A, B, C; // x,z로만 판별
+    public int key;
+    public int index;
 
-    public TriangleCollision(Vector3 pivot, int indexTriangle, float scale)
+    public TriangleCollision(int key, Vector3 pivot, int indexTriangle, float scale)
     {
-        index = indexTriangle;
-        this.pivot = pivot;
-        this.scale = scale;
+        this.key = key;
+        this.index = indexTriangle;
+
+        Vector2 pivot2d = new Vector2(pivot.x, pivot.z);
+        A = pivot2d;
+        B = pivot2d;
+        C = pivot2d;
+
+        float scale_quater = scale * 0.25f;
+        switch (index % 4)
+        {
+            case 0:
+                A += new Vector2(1f, 1f) * scale_quater;
+                B += new Vector2(2f, 0f) * scale_quater;
+
+                break;
+            case 1:
+                A += new Vector2(1f, 1f) * scale_quater;
+                B += new Vector2(2f, 0)  * scale_quater;
+                C += new Vector2(2f, 2f) * scale_quater;
+                break;
+            case 2:
+                A += new Vector2(1f, 1f) * scale_quater;
+                B += new Vector2(0, 2f)  * scale_quater;
+                C += new Vector2(2f, 2f) * scale_quater;
+                break;
+            case 3:
+                A += new Vector2(1f, 1f) * scale_quater;
+                B += new Vector2(0, 2f)  * scale_quater;
+
+                break;
+        }
+
+        switch ((int)(index * 0.25f))
+        {
+            case 1:
+                A += new Vector2(2f, 0) * scale_quater;
+                B += new Vector2(2f, 0) * scale_quater;
+                C += new Vector2(2f, 0) * scale_quater;
+                break;
+            case 2:
+                A += new Vector2(0, 2f) * scale_quater;
+                B += new Vector2(0, 2f) * scale_quater;
+                C += new Vector2(0, 2f) * scale_quater;
+                break;
+            case 3:
+                A += new Vector2(2f, 2f) * scale_quater;
+                B += new Vector2(2f, 2f) * scale_quater;
+                C += new Vector2(2f, 2f) * scale_quater;
+                break;
+        }
     }
 
     public bool IsIntersected(Vector3 center, float radius)
     {
-        Vector3 A = pivot, B = pivot, C = pivot;
-        float scale_quater = scale * 0.25f;
+        Vector2 center2D = new Vector2(center.x, center.z);
 
-        switch (index % 4)
+        if (PointInTriangle(center2D, A, B, C))
         {
-            case 0:
-                A += new Vector3(1f, 0f, 1f) * scale_quater;
-                B += new Vector3(2f, 0f, 0f) * scale_quater;
-
-                break;
-            case 1:
-                A += new Vector3(1f, 0f, 1f) * scale_quater;
-                B += new Vector3(2f, 0, 0) * scale_quater;
-                C += new Vector3(2f, 0, 2f) * scale_quater;
-                break;
-            case 2:
-                A += new Vector3(1f, 0f, 1f) * scale_quater;
-                B += new Vector3(0, 0, 2f) * scale_quater;
-                C += new Vector3(2f, 0, 2f) * scale_quater;
-                break;
-            case 3:
-                A += new Vector3(1f, 0f, 1f) * scale_quater;
-                B += new Vector3(0, 0, 2f);
-
-                break;
-            default:
-                return false;
-        }
-
-        if (1 <= index * 0.25f)
-        {
-            A += new Vector3(2f, 0, 0) * scale_quater;
-            B += new Vector3(2f, 0, 0) * scale_quater;
-            C += new Vector3(2f, 0, 0) * scale_quater;
-        }
-        else if (2 <= index * 0.25f)
-        {
-            A += new Vector3(0, 0, 2f) * scale_quater;
-            B += new Vector3(0, 0, 2f) * scale_quater;
-            C += new Vector3(0, 0, 2f) * scale_quater;
-        }
-        else if (3 <= index * 0.25f)
-        {
-            A += new Vector3(2f, 0, 2f) * scale_quater;
-            B += new Vector3(2f, 0, 2f) * scale_quater;
-            C += new Vector3(2f, 0, 2f) * scale_quater;
-        }
-
-
-        // 원의 중심이 삼각형 내부에 있는지 확인
-        if (PointInTriangle(center, A, B, C))
             return true;
+        }
 
         // 삼각형의 각 꼭짓점이 원 내부에 있는지 확인
-        if (IsPointInsideCircle(A, center, radius) ||
-            IsPointInsideCircle(B, center, radius) ||
-            IsPointInsideCircle(C, center, radius))
+        if (IsPointInsideCircle(A, center2D, radius) ||
+            IsPointInsideCircle(B, center2D, radius) ||
+            IsPointInsideCircle(C, center2D, radius))
+        {
             return true;
+        }
+
 
         // 삼각형의 각 변과 원의 교차 확인
-        if (IsCircleLineIntersect(center, radius, A, B) ||
-            IsCircleLineIntersect(center, radius, B, C) ||
-            IsCircleLineIntersect(center, radius, C, A))
+        if (IsCircleLineIntersect(center2D, radius, A, B) ||
+            IsCircleLineIntersect(center2D, radius, B, C) ||
+            IsCircleLineIntersect(center2D, radius, C, A))
+        {
             return true;
+        }
 
         return false;
     }
@@ -92,13 +99,13 @@ public struct TriangleCollision
     }
     private bool PointInTriangle(Vector2 p, Vector2 p0, Vector2 p1, Vector2 p2)
     {
-        var s = p0.y * p2.x - p0.x * p2.y + (p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y;
-        var t = p0.x * p1.y - p0.y * p1.x + (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y;
+        float s = p0.y * p2.x - p0.x * p2.y + (p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y;
+        float t = p0.x * p1.y - p0.y * p1.x + (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y;
 
         if ((s < 0) != (t < 0))
             return false;
 
-        var A = -p1.y * p2.x + p0.y * (p2.x - p1.x) + p0.x * (p1.y - p2.y) + p1.x * p2.y;
+        float A = -p1.y * p2.x + p0.y * (p2.x - p1.x) + p0.x * (p1.y - p2.y) + p1.x * p2.y;
         if (A < 0.0)
         {
             s = -s;
@@ -150,624 +157,443 @@ public struct TriangleCollision
 public class GeometryUtility : MonoBehaviour
 {
     private TriangleCollision[] triangles;
-    private int layer = 0;
-    private float scale = 1f;
-    private float speed = 2f;
+    private int   layer;
+    private float scale;
+    private float speed;
     private void Awake()
     {
         triangles = new TriangleCollision[15];
+        layer = 0;
+        scale = 1f;
+        speed = 2f;
     }
     public bool CanMove(Dictionary<int, Tile_t> map, Vector3 dir, out Vector3 goal)
     {
-        Vector3 position = transform.position;
         dir *= Time.fixedDeltaTime * speed;
+        goal = transform.position + dir;
 
-        goal = position + dir;
-        if (scale * 0.25f > goal.x || scale * 0.25f > goal.z)
+        int keyMy = PTile.GetKey(layer, goal, scale);
+        keyMy = PTile.GetKey_FromRelativeCoord(map, keyMy, 0, 0);
+        if (-1 == keyMy)
         {
+            //목적 지점에서 tile_t 정보를 찾을 수 없다면 return false;
             return false;
         }
 
-        int keyMy = PTile.GetKey(layer, goal, scale);
-        if (true == map.TryGetValue(keyMy, out Tile_t tileMy))
-        {
-            goto CHECK;
-        }
-        if (true == map.TryGetValue(keyMy + (1 << 8), out tileMy))
-        {
-            keyMy += (1 << 8);
-            goto CHECK;
-        }
-        if (true == map.TryGetValue(keyMy - (1 << 8), out tileMy))
-        {
-            keyMy -= (1 << 8);
-            goto CHECK;
-        }
-
-        //목적 지점에서 tile_t 정보를 찾을 수 없다면 return false;
-        return false;
-
-    CHECK:
         Vector3 pivot = PTile.GetPivot(goal, scale);
+        Vector3 pivotNeighbor;
         int triangleTarget = PTile.GetTriangleIndex(goal - pivot, scale * 0.5f);
-
-        float radius = tileMy.GetScale(TileSize.Quater);
-        int index = 0, key;
+        int index = 0;
         bool canMove = false;
 
         switch (triangleTarget)
         {
             case 0:
-                {
-                    key = keyMy;
-                    triangles[index++] = new TriangleCollision(pivot, 1, scale);
-                    triangles[index++] = new TriangleCollision(pivot, 2, scale);
-                    triangles[index++] = new TriangleCollision(pivot, 3, scale);
-                    triangles[index++] = new TriangleCollision(pivot, 4, scale);
-                    triangles[index++] = new TriangleCollision(pivot, 7, scale);
+                //params[] 쓰면 편할 텐데 힙 메모리는 가능하면 지양하기로.
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 0, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 1, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 3, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 4, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 7, scale);
 
-                    key = PTile.GetLinkedKey(fromKey: keyMy, toIndex: 0);
-                    triangles[index++] = GetLinkedTriangle(key, 13, scale);
-                    triangles[index++] = GetLinkedTriangle(key, 14, scale);
+                //neighbor: z-1
+                int keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 15, scale);
 
-                    key = PTile.GetLinkedKey(keyMy, 1);
-                    triangles[index++] = GetLinkedTriangle(key, 9, scale);
-                    triangles[index++] = GetLinkedTriangle(key, 10, scale);
-                    triangles[index++] = GetLinkedTriangle(key, 11, scale);
+                //neighbor: x-1, z-1
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: -1);
+                pivotNeighbor = pivot + new Vector3(-1, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
 
-                    key = PTile.GetLinkedKey(keyMy, 2);
-                    triangles[index++] = GetLinkedTriangle(key, 14, scale);
-                    triangles[index++] = GetLinkedTriangle(key, 15, scale);
-
-                    key = PTile.GetLinkedKey(keyMy, 11);
-                    triangles[index++] = GetLinkedTriangle(key, 4, scale);
-                    triangles[index++] = GetLinkedTriangle(key, 5, scale);
-                }
+                //neighbor: x-1
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
                 break;
-                //case 1:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 0, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 1, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 2, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 3, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 4, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 7, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
 
-                //        if (true == tileMy.IsLinked(1, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 9, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 10, index);
-                //        }
-                //        if (true == tileMy.IsLinked(2, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 14, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 15, index);
-                //        }
-                //    }
-                //    break;
-                //case 2:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 0, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 1, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 2, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 3, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 7, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 11, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
+            case 1:
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  0, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  1, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  3, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  4, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  6, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  7, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
 
-                //        if (true == tileMy.IsLinked(10, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 12, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 13, index);
-                //        }
-                //        if (true == tileMy.IsLinked(11, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 5, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 6, index);
-                //        }
-                //    }
-                //    break;
-                //case 3:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 0, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 1, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 2, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 3, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 11, goal, radius);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
 
-                //        if (true == tileMy.IsLinked(0, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 13, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 14, index);
-                //        }
-                //        if (true == tileMy.IsLinked(1, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 10, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 11, index);
-                //        }
-                //        if (true == tileMy.IsLinked(10, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 12, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 13, index);
-                //        }
-                //        if (true == tileMy.IsLinked(11, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 4, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 5, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 6, index);
-                //        }
-                //    }
-                //    break;
-                //case 4:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 4, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 5, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 7, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 0, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 1, goal, radius);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: -1);
+                pivotNeighbor = pivot + new Vector3(+1, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 15, scale);
+                break;
 
-                //        if (true == tileMy.IsLinked(0, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 9, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 10, index);
-                //        }
-                //        if (true == tileMy.IsLinked(1, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 13, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 14, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 15, index);
-                //        }
-                //        if (true == tileMy.IsLinked(2, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 4, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 5, index);
-                //        }
-                //        if (true == tileMy.IsLinked(3, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 0, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 3, index);
-                //        }
-                //    }
-                //    break;
-                //case 5:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 4, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 5, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 7, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 13, goal, radius);
+            case 2:
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  0, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  1, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  3, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  6, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  7, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 11, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
 
-                //        if (true == tileMy.IsLinked(2, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 13, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 14, index);
-                //        }
-                //        if (true == tileMy.IsLinked(3, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 10, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 11, index);
-                //        }
-                //        if (true == tileMy.IsLinked(4, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 0, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 2, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 3, index);
-                //        }
-                //        if (true == tileMy.IsLinked(5, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 8, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 11, index);
-                //        }
-                //    }
-                //    break;
-                //case 6:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 4, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 5, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 7, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 1, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 2, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 13, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 6, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 12, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
+                break;
 
-                //        if (true == tileMy.IsLinked(4, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 2, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 3, index);
-                //        }
-                //        if (true == tileMy.IsLinked(5, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 8, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 11, index);
-                //        }
-                //    }
-                //    break;
-                //case 7:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 4, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 5, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 7, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 1, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 2, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
+            case 3:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 0, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 1, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 3, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 11, scale);
 
-                //        if (true == tileMy.IsLinked(1, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 9, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 10, index);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
 
-                //        }
-                //        if (true == tileMy.IsLinked(2, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 14, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 15, index);
-                //        }
-                //    }
-                //    break;
-                //case 8:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 10, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 11, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 1, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 2, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 3, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 7, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 6, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 12, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
 
-                //        if (true == tileMy.IsLinked(10, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 12, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 13, index);
-                //        }
-                //        if (true == tileMy.IsLinked(11, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 5, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 6, index);
-                //        }
-                //    }
-                //    break;
-                //case 9:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 10, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 11, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 1, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 2, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 7, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 14, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
+                break;
+            case 4:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 4, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 5, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 6, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 7, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 0, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 1, scale);
 
-                //        if (true == tileMy.IsLinked(7, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 4, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 7, index);
-                //        }
-                //        if (true == tileMy.IsLinked(8, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 0, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 1, index);
-                //        }
-                //    }
-                //    break;
-                //case 10:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 10, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 11, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 14, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: -1);
+                pivotNeighbor = pivot + new Vector3(-1, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
 
-                //        if (true == tileMy.IsLinked(7, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 4, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 7, index);
-                //        }
-                //        if (true == tileMy.IsLinked(8, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 0, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 1, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 3, index);
-                //        }
-                //        if (true == tileMy.IsLinked(9, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 4, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 5, index);
-                //        }
-                //        if (true == tileMy.IsLinked(10, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 13, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 14, index);
-                //        }
-                //    }
-                //    break;
-                //case 11:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 10, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 11, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 2, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 3, goal, radius);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 15, scale);
 
-                //        if (true == tileMy.IsLinked(8, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 0, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 3, index);
-                //        }
-                //        if (true == tileMy.IsLinked(9, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 4, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 5, index);
-                //        }
-                //        if (true == tileMy.IsLinked(10, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 11, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 12, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 13, index);
-                //        }
-                //        if (true == tileMy.IsLinked(11, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 5, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 6, index);
-                //        }
-                //    }
-                //    break;
-                //case 12:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 13, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 14, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 1, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 2, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 5, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 7, goal, radius);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: -1);
+                pivotNeighbor = pivot + new Vector3(1, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
+                break;
+            case 5:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 4, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 5, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 6, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 7, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 13, scale);
 
-                //        if (true == tileMy.IsLinked(4, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 2, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 3, index);
-                //        }
-                //        if (true == tileMy.IsLinked(5, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 8, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 11, index);
-                //        }
-                //    }
-                //    break;
-                //case 13:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 13, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 14, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 5, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
 
-                //        if (true == tileMy.IsLinked(4, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 2, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 3, index);
-                //        }
-                //        if (true == tileMy.IsLinked(5, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 8, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 10, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 11, index);
-                //        }
-                //        if (true == tileMy.IsLinked(6, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 0, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 3, index);
-                //        }
-                //        if (true == tileMy.IsLinked(7, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 4, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 5, index);
-                //        }
-                //    }
-                //    break;
-                //case 14:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 13, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 14, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 10, goal, radius);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: -1);
+                pivotNeighbor = pivot + new Vector3(+1, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
 
-                //        if (true == tileMy.IsLinked(5, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 10, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 11, index);
-                //        }
-                //        if (true == tileMy.IsLinked(6, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 0, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 3, index);
-                //        }
-                //        if (true == tileMy.IsLinked(7, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 4, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 5, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 7, index);
-                //        }
-                //        if (true == tileMy.IsLinked(8, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 0, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 1, index);
-                //        }
-                //    }
-                //    break;
-                //case 15:
-                //    {
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 12, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 13, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 14, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 15, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 6, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 7, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 1, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 2, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 8, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 9, goal, radius);
-                //        triangles[index++] = new TriangleCollision(keyMy, tileMy, pivot, 10, goal, radius);
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 2, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 8, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
+                break;
 
-                //        if (true == tileMy.IsLinked(7, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 4, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 7, index);
-                //        }
-                //        if (true == tileMy.IsLinked(8, out shiftKey))
-                //        {
-                //            keyTarget = keyMy + shiftKey;
-                //            index = AddLinked(map, triangles, keyTarget, goal, 0, index);
-                //            index = AddLinked(map, triangles, keyTarget, goal, 1, index);
-                //        }
-                //    }
-                //    break;
-                //default:
-                //    return false;
+            case 6:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 4, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 5, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 6, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 7, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 1, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 13, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 2, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 8, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
+                break;
+            case 7:
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  4, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  5, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  6, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  7, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  1, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
+                pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 15, scale);
+                break;
+            case 8:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 10, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 11, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 1, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 3, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 6, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 7, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 6, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 12, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
+                break;
+            case 9:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 10, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 11, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 1, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 6, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 7, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 14, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 7, scale);
+                break;
+            case 10:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 10, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 11, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 14, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 7, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: +1);
+                pivotNeighbor = pivot + new Vector3(-1, 0, +1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
+                break;
+            case 11:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 10, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 11, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 3, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: +1);
+                pivotNeighbor = pivot + new Vector3(-1, 0, +1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: 0);
+                pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 6, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 12, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
+                break;
+            case 12:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 13, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 14, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  1, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  5, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  6, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot,  7, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor,  2, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor,  3, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor,  8, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
+                break;
+            case 13:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 13, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 14, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 5, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 6, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 2, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 8, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: +1);
+                pivotNeighbor = pivot + new Vector3(+1, 0, +1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
+                break;
+            case 14:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 13, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 14, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 10, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: +1);
+                pivotNeighbor = pivot + new Vector3(+1, 0, +1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 7, scale);
+                break;
+            case 15:
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 12, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 13, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 14, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 15, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 6, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 7, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 1, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 2, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 8, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 9, scale);
+                triangles[index++] = new TriangleCollision(keyMy, pivot, 10, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: +1);
+                pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 7, scale);
+                break;
+            default:
+                return false;
         }
 
+        float dist = scale * Index.IDxTile.SIZE_QUATER - Time.fixedDeltaTime;
         for (int i = 0; i < index; ++i)
         {
             TriangleCollision triangle = triangles[i];
-
-            if (true == triangle.IsIntersected(goal, scale))
+            if (true == triangle.IsIntersected(goal, dist))
             {
-                key = PTile.GetKey(layer, triangle.pivot, scale);
-                if (false == Dev_MapSampler.Map.TryGetValue(key, out Tile_t tile))
+                if (false == Dev_MapSampler.Map.TryGetValue(triangle.key, out Tile_t tileChecked))
                 {
-                    Debug.Log($"NULL_TILE: [{triangle.index}:{PTile.GetPivot(key, triangle.scale)}] {System.Convert.ToString(tile.Move, 2)}");
                     goto CLOSE;
                 }
-                if (false == tile.IsMovable(triangle.index))
+                if (false == tileChecked.IsMovable(triangle.index))
                 {
-                    Debug.Log($"NOT_MOVE: [{triangle.index}:{PTile.GetPivot(key, triangle.scale)}] {System.Convert.ToString(tile.Move, 2)}");
                     goto CLOSE;
                 }
             }
         }
 
-        canMove = true;
-        float y = tileMy.GetYValue(keyMy, goal);
-        goal = CMathf.CMath.FloorToVector(new Vector3(goal.x, y, goal.z), 3);
+        if (true == map.TryGetValue(keyMy, out Tile_t tileMy))
+        {
+            float y = tileMy.GetYValue(keyMy, goal);
+            goal = CMathf.CMath.FloorToVector(new Vector3(goal.x, y, goal.z), 3);
+            canMove = true;
+        }
 
     CLOSE:
         //어차피 index, length를 매번 갱신하니 Clear 할 필요도 없음. (포인터스럽게..)
         return canMove;
-    }
-    //private int AddLinked(Dictionary<int, Tile_t> map, TriangleCollision[] array, int key, Vector3 center, int triangle, int index)
-    //{
-    //    for (int y = 1; y >= -1; --y)
-    //    {
-    //        int keyTarget = key + y * (1 << 8);
-    //        Vector3 pivot = PTile.GetPivot(keyTarget, scale);
-    //        if (true == map.TryGetValue(keyTarget, out Tile_t tileTarget))
-    //        {
-    //            float radius = tileTarget.GetScale(TileSize.Quater);
-    //            array[index++] = new TriangleCollision(keyTarget, tileTarget, pivot, triangle, center, radius);
-    //            break;
-    //        }
-    //    }
-    //    return index;
-    //}
-
-    private TriangleCollision GetLinkedTriangle(int key, int triangle, float scale)
-    {
-        //여기서.. 호옥시나 y값을 반영해야 한다면.. 인거지?
-        Dictionary<int, Tile_t> map = Dev_MapSampler.Map;
-        Vector3 pivot = PTile.GetPivot(key, scale);
-
-        int keyTarget = key + (1 << 8);
-        if (true == map.ContainsKey(keyTarget))
-        {
-            pivot = PTile.GetPivot(keyTarget, scale);
-            goto RETURN;
-        }
-        keyTarget = key - (1 << 8);
-        if (true == map.ContainsKey(keyTarget))
-        {
-            pivot = PTile.GetPivot(keyTarget, scale);
-            goto RETURN;
-        }
-
-    RETURN:
-        return new TriangleCollision(pivot, triangle, scale);
     }
 }

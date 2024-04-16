@@ -103,7 +103,7 @@ namespace Index
 
         public const byte SHIFT_KEY_LAYER = 30;
         public const byte SHIFT_KEY_SCALE = 20;
-        public const byte SHIFT_KEY_X = 12;
+        public const byte SHIFT_KEY_X = 16;
         public const byte SHIFT_KEY_Y = 8;
         public const byte SHIFT_KEY_Z = 0;
 

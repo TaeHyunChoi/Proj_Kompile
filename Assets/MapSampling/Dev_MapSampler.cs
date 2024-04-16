@@ -426,10 +426,34 @@ public class Dev_MapSampler : MonoBehaviour
     // test
     private void Update()
     {
-        if (true == Input.GetKeyDown(KeyCode.UpArrow)    || true == Input.GetKey(KeyCode.UpArrow))    { dir += Vector3.forward; }
-        if (true == Input.GetKeyDown(KeyCode.DownArrow)  || true == Input.GetKey(KeyCode.DownArrow))  { dir += Vector3.back; }
-        if (true == Input.GetKeyDown(KeyCode.LeftArrow)  || true == Input.GetKey(KeyCode.LeftArrow))  { dir += Vector3.left; }
-        if (true == Input.GetKeyDown(KeyCode.RightArrow) || true == Input.GetKey(KeyCode.RightArrow)) { dir += Vector3.right; }
+        if (true == Input.GetKeyDown(KeyCode.UpArrow)    || true == Input.GetKey(KeyCode.UpArrow))   
+        {
+            if (dir.z == 0)
+            {
+                dir += Vector3.forward;
+            }
+        }
+        if (true == Input.GetKeyDown(KeyCode.DownArrow)  || true == Input.GetKey(KeyCode.DownArrow))  
+        {
+            if (dir.z == 0)
+            {
+                dir += Vector3.back;
+            }
+        }
+        if (true == Input.GetKeyDown(KeyCode.LeftArrow)  || true == Input.GetKey(KeyCode.LeftArrow))  
+        {
+            if (dir.x == 0)
+            {
+                dir += Vector3.left;
+            }
+        }
+        if (true == Input.GetKeyDown(KeyCode.RightArrow) || true == Input.GetKey(KeyCode.RightArrow))
+        {
+            if (dir.x == 0)
+            {
+                dir += Vector3.right;
+            }
+        }
     }
 
     private readonly float[] intervalRot = new float[] { 0, 45f, -45f, 90f, -90f }; //clock-wise
@@ -481,7 +505,7 @@ public class Dev_MapSampler : MonoBehaviour
         string height = System.Convert.ToString(tile.Height, 2).ToString();
         string link   = System.Convert.ToString(tile.Info & 0xFFF, 2);
         float scale = tile.GetScale(TileSize.Default);
-        Debug.Log($"{PTile.GetPivot(key, scale):F3}(scale:{scale}, trigger:{trigger}) m:{move} l:{link}\nh:{height}");
+        Debug.Log($"{key}:{PTile.GetPivot(key, scale):F3}(scale:{scale}, trigger:{trigger}) m:{move} l:{link}\nh:{height}");
     }
 }
 #endif

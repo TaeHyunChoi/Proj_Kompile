@@ -1,8 +1,10 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using CMathf;
-using System;
 using static IDxInput;
 using static Index.IDxTile;
+
 
 [Flags]
 public enum TileTrigger : int
@@ -163,25 +165,26 @@ public static class PTile
         return true;
     }
 
-    public static int GetLinkedKey(int fromKey, int toIndex)
+    public static int GetKey_FromRelativeCoord(Dictionary<int, DataType.Tile_t> map, int key, int x, int z)
     {
-        int x = 1 << 16;
-        int z = 1 << 0;
+        int keyLink = key + x * (1 << SHIFT_KEY_X) + z * (1 << SHIFT_KEY_Z);
 
-        switch (toIndex)
+        // y = 0
+        if (true == map.ContainsKey(keyLink))
         {
-            case 0: return fromKey - x - z;
-            case 1: return fromKey - z;
-            case 2: return fromKey - z;
-            case 3: return fromKey + x - z;
-            case 4: return fromKey + x;
-            case 5: return fromKey + x;
-            case 6: return fromKey + x + z;
-            case 7: return fromKey + z;
-            case 8: return fromKey + z;
-            case 9: return fromKey - x + z;
-            case 10: return fromKey - x;
-            case 11: return fromKey - x;
+            return keyLink;
+        }
+        //y + 1
+        if (true == map.ContainsKey(keyLink + (1 << 8)))
+        {
+            
+            return keyLink += (1 << 8);
+        }
+        // y - 1
+        if (true == map.ContainsKey(keyLink - (1 << 8)))
+        {
+            
+            return keyLink -= (1 << 8);
         }
 
         return -1;
