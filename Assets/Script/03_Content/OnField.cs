@@ -9,6 +9,7 @@ public class OnField : ContentBase, IGetInput, IGetFixedInput
 {
     private Dictionary<int, Tile_t> tileMap;
     private MapTileComponent[] tiles;
+    private Transform level;
 
     public static async Task<OnField> InitAsync(Transform level, MapData data)
     {
@@ -23,14 +24,6 @@ public class OnField : ContentBase, IGetInput, IGetFixedInput
         Main.Instance.SetFixedInputGetter(field);
 
         return field;
-    }
-
-    public void SetLayer(int layer)
-    {
-        for (int i = 0; i < tiles.Length; ++i)
-        {
-            tiles[i].gameObject.SetActive(layer == tiles[i].Layer);
-        }
     }
     public void Input(int input)
     {
@@ -50,15 +43,20 @@ public class OnField : ContentBase, IGetInput, IGetFixedInput
     private OnField(Transform level, MapData data)
     {
         tileMap = DataTable.LoadMappingData<Tile_t>("020_FieldTest");
+        this.level = level;
 
+        SetFieldLayer(0);
+    }
+    public void SetFieldLayer(int layer)
+    {
         //Task.Run()을 고려했으나 .SetActive()가 Unity API라서 사용 불가
-        tiles = level.GetComponentsInChildren<MapTileComponent>();
+        tiles = level.GetComponentsInChildren<MapTileComponent>(true);
+
+        MapTileComponent tile;
         for (int i = 0; i < tiles.Length; ++i)
         {
-            if (0 != tiles[i].Layer)
-            {
-                tiles[i].gameObject.SetActive(false);
-            }
+            tile = tiles[i];
+            tile.gameObject.SetActive(layer == tile.Layer);
         }
     }
 }

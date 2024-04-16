@@ -103,7 +103,7 @@ namespace Index
 
         public const byte SHIFT_KEY_LAYER = 30;
         public const byte SHIFT_KEY_SCALE = 20;
-        public const byte SHIFT_KEY_X = 16;
+        public const byte SHIFT_KEY_X = 12;
         public const byte SHIFT_KEY_Y = 8;
         public const byte SHIFT_KEY_Z = 0;
 
@@ -306,6 +306,29 @@ namespace DataType
         {
             this.info = (uint)info;
             this.movement = (ulong)((height << 16) | (long)move);
+        }
+        public void DebugLog(int key)
+        {
+            string trigger = string.Empty;
+
+            if (true == HasTrigger(TileTrigger.ScaleDown, out int not_used))
+            {
+                trigger += "Scale Down, ";
+            }
+            if (true == HasTrigger(TileTrigger.Layer, out not_used))
+            {
+                trigger += "Layer, ";
+            }
+            if (true == HasTrigger(TileTrigger.Interact, out not_used))
+            {
+                trigger += "Interact, ";
+            }
+
+            string move = System.Convert.ToString(Move, 2).ToString();
+            string height = System.Convert.ToString(Height, 2).ToString();
+            string link = System.Convert.ToString(Info & 0xFFF, 2);
+            float scale = GetScale(TileSize.Default);
+            Debug.Log($"{key}:{TileUtility.GetPivot(key, scale):F3}(scale:{scale}, trigger:{trigger}) m:{move} l:{link}\nh:{height}");
         }
 #endif
     }

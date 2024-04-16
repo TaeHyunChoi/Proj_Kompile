@@ -28,17 +28,18 @@ public enum TileSize
 /// <summary> Parser related to Tile </summary> /// 
 public static class TileUtility
 {
-    // related to tile_t
     public static Vector3 GetPivot(int key, float scale)
     {
-        float x = ((key >> SHIFT_KEY_X) & 0xFF) * scale;
+        float x = 0f, y = 0f, z = 0f;
         if (0 != ((key >> SHIFT_KEY_SCALE) & 0x1))
         {
             x += 0.125f;
         }
 
-        float y = ((key >> SHIFT_KEY_Y) & 0x0F) * scale;
-        float z = ((key >> SHIFT_KEY_Z) & 0xFF) * scale;
+        key &= ~(1 << SHIFT_KEY_SCALE);
+        x += ((key >> SHIFT_KEY_X) & 0xFF) * scale;
+        y += ((key >> SHIFT_KEY_Y) & 0x0F) * scale;
+        z += ((key >> SHIFT_KEY_Z) & 0xFF) * scale;
 
         return new Vector3(x, y, z);
     }
@@ -677,7 +678,7 @@ public static class TriangleUtility
     }
     public static bool IsMovable(Vector3 goal, float scale)
     {
-        float dist = scale * SIZE_QUATER - Time.fixedDeltaTime;
+        float dist = scale * (SIZE_QUATER - Time.fixedDeltaTime);
         for (int i = 0; i < index; ++i)
         {
             TriangleCollision triangle = triangles[i];

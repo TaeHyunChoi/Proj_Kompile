@@ -2,7 +2,6 @@
 using UnityEngine;
 using DataType;
 using CMathf;
-using static Index.IDxTile;
 
 public class UnitPlayer : UnitBase
 {
@@ -22,7 +21,7 @@ public class UnitPlayer : UnitBase
             Vector3 dirRotated = Quaternion.Euler(0f, sign * intervalRot[i], 0f) * dirInput;
             dirRotated.Normalize();
 
-            dirRotated *= Time.fixedDeltaTime * SPEED_MOVE;
+            dirRotated *= Time.fixedDeltaTime * SPEED_MOVE * scale;
             Vector3 goal = transform.position + dirRotated;
 
             int keyMy = TileUtility.GetKey(layer, goal, scale);
@@ -44,9 +43,28 @@ public class UnitPlayer : UnitBase
                 float y = tileMy.GetYValue(keyMy, goal);
                 transform.position = CMath.FloorToVector(new Vector3(goal.x, y, goal.z), 3);
 
+                //trigger
+                if (true == tileMy.HasTrigger(TileTrigger.ScaleDown, out int flagScale))
+                {
+                    scale = (flagScale == 1) ? 0.5f : 1f;
+                    Main.Cam.SetFOV(scale);
+                    transform.localScale = Vector3.one * scale;
+                }
+                if (true == tileMy.HasTrigger(TileTrigger.Layer, out int layer))
+                {
+                    this.layer = layer;
+                    Main.Instance.GetContent<OnField>().SetFieldLayer(layer);
+                }
+                //if (true == tileMy.HasTrigger(TileTrigger.Interact, out int code))
+                //{
+                //  //call interaction
+                //}
+
                 float x = (0 != dirRotated.x) ? dirRotated.x : dirBefore.x;
                 float z = (0 != dirRotated.z) ? dirRotated.z : dirBefore.z;
                 dirBefore = new Vector3(x, y, z);
+
+                //tileMy.DebugLog(keyMy);
                 return;
             }
         }
