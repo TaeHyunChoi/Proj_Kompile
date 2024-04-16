@@ -296,23 +296,24 @@ public class GeometryUtility : MonoBehaviour
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 0, scale);
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 1, scale);
 
-                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: -1, z: -1);
-                pivotNeighbor = pivot + new Vector3(-1, 0, -1) * scale;
-                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
-                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
-
                 keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
-                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
-                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 15, scale);
 
                 keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: -1);
                 pivotNeighbor = pivot + new Vector3(1, 0, -1) * scale;
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
+                triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
+
+                keyLink = PTile.GetKey_FromRelativeCoord(map, keyMy, x: +1, z: 0);
+                pivotNeighbor = pivot + new Vector3(1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
+
                 break;
             case 5:
                 triangles[index++] = new TriangleCollision(keyMy, pivot, 4, scale);
@@ -589,6 +590,8 @@ public class GeometryUtility : MonoBehaviour
         {
             float y = tileMy.GetYValue(keyMy, goal);
             goal = CMathf.CMath.FloorToVector(new Vector3(goal.x, y, goal.z), 3);
+            //goal = Vector3.Lerp(transform.position, new Vector3(goal.x, y, goal.z), 0.5f);
+            //goal = CMathf.CMath.FloorToVector(goal, 3);
             canMove = true;
         }
 

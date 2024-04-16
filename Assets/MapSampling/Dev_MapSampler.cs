@@ -13,7 +13,7 @@ public class Dev_MapSampler : MonoBehaviour
     public static Dictionary<int, Tile_t> Map { get => map; }
     private readonly int[] triangles = new int[] { 0, 4, 5, 13, 14, 10, 11, 3 };
 
-    private Vector3 dir;
+    private Vector3 dirInput;
 
     private void Start()
     {
@@ -428,30 +428,30 @@ public class Dev_MapSampler : MonoBehaviour
     {
         if (true == Input.GetKeyDown(KeyCode.UpArrow)    || true == Input.GetKey(KeyCode.UpArrow))   
         {
-            if (dir.z == 0)
+            if (dirInput.z == 0)
             {
-                dir += Vector3.forward;
+                dirInput += Vector3.forward;
             }
         }
         if (true == Input.GetKeyDown(KeyCode.DownArrow)  || true == Input.GetKey(KeyCode.DownArrow))  
         {
-            if (dir.z == 0)
+            if (dirInput.z == 0)
             {
-                dir += Vector3.back;
+                dirInput += Vector3.back;
             }
         }
         if (true == Input.GetKeyDown(KeyCode.LeftArrow)  || true == Input.GetKey(KeyCode.LeftArrow))  
         {
-            if (dir.x == 0)
+            if (dirInput.x == 0)
             {
-                dir += Vector3.left;
+                dirInput += Vector3.left;
             }
         }
         if (true == Input.GetKeyDown(KeyCode.RightArrow) || true == Input.GetKey(KeyCode.RightArrow))
         {
-            if (dir.x == 0)
+            if (dirInput.x == 0)
             {
-                dir += Vector3.right;
+                dirInput += Vector3.right;
             }
         }
     }
@@ -461,23 +461,26 @@ public class Dev_MapSampler : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (Vector3.zero != dir)
+        if (Vector3.zero != dirInput)
         {
+            float sign = Mathf.Sign(Vector3.Cross(dirInput, dirBefore).y) >= 0 ? 1f : -1f;
+
             for (int i = 0; i < intervalRot.Length; ++i)
             {
-                Vector3 dirRotated = Quaternion.Euler(0f, intervalRot[i], 0f) * dir;
+                Vector3 dirRotated = Quaternion.Euler(0f, sign * intervalRot[i], 0f) * dirInput;
                 dirRotated.Normalize();
 
-                int sign = 1;
-                if (true == tester.CanMove(map, sign * dirRotated, out Vector3 pos))
+                if (true == tester.CanMove(map, dirRotated, out Vector3 pos))
                 {
                     tester.transform.position = pos;
-                    dirBefore = dirRotated;
+                    float x = (0 != dirRotated.x) ? dirRotated.x : dirBefore.x;
+                    float z = (0 != dirRotated.z) ? dirRotated.z : dirBefore.z;
+                    dirBefore = new Vector3(x, pos.y, z);
                     break;
                 }
             }
 
-            dir = Vector3.zero;
+            dirInput = Vector3.zero;
         }
     }
 

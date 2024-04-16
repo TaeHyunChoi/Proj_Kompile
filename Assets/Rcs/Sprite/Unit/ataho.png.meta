@@ -135,8 +135,8 @@ TextureImporter:
         y: 337
         width: 36
         height: 61
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1592,7 +1592,7 @@ TextureImporter:
       ataho_26: -1736347302
       ataho_23: -1764492700
       ataho_50: -2092085476
-      ataho_65: 1150955104
+      ataho_22: -5704412
       ataho_51: 1338749358
       ataho_36: 1898022292
       ataho_57: -1457992216
@@ -1665,7 +1665,7 @@ TextureImporter:
       ataho_8: -1151996689
       ataho_5: -1277980613
       ataho_29: 569135459
-      ataho_22: -5704412
+      ataho_65: 1150955104
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0
