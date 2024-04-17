@@ -43,20 +43,20 @@ public class MapTileComponent : MonoBehaviour
 #endif
     }
 }
-
 public class TransMapTile : IUpdateRoutine
 {
+    private readonly float fadeSpeed = 5f;
+
     private GameObject gameObject;
-    private Material mat;
-    private Color color;
-    private float fadeSpeed = 5f;
+    private Material   material;
+    private Color      color;
 
     public TransMapTile(MapTileComponent tile)
     {
         gameObject = tile.gameObject;
-        mat = tile.GetComponent<MeshRenderer>().material;
-        color = mat.color;
-        mat.color = new Color(color.r, color.g, color.b, 0f);
+        material = tile.GetComponent<MeshRenderer>().material;
+        color = material.color;
+        material.color = new Color(color.r, color.g, color.b, 0f);
         gameObject.SetActive(true);
     }
 
@@ -65,14 +65,14 @@ public class TransMapTile : IUpdateRoutine
         switch (index)
         {
             case 0:
-                float alpha = mat.color.a;
+                float alpha = material.color.a;
                 if (1f > alpha)
                 {
                     alpha += Time.fixedDeltaTime * fadeSpeed;
-                    mat.color = new Color(color.r, color.g, color.b, alpha);
+                    material.color = new Color(color.r, color.g, color.b, alpha);
                     return index;
                 }
-                alpha = 1f;
+                material.color = new Color(color.r, color.g, color.b, 0f);
                 break;
             default:
                 return -1;
