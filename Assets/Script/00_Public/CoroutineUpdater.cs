@@ -5,8 +5,6 @@ using UnityEngine;
 public class CoroutineUpdater : MonoBehaviour
 {
     private static CoroutineUpdater instance;
-    public static CoroutineUpdater Get { get => instance; }
-
     private List<CCoroutineHandler> handlers = new List<CCoroutineHandler>();
     private List<bool> isFinished = new List<bool>();
 
@@ -41,18 +39,21 @@ public class CoroutineUpdater : MonoBehaviour
             }
         }
     }
-    public void SetHandler(CCoroutineHandler handler)
+
+    public static void SetHandler(CCoroutineHandler handler)
     {
         if (null == handler)
         {
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
             Debug.LogError("Handler is null;");
+#endif
             return;
         }
 
-        if (0 == handlers.Count)
+        instance.handlers.Add(handler);
+        if (1 == instance.handlers.Count)
         {
-            enabled = true;
+            instance.enabled = true;
         }
-        handlers.Add(handler);
     }
 }

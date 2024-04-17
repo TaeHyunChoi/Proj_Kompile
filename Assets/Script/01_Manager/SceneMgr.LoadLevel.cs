@@ -75,7 +75,7 @@ public partial class SceneMgr // .LoadScene
             switch (index)
             {
                 case 0:
-                    Main.SceneMgr.state = SceneState.Load;
+                    Main.SceneMgr.state = SceneState.Leave;
                     curtain.alpha = 0;
                     curtain.gameObject.SetActive(true);
                     break;
@@ -89,6 +89,7 @@ public partial class SceneMgr // .LoadScene
                     break;
                 case 2:
                     //TODO: dev Mapdata (using grid?)
+                    Main.SceneMgr.state = SceneState.Load;
                     string sceneName = string.Empty;
                     int chapter = mapData.Code / 100;
                     switch (chapter)

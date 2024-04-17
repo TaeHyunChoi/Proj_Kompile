@@ -45,7 +45,7 @@ public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
                     }
                     break;
                 default:
-                    Main.Instance.ReleaseInputGetter();
+                    Main.InputMgr.ReleaseInputGetter();
                     instance.Set();
                     return -1;
             }
@@ -75,7 +75,7 @@ public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
             wait = 0;
             state = 0;
 
-            Main.Instance.SetInputGetter(this);
+            Main.InputMgr.SetInputGetter(this);
         }
     }
     private class OpeningDemo : IUpdateRoutine, IGetInput

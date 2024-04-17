@@ -1,12 +1,14 @@
 using UnityEngine;
 using static Index.IDxInput;
 
-public class InputMgr
+public class InputMgr : MonoBehaviour
 {
-    public static bool TryGetInput(out int input)
-    {
-        input = 0;
+    private IGetInput inputGetter;
+    private IGetInput fixedInputGetter;
+    private int input;
 
+    public void Update()
+    {
         //Button Down
         if (Input.GetButtonDown("DOWN"))    { input |= DOWN;   }
         if (Input.GetButtonDown("UP"))      { input |= UP;     }
@@ -24,6 +26,38 @@ public class InputMgr
         if (Input.GetButton("RIGHT"))       { input |= RIGHT_HOLD;  }
         if (Input.GetButton("ACTION"))      { input |= ACTION_HOLD; }
 
-        return 0 != input;
+        if (0 != input
+            && null != inputGetter)
+        {
+            inputGetter.Input(input);
+            input = 0;
+        }
+    }
+    private void FixedUpdate()
+    {
+        if (0 != input
+            && null != fixedInputGetter)
+        {
+            fixedInputGetter.Input(input);
+            input = 0;
+        }
+    }
+
+    public void SetInputGetter(IGetInput getter)
+    {
+        inputGetter = getter;
+    }
+    public void SetFixedInputGetter(IGetInput fixedGetter)
+    {
+        fixedInputGetter = fixedGetter;
+    }
+
+    public void ReleaseInputGetter()
+    {
+        inputGetter = null;
+    }
+    public void ReleaseFixedInputGetter()
+    {
+        fixedInputGetter = null;
     }
 }

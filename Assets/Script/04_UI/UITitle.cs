@@ -25,7 +25,7 @@ public class UITitle : UIBase, IGetInput
     }
     private void Start()
     {
-        Main.Instance.SetInputGetter(this);
+        Main.InputMgr.SetInputGetter(this);
     }
     public override void Pop(bool isOn)
     {

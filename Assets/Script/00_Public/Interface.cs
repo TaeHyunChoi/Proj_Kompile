@@ -21,10 +21,6 @@ public interface IGetInput
 {
     public void Input(int input);
 }
-public interface IGetFixedInput
-{
-    public void FixedInput(int input);
-}
 
 // This is the code recommended by Chat-GPT, but it is not well understood. (event-base input callback)
 /*

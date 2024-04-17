@@ -3,27 +3,27 @@
 public partial class Main : MonoBehaviour
 {
     [SerializeField]
-    private int frameRate = 60;
+    private int frameRate = 60; //얘는 Main.cs가 아니라 Config.cs로 빠지는 게 맞는 듯?
+    public static int FrameRate { get => instance.frameRate; }
 
     private static Main instance;
     private static UnitPlayer player;
 
-    private UnitMgr     unitMgr;
+    private InputMgr mgrInput;
+    private UnitMgr     mgrUnit;
     private UIMgr       mgrUI;
     private SceneMgr    mgrScene;
     private CameraFollow cam;
 
     public static Main     Instance { get => instance; }
     public static UnitPlayer Player { get => player; }
+    public static InputMgr InputMgr { get => instance.mgrInput; }
     public static SceneMgr SceneMgr { get => instance.mgrScene; }
-    public static UnitMgr  UnitMgr  { get => instance.unitMgr; }
+    public static UnitMgr  UnitMgr  { get => instance.mgrUnit; }
     public static UIMgr    UIMgr    { get => instance.mgrUI; }
     public static CameraFollow Cam { get => instance.cam; }
 
-    //current;
     private ContentBase content;
-    private IGetInput inputGetter;
-    private IGetFixedInput fixedInputGetter;
 
     private void Awake()
     {
@@ -37,11 +37,11 @@ public partial class Main : MonoBehaviour
 
         DataTable.LoadTable();
         //++Load Player Data
-
+        mgrInput = transform.GetComponent<InputMgr>();
         mgrUI    = new UIMgr   (transform.Find("UI"));
-        unitMgr  = new UnitMgr (transform.Find("Unit"));
+        mgrUnit  = new UnitMgr (transform.Find("Unit"));
         mgrScene = new SceneMgr(transform.Find("Scene"));
-        cam   = UnityEngine.Camera.main.transform.GetComponent<CameraFollow>();
+        cam      = Camera.main.transform.GetComponent<CameraFollow>();
     }
     private void Start()
     {
@@ -49,35 +49,35 @@ public partial class Main : MonoBehaviour
         Application.targetFrameRate = frameRate;
     }
 
-    //입력 제어는 InputMgr에서 처리하는게 차라리 나을 듯?
+    //Main은 Mgr급만 상대한다! 느낌인디
+    //inputGetter가 그정도는 아닌 듯.
+
     private void Update()
     {
-        //입력 제어 : 버그 수정
-
-        //TODO: not Update(), but event?
-        if (true == InputMgr.TryGetInput(out int input)
-            && null != inputGetter)
-        {
-            inputGetter.Input(input);
-        }
+        //if (true == InputMgr.TryGetInput(out int input)
+        //    && null != inputGetter)
+        //{
+        //    inputGetter.Input(input);
+        //}
     }
     private void FixedUpdate()
     {
-        if (true == InputMgr.TryGetInput(out int input)
-            && null != fixedInputGetter)
-        {
-            fixedInputGetter.FixedInput(input);
-        }
+        //if (true == InputMgr.TryGetInput(out int input)
+        //    && null != fixedInputGetter)
+        //{
+        //    fixedInputGetter.FixedInput(input);
+        //}
     }
 
 
     public void SetContent(ContentBase content)
     {
         this.content = content;
+        InputMgr.SetInputGetter(content as IGetInput);
     }
     public T GetContent<T>() where T:ContentBase
     {
-        return (T)content;
+        return content as T;
     }
     public void Release()
     {
@@ -87,19 +87,6 @@ public partial class Main : MonoBehaviour
         }
 
         UIMgr.Release();
-    }
-
-    public void SetInputGetter(IGetInput getter)
-    {
-        inputGetter = getter;
-    }
-    public void SetFixedInputGetter(IGetFixedInput fixedGetter)
-    {
-        fixedInputGetter = fixedGetter;
-    }
-    public void ReleaseInputGetter()
-    {
-        inputGetter = null;
     }
 
     public void SetPlayer(UnitPlayer unit)

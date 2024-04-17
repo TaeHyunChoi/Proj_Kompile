@@ -56,7 +56,7 @@ public class UnitPlayer : UnitBase
                 if (true == tileMy.HasTrigger(TileTrigger.Layer, out int layer))
                 {
                     this.layer = layer;
-                    Main.Instance.GetContent<OnField>().SetFieldLayer(layer);
+                    Main.Instance.GetContent<OnField>().TransLayer(layer);
                 }
                 //if (true == tileMy.HasTrigger(TileTrigger.Interact, out int code))
                 //{
