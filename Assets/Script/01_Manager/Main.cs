@@ -2,6 +2,9 @@
 
 public partial class Main : MonoBehaviour
 {
+    [SerializeField]
+    private int frameRate = 60;
+
     private static Main instance;
     private static UnitPlayer player;
 
@@ -43,6 +46,7 @@ public partial class Main : MonoBehaviour
     private void Start()
     {
         mgrScene.LoadSceneAsync(GameState.Opening);
+        Application.targetFrameRate = frameRate;
     }
     private void Update()
     {

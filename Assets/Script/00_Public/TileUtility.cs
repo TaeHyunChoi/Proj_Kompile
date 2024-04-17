@@ -828,7 +828,8 @@ public static class TriangleUtility
     }
     public static bool IsMovable(Vector3 goal, float scale)
     {
-        float dist = scale * (SIZE_QUATER - Time.fixedDeltaTime);
+        float dist = (scale * SIZE_QUATER) - Time.fixedDeltaTime;
+        //float dist = scale * (SIZE_QUATER - Time.fixedDeltaTime);
         for (int i = 0; i < index; ++i)
         {
             TriangleCollision triangle = triangles[i];
