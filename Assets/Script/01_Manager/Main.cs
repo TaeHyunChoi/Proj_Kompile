@@ -48,8 +48,12 @@ public partial class Main : MonoBehaviour
         mgrScene.LoadSceneAsync(GameState.Opening);
         Application.targetFrameRate = frameRate;
     }
+
+    //입력 제어는 InputMgr에서 처리하는게 차라리 나을 듯?
     private void Update()
     {
+        //입력 제어 : 버그 수정
+
         //TODO: not Update(), but event?
         if (true == InputMgr.TryGetInput(out int input)
             && null != inputGetter)

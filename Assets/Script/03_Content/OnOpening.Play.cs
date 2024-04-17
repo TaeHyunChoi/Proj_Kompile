@@ -1,7 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Index;
 
 public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
 {

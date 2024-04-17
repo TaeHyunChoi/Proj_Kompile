@@ -2,15 +2,20 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using CMathf;
-using static IDxInput;
 using static Index.IDxTile;
-
+using static Index.IDxInput;
 
 [Flags]
-public enum TileTrigger : int
+public enum TileStatus : byte
+{ 
+    None   = 0,
+    Locked = 1 << 0
+}
+[Flags]
+public enum TileTrigger : ushort
 {
     None      = 0,
-    ScaleDown = 1 << SHIFT_TRIGGER_SCALE,
+    Scale = 1 << SHIFT_TRIGGER_SCALE,
     Layer     = 1 << SHIFT_TRIGGER_LAYER,
     Interact  = 1 << SHIFT_TRIGGER_INTERACT
 }
@@ -24,8 +29,6 @@ public enum TileSize
     Half_inverse,
     Quater_inverse
 }
-
-/// <summary> Parser related to Tile </summary> /// 
 public static class TileUtility
 {
     public static Vector3 GetPivot(int key, float scale)
@@ -286,7 +289,6 @@ public static class TileUtility
         return CMath.FloorToVector(new Vector3(x, y, z), exponent);
     }
 }
-
 
 public struct TriangleCollision
 {
@@ -826,10 +828,9 @@ public static class TriangleUtility
                 break;
         }
     }
-    public static bool IsMovable(Vector3 goal, float scale)
+    public static bool IsMovable(Dictionary<int, DataType.Tile_t> map, Vector3 goal, float scale)
     {
-        float dist = (scale * SIZE_QUATER) - Time.fixedDeltaTime;
-        //float dist = scale * (SIZE_QUATER - Time.fixedDeltaTime);
+        float dist = CMath.Floor(scale * SIZE_QUATER - Time.fixedDeltaTime, 3);
         for (int i = 0; i < index; ++i)
         {
             TriangleCollision triangle = triangles[i];
@@ -838,8 +839,7 @@ public static class TriangleUtility
             {
                 continue;
             }
-
-            if (false == Dev_MapSampler.Map.TryGetValue(triangle.key, out DataType.Tile_t tileChecked))
+            if (false == map.TryGetValue(triangle.key, out DataType.Tile_t tileChecked))
             {
                 return false;
             }
@@ -847,8 +847,6 @@ public static class TriangleUtility
             {
                 return false;
             }
-
-            //how to check, compare height difference?
         }
 
         return true;

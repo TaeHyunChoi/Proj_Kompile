@@ -2,7 +2,6 @@
 using UnityEngine;
 using DataType;
 using CMathf;
-using static Index.IDxTile;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
 public class Dev_MapSampler : MonoBehaviour
@@ -11,86 +10,14 @@ public class Dev_MapSampler : MonoBehaviour
     [SerializeField] private GeometryUtility tester;
     private static Dictionary<int, Tile_t> map = new Dictionary<int, Tile_t>();
     public static Dictionary<int, Tile_t> Map { get => map; }
-    private readonly int[] triangles = new int[] { 0, 4, 5, 13, 14, 10, 11, 3 };
-
-    private Vector3 dirInput;
-
+    
     private void Start()
     {
         //// initialize tiles
         List<int> keys = new List<int>();
-        foreach (int k in map.Keys)
+        foreach (int key in map.Keys)
         {
-            keys.Add(k);
-        }
-
-        //// set links
-        foreach (int key in keys)
-        {
-            for (int t = 0; t < 8; ++t)
-            {
-                int triangle = triangles[t];
-                int linkMy = GetLinkIndex(triangle);
-                if (false == SetLink(key, triangle, linkMy, out int keyNext, out int triangleNext))
-                {
-                    continue;
-                }
-
-                int linkToLeft  = (linkMy + 11) % 12;
-                int linkToRight = (linkMy +  1) % 12;
-                int linkOther;
-
-                //differnet tile
-                int quarant = (int)(triangleNext * 0.25f) * 4;
-                if (0 == linkToLeft % 3)
-                {
-                    triangleNext = quarant + (triangleNext + 1) % 4;
-                    int linkNext = GetLinkIndex(triangleNext);
-                    linkOther = linkToRight;
-
-                    if (true == SetLink(keyNext, triangleNext, linkNext))
-                    {
-                        SetTile(key, linkToLeft);
-                    }
-                }
-                else
-                {
-                    triangleNext = quarant + (triangleNext + 3) % 4;
-                    int linkNext = GetLinkIndex(triangleNext);
-                    linkOther = linkToLeft;
-
-                    if (true == SetLink(keyNext, triangleNext, linkNext))
-                    {
-                        SetTile(key, linkToRight);
-                    }
-                }
-
-                //same tile
-                Tile_t tileNext = map[keyNext];
-                int index0, index1;
-
-                switch (linkMy)
-                {
-                    case  1: index0 =  9; index1 =  7; break;
-                    case  2: index0 = 15; index1 =  9; break;
-                    case  4: index0 =  2; index1 =  8; break;
-                    case  5: index0 =  8; index1 =  2; break;
-                    case  7: index0 =  7; index1 =  1; break;
-                    case  8: index0 =  1; index1 =  7; break;
-                    case 10: index0 = 12; index1 =  6; break;
-                    case 11: index0 =  6; index1 = 12; break;
-                    default: continue;
-                }
-
-                if (false == tileNext.IsMovable(index0)
-                    || false == tileNext.IsMovable(index1))
-                {
-                    continue;
-                }
-
-                SetTile(key, linkOther);
-            }
-
+            keys.Add(key);
             DebugLog(key);
         }
 
@@ -98,7 +25,7 @@ public class Dev_MapSampler : MonoBehaviour
         DataTable.WriteBinaryMappingData<Tile_t>(map, transformRsc.GetChild(0).gameObject.name);
         Debug.Log($"Sampling Done.");
     }
-    public static void InitTile(Transform transform, Mesh mesh, float scale, byte layer, int info)
+    public static void InitTile(Transform transform, Mesh mesh, float scale, byte layer, int info, int trigger)
     {
         Quaternion rot = transform.rotation;
         Vector3[] vertices = mesh.vertices;
@@ -128,12 +55,12 @@ public class Dev_MapSampler : MonoBehaviour
             Vector3 B = TileUtility.SnappingPoint(transform.TransformPoint(vertices[t1]), 0.125f, 3);
             Vector3 C = TileUtility.SnappingPoint(transform.TransformPoint(vertices[t2]), 0.125f, 3);
 
-            SetTileData(A, B, C, scale, layer, info);
+            SetTileData(A, B, C, scale, layer, info, trigger);
         }
     }
 
     // get
-    private static long GetHeightFlag(Vector3 diff, float size_quater, float size_quater_inverse)
+    private static long GetHeightFlag(Vector3 diff, float size_quater_inverse)
     {
         //diff = PTile.SnappingPoint(diff, size_quater, 3);
         diff = CMath.FloorToVector(diff, 3);
@@ -165,193 +92,7 @@ public class Dev_MapSampler : MonoBehaviour
 
         return y << shift;
     }
-    private int GetLinkIndex(int triangle)
-    {
-        switch (triangle)
-        {
-            case 0: return 1;
-            case 3: return 11;
-            case 4: return 2;
-            case 5: return 4;
-            case 10: return 8;
-            case 11: return 10;
-            case 13: return 5;
-            case 14: return 7;
-        }
-
-        return -1;
-    }
-    private bool HasLinkedTile(int key, int triangleMy, out int keyNext, out int triangleNext)
-    {
-        keyNext = int.MinValue;
-        triangleNext = -1;
-        switch (triangleMy)
-        {
-            case 0:
-                keyNext = key + (0 << SHIFT_KEY_X) - (1 << SHIFT_KEY_Z);
-                triangleNext = 10;
-                break;
-            case 10:
-                keyNext = key + (0 << SHIFT_KEY_X) + (1 << SHIFT_KEY_Z);
-                triangleNext = 0;
-                break;
-
-            case 4:
-                keyNext = key + (0 << SHIFT_KEY_X) - (1 << SHIFT_KEY_Z);
-                triangleNext = 14;
-                break;
-            case 14:
-                keyNext = key + (0 << SHIFT_KEY_X) + (1 << SHIFT_KEY_Z);
-                triangleNext = 4;
-                break;
-
-            case 3:
-                keyNext = key - (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
-                triangleNext = 5;
-                break;
-            case 5:
-                keyNext = key + (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
-                triangleNext = 3;
-                break;
-
-            case 11:
-                keyNext = key - (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
-                triangleNext = 13;
-                break;
-            case 13:
-                keyNext = key + (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
-                triangleNext = 11;
-                break;
-
-            default: return false;
-        }
-
-        for (int sign = -1; sign <= 1; ++sign)
-        {
-            if (false == map.TryGetValue(keyNext + sign * (1 << SHIFT_KEY_Y), out Tile_t tileNext))
-            {
-                continue;
-            }
-            if (false == tileNext.IsMovable(triangleNext))
-            {
-                return false;
-            }
-
-            Tile_t tileMy = map[key];
-            if (tileMy.GetTriangleHeightMask(triangleMy, -sign * 4)
-                    == tileNext.GetTriangleHeightMask(triangleNext, 0))
-            {
-                keyNext += sign * (1 << SHIFT_KEY_Y);
-                return true;
-            }
-        }
-
-        return false;
-    }
-    private bool HasLinkedTile(int key, int triangleMy)
-    {
-        int keyNext, triangleNext;
-        switch (triangleMy)
-        {
-            case 0:
-                keyNext = key + (0 << SHIFT_KEY_X) - (1 << SHIFT_KEY_Z);
-                triangleNext = 10;
-                break;
-            case 10:
-                keyNext = key + (0 << SHIFT_KEY_X) + (1 << SHIFT_KEY_Z);
-                triangleNext = 0;
-                break;
-
-            case 4:
-                keyNext = key + (0 << SHIFT_KEY_X) - (1 << SHIFT_KEY_Z);
-                triangleNext = 14;
-                break;
-            case 14:
-                keyNext = key + (0 << SHIFT_KEY_X) + (1 << SHIFT_KEY_Z);
-                triangleNext = 4;
-                break;
-
-            case 3:
-                keyNext = key - (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
-                triangleNext = 5;
-                break;
-            case 5:
-                keyNext = key + (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
-                triangleNext = 3;
-                break;
-
-            case 11:
-                keyNext = key - (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
-                triangleNext = 13;
-                break;
-            case 13:
-                keyNext = key + (1 << SHIFT_KEY_X) + (0 << SHIFT_KEY_Z);
-                triangleNext = 11;
-                break;
-
-            default: return false;
-        }
-
-        for (int sign = -1; sign <= 1; ++sign)
-        {
-            if (false == map.TryGetValue(keyNext + sign * (1 << SHIFT_KEY_Y), out Tile_t tileNext))
-            {
-                continue;
-            }
-            if (false == tileNext.IsMovable(triangleNext))
-            {
-                return false;
-            }
-
-            Tile_t tileMy = map[key];
-            if (tileMy.GetTriangleHeightMask(triangleMy, -sign * 4)
-                    == tileNext.GetTriangleHeightMask(triangleNext, 0))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    // set
-    private bool SetLink(int key, int triangle, int indexLink, out int keyNext, out int trinagleNext)
-    {
-        Tile_t tileMy = map[key];
-        keyNext = -1;
-        trinagleNext = -1;
-
-        if (false == tileMy.IsMovable(triangle))
-        {
-            return false;
-        }
-
-        if (false == HasLinkedTile(key, triangle, out keyNext, out trinagleNext))
-        {
-            return false;
-        }
-
-        SetTile(key, indexLink);
-        return true;
-    }
-    private bool SetLink(int key, int triangle, int indexLink)
-    {
-        Tile_t tileMy = map[key];
-
-        if (false == tileMy.IsMovable(triangle))
-        {
-            return false;
-        }
-
-        if (false == HasLinkedTile(key, triangle))
-        {
-            return false;
-        }
-
-        SetTile(key, indexLink);
-        return true;
-    }
-    private static void SetTileData(Vector3 p0, Vector3 p1, Vector3 p2, float scale, byte layer, int info)
+    private static void SetTileData(Vector3 p0, Vector3 p1, Vector3 p2, float scale, byte layer, int info, int trigger)
     {
         //(Isosceles right triangle) Find the right angle point and store it in p0
         float v0to1 = CMath.Floor(Vector3.Distance(new Vector3(p0.x, 0, p0.z), new Vector3(p1.x, 0, p1.z)), 3);
@@ -383,8 +124,8 @@ public class Dev_MapSampler : MonoBehaviour
         if (scale_half < diagonal)
         {
             Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 3);
-            SetTileData(p0, p1, midPoint, scale, layer, info);
-            SetTileData(p0, p2, midPoint, scale, layer, info);
+            SetTileData(p0, p1, midPoint, scale, layer, info, trigger);
+            SetTileData(p0, p2, midPoint, scale, layer, info, trigger);
         }
         else
         {
@@ -397,90 +138,24 @@ public class Dev_MapSampler : MonoBehaviour
 
             long height = 0;
             float size_quater_inverse = TileUtility.GetScale(TileSize.Quater_inverse, scale);
-            height |= GetHeightFlag(p0 - pivot, scale_quater, size_quater_inverse);
-            height |= GetHeightFlag(p1 - pivot, scale_quater, size_quater_inverse);
-            height |= GetHeightFlag(p2 - pivot, scale_quater, size_quater_inverse);
+            height |= GetHeightFlag(p0 - pivot, size_quater_inverse);
+            height |= GetHeightFlag(p1 - pivot, size_quater_inverse);
+            height |= GetHeightFlag(p2 - pivot, size_quater_inverse);
 
             //set tile data
             int key = TileUtility.GetKey(layer, pivot, scale);
             if (false == map.TryGetValue(key, out Tile_t tile))
             {
-                map.Add(key, new Tile_t(info, move, height));
+                map.Add(key, new Tile_t(info, trigger, move, height));
             }
             else
             {
-                info   |= tile.Info;
+                info |= tile.Info;
+                trigger   |= tile.Trigger;
                 move   |= tile.Move;
                 height |= tile.Height;
-                map[key] = new Tile_t(info, move, height);
+                map[key] = new Tile_t(info, trigger, move, height);
             }
-        }
-    }
-    private void SetTile(int key, int indexLink)
-    {
-        Tile_t tile = map[key];
-        int info = tile.Info | (1 << indexLink);
-        map[key] = new Tile_t(info, tile.Movement);
-    }
-
-    // test
-    private void Update()
-    {
-        if (true == Input.GetKeyDown(KeyCode.UpArrow)    || true == Input.GetKey(KeyCode.UpArrow))   
-        {
-            if (dirInput.z == 0)
-            {
-                dirInput += Vector3.forward;
-            }
-        }
-        if (true == Input.GetKeyDown(KeyCode.DownArrow)  || true == Input.GetKey(KeyCode.DownArrow))  
-        {
-            if (dirInput.z == 0)
-            {
-                dirInput += Vector3.back;
-            }
-        }
-        if (true == Input.GetKeyDown(KeyCode.LeftArrow)  || true == Input.GetKey(KeyCode.LeftArrow))  
-        {
-            if (dirInput.x == 0)
-            {
-                dirInput += Vector3.left;
-            }
-        }
-        if (true == Input.GetKeyDown(KeyCode.RightArrow) || true == Input.GetKey(KeyCode.RightArrow))
-        {
-            if (dirInput.x == 0)
-            {
-                dirInput += Vector3.right;
-            }
-        }
-    }
-
-    private readonly float[] intervalRot = new float[] { 0, 45f, -45f, 90f, -90f }; //clock-wise
-    private Vector3 dirBefore = new Vector3(-1f, 0, -1f);
-    private void FixedUpdate()
-    {
-        if (Vector3.zero != dirInput)
-        {
-            float sign = Mathf.Sign(Vector3.Cross(dirInput, dirBefore).y) >= 0 ? 1f : -1f;
-
-            for (int i = 0; i < intervalRot.Length; ++i)
-            {
-                Vector3 dirRotated = Quaternion.Euler(0f, sign * intervalRot[i], 0f) * dirInput;
-                dirRotated.Normalize();
-
-                if (true == tester.CanMove(map, dirRotated, out Vector3 pos))
-                {
-                    tester.transform.position = pos;
-
-                    float x = (0 != dirRotated.x) ? dirRotated.x : dirBefore.x;
-                    float z = (0 != dirRotated.z) ? dirRotated.z : dirBefore.z;
-                    dirBefore = new Vector3(x, pos.y, z);
-                    break;
-                }
-            }
-
-            dirInput = Vector3.zero;
         }
     }
 
@@ -489,9 +164,10 @@ public class Dev_MapSampler : MonoBehaviour
     {
         Tile_t tile = map[key];
 
+        string info = tile.Info.ToString();
         string trigger = string.Empty;
 
-        if (true == tile.HasTrigger(TileTrigger.ScaleDown, out int not_used))
+        if (true == tile.HasTrigger(TileTrigger.Scale, out int not_used))
         {
             trigger += "Scale Down, ";
         }
@@ -506,9 +182,9 @@ public class Dev_MapSampler : MonoBehaviour
 
         string move   = System.Convert.ToString(tile.Move, 2).ToString();
         string height = System.Convert.ToString(tile.Height, 2).ToString();
-        string link   = System.Convert.ToString(tile.Info & 0xFFF, 2);
+        string link   = System.Convert.ToString(tile.Trigger & 0xFFF, 2);
         float scale = tile.GetScale(TileSize.Default);
-        Debug.Log($"{key}:{TileUtility.GetPivot(key, scale):F3}(scale:{scale}, trigger:{trigger}) m:{move} l:{link}\nh:{height}");
+        Debug.Log($"{key}:{TileUtility.GetPivot(key, scale):F3}(scale:{scale}, info:{info} trigger:{trigger}) m:{move} l:{link}\nh:{height}");
     }
 }
 #endif

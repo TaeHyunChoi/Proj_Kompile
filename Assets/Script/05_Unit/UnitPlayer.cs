@@ -38,7 +38,7 @@ public class UnitPlayer : UnitBase
 
             TriangleUtility.SetTriangleArray(map, triangePoint, keyMy, pivot, scale);
 
-            if (TriangleUtility.IsMovable(goal, scale)
+            if (TriangleUtility.IsMovable(map, goal, scale)
                 && true == map.TryGetValue(keyMy, out Tile_t tileMy))
             {
                 //set position
@@ -47,7 +47,7 @@ public class UnitPlayer : UnitBase
                 transform.position = CMath.FloorToVector(goal, 3);
 
                 //call trigger
-                if (true == tileMy.HasTrigger(TileTrigger.ScaleDown, out int flagScale))
+                if (true == tileMy.HasTrigger(TileTrigger.Scale, out int flagScale))
                 {
                     scale = (flagScale == 1) ? 0.5f : 1f;
                     Main.Cam.SetFOV(scale);

@@ -82,7 +82,7 @@ public partial class SceneMgr // .LoadScene
                 case 1:
                     if (curtain.alpha < 1)
                     {
-                        curtain.alpha += Time.fixedDeltaTime * 0.75f;
+                        curtain.alpha += Time.fixedDeltaTime;
                         return index;
                     }
                     curtain.alpha = 1;
@@ -120,9 +120,10 @@ public partial class SceneMgr // .LoadScene
                 case 6:
                     if (curtain.alpha > 0)
                     {
-                        curtain.alpha -= Time.fixedDeltaTime;
+                        curtain.alpha -= Time.fixedDeltaTime * 3;
                         return index;
                     }
+                    curtain.gameObject.SetActive(false);
                     break;
                 default:
                     return -1;

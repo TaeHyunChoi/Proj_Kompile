@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using static IDxInput;
+using static Index.IDxInput;
 
 public class UITitle : UIBase, IGetInput
 {
