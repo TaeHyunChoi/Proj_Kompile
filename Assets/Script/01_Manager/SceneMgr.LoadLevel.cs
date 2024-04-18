@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 public partial class SceneMgr // .LoadScene
 {
-    public class LoadOpeningScene : IUpdateRoutine
+    public class LoadOpeningScene : IRoutineUpdater
     {
         private AsyncOperation  loadAsync;
         private CanvasGroup     curtain;
@@ -62,7 +62,7 @@ public partial class SceneMgr // .LoadScene
             this.curtain = curtain;
         }
     }
-    public class LoadFieldScene : IUpdateRoutine
+    public class LoadFieldScene : IRoutineUpdater
     {
         private AsyncOperation loadAsync;
         private CanvasGroup curtain;

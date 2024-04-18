@@ -42,30 +42,29 @@ public enum UIType : byte
     Title = 0,
 }
 
-
 namespace Index
 {
     public static class IDxInput
     {
-        public const int DOWN = 1 << 0;
-        public const int UP = 1 << 1;
-        public const int LEFT = 1 << 2;
-        public const int RIGHT = 1 << 3;
-        public const int ENTER = 1 << 4;
+        public const int DOWN   = 1 << 0;
+        public const int UP     = 1 << 1;
+        public const int LEFT   = 1 << 2;
+        public const int RIGHT  = 1 << 3;
+        public const int ENTER  = 1 << 4;
         public const int CANCEL = 1 << 5;
         public const int ESCAPE = 1 << 6;
         public const int ACTION = 1 << 7;
 
-        private const int BIT_HOLD = 8;
-        public const int DOWN_HOLD = 1 << (DOWN + BIT_HOLD);
-        public const int UP_HOLD = 1 << (UP + BIT_HOLD);
-        public const int LEFT_HOLD = 1 << (LEFT + BIT_HOLD);
-        public const int RIGHT_HOLD = 1 << (RIGHT + BIT_HOLD);
-        public const int ENTER_HOLD = 1 << (ENTER + BIT_HOLD);
-        public const int CANCEL_HOLD = 1 << (CANCEL + BIT_HOLD);
-        public const int ESCAPE_HOLD = 1 << (ESCAPE + BIT_HOLD);
-        public const int ACTION_HOLD = 1 << (ACTION + BIT_HOLD);
-        public const int MASK_HOLD = 0x0F << BIT_HOLD;
+        private const int BIT_HOLD    = 8;
+        public  const int DOWN_HOLD   = 1 << (DOWN + BIT_HOLD);
+        public  const int UP_HOLD     = 1 << (UP + BIT_HOLD);
+        public  const int LEFT_HOLD   = 1 << (LEFT + BIT_HOLD);
+        public  const int RIGHT_HOLD  = 1 << (RIGHT + BIT_HOLD);
+        public  const int ENTER_HOLD  = 1 << (ENTER + BIT_HOLD);
+        public  const int CANCEL_HOLD = 1 << (CANCEL + BIT_HOLD);
+        public  const int ESCAPE_HOLD = 1 << (ESCAPE + BIT_HOLD);
+        public  const int ACTION_HOLD = 1 << (ACTION + BIT_HOLD);
+        public  const int MASK_HOLD   = 0x0F << BIT_HOLD;
 
         public const int ALL = 0xFF;
 
@@ -192,5 +191,38 @@ namespace DataType
             this.move    = (ulong)((height << 16) | (long)move);
         }
 #endif
+    }
+}
+namespace CMathf
+{
+    public static class CMath
+    {
+        public static float Floor(float value, int exponent)
+        {
+            float d = (int)Mathf.Pow(10, exponent);
+
+            //exponent媛 ?遺遺?2 ?먮뒗 3?대?濡?罹먯떛
+            float d_invert;
+            switch (exponent)
+            {
+                case 2: d_invert = 0.01f; break;
+                case 3: d_invert = 0.001f; break;
+                default: d_invert = 1 / d; break;
+            }
+
+            return (int)(value * d) * d_invert;
+        }
+        public static int FloorToInt(float value, int exponent)
+        {
+            return (int)Floor(value, exponent);
+        }
+        public static Vector3 FloorToVector(Vector3 value, int exponent)
+        {
+            float x = Floor(value.x, exponent);
+            float y = Floor(value.y, exponent);
+            float z = Floor(value.z, exponent);
+
+            return new Vector3(x, y, z);
+        }
     }
 }

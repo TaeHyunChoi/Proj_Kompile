@@ -43,7 +43,7 @@ public class MapTileComponent : MonoBehaviour
 #endif
     }
 }
-public class TransMapTile : IUpdateRoutine
+public class TransMapTile : IRoutineUpdater
 {
     private readonly float fadeSpeed = 5f;
 

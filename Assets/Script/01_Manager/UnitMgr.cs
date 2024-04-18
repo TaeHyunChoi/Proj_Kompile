@@ -21,8 +21,6 @@ public class UnitMgr
         UnitPlayer player = obj.AddComponent<UnitPlayer>();
         player.transform.position = new Vector3(0.5f, 0f, 0.5f);
         Main.Instance.SetPlayer(player);
-        Main.Cam.SetFollow(player.transform);
-
         pool.Add(player);
 
         //UnitBase[] npc = level.GetComponentsInChildren<UnitBase>(true);

@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using static Index.IDxInput;
 
-public class UITitle : UIBase, IGetInput
+public class UITitle : UIBase, IInputHandler
 {
     private Image[] items;
 

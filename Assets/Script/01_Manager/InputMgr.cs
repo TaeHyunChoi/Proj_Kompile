@@ -3,12 +3,13 @@ using static Index.IDxInput;
 
 public class InputMgr : MonoBehaviour
 {
-    private IGetInput inputGetter;
-    private IGetInput fixedInputGetter;
-    private int input;
+    private IInputHandler inputGetter;          //update
+    private IInputHandler fixedInputGetter;     //fixed update
+    private int input;                          //ÀÔ·Â°ª
 
     public void Update()
     {
+        #region Get Input
         //Button Down
         if (Input.GetButtonDown("DOWN"))    { input |= DOWN;   }
         if (Input.GetButtonDown("UP"))      { input |= UP;     }
@@ -25,6 +26,7 @@ public class InputMgr : MonoBehaviour
         if (Input.GetButton("LEFT"))        { input |= LEFT_HOLD;   }
         if (Input.GetButton("RIGHT"))       { input |= RIGHT_HOLD;  }
         if (Input.GetButton("ACTION"))      { input |= ACTION_HOLD; }
+        #endregion
 
         if (0 != input
             && null != inputGetter)
@@ -43,11 +45,11 @@ public class InputMgr : MonoBehaviour
         }
     }
 
-    public void SetInputGetter(IGetInput getter)
+    public void SetInputGetter(IInputHandler getter)
     {
         inputGetter = getter;
     }
-    public void SetFixedInputGetter(IGetInput fixedGetter)
+    public void SetFixedInputGetter(IInputHandler fixedGetter)
     {
         fixedInputGetter = fixedGetter;
     }

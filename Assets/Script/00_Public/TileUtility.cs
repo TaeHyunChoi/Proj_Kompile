@@ -6,12 +6,6 @@ using static Index.IDxTile;
 using static Index.IDxInput;
 
 [Flags]
-public enum TileStatus : byte
-{ 
-    None   = 0,
-    Locked = 1 << 0
-}
-[Flags]
 public enum TileTrigger : ushort
 {
     None      = 0,
@@ -31,6 +25,158 @@ public enum TileSize
 }
 public static class TileUtility
 {
+    private struct TriangleCollision
+    {
+        public Vector3 A, B, C; // x,z로만 판별
+        public int key;
+        public int index;
+
+        public TriangleCollision(int key, Vector3 pivot, int indexTriangle, float scale)
+        {
+            A = B = C = pivot;
+            this.key = key;
+            index = indexTriangle;
+
+            float scale_quater = scale * 0.25f;
+            switch (index % 4)
+            {
+                case 0:
+                    A += new Vector3(1f, 0f, 1f) * scale_quater;
+                    B += new Vector3(2f, 0f, 0f) * scale_quater;
+
+                    break;
+                case 1:
+                    A += new Vector3(1f, 0f, 1f) * scale_quater;
+                    B += new Vector3(2f, 0f, 0) * scale_quater;
+                    C += new Vector3(2f, 0f, 2f) * scale_quater;
+                    break;
+                case 2:
+                    A += new Vector3(1f, 0f, 1f) * scale_quater;
+                    B += new Vector3(0, 0f, 2f) * scale_quater;
+                    C += new Vector3(2f, 0f, 2f) * scale_quater;
+                    break;
+                case 3:
+                    A += new Vector3(1f, 0f, 1f) * scale_quater;
+                    B += new Vector3(0, 0f, 2f) * scale_quater;
+
+                    break;
+            }
+
+            switch ((int)(index * 0.25f))
+            {
+                case 1:
+                    A += new Vector3(2f, 0f, 0) * scale_quater;
+                    B += new Vector3(2f, 0f, 0) * scale_quater;
+                    C += new Vector3(2f, 0f, 0) * scale_quater;
+                    break;
+                case 2:
+                    A += new Vector3(0, 0f, 2f) * scale_quater;
+                    B += new Vector3(0, 0f, 2f) * scale_quater;
+                    C += new Vector3(0, 0f, 2f) * scale_quater;
+                    break;
+                case 3:
+                    A += new Vector3(2f, 0f, 2f) * scale_quater;
+                    B += new Vector3(2f, 0f, 2f) * scale_quater;
+                    C += new Vector3(2f, 0f, 2f) * scale_quater;
+                    break;
+            }
+        }
+
+        public bool IsIntersected(Vector3 center, float radius)
+        {
+            Vector2 center2D = new Vector2(center.x, center.z);
+            Vector2 A2d = new Vector2(A.x, A.z);
+            Vector2 B2d = new Vector2(B.x, B.z);
+            Vector2 C2d = new Vector2(C.x, C.z);
+
+            if (PointInTriangle(center2D, A2d, B2d, C2d))
+            {
+                return true;
+            }
+
+            // 삼각형의 각 꼭짓점이 원 내부에 있는지 확인
+            if (IsPointInsideCircle(A2d, center2D, radius) ||
+                IsPointInsideCircle(B2d, center2D, radius) ||
+                IsPointInsideCircle(C2d, center2D, radius))
+            {
+                return true;
+            }
+
+
+            // 삼각형의 각 변과 원의 교차 확인
+            if (IsCircleLineIntersect(center2D, radius, A2d, B2d) ||
+                IsCircleLineIntersect(center2D, radius, B2d, C2d) ||
+                IsCircleLineIntersect(center2D, radius, C2d, A2d))
+            {
+                return true;
+            }
+
+            return false;
+        }
+        private bool IsPointInsideCircle(Vector2 point, Vector2 circleCenter, float radius)
+        {
+            return (point - circleCenter).sqrMagnitude < radius * radius;
+        }
+        private bool PointInTriangle(Vector2 p, Vector2 p0, Vector2 p1, Vector2 p2)
+        {
+            float s = p0.y * p2.x - p0.x * p2.y + (p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y;
+            float t = p0.x * p1.y - p0.y * p1.x + (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y;
+
+            if ((s < 0) != (t < 0))
+                return false;
+
+            float A = -p1.y * p2.x + p0.y * (p2.x - p1.x) + p0.x * (p1.y - p2.y) + p1.x * p2.y;
+            if (A < 0.0)
+            {
+                s = -s;
+                t = -t;
+                A = -A;
+            }
+            return s > 0 && t > 0 && (s + t) < A;
+        }
+        private bool IsCircleLineIntersect(Vector2 circleCenter, float radius, Vector2 A, Vector2 B)
+        {
+            // 선분 AB의 방향 벡터를 계산합니다.
+            Vector2 d = B - A;
+
+            // 원의 중심에서 점 A까지의 벡터를 계산합니다.
+            Vector2 f = A - circleCenter;
+
+            // 2차 방정식의 계수 a, b, c를 계산합니다. 이 방정식은 선분과 원의 교차 조건을 나타냅니다.
+            float a = Vector2.Dot(d, d); // d 벡터의 길이의 제곱
+            float b = 2 * Vector2.Dot(f, d); // f와 d 벡터의 내적을 2배 한 값
+            float c = Vector2.Dot(f, f) - radius * radius; // f 벡터의 길이의 제곱에서 원의 반지름 제곱을 뺀 값
+
+            // 판별식을 계산합니다. 이 값이 양수라면 근이 실수로 존재함을 의미합니다.
+            float discriminant = b * b - 4 * a * c;
+
+            if (discriminant < 0)
+            {
+                // 판별식이 음수이면, 선분과 원은 서로 교차하지 않습니다.
+                return false;
+            }
+            else
+            {
+                // 판별식의 제곱근을 구하여 실제 근을 찾습니다.
+                discriminant = Mathf.Sqrt(discriminant);
+
+                // 근의 공식을 사용하여 두 근을 계산합니다.
+                float t1 = (-b - discriminant) / (2 * a);
+                float t2 = (-b + discriminant) / (2 * a);
+
+                // 두 근 중 하나라도 선분의 파라미터 0과 1 사이에 있으면, 선분이 원과 교차합니다.
+                if (t1 >= 0 && t1 <= 1 || t2 >= 0 && t2 <= 1)
+                    return true;
+
+                // 그렇지 않다면 교차하지 않습니다.
+                return false;
+            }
+        }
+    }
+
+    private static TriangleCollision[] triangles = new TriangleCollision[16]; //0:본인, 1~:비교대상
+    private static int index;
+
     public static Vector3 GetPivot(int key, float scale)
     {
         float x = 0f, y = 0f, z = 0f;
@@ -248,201 +394,8 @@ public static class TileUtility
 
         return Vector3.zero;
     }
-    public static Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
-    {
-        float x = p.x;
-        float y = p.y;
-        float z = p.z;
-        float diff;
 
-        //Similar to rounding, but the standard is different for each dist, not 0.5f.
-        diff = x % dist;
-        if (0 < diff & diff <= dist * 0.1f)
-        {
-            x -= diff;
-        }
-        else if (dist * 0.9f <= diff && diff < dist)
-        {
-            x += (dist - diff);
-        }
-
-        diff = y % dist;
-        if (0 < diff & diff <= dist * 0.1f)
-        {
-            y -= diff;
-        }
-        else if (dist * 0.9f <= diff && diff < dist)
-        {
-            y += (dist - diff);
-        }
-
-        diff = z % dist;
-        if (0 < diff & diff <= dist * 0.1f)
-        {
-            z -= diff;
-        }
-        else if (dist * 0.9f <= diff && diff < dist)
-        {
-            z += (dist - diff);
-        }
-
-        return CMath.FloorToVector(new Vector3(x, y, z), exponent);
-    }
-}
-
-public struct TriangleCollision
-{
-    public Vector3 A, B, C; // x,z로만 판별
-    public int key;
-    public int index;
-
-    public TriangleCollision(int key, Vector3 pivot, int indexTriangle, float scale)
-    {
-        A = B = C = pivot;
-        this.key = key;
-        index = indexTriangle;
-
-        float scale_quater = scale * 0.25f;
-        switch (index % 4)
-        {
-            case 0:
-                A += new Vector3(1f, 0f, 1f) * scale_quater;
-                B += new Vector3(2f, 0f, 0f) * scale_quater;
-
-                break;
-            case 1:
-                A += new Vector3(1f, 0f, 1f) * scale_quater;
-                B += new Vector3(2f, 0f, 0) * scale_quater;
-                C += new Vector3(2f, 0f, 2f) * scale_quater;
-                break;
-            case 2:
-                A += new Vector3(1f, 0f, 1f) * scale_quater;
-                B += new Vector3(0, 0f, 2f) * scale_quater;
-                C += new Vector3(2f, 0f, 2f) * scale_quater;
-                break;
-            case 3:
-                A += new Vector3(1f, 0f, 1f) * scale_quater;
-                B += new Vector3(0, 0f, 2f) * scale_quater;
-
-                break;
-        }
-
-        switch ((int)(index * 0.25f))
-        {
-            case 1:
-                A += new Vector3(2f, 0f, 0) * scale_quater;
-                B += new Vector3(2f, 0f, 0) * scale_quater;
-                C += new Vector3(2f, 0f, 0) * scale_quater;
-                break;
-            case 2:
-                A += new Vector3(0, 0f, 2f) * scale_quater;
-                B += new Vector3(0, 0f, 2f) * scale_quater;
-                C += new Vector3(0, 0f, 2f) * scale_quater;
-                break;
-            case 3:
-                A += new Vector3(2f, 0f, 2f) * scale_quater;
-                B += new Vector3(2f, 0f, 2f) * scale_quater;
-                C += new Vector3(2f, 0f, 2f) * scale_quater;
-                break;
-        }
-    }
-
-    public bool IsIntersected(Vector3 center, float radius)
-    {
-        Vector2 center2D = new Vector2(center.x, center.z);
-        Vector2 A2d = new Vector2(A.x, A.z);
-        Vector2 B2d = new Vector2(B.x, B.z);
-        Vector2 C2d = new Vector2(C.x, C.z);
-
-        if (PointInTriangle(center2D, A2d, B2d, C2d))
-        {
-            return true;
-        }
-
-        // 삼각형의 각 꼭짓점이 원 내부에 있는지 확인
-        if (IsPointInsideCircle(A2d, center2D, radius) ||
-            IsPointInsideCircle(B2d, center2D, radius) ||
-            IsPointInsideCircle(C2d, center2D, radius))
-        {
-            return true;
-        }
-
-
-        // 삼각형의 각 변과 원의 교차 확인
-        if (IsCircleLineIntersect(center2D, radius, A2d, B2d) ||
-            IsCircleLineIntersect(center2D, radius, B2d, C2d) ||
-            IsCircleLineIntersect(center2D, radius, C2d, A2d))
-        {
-            return true;
-        }
-
-        return false;
-    }
-    private bool IsPointInsideCircle(Vector2 point, Vector2 circleCenter, float radius)
-    {
-        return (point - circleCenter).sqrMagnitude < radius * radius;
-    }
-    private bool PointInTriangle(Vector2 p, Vector2 p0, Vector2 p1, Vector2 p2)
-    {
-        float s = p0.y * p2.x - p0.x * p2.y + (p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y;
-        float t = p0.x * p1.y - p0.y * p1.x + (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y;
-
-        if ((s < 0) != (t < 0))
-            return false;
-
-        float A = -p1.y * p2.x + p0.y * (p2.x - p1.x) + p0.x * (p1.y - p2.y) + p1.x * p2.y;
-        if (A < 0.0)
-        {
-            s = -s;
-            t = -t;
-            A = -A;
-        }
-        return s > 0 && t > 0 && (s + t) < A;
-    }
-    private bool IsCircleLineIntersect(Vector2 circleCenter, float radius, Vector2 A, Vector2 B)
-    {
-        // 선분 AB의 방향 벡터를 계산합니다.
-        Vector2 d = B - A;
-
-        // 원의 중심에서 점 A까지의 벡터를 계산합니다.
-        Vector2 f = A - circleCenter;
-
-        // 2차 방정식의 계수 a, b, c를 계산합니다. 이 방정식은 선분과 원의 교차 조건을 나타냅니다.
-        float a = Vector2.Dot(d, d); // d 벡터의 길이의 제곱
-        float b = 2 * Vector2.Dot(f, d); // f와 d 벡터의 내적을 2배 한 값
-        float c = Vector2.Dot(f, f) - radius * radius; // f 벡터의 길이의 제곱에서 원의 반지름 제곱을 뺀 값
-
-        // 판별식을 계산합니다. 이 값이 양수라면 근이 실수로 존재함을 의미합니다.
-        float discriminant = b * b - 4 * a * c;
-
-        if (discriminant < 0)
-        {
-            // 판별식이 음수이면, 선분과 원은 서로 교차하지 않습니다.
-            return false;
-        }
-        else
-        {
-            // 판별식의 제곱근을 구하여 실제 근을 찾습니다.
-            discriminant = Mathf.Sqrt(discriminant);
-
-            // 근의 공식을 사용하여 두 근을 계산합니다.
-            float t1 = (-b - discriminant) / (2 * a);
-            float t2 = (-b + discriminant) / (2 * a);
-
-            // 두 근 중 하나라도 선분의 파라미터 0과 1 사이에 있으면, 선분이 원과 교차합니다.
-            if (t1 >= 0 && t1 <= 1 || t2 >= 0 && t2 <= 1)
-                return true;
-
-            // 그렇지 않다면 교차하지 않습니다.
-            return false;
-        }
-    }
-}
-public static class TriangleUtility
-{
-    private static TriangleCollision[] triangles = new TriangleCollision[16]; //0:본인, 1~:비교대상
-    private static int index;
-
+    //Triangle
     public static void SetTriangleArray(Dictionary<int, DataType.Tile_t> map, int triangle, int key, Vector3 pivot, float scale)
     {
         index = 0;
@@ -851,4 +804,50 @@ public static class TriangleUtility
 
         return true;
     }
+
+
+
+
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+    public static Vector3 SnappingPoint(Vector3 p, float dist, int exponent)
+    {
+        float x = p.x;
+        float y = p.y;
+        float z = p.z;
+        float diff;
+
+        //Similar to rounding, but the standard is different for each dist, not 0.5f.
+        diff = x % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            x -= diff;
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            x += (dist - diff);
+        }
+
+        diff = y % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            y -= diff;
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            y += (dist - diff);
+        }
+
+        diff = z % dist;
+        if (0 < diff & diff <= dist * 0.1f)
+        {
+            z -= diff;
+        }
+        else if (dist * 0.9f <= diff && diff < dist)
+        {
+            z += (dist - diff);
+        }
+
+        return CMath.FloorToVector(new Vector3(x, y, z), exponent);
+    }
+#endif
 }

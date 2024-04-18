@@ -36,9 +36,9 @@ public class UnitPlayer : UnitBase
             Vector3 pivot = TileUtility.GetPivot(goal, scale);
             int triangePoint = TileUtility.GetTriangleIndex(goal - pivot, scale * 0.5f);
 
-            TriangleUtility.SetTriangleArray(map, triangePoint, keyMy, pivot, scale);
+            TileUtility.SetTriangleArray(map, triangePoint, keyMy, pivot, scale);
 
-            if (TriangleUtility.IsMovable(map, goal, scale)
+            if (TileUtility.IsMovable(map, goal, scale)
                 && true == map.TryGetValue(keyMy, out Tile_t tileMy))
             {
                 //set position
@@ -56,7 +56,7 @@ public class UnitPlayer : UnitBase
                 if (true == tileMy.HasTrigger(TileTrigger.Layer, out int layer))
                 {
                     this.layer = layer;
-                    Main.Instance.GetContent<OnField>().TransLayer(layer);
+                    Main.Instance.SetFieldLayer(layer);
                 }
                 //if (true == tileMy.HasTrigger(TileTrigger.Interact, out int code))
                 //{

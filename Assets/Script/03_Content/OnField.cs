@@ -5,7 +5,7 @@ using UnityEngine;
 using DataType;
 using System;
 
-public class OnField : ContentBase, IGetInput
+public class OnField : ContentBase, IInputHandler
 {
     private Dictionary<int, Tile_t> tileMap;
     private MapTileComponent[] tiles;

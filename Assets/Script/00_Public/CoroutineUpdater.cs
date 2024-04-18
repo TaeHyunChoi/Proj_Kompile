@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class CoroutineUpdater : MonoBehaviour
 {
-    private static CoroutineUpdater instance;
+    private static CoroutineUpdater instance;   //singleton
     private List<CCoroutineHandler> handlers = new List<CCoroutineHandler>();
+
     private List<bool> isFinished = new List<bool>();
 
     private void Awake()

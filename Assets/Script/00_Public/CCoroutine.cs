@@ -6,7 +6,7 @@ public class CCoroutineHandler
         return false;
     }
 }
-public class CCoroutine<T> : CCoroutineHandler where T: class, IUpdateRoutine
+public class CCoroutine<T> : CCoroutineHandler where T: class, IRoutineUpdater
 {
     private T routine;
 

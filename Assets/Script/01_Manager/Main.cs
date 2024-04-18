@@ -1,32 +1,37 @@
 ﻿using UnityEngine;
 
-public partial class Main : MonoBehaviour
+public class Main : MonoBehaviour
 {
+    //TODO: FrameRate는 추후에 Config.cs 등에게 넘기기
     [SerializeField]
-    private int frameRate = 60; //얘는 Main.cs가 아니라 Config.cs로 빠지는 게 맞는 듯?
-    public static int FrameRate { get => instance.frameRate; }
+    private int frameRate = 60; 
 
+    //singleton
     private static Main instance;
-    private static UnitPlayer player;
 
-    private InputMgr mgrInput;
-    private UnitMgr     mgrUnit;
-    private UIMgr       mgrUI;
-    private SceneMgr    mgrScene;
-    private CameraFollow cam;
+    //manager
+    private InputMgr     mgrInput;
+    private UnitMgr      mgrUnit;
+    private UIMgr        mgrUI;
+    private SceneMgr     mgrScene;
+    private CameraFollow camFollower;
 
-    public static Main     Instance { get => instance; }
-    public static UnitPlayer Player { get => player; }
-    public static InputMgr InputMgr { get => instance.mgrInput; }
-    public static SceneMgr SceneMgr { get => instance.mgrScene; }
-    public static UnitMgr  UnitMgr  { get => instance.mgrUnit; }
-    public static UIMgr    UIMgr    { get => instance.mgrUI; }
-    public static CameraFollow Cam { get => instance.cam; }
-
+    //content
+    private UnitPlayer player;
     private ContentBase content;
+
+    //getter
+    public static Main          Instance { get => instance; }
+    public static UnitPlayer    Player   { get => instance.player; }
+    public static InputMgr      InputMgr { get => instance.mgrInput; }
+    public static SceneMgr      SceneMgr { get => instance.mgrScene; }
+    public static UnitMgr       UnitMgr  { get => instance.mgrUnit; }
+    public static UIMgr         UIMgr    { get => instance.mgrUI; }
+    public static CameraFollow  Cam      { get => instance.camFollower; }
 
     private void Awake()
     {
+        //Singleton
         if (instance != null)
         {
             Destroy(gameObject);
@@ -35,50 +40,42 @@ public partial class Main : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(gameObject);
 
+        //Init DataTable
         DataTable.LoadTable();
-        //++Load Player Data
+        //TODO: Load Player Saved Data
+
+        //Init Manager
         mgrInput = transform.GetComponent<InputMgr>();
         mgrUI    = new UIMgr   (transform.Find("UI"));
         mgrUnit  = new UnitMgr (transform.Find("Unit"));
         mgrScene = new SceneMgr(transform.Find("Scene"));
-        cam      = Camera.main.transform.GetComponent<CameraFollow>();
+        camFollower      = Camera.main.transform.GetComponent<CameraFollow>();
     }
+
     private void Start()
     {
         mgrScene.LoadSceneAsync(GameState.Opening);
         Application.targetFrameRate = frameRate;
     }
 
-    //Main은 Mgr급만 상대한다! 느낌인디
-    //inputGetter가 그정도는 아닌 듯.
-
-    private void Update()
-    {
-        //if (true == InputMgr.TryGetInput(out int input)
-        //    && null != inputGetter)
-        //{
-        //    inputGetter.Input(input);
-        //}
-    }
-    private void FixedUpdate()
-    {
-        //if (true == InputMgr.TryGetInput(out int input)
-        //    && null != fixedInputGetter)
-        //{
-        //    fixedInputGetter.FixedInput(input);
-        //}
-    }
-
-
+    // set func()
     public void SetContent(ContentBase content)
     {
         this.content = content;
-        InputMgr.SetInputGetter(content as IGetInput);
+        mgrInput.SetInputGetter(content as IInputHandler);
     }
-    public T GetContent<T>() where T:ContentBase
+    public void SetFieldLayer(int layer)
     {
-        return content as T;
+        OnField field = content as OnField;
+        UnityEngine.Assertions.Assert.IsNotNull(field, "field is null;");
+        field.TransLayer(layer);
     }
+    public void SetPlayer(UnitPlayer unit)
+    {
+        player = unit;
+        camFollower.SetFollow(player.transform);
+    }
+
     public void Release()
     {
         if (null != content)
@@ -87,10 +84,5 @@ public partial class Main : MonoBehaviour
         }
 
         UIMgr.Release();
-    }
-
-    public void SetPlayer(UnitPlayer unit)
-    {
-        player = unit;
     }
 }

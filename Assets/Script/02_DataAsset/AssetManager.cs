@@ -9,26 +9,14 @@ public class AssetManager
 {
     private static Dictionary<int, AsyncOperationHandle<GameObject>> Handlers = new Dictionary<int, AsyncOperationHandle<GameObject>>();
 
-    public static async Task<GameObject> InstantiateAsync(string address, Transform parent, bool isActive)
-    {
-        AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
-
-        GameObject go = await handle.Task;
-        go.SetActive(isActive);
-        Handlers.Add(go.GetInstanceID(), handle);
-
-        return go;
-    }
-
-    public static async Task<T> CreateUIAsync<T>(string address, Transform parent, bool isOn) where T: UIBase, new()
+    public static async Task<GameObject> InstantiateAsync(string address, Transform parent, bool isOn)
     {
         AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
         GameObject go = await handle.Task;
-        T ui = go.AddComponent<T>();
-
         go.SetActive(isOn);
+
         Handlers.Add(go.GetInstanceID(), handle);
-        return ui;
+        return go;
     }
 
     public static bool ReleaseAsset(int instanceID)

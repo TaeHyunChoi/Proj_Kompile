@@ -4,7 +4,7 @@ using Index;
 
 public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
 {
-    private class OpeningLogo : IUpdateRoutine, IGetInput
+    private class OpeningLogo : IRoutineUpdater, IInputHandler
     {
         private Image imageLogo;
         private float wait;
@@ -78,7 +78,7 @@ public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
             Main.InputMgr.SetInputGetter(this);
         }
     }
-    private class OpeningDemo : IUpdateRoutine, IGetInput
+    private class OpeningDemo : IRoutineUpdater, IInputHandler
     {
         public int MoveNext(int index)
         {
@@ -94,7 +94,7 @@ public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
             Debug.Log("Need to dev: Play Demo");
         }
     }
-    private class OpeningTitle : IUpdateRoutine
+    private class OpeningTitle : IRoutineUpdater
     {
         private Image[] images; //logo_upper, logo_lower, flash
         private RectTransform[] rect;

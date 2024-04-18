@@ -10,27 +10,67 @@ using DataType;
 /// [방법] (1)기존 string → byte[] 로 읽어오기 (2)Generic<T> 활용하여 코드 재사용성 높이기
 /// [비고] Job System을 사용하여 멀티 스레딩으로 CSV를 불러오려 했으나 'reference type은 Job struct에서 사용할 수 없다'는 제한이 있어 기각.
 /// </summary>
-public class DataTable
+public static class DataTable
 {
-    private static List<SkillData> skillTable;
-    private static List<ItemData>  itemTable;
-    private static List<UnitData>  unitTalbe;
-    private static List<MapData>   mapTable;
+    private static List<SkillData> tableSkill;
+    private static List<ItemData>  tableItem;
+    private static List<UnitData>  tableUnit;
+    private static List<MapData>   tableMap;
 
-    public static List<SkillData> SkillTable { get => skillTable; }
-    public static List<ItemData>  ItemTable  { get => itemTable; }
-    public static List<UnitData>  UnitTable  { get => unitTalbe; }
-    public static List<MapData>   MapTable   { get => mapTable; }
+    public static List<SkillData> SkillTable { get => tableSkill; }
+    public static List<ItemData>  ItemTable  { get => tableItem; }
+    public static List<UnitData>  UnitTable  { get => tableUnit; }
+    public static List<MapData>   MapTable   { get => tableMap; }
 
+    public static void LoadTable()
+    {
+        tableSkill = ReadBinary<SkillData>("SkillData.bin");
+        tableItem  = ReadBinary<ItemData>("ItemData.bin");
+        tableUnit  = ReadBinary<UnitData>("UnitData.bin");
+        tableMap   = ReadBinary<MapData>("MapData.bin");
+    }
+    public static List<T> ReadBinary<T>(string fileName) where T : struct, IDataSetter
+    {
+        string path = Application.dataPath + "/Resources/bin/" + fileName;
+
+        BinaryFormatter formatter = new BinaryFormatter();
+        FileStream stream = new FileStream(path, FileMode.Open);
+        List<T> table = (List<T>)formatter.Deserialize(stream);
+        stream.Close();
+
+        return table;
+    }
+    private static void WriteBinary<T>(string path, List<T> table) where T : struct, IDataSetter
+    {
+        BinaryFormatter formatter = new BinaryFormatter();
+        FileStream stream = new FileStream(path, FileMode.Create);
+        formatter.Serialize(stream, table);
+        stream.Close();
+    }
+    public static bool TryGetMapData(int code, out MapData map)
+    {
+        for (int i = 0; i < tableMap.Count; ++i)
+        {
+            map = tableMap[i];
+            if (code == map.Code)
+            {
+                return true;
+            }
+        }
+
+        map = default(MapData);
+        return false;
+    }
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+
     //.csv (기획자, 에디터에서 .bin 파일로 변환 필요)
     public static void LoadCSVTable()
     {
-        skillTable = LoadTable<SkillData>("SkillData");
-        itemTable = LoadTable<ItemData>("ItemData");
-        unitTalbe = LoadTable<UnitData>("UnitData");
-        mapTable = LoadTable<MapData>("MapData");
+        tableSkill = LoadTable<SkillData>("SkillData");
+        tableItem = LoadTable<ItemData>("ItemData");
+        tableUnit = LoadTable<UnitData>("UnitData");
+        tableMap = LoadTable<MapData>("MapData");
     }
     private static List<T> LoadTable<T>(string fileName) where T : IDataSetter, new()
     {
@@ -98,9 +138,18 @@ public class DataTable
 
         return list;
     }
+    public static void WriteBinaryFiles()
+    {
+        string path = Application.dataPath + "/Resources/bin/";
+
+        WriteBinary(path + "SkillData.bin", SkillTable);
+        WriteBinary(path + "ItemData.bin", ItemTable);
+        WriteBinary(path + "UnitData.bin", UnitTable);
+        WriteBinary(path + "MapData.bin", MapTable);
+    }
 
     // map sampling
-    public static void WriteBinaryMappingData<T>(Dictionary<int, T> data, string fileName) where T:struct
+    public static void WriteBinaryMappingData<T>(Dictionary<int, T> data, string fileName) where T : struct
     {
         BinaryFormatter binaryFormatter = new BinaryFormatter();
         string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapTileData", fileName + ".dat");
@@ -110,7 +159,7 @@ public class DataTable
         binaryFormatter.Serialize(fileStream, data);
         fileStream.Close();
     }
-    public static Dictionary<int, T> LoadMappingData<T>(string fileName) where T:struct
+    public static Dictionary<int, T> LoadMappingData<T>(string fileName) where T : struct
     {
         string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapTileData", fileName + ".dat");
         if (File.Exists(filePath))
@@ -131,90 +180,6 @@ public class DataTable
 
         return null;
     }
-    //public static void WriteBinaryMapVoxel(Dictionary<int, Voxel_t> data, string fileName)
-    //{
-    //    BinaryFormatter binaryFormatter = new BinaryFormatter();
-    //    string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
-    //    FileStream fileStream = File.Create(filePath);
-
-    //    // Dictionary 직렬화
-    //    binaryFormatter.Serialize(fileStream, data);
-
-    //    fileStream.Close();
-    //}
-    //public static Dictionary<int, Voxel_t> LoadMapVoxel(string fileName)
-    //{
-    //    string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapVoxelData", fileName + ".dat");
-    //    if (File.Exists(filePath))
-    //    {
-    //        BinaryFormatter binaryFormatter = new BinaryFormatter();
-    //        FileStream fileStream = File.Open(filePath, FileMode.Open);
-
-    //        // 파일에서 데이터를 역직렬화하여 Dictionary에 로드
-    //        Dictionary<int, Voxel_t> data = (Dictionary<int, Voxel_t>)binaryFormatter.Deserialize(fileStream);
-
-    //        fileStream.Close();
-    //        return data;
-    //    }
-    //    else
-    //    {
-    //        Debug.LogError("파일이 존재하지 않습니다.");
-    //    }
-
-    //    return null;
-    //}
 
 #endif
-
-    //.bin (프로그래머, .bin 파일로 데이터테이블 읽기)
-    public static void LoadTable()
-    {
-        skillTable = ReadBinary<SkillData>("SkillData.bin");
-        itemTable = ReadBinary<ItemData>("ItemData.bin");
-        unitTalbe = ReadBinary<UnitData>("UnitData.bin");
-        mapTable = ReadBinary<MapData>("MapData.bin");
-    }
-    public static List<T> ReadBinary<T>(string fileName) where T : struct, IDataSetter
-    {
-        string path = Application.dataPath + "/Resources/bin/" + fileName;
-
-        BinaryFormatter formatter = new BinaryFormatter();
-        FileStream stream = new FileStream(path, FileMode.Open);
-        List<T> table = (List<T>)formatter.Deserialize(stream);
-        stream.Close();
-
-        return table;
-    }
-    public static void WriteBinaryFiles()
-    {
-        string path = Application.dataPath + "/Resources/bin/";
-
-        WriteBinary(path + "SkillData.bin", SkillTable);
-        WriteBinary(path + "ItemData.bin", ItemTable);
-        WriteBinary(path + "UnitData.bin", UnitTable);
-        WriteBinary(path + "MapData.bin", MapTable);
-    }
-    private static void WriteBinary<T>(string path, List<T> table) where T : struct, IDataSetter
-    {
-        BinaryFormatter formatter = new BinaryFormatter();
-        FileStream stream = new FileStream(path, FileMode.Create);
-        formatter.Serialize(stream, table);
-        stream.Close();
-    }
-
-    // get
-    public static bool TryGetMapData(int code, out MapData map)
-    {
-        for (int i = 0; i < mapTable.Count; ++i)
-        {
-            map = mapTable[i];
-            if (code == map.Code)
-            {
-                return true;
-            }
-        }
-
-        map = default(MapData);
-        return false;
-    }
 }
