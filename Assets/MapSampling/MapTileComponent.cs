@@ -72,7 +72,7 @@ public class TransMapTile : IUpdateRoutine
                     material.color = new Color(color.r, color.g, color.b, alpha);
                     return index;
                 }
-                material.color = new Color(color.r, color.g, color.b, 0f);
+                material.color = new Color(color.r, color.g, color.b, 1f);
                 break;
             default:
                 return -1;

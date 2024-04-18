@@ -23,7 +23,7 @@ public class UnitPlayer : UnitBase
             dirRotated.Normalize();
 
             dirRotated *= Time.fixedDeltaTime * SPEED_MOVE * scale;
-            Vector3 goal = position + dirRotated;
+            Vector3 goal = CMath.FloorToVector(position + dirRotated, 3);
 
             int keyMy = TileUtility.GetKey(layer, goal, scale);
             keyMy = TileUtility.GetKey_FromRelativeCoord(map, keyMy, 0, 0);
@@ -44,7 +44,7 @@ public class UnitPlayer : UnitBase
                 //set position
                 float y = tileMy.GetYValue(keyMy, goal);
                 goal = new Vector3(goal.x, y, goal.z);
-                transform.position = CMath.FloorToVector(goal, 3);
+                transform.position = goal;
 
                 //call trigger
                 if (true == tileMy.HasTrigger(TileTrigger.Scale, out int flagScale))
