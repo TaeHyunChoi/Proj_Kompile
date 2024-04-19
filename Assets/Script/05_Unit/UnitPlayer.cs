@@ -1,149 +1,83 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using DataType;
 using CMathf;
 
-/// <summary>
-/// It would be better to attach it as a "movement operation" component class in the future. The size is quite large;
-/// </summary>
-public class UnitPlayer : Unit
+public class UnitPlayer : UnitBase
 {
-//    private readonly int[] intervalRot = new int[] { 0, 1, -1, 2, -2 }; //시계 방향을 우선 탐색하는 기준
-//    private Vector3 beforeDir;
+    private readonly float[] intervalRot  = new float[] { 0, 45f, -45f, 90f, -90f }; //시계방향 기준
+    private readonly float SPEED_MOVE = 3f;
 
-//    public void Move(Dictionary<int, Tile_t> map, Vector3 inputDir)
-//    {
-//        inputDir.Normalize();
+    private Vector3 dirBefore = new Vector3(-1f, 0, -1f);   // 직전의 이동 방향
+    private float   scale = 1f;
+    private int     layer = 0;
 
-//        Vector3 nowPoint = transform.position;
-//        Vector3 targetPoint;
-//        Vector3 dir;
+    public void Move(Dictionary<int, Tile_t> map, Vector3 dirInput)
+    {
+        Vector3 position = transform.position;
 
-//        float dist = CMath.Floor(Time.deltaTime * SPEED_MOVE, 3);
-//        int sign;
+        //직전 이동 방향과 같은 방향이면 시계 방향으로, 그렇지 않다면 반시계 방향으로 탐색한다.
+        float sign = Mathf.Sign(Vector3.Cross(dirInput, dirBefore).y) >= 0 ? 1f : -1f;
+        for (int i = 0; i < intervalRot.Length; ++i)
+        {
+            //입력 방향을 회전시킨다.
+            Vector3 dirRotated = Quaternion.Euler(0f, sign * intervalRot[i], 0f) * dirInput;
+            dirRotated.Normalize();
 
+            dirRotated *= Time.fixedDeltaTime * SPEED_MOVE * scale;
+            Vector3 goal = CMath.FloorToVector(position + dirRotated, 3);
 
-//        //CHECK_INPUT_DIR:
-//        for (int c = 0; c < 3; ++c)
-//        {
-//            dir = Quaternion.Euler(0f, intervalRot[c] * 45f, 0f) * inputDir;
-//            dir.Normalize();
-//            dir = CMath.FloorToVector(dir * (TILE_QUATER + dist), 3);
+            int keyGoal = TileUtility.GetKey(layer, /*Vector3*/ goal, scale);
+            keyGoal = TileUtility.GetKey_FromRelativeCoord(map, keyGoal, x: 0, z: 0);
+            if (-1 == keyGoal)
+            {
+                continue;
+            }
 
-//            targetPoint = CMath.FloorToVector(nowPoint + dir, 3);
+            //목표 지점에 타일이 존재하는가?
+            if (false == map.TryGetValue(keyGoal, out Tile_t tileGoal))
+            {
+                return;
+            }
 
-//            if (targetPoint.x < 0 || targetPoint.z < 0
-//                || false == CanMove(map, nowPoint, targetPoint, out targetPoint))
-//            {
-//                goto CHECK_OTHER_DIRS;
-//            }
-//        }
-//        dir = CMath.FloorToVector(inputDir, 3);
-//        goto SET_POSITION;
+            //감지 대상 삼각형을 배열에 저장한다.
+            Vector3 pivot = TileUtility.GetPivot(goal, scale);
+            int triangePoint = TileUtility.GetTriangleIndex(goal - pivot, scale * 0.5f);
+            TileUtility.SetTriangleArray(map, triangePoint, keyGoal, pivot, scale);
 
+            //UnitPlayer.Move() : 이동 가능할 때의 처리
+            if (true == TileUtility.IsMovable(map, goal, scale))
+            {
+                //위치 변경
+                float y = tileGoal.GetYValue(keyGoal, goal);
+                goal = new Vector3(goal.x, y, goal.z);
+                transform.position = goal;
 
-//    CHECK_OTHER_DIRS:
-//        float rotY = Mathf.Sign(Vector3.Cross(inputDir, beforeDir).y);
-//        if (rotY >= 0) { sign =  1; }
-//        else           { sign = -1; }
+                //트리거 호출
+                if (true == tileGoal.HasTrigger(TileTrigger.Scale, out int flagScale))
+                {
+                    scale = (flagScale == 1) ? 0.5f : 1f;
+                    Main.Cam.SetFOV(scale);
+                    transform.localScale = Vector3.one * scale;
+                }
+                if (true == tileGoal.HasTrigger(TileTrigger.Layer, out int layer))
+                {
+                    this.layer = layer;
+                    Main.Instance.SetFieldLayer(layer);
+                }
+                //필드 이벤트는 아직 미구현
+                //if (true == tileMy.HasTrigger(TileTrigger.Event, out int code))
+                //{
+                //  //call event
+                //}
 
-//        for (int i = 0; i < 5; ++i)
-//        {
-//            Vector3 inputRotDir = Quaternion.Euler(0f, intervalRot[i] * 45f, 0f) * inputDir;
-//            inputRotDir.Normalize();
-//            inputRotDir = CMath.FloorToVector(dir * (TILE_QUATER + dist), 3);
+                //직전의 입력 방향을 갱신
+                float x = (0 != dirRotated.x) ? dirRotated.x : dirBefore.x;
+                float z = (0 != dirRotated.z) ? dirRotated.z : dirBefore.z;
+                dirBefore = new Vector3(x, y, z);
 
-//            for (int d = 1; d < 5; ++d)
-//            {
-//                Vector3 otherDir = Quaternion.Euler(0f, sign * intervalRot[d] * 45f, 0f) * inputRotDir;
-
-//                for (int c = 0; c < 3; ++c)
-//                {
-//                    dir = Quaternion.Euler(0f, intervalRot[c] * 45f, 0f) * otherDir;
-//                    dir.Normalize();
-//                    dir = CMath.FloorToVector(dir * (TILE_QUATER + dist), 3);
-
-//                    targetPoint = CMath.FloorToVector(nowPoint + dir, 3);
-
-//                    if (targetPoint.x < 0 || targetPoint.z < 0
-//                        || false == CanMove(map, nowPoint, targetPoint, out targetPoint))
-//                    {
-//                        goto CONTINUE;
-//                    }
-//                }
-
-//                otherDir.Normalize();
-//                dir = CMath.FloorToVector(otherDir, 3);
-//                goto SET_POSITION;
-
-//            CONTINUE:
-//                continue;
-//            }
-//        }
-
-//#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-//        Debug.LogError("Can`t MOVE");
-//#endif
-
-//    SET_POSITION:
-//        dir = CMath.FloorToVector(dir * dist, 3);
-//        targetPoint = CMath.FloorToVector(nowPoint + dir, 3);
-
-//        if (false == CanMove(map, nowPoint, targetPoint, out targetPoint))
-//        {
-//            return;
-//        }
-
-//        transform.position = targetPoint;
-//        beforeDir = dir;
-//    }
-//    private bool IsMovableVoxel(Dictionary<int, Tile_t> map, int fromKey, int targetKey, Vector3 toPoint, out Tile_t targetVoxel)
-//    {
-//        if (false == map.TryGetValue(targetKey, out targetVoxel))
-//            return false;
-
-//        if (false == targetVoxel.IsLinkedWith(fromKey, targetKey))
-//            return false;
-
-//        if (false == targetVoxel.IsMovable(toPoint))
-//            return false;
-
-//        return true;
-//    }
-//    private bool CanMove(Dictionary<int, Tile_t> map, Vector3 from, Vector3 to, out Vector3 point)
-//    {
-//        point = Vector3.zero;
-//        int keyFrom = PVoxel.GetKey(from);
-//        int keyTo   = PVoxel.GetKey(to);
-
-//        //y ==
-//        if (true == IsMovableVoxel(map, keyFrom, keyTo, to, out Tile_t voxelTo))
-//        {
-//            float y = PVoxel.GetYValue(voxelTo, to);
-//            point = CMath.FloorToVector(new Vector3(to.x, y, to.z), 3);
-//            return true;
-//        }
-
-//        //y ++
-//        Vector3 newTo = to + Vector3.up * TILE_HALF;
-//        keyTo = PVoxel.GetKey(newTo);
-//        if (true == IsMovableVoxel(map, keyFrom, keyTo, newTo, out voxelTo))
-//        {
-//            float y = PVoxel.GetYValue(voxelTo, newTo);
-//            point = CMath.FloorToVector(new Vector3(newTo.x, y, newTo.z), 3);
-//            return true;
-//        }
-
-//        //y --
-//        newTo = to - Vector3.up * TILE_HALF;
-//        keyTo = PVoxel.GetKey(newTo);
-//        if (true == IsMovableVoxel(map, keyFrom, keyTo, newTo, out voxelTo))
-//        {
-//            float y = PVoxel.GetYValue(voxelTo, newTo);
-//            point = CMath.FloorToVector(new Vector3(newTo.x, y, newTo.z), 3);
-//            return true;
-//        }
-
-//        return false;
-//    }
+                return;
+            }
+        }
+    }
 }

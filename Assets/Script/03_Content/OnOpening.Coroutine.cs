@@ -1,11 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Index;
 
-public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
+public partial class OnOpening // Coroutine
 {
-    private class OpeningLogo : IUpdateRoutine, IGetInput
+    private class OpeningLogo : IRoutineUpdater, IInputHandler
     {
         private Image imageLogo;
         private float wait;
@@ -46,7 +45,7 @@ public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
                     }
                     break;
                 default:
-                    Main.Instance.ReleaseInputGetter();
+                    Main.InputMgr.ReleaseUpdater();
                     instance.Set();
                     return -1;
             }
@@ -54,17 +53,21 @@ public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
         }
         public void Input(int input)
         {
+            //정해진 입력 이외는 처리하지 않음
             if (false == IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ACTION))
             {
                 return;
             }
+
+            //현재 코루틴의 상태값이 0일 때에만 입력 처리 (0 == state)
             if (0 == state)
             {
                 alpha = 1f;
                 imageLogo.color = new Color(1f, 1f, 1f, alpha);
+
+                //코루틴 단계를 0에서 2로 점프한다.
                 state = 2;
             }
-            // In other cases, input doesn`t processed.
         }
 
         public OpeningLogo(Transform transform)
@@ -76,10 +79,10 @@ public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
             wait = 0;
             state = 0;
 
-            Main.Instance.SetInputGetter(this);
+            Main.InputMgr.SetUpdater(this);
         }
     }
-    private class OpeningDemo : IUpdateRoutine, IGetInput
+    private class OpeningDemo : IRoutineUpdater, IInputHandler
     {
         public int MoveNext(int index)
         {
@@ -95,7 +98,7 @@ public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
             Debug.Log("Need to dev: Play Demo");
         }
     }
-    private class OpeningTitle : IUpdateRoutine
+    private class OpeningTitle : IRoutineUpdater
     {
         private Image[] images; //logo_upper, logo_lower, flash
         private RectTransform[] rect;

@@ -3,14 +3,14 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public partial class SceneMgr // .LoadScene
+public partial class SceneMgr // Coroutine
 {
-    public class LoadOpeningScene : IUpdateRoutine
+    public class LoadOpeningScene : IRoutineUpdater
     {
         private AsyncOperation  loadAsync;
         private CanvasGroup     curtain;
         private Task<OnOpening> taskOpening;
-        private Task   taskUI;
+        private Task            taskUI;
 
         public int MoveNext(int index)
         {
@@ -36,11 +36,8 @@ public partial class SceneMgr // .LoadScene
                     taskUI = Main.UIMgr.InitAsync(GameState.Opening);
                     break;
                 case 4:
-                    if (false == taskOpening.IsCompletedSuccessfully)
-                    {
-                        return index;
-                    }
-                    if (false == taskUI.IsCompletedSuccessfully)
+                    if (false == taskOpening.IsCompletedSuccessfully
+                        || false == taskUI.IsCompletedSuccessfully)
                     {
                         return index;
                     }
@@ -50,6 +47,7 @@ public partial class SceneMgr // .LoadScene
                     break;
                 default:
                     taskOpening.Dispose();
+                    taskUI.Dispose();
                     Main.SceneMgr.SetState(SceneState.Play);
                     return -1;
             }
@@ -62,7 +60,7 @@ public partial class SceneMgr // .LoadScene
             this.curtain = curtain;
         }
     }
-    public class LoadFieldScene : IUpdateRoutine
+    public class LoadFieldScene : IRoutineUpdater
     {
         private AsyncOperation loadAsync;
         private CanvasGroup curtain;
@@ -75,20 +73,21 @@ public partial class SceneMgr // .LoadScene
             switch (index)
             {
                 case 0:
-                    Main.SceneMgr.state = SceneState.Load;
+                    Main.SceneMgr.state = SceneState.Leave;
                     curtain.alpha = 0;
                     curtain.gameObject.SetActive(true);
                     break;
                 case 1:
                     if (curtain.alpha < 1)
                     {
-                        curtain.alpha += Time.fixedDeltaTime * 0.75f;
+                        curtain.alpha += Time.fixedDeltaTime;
                         return index;
                     }
                     curtain.alpha = 1;
                     break;
                 case 2:
                     //TODO: dev Mapdata (using grid?)
+                    Main.SceneMgr.state = SceneState.Load;
                     string sceneName = string.Empty;
                     int chapter = mapData.Code / 100;
                     switch (chapter)
@@ -120,11 +119,14 @@ public partial class SceneMgr // .LoadScene
                 case 6:
                     if (curtain.alpha > 0)
                     {
-                        curtain.alpha -= Time.fixedDeltaTime;
+                        curtain.alpha -= Time.fixedDeltaTime * 3;
                         return index;
                     }
+                    curtain.gameObject.SetActive(false);
                     break;
                 default:
+                    taskField.Dispose();
+                    taskUI.Dispose();
                     return -1;
             }
 

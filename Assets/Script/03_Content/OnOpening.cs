@@ -1,6 +1,4 @@
-using System;
 using System.Threading.Tasks;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -35,18 +33,18 @@ public partial class OnOpening : ContentBase
             case 0:
                 Main.Instance.SetContent(this);
                 OpeningLogo logo = new OpeningLogo(transform.GetChild(0));
-                CoroutineUpdater.Get.SetHandler(new CCoroutine<OpeningLogo>(logo));
+                CoroutineUpdater.SetHandler(new CCoroutine<OpeningLogo>(logo));
                 break;
             case 1:
                 OpeningDemo demo = new OpeningDemo(transform.GetChild(1));
-                CoroutineUpdater.Get.SetHandler(new CCoroutine<OpeningDemo>(demo));
+                CoroutineUpdater.SetHandler(new CCoroutine<OpeningDemo>(demo));
                 break;
             case 2:
                 OpeningTitle title = new OpeningTitle(transform.GetChild(2));
-                CoroutineUpdater.Get.SetHandler(new CCoroutine<OpeningTitle>(title));
+                CoroutineUpdater.SetHandler(new CCoroutine<OpeningTitle>(title));
                 break;
             case 3:
-                Main.Instance.ReleaseInputGetter();
+                Main.InputMgr.ReleaseUpdater();
                 Main.UIMgr.Pop(UIType.Title, true);
                 break;
             default:

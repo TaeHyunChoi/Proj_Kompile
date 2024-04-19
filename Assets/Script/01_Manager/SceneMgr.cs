@@ -7,17 +7,20 @@ public partial class SceneMgr
 
     public void LoadSceneAsync(GameState next, int code = -1)
     {
+        Main.InputMgr.ReleaseUpdater();
+        Main.InputMgr.ReleaseFixedUpdater();
+
         switch (next)
         {
             case GameState.Opening:
                 LoadOpeningScene opening = new LoadOpeningScene(loadingCurtain);
-                CoroutineUpdater.Get.SetHandler(new CCoroutine<LoadOpeningScene>(opening));
+                CoroutineUpdater.SetHandler(new CCoroutine<LoadOpeningScene>(opening));
                 break;
             case GameState.Field:
                 if (true == DataTable.TryGetMapData(code, out MapData map))
                 {
                     LoadFieldScene level = new LoadFieldScene(loadingCurtain, map);
-                    CoroutineUpdater.Get.SetHandler(new CCoroutine<LoadFieldScene>(level));
+                    CoroutineUpdater.SetHandler(new CCoroutine<LoadFieldScene>(level));
                 }
                 else
                 {

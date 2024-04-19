@@ -1,4 +1,4 @@
-public class CCoroutineHandler
+﻿public class CCoroutineHandler
 {
     protected int index;
     public virtual bool MoveNext()
@@ -6,7 +6,7 @@ public class CCoroutineHandler
         return false;
     }
 }
-public class CCoroutine<T> : CCoroutineHandler where T: class, IUpdateRoutine
+public class CCoroutine<T> : CCoroutineHandler where T: class, IRoutineUpdater
 {
     private T routine;
 
@@ -25,7 +25,6 @@ public class CCoroutine<T> : CCoroutineHandler where T: class, IUpdateRoutine
             return false;
         }
 
-        //possible to move next;
         return true;
     }
 }

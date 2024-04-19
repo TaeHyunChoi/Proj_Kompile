@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
-using static IDxInput;
+using static Index.IDxInput;
 
-public class UITitle : UIBase, IGetInput
+public class UITitle : UIBase, IInputHandler
 {
     private Image[] items;
 
@@ -25,7 +25,7 @@ public class UITitle : UIBase, IGetInput
     }
     private void Start()
     {
-        Main.Instance.SetInputGetter(this);
+        Main.InputMgr.SetUpdater(this);
     }
     public override void Pop(bool isOn)
     {

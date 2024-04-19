@@ -1,25 +1,37 @@
 ﻿using UnityEngine;
 
-public partial class Main : MonoBehaviour
+public class Main : MonoBehaviour
 {
+    //TODO: FrameRate는 추후에 Config.cs 등에게 넘기기
+    [SerializeField]
+    private int frameRate = 60; 
+
+    //singleton
     private static Main instance;
-    private UnitMgr     unitMgr;
-    private UIMgr       mgrUI;
-    private SceneMgr    mgrScene;
-    private CameraFollow camera;
 
-    public static Main     Instance { get => instance; }
-    public static SceneMgr SceneMgr { get => instance.mgrScene; }
-    public static UnitMgr  UnitMgr  { get => instance.unitMgr; }
-    public static UIMgr    UIMgr    { get => instance.mgrUI; }
-    public static CameraFollow Camera { get => instance.camera; }
+    //manager
+    private InputMgr     mgrInput;
+    private UnitMgr      mgrUnit;
+    private UIMgr        mgrUI;
+    private SceneMgr     mgrScene;
+    private CameraFollow camFollower;
 
-    //current;
+    //content
+    private UnitPlayer player;
     private ContentBase content;
-    private IGetInput inputGetter;
+
+    //getter
+    public static Main          Instance { get => instance; }
+    public static UnitPlayer    Player   { get => instance.player; }
+    public static InputMgr      InputMgr { get => instance.mgrInput; }
+    public static SceneMgr      SceneMgr { get => instance.mgrScene; }
+    public static UnitMgr       UnitMgr  { get => instance.mgrUnit; }
+    public static UIMgr         UIMgr    { get => instance.mgrUI; }
+    public static CameraFollow  Cam      { get => instance.camFollower; }
 
     private void Awake()
     {
+        //Singleton
         if (instance != null)
         {
             Destroy(gameObject);
@@ -28,33 +40,45 @@ public partial class Main : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(gameObject);
 
+        //Init DataTable
         DataTable.LoadTable();
-        //++Load Player Data
+        //TODO: Load Player Saved Data
 
+        //Init Manager
+        mgrInput = transform.GetComponent<InputMgr>();
         mgrUI    = new UIMgr   (transform.Find("UI"));
-        unitMgr  = new UnitMgr (transform.Find("Unit"));
+        mgrUnit  = new UnitMgr (transform.Find("Unit"));
         mgrScene = new SceneMgr(transform.Find("Scene"));
-        camera   = UnityEngine.Camera.main.transform.GetComponent<CameraFollow>();
+        camFollower      = Camera.main.transform.GetComponent<CameraFollow>();
     }
+
     private void Start()
     {
         mgrScene.LoadSceneAsync(GameState.Opening);
-    }
-    private void Update()
-    {
-        //TODO: not Update(), but event?
-        if (true == InputMgr.TryGetInput(out int input)
-            && null != inputGetter)
-        {
-            inputGetter.Input(input);
-        }
+        Application.targetFrameRate = frameRate;
     }
 
-
-    public void SetContent(ContentBase content)
+    // set func()
+    public void SetContent(ContentBase content) //여기서 type을 받는게 깔끔하려나.. 아니면 하지 않거나?
     {
         this.content = content;
+
+        //IInputHandler가 없으면 null을 반환 => 그대로 Release까지 가능
+        mgrInput.SetUpdater(content as IInputHandler);
+        mgrInput.SetFixedUpdater(content as IFixedInputHandler);
     }
+    public void SetFieldLayer(int layer)
+    {
+        OnField field = content as OnField;
+        UnityEngine.Assertions.Assert.IsNotNull(field, "field is null;");
+        field.TransLayer(layer);
+    }
+    public void SetPlayer(UnitPlayer unit)
+    {
+        player = unit;
+        camFollower.SetFollow(player.transform);
+    }
+
     public void Release()
     {
         if (null != content)
@@ -63,23 +87,5 @@ public partial class Main : MonoBehaviour
         }
 
         UIMgr.Release();
-    }
-
-    public void SetInputGetter(IGetInput getter)
-    {
-        inputGetter = getter;
-    }
-    public void ReleaseInputGetter()
-    {
-        inputGetter = null;
-    }
-
-    public void Dispose()
-    {
-        //TODO: Dispose() timing?
-        if (content != null)
-        {
-            content.Dispose();
-        }
     }
 }
