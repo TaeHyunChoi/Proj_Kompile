@@ -123,7 +123,7 @@ namespace DataType
     public struct Tile_t
     {
         //total 10 bytes
-        private byte   maskInfo;    //  8 bits: scale(1), status(7)
+        private byte   maskInfo;    //  8 bits: scale(1), state(7)
         private ushort maskTrigger; // 15 bits:  scale_trigger_flag(1),    scale_trigger_value(1),
                                     //           layer_trigger_flag(1),    layer_trigger_value(4),
                                     //           interact_trigger_flag(1), interact_trigger_value(7)
@@ -135,6 +135,8 @@ namespace DataType
             mask &= (1 << indexTriangle);
             return 0 != mask;
         }
+
+        // struct Tile_t
         public bool HasTrigger(TileTrigger type, out int value)
         {
             value = 0;
@@ -148,7 +150,7 @@ namespace DataType
                 case TileTrigger.Layer:
                     value = (int)((maskTrigger >> SHIFT_TRIGGER_LAYER_VALUE) & 0b_1111);
                     break;
-                case TileTrigger.Interact:
+                case TileTrigger.Event:
                     value = (int)((maskTrigger >> SHIFT_TRIGGER_INTERACT_VALUE) & 0b_0011_1111_1111);
                     break;
             }
@@ -160,22 +162,25 @@ namespace DataType
             float scale = (0 != (maskInfo >> SHIFT_INFO_SCALE)) ? 0.5f : 1f;
             return TileUtility.GetScale(type, scale);
         }
+
+        //strut Tile_t
         public float GetYValue(int keyMy, Vector3 point)
         {
-            //point가 속한 분면을 구해서
+            //point가 속한 삼각형 인덱스를 구한다.
             Vector3 pivot    = TileUtility.GetPivot(keyMy, GetScale());
             float scale_half = GetScale(TileSize.Half);
-            int quarant      = TileUtility.GetTriangleIndex(point - pivot, scale_half);
+            int triangle      = TileUtility.GetTriangleIndex(point - pivot, scale_half);
 
-            //각 포인트에 해당하는 높이 구해서...
+            //각 포인트에 해당하는 높이 구한다. (배열을 사용하지 않기 위해 out 3번 사용...)
+            //[주의!] 유니티는 "왼손 좌표계"이므로 외적 계산을 반대로 생각해야 한다...
             long height = (long)(maskMove >> 16);
-            Vector3[] points = TileUtility.GetQuarantPoints(pivot, GetScale(), height, quarant);
+            TileUtility.GetTrianglePoints(pivot, GetScale(), height, triangle, out Vector3 p0, out Vector3 p1, out Vector3 p2);
 
-            //평면의 방정식에 대입하면 y값을 구할 수 있다. (유의: 왼손 좌표계)
-            Vector3 normal = Vector3.Cross(points[1] - points[0], points[2] - points[0]);
+            //평면의 방정식에 대입하면 y값을 구할 수 있다.
+            Vector3 normal = Vector3.Cross(p1 - p0, p2 - p0);
             normal.Normalize();
             normal = CMath.FloorToVector(normal, 3);
-            float d = Vector3.Dot(normal, points[0]);
+            float d = Vector3.Dot(normal, p0);
 
             return -(normal.x * point.x + normal.z * point.z - d) / normal.y;
         }

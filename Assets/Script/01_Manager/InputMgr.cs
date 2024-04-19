@@ -3,13 +3,12 @@ using static Index.IDxInput;
 
 public class InputMgr : MonoBehaviour
 {
-    private IInputHandler inputGetter;          //update
-    private IInputHandler fixedInputGetter;     //fixed update
+    private IInputHandler      updater;         //update
+    private IFixedInputHandler fixedUpdater;    //fixed update
     private int input;                          //ÀÔ·Â°ª
 
     public void Update()
     {
-        #region Get Input
         //Button Down
         if (Input.GetButtonDown("DOWN"))    { input |= DOWN;   }
         if (Input.GetButtonDown("UP"))      { input |= UP;     }
@@ -26,40 +25,38 @@ public class InputMgr : MonoBehaviour
         if (Input.GetButton("LEFT"))        { input |= LEFT_HOLD;   }
         if (Input.GetButton("RIGHT"))       { input |= RIGHT_HOLD;  }
         if (Input.GetButton("ACTION"))      { input |= ACTION_HOLD; }
-        #endregion
 
         if (0 != input
-            && null != inputGetter)
+            && null != updater)
         {
-            inputGetter.Input(input);
+            updater.Input(input);
             input = 0;
         }
     }
     private void FixedUpdate()
     {
         if (0 != input
-            && null != fixedInputGetter)
+            && null != fixedUpdater)
         {
-            fixedInputGetter.Input(input);
+            fixedUpdater.Input(input);
             input = 0;
         }
     }
+    public void SetUpdater(IInputHandler getter)
+    {
+        updater = getter;
+    }
+    public void SetFixedUpdater(IFixedInputHandler fixedGetter)
+    {
+        fixedUpdater = fixedGetter;
+    }
 
-    public void SetInputGetter(IInputHandler getter)
+    public void ReleaseUpdater()
     {
-        inputGetter = getter;
+        updater = null;
     }
-    public void SetFixedInputGetter(IInputHandler fixedGetter)
+    public void ReleaseFixedUpdater()
     {
-        fixedInputGetter = fixedGetter;
-    }
-
-    public void ReleaseInputGetter()
-    {
-        inputGetter = null;
-    }
-    public void ReleaseFixedInputGetter()
-    {
-        fixedInputGetter = null;
+        fixedUpdater = null;
     }
 }

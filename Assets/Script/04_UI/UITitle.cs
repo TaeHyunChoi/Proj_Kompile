@@ -25,7 +25,7 @@ public class UITitle : UIBase, IInputHandler
     }
     private void Start()
     {
-        Main.InputMgr.SetInputGetter(this);
+        Main.InputMgr.SetUpdater(this);
     }
     public override void Pop(bool isOn)
     {

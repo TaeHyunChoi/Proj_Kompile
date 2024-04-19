@@ -45,7 +45,7 @@ public partial class OnOpening // Coroutine
                     }
                     break;
                 default:
-                    Main.InputMgr.ReleaseInputGetter();
+                    Main.InputMgr.ReleaseUpdater();
                     instance.Set();
                     return -1;
             }
@@ -53,17 +53,21 @@ public partial class OnOpening // Coroutine
         }
         public void Input(int input)
         {
+            //정해진 입력 이외는 처리하지 않음
             if (false == IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ACTION))
             {
                 return;
             }
+
+            //현재 코루틴의 상태값이 0일 때에만 입력 처리 (0 == state)
             if (0 == state)
             {
                 alpha = 1f;
                 imageLogo.color = new Color(1f, 1f, 1f, alpha);
+
+                //코루틴 단계를 0에서 2로 점프한다.
                 state = 2;
             }
-            // In other cases, input doesn`t processed.
         }
 
         public OpeningLogo(Transform transform)
@@ -75,7 +79,7 @@ public partial class OnOpening // Coroutine
             wait = 0;
             state = 0;
 
-            Main.InputMgr.SetInputGetter(this);
+            Main.InputMgr.SetUpdater(this);
         }
     }
     private class OpeningDemo : IRoutineUpdater, IInputHandler

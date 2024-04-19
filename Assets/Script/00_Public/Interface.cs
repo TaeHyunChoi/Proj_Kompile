@@ -12,3 +12,7 @@ public interface IInputHandler
 {
     public void Input(int input);
 }
+public interface IFixedInputHandler
+{
+    public void Input(int input);
+}

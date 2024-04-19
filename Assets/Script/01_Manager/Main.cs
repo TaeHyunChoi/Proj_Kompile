@@ -59,10 +59,13 @@ public class Main : MonoBehaviour
     }
 
     // set func()
-    public void SetContent(ContentBase content)
+    public void SetContent(ContentBase content) //여기서 type을 받는게 깔끔하려나.. 아니면 하지 않거나?
     {
         this.content = content;
-        mgrInput.SetInputGetter(content as IInputHandler);
+
+        //IInputHandler가 없으면 null을 반환 => 그대로 Release까지 가능
+        mgrInput.SetUpdater(content as IInputHandler);
+        mgrInput.SetFixedUpdater(content as IFixedInputHandler);
     }
     public void SetFieldLayer(int layer)
     {

@@ -94,13 +94,14 @@ public class Dev_MapSampler : MonoBehaviour
     }
     private static void SetTileData(Vector3 p0, Vector3 p1, Vector3 p2, float scale, byte layer, int info, int trigger)
     {
-        //(Isosceles right triangle) Find the right angle point and store it in p0
         float v0to1 = CMath.Floor(Vector3.Distance(new Vector3(p0.x, 0, p0.z), new Vector3(p1.x, 0, p1.z)), 3);
         float v1to2 = CMath.Floor(Vector3.Distance(new Vector3(p1.x, 0, p1.z), new Vector3(p2.x, 0, p2.z)), 3);
         float v0to2 = CMath.Floor(Vector3.Distance(new Vector3(p0.x, 0, p0.z), new Vector3(p2.x, 0, p2.z)), 3);
 
         float diagonal = v1to2;
         Vector3 swap;
+
+        //빠른 탐색을 위하여 꼭지점의 각이 직각인 점을 v0로 설정한다. (모든 삼각형이 직각 이등변 삼각형이라 가능함.)
         if (diagonal < v0to1)
         {
             swap = p2;
@@ -121,12 +122,14 @@ public class Dev_MapSampler : MonoBehaviour
         float scale_half   = TileUtility.GetScale(TileSize.Half, scale);
         float scale_quater = scale_half * 0.5f;
 
+        //삼각형 중 가장 긴 변이 단위 길이(scale_half)보다 같거나 짧을 때까지 재귀호출
         if (scale_half < diagonal)
         {
             Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 3);
             SetTileData(p0, p1, midPoint, scale, layer, info, trigger);
             SetTileData(p0, p2, midPoint, scale, layer, info, trigger);
         }
+        //대상 삼각형을 찾으면 Tile_t에 정보를 저장한다.
         else
         {
             //get point, get pivot
@@ -175,7 +178,7 @@ public class Dev_MapSampler : MonoBehaviour
         {
             trigger += "Layer, ";
         }
-        if (true == tile.HasTrigger(TileTrigger.Interact, out not_used))
+        if (true == tile.HasTrigger(TileTrigger.Event, out not_used))
         {
             trigger += "Interact, ";
         }

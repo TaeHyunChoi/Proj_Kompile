@@ -7,8 +7,8 @@ public partial class SceneMgr
 
     public void LoadSceneAsync(GameState next, int code = -1)
     {
-        Main.InputMgr.ReleaseInputGetter();
-        Main.InputMgr.ReleaseFixedInputGetter();
+        Main.InputMgr.ReleaseUpdater();
+        Main.InputMgr.ReleaseFixedUpdater();
 
         switch (next)
         {

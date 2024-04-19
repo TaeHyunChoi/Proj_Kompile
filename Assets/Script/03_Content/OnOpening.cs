@@ -44,7 +44,7 @@ public partial class OnOpening : ContentBase
                 CoroutineUpdater.SetHandler(new CCoroutine<OpeningTitle>(title));
                 break;
             case 3:
-                Main.InputMgr.ReleaseInputGetter();
+                Main.InputMgr.ReleaseUpdater();
                 Main.UIMgr.Pop(UIType.Title, true);
                 break;
             default:

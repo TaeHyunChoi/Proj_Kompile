@@ -11,7 +11,7 @@ public enum TileTrigger : ushort
     None      = 0,
     Scale = 1 << SHIFT_TRIGGER_SCALE,
     Layer     = 1 << SHIFT_TRIGGER_LAYER,
-    Interact  = 1 << SHIFT_TRIGGER_INTERACT
+    Event  = 1 << SHIFT_TRIGGER_INTERACT
 }
 public enum TileSize
 {
@@ -27,9 +27,9 @@ public static class TileUtility
 {
     private struct TriangleCollision
     {
-        public Vector3 A, B, C; // x,z로만 판별
-        public int key;
-        public int index;
+        public Vector3 A, B, C; // 삼각형의 꼭지점
+        public int key;         // 삼각형이 속한 타일의 key
+        public int index;       // 삼각형 인덱스
 
         public TriangleCollision(int key, Vector3 pivot, int indexTriangle, float scale)
         {
@@ -82,6 +82,7 @@ public static class TileUtility
             }
         }
 
+        //삼각형과 감지 범위가 서로 겹치는지 여부 확인
         public bool IsIntersected(Vector3 center, float radius)
         {
             Vector2 center2D = new Vector2(center.x, center.z);
@@ -136,39 +137,27 @@ public static class TileUtility
         }
         private bool IsCircleLineIntersect(Vector2 circleCenter, float radius, Vector2 A, Vector2 B)
         {
-            // 선분 AB의 방향 벡터를 계산합니다.
             Vector2 d = B - A;
-
-            // 원의 중심에서 점 A까지의 벡터를 계산합니다.
             Vector2 f = A - circleCenter;
 
-            // 2차 방정식의 계수 a, b, c를 계산합니다. 이 방정식은 선분과 원의 교차 조건을 나타냅니다.
-            float a = Vector2.Dot(d, d); // d 벡터의 길이의 제곱
-            float b = 2 * Vector2.Dot(f, d); // f와 d 벡터의 내적을 2배 한 값
-            float c = Vector2.Dot(f, f) - radius * radius; // f 벡터의 길이의 제곱에서 원의 반지름 제곱을 뺀 값
+            float a = Vector2.Dot(d, d);
+            float b = Vector2.Dot(f, d) * 2;
+            float c = Vector2.Dot(f, f) - radius * radius;
 
-            // 판별식을 계산합니다. 이 값이 양수라면 근이 실수로 존재함을 의미합니다.
             float discriminant = b * b - 4 * a * c;
-
             if (discriminant < 0)
             {
-                // 판별식이 음수이면, 선분과 원은 서로 교차하지 않습니다.
                 return false;
             }
             else
             {
-                // 판별식의 제곱근을 구하여 실제 근을 찾습니다.
                 discriminant = Mathf.Sqrt(discriminant);
 
-                // 근의 공식을 사용하여 두 근을 계산합니다.
                 float t1 = (-b - discriminant) / (2 * a);
                 float t2 = (-b + discriminant) / (2 * a);
-
-                // 두 근 중 하나라도 선분의 파라미터 0과 1 사이에 있으면, 선분이 원과 교차합니다.
                 if (t1 >= 0 && t1 <= 1 || t2 >= 0 && t2 <= 1)
                     return true;
 
-                // 그렇지 않다면 교차하지 않습니다.
                 return false;
             }
         }
@@ -180,6 +169,8 @@ public static class TileUtility
     public static Vector3 GetPivot(int key, float scale)
     {
         float x = 0f, y = 0f, z = 0f;
+
+        //scale = 0.5f인 경우, 추가적인 처리가 필요함
         if (0 != ((key >> SHIFT_KEY_SCALE) & 0x1))
         {
             x += 0.125f;
@@ -328,10 +319,8 @@ public static class TileUtility
 
         return -1;
     }
-    public static Vector3[] GetQuarantPoints(Vector3 pivot, float scale, long flagHeight, int quarant)
+    public static Vector3[] GetTrianglePoints(Vector3 pivot, float scale, long flagHeight, int quarant)
     {
-        //인덱스를 미숙하게+많이 짜서 고생하는구만..
-        //왼손 좌표계...
         int i0, i1, i2;
         switch (quarant)
         {
@@ -364,6 +353,43 @@ public static class TileUtility
 
         return new Vector3[3] { p0, p1, p2 };
     }
+
+    public static void GetTrianglePoints(Vector3 pivot, float scale, long flagHeight, int quarant, out Vector3 p0, out Vector3 p1, out Vector3 p2)
+    {
+        int i0, i1, i2;
+        p0 = p1 = p2 = pivot;
+
+        switch (quarant)
+        {
+            case 0: i0 = 0; i1 = 9; i2 = 1; break;
+            case 1: i0 = 1; i1 = 9; i2 = 4; break;
+            case 2: i0 = 3; i1 = 4; i2 = 9; break;
+            case 3: i0 = 0; i1 = 3; i2 = 9; break;
+
+            case 4: i0 = 1; i1 = 10; i2 = 2; break;
+            case 5: i0 = 2; i1 = 10; i2 = 5; break;
+            case 6: i0 = 4; i1 = 5; i2 = 10; break;
+            case 7: i0 = 1; i1 = 4; i2 = 10; break;
+
+            case 8: i0 = 3; i1 = 11; i2 = 4; break;
+            case 9: i0 = 4; i1 = 11; i2 = 7; break;
+            case 10: i0 = 6; i1 = 7; i2 = 11; break;
+            case 11: i0 = 3; i1 = 6; i2 = 11; break;
+
+            case 12: i0 = 4; i1 = 12; i2 = 5; break;
+            case 13: i0 = 5; i1 = 12; i2 = 8; break;
+            case 14: i0 = 7; i1 = 8; i2 = 12; break;
+            case 15: i0 = 4; i1 = 7; i2 = 12; break;
+
+            default: return;
+        }
+
+        p0 = GetPoint(pivot, flagHeight, i0, scale);
+        p1 = GetPoint(pivot, flagHeight, i1, scale);
+        p2 = GetPoint(pivot, flagHeight, i2, scale);
+    }
+
+
     private static Vector3 GetPoint(Vector3 pivot, long flagHeight, int index, float scale)
     {
         float scale_half    = scale * 0.5f;
@@ -402,7 +428,6 @@ public static class TileUtility
         switch (triangle)
         {
             case 0:
-                //params[] 쓰면 편할 텐데 힙 메모리는 가능하면 지양하기로.
                 triangles[index++] = new TriangleCollision(key, pivot, 0, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 1, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 2, scale);
@@ -411,7 +436,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 7, scale);
 
                 //neighbor: z-1
-                int keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
+                int keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
                 Vector3 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
@@ -420,13 +445,13 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 15, scale);
 
                 //neighbor: x-1, z-1
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: -1, z: -1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: -1, z: -1);
                 pivotNeighbor = pivot + new Vector3(-1, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
 
                 //neighbor: x-1
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
@@ -445,7 +470,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 12, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 15, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
@@ -466,7 +491,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 12, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 15, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 6, scale);
@@ -482,17 +507,17 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 8, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 11, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: -1, z: -1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: -1, z: -1);
                 pivotNeighbor = pivot + new Vector3(-1, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
@@ -509,7 +534,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 0, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 1, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
@@ -517,12 +542,12 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 15, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: +1, z: -1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: +1, z: -1);
                 pivotNeighbor = pivot + new Vector3(1, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
@@ -536,17 +561,17 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 12, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 13, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: +1, z: -1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: +1, z: -1);
                 pivotNeighbor = pivot + new Vector3(+1, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 2, scale);
@@ -568,7 +593,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 13, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 15, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 2, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
@@ -588,7 +613,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 12, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 15, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: -1);
                 pivotNeighbor = pivot + new Vector3(0, 0, -1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 9, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
@@ -608,7 +633,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 12, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 15, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 6, scale);
@@ -628,7 +653,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 14, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 15, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
@@ -643,7 +668,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 14, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 15, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
@@ -651,12 +676,12 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 7, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: -1, z: +1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: -1, z: +1);
                 pivotNeighbor = pivot + new Vector3(-1, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 13, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 14, scale);
@@ -669,17 +694,17 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 10, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 11, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: -1, z: +1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: -1, z: +1);
                 pivotNeighbor = pivot + new Vector3(-1, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: -1, z: 0);
                 pivotNeighbor = pivot + new Vector3(-1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 6, scale);
@@ -700,7 +725,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 8, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 9, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 2, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
@@ -715,7 +740,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 5, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 6, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 2, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
@@ -723,12 +748,12 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: +1, z: +1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: +1, z: +1);
                 pivotNeighbor = pivot + new Vector3(+1, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 4, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 5, scale);
@@ -741,17 +766,17 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 9, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 10, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: +1, z: 0);
                 pivotNeighbor = pivot + new Vector3(+1, 0, 0) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 10, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 11, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: +1, z: +1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: +1, z: +1);
                 pivotNeighbor = pivot + new Vector3(+1, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 3, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
@@ -772,7 +797,7 @@ public static class TileUtility
                 triangles[index++] = new TriangleCollision(key, pivot, 9, scale);
                 triangles[index++] = new TriangleCollision(key, pivot, 10, scale);
 
-                keyLink = TileUtility.GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
+                keyLink = GetKey_FromRelativeCoord(map, key, x: 0, z: +1);
                 pivotNeighbor = pivot + new Vector3(0, 0, +1) * scale;
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 0, scale);
                 triangles[index++] = new TriangleCollision(keyLink, pivotNeighbor, 1, scale);
@@ -781,6 +806,8 @@ public static class TileUtility
                 break;
         }
     }
+
+    //TileUtility.cs (주변 삼각형은 이동 가능한지 여부를 확인하는 함수)
     public static bool IsMovable(Dictionary<int, DataType.Tile_t> map, Vector3 goal, float scale)
     {
         float dist = CMath.Floor(scale * SIZE_QUATER - Time.fixedDeltaTime, 3);

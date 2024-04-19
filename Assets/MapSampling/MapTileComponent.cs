@@ -16,8 +16,9 @@ public class MapTileComponent : MonoBehaviour
     private byte valueLayer;
     [SerializeField] 
     private int  valueInteract;
+#endif
 
-
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
     private void Awake()
     {
         Mesh mesh = transform.GetComponent<MeshFilter>().mesh;
@@ -34,7 +35,7 @@ public class MapTileComponent : MonoBehaviour
         {
             trigger |= valueLayer << SHIFT_TRIGGER_LAYER_VALUE;
         }
-        if (0 != (TileTrigger.Interact & this.trigger))
+        if (0 != (TileTrigger.Event & this.trigger))
         {
             trigger |= valueInteract << SHIFT_TRIGGER_INTERACT_VALUE;
         }
