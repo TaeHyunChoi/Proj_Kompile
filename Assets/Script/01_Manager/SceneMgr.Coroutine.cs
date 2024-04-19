@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -33,7 +32,7 @@ public partial class SceneMgr // Coroutine
                     Main.Instance.Release();
                     Transform transformCameraCanvas = Main.UIMgr.CameraCanvas.transform;
                     taskOpening = OnOpening.InitAsync(transformCameraCanvas);
-                    taskUI = Main.UIMgr.InitAsync(GameState.Opening);
+                    taskUI      = Main.UIMgr.InitAsync(GameState.Opening);
                     break;
                 case 4:
                     if (false == taskOpening.IsCompletedSuccessfully

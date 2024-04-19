@@ -28,10 +28,10 @@ public class CoroutineUpdater : MonoBehaviour
             {
                 continue;
             }
-
             if (false == handlers[i].MoveNext())
             {
                 handlers[i] = null;
+                continue;
             }
 
             index = i;
