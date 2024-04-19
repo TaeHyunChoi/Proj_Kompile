@@ -17,7 +17,7 @@ public class UnitMgr
     }
     public async Task InitAsync(Transform level)
     {
-        GameObject obj = await AssetManager.InstantiateAsync("UnitBase", transform, true);
+        GameObject obj = await AssetMgr.InstantiateGameObjectAsync("UnitBase", transform, true);
         UnitPlayer player = obj.AddComponent<UnitPlayer>();
         player.transform.position = new Vector3(0.5f, 0f, 0.5f);
         Main.Instance.SetPlayer(player);

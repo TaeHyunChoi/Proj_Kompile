@@ -53,17 +53,17 @@ MonoBehaviour:
     m_SerializedLabels:
     - Animation
   - m_GUID: 2466c4e372c648c43bfc48a108520ba6
-    m_Address: HIT
+    m_Address: ATAHO_HIT
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: 3c8c1d2ca36ac1740b355d0dc9e0e779
-    m_Address: IDLE
+    m_Address: ATAHO_IDLE
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation
   - m_GUID: e33ad4fd924256e4fa80e0494779f2a4
-    m_Address: SKILL
+    m_Address: ATAHO_SKILL
     m_ReadOnly: 0
     m_SerializedLabels:
     - Animation

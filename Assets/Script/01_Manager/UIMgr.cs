@@ -17,7 +17,7 @@ public class UIMgr
         {
             case GameState.Opening:
                 cache = new UIBase[1];
-                GameObject obj = await AssetManager.InstantiateAsync("UITitle", CameraCanvas.transform, false);
+                GameObject obj = await AssetMgr.InstantiateGameObjectAsync("UITitle", CameraCanvas.transform, false);
                 UITitle title = obj.AddComponent<UITitle>();
                 cache[(byte)UIType.Title] = title;
                 break;

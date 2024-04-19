@@ -9,7 +9,7 @@ public partial class OnOpening : ContentBase
 
     public static async Task<OnOpening> InitAsync(Transform canvas_camera)
     {
-        GameObject go = await AssetManager.InstantiateAsync("OpeningGame", canvas_camera, true);
+        GameObject go = await AssetMgr.InstantiateGameObjectAsync("OpeningGame", canvas_camera, true);
         OnOpening opening = new OnOpening(go.transform);
         return opening;
     }
@@ -57,7 +57,7 @@ public partial class OnOpening : ContentBase
     {
         GameObject obj = transform.gameObject;
         GameObject.Destroy(obj);
-        if (false == AssetManager.ReleaseAsset(obj.GetInstanceID()))
+        if (false == AssetMgr.ReleaseAsset(obj.GetInstanceID()))
         {
             Debug.LogError($"Can`t Release Asset: {obj.name}({obj.GetInstanceID()})");
         }

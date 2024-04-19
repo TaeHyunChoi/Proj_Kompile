@@ -11,7 +11,6 @@ public class UnitPlayer : UnitBase
     private Vector3 dirBefore = new Vector3(-1f, 0, -1f);   // 직전의 이동 방향
     private float   scale = 1f;
     private int     layer = 0;
-
     public void Move(Dictionary<int, Tile_t> map, Vector3 dirInput)
     {
         Vector3 position = transform.position;
