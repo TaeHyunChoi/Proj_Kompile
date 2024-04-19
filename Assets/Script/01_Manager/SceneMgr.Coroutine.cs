@@ -3,14 +3,14 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public partial class SceneMgr // .LoadScene
+public partial class SceneMgr // Coroutine
 {
     public class LoadOpeningScene : IRoutineUpdater
     {
         private AsyncOperation  loadAsync;
         private CanvasGroup     curtain;
         private Task<OnOpening> taskOpening;
-        private Task   taskUI;
+        private Task            taskUI;
 
         public int MoveNext(int index)
         {
@@ -36,11 +36,8 @@ public partial class SceneMgr // .LoadScene
                     taskUI = Main.UIMgr.InitAsync(GameState.Opening);
                     break;
                 case 4:
-                    if (false == taskOpening.IsCompletedSuccessfully)
-                    {
-                        return index;
-                    }
-                    if (false == taskUI.IsCompletedSuccessfully)
+                    if (false == taskOpening.IsCompletedSuccessfully
+                        || false == taskUI.IsCompletedSuccessfully)
                     {
                         return index;
                     }
@@ -50,6 +47,7 @@ public partial class SceneMgr // .LoadScene
                     break;
                 default:
                     taskOpening.Dispose();
+                    taskUI.Dispose();
                     Main.SceneMgr.SetState(SceneState.Play);
                     return -1;
             }
@@ -127,6 +125,8 @@ public partial class SceneMgr // .LoadScene
                     curtain.gameObject.SetActive(false);
                     break;
                 default:
+                    taskField.Dispose();
+                    taskUI.Dispose();
                     return -1;
             }
 

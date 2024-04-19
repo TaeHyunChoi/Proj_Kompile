@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Index;
 
-public partial class OnOpening // PlayLogo, PlayDemo, PlayTitle
+public partial class OnOpening // Coroutine
 {
     private class OpeningLogo : IRoutineUpdater, IInputHandler
     {

@@ -99,11 +99,11 @@ namespace Index
         public const float SIZE_QUATER_INVERSE = 1f / SIZE_QUATER;
         public const float SIZE_EIGHTH = 0.125f * SIZE;
 
-        public const byte SHIFT_KEY_LAYER = 30;
-        public const byte SHIFT_KEY_SCALE = 20;
-        public const byte SHIFT_KEY_X = 12;
-        public const byte SHIFT_KEY_Y = 8;
-        public const byte SHIFT_KEY_Z = 0;
+        public const byte SHIFT_KEY_LAYER = 21; // 3bits, mask
+        public const byte SHIFT_KEY_SCALE = 20; // 1bit,  flag
+        public const byte SHIFT_KEY_X     = 12; // 8bits, mask
+        public const byte SHIFT_KEY_Y     =  8; // 4bits, mask
+        public const byte SHIFT_KEY_Z     =  0; // 8bits, mask
 
         public const byte SHIFT_TRIGGER_SCALE          = 14;
         public const byte SHIFT_TRIGGER_SCALE_VALUE    = 13;
@@ -123,31 +123,33 @@ namespace DataType
     public struct Tile_t
     {
         //total 10 bytes
-        private byte   info;    //  8: scale(1), status(7)
-        private ushort trigger; // 15: scale_trigger_flag(1), scale_trigger_value(1), layer_trigger_falg(1), layer_trigger_value(4), interact_trigger_flag(1), interact_trigger_value(7)
-        private ulong  move;    // 55: height(13*3), move(16)
+        private byte   maskInfo;    //  8 bits: scale(1), status(7)
+        private ushort maskTrigger; // 15 bits:  scale_trigger_flag(1),    scale_trigger_value(1),
+                                    //           layer_trigger_flag(1),    layer_trigger_value(4),
+                                    //           interact_trigger_flag(1), interact_trigger_value(7)
+        private ulong  maskMove;    // 55 bits: height(13*3), move(16)
 
         public bool IsMovable(int indexTriangle)
         {
-            int mask = (int)(move & 0xFFFF);
+            int mask = (int)(maskMove & 0xFFFF);
             mask &= (1 << indexTriangle);
             return 0 != mask;
         }
         public bool HasTrigger(TileTrigger type, out int value)
         {
             value = 0;
-            bool hasTrigger = (0 != (trigger & (ushort)type));
+            bool hasTrigger = (0 != (maskTrigger & (ushort)type));
 
             switch (type)
             {
                 case TileTrigger.Scale:
-                    value = (int)((trigger >> SHIFT_TRIGGER_SCALE_VALUE) & 0b_0001);
+                    value = (int)((maskTrigger >> SHIFT_TRIGGER_SCALE_VALUE) & 0b_0001);
                     break;
                 case TileTrigger.Layer:
-                    value = (int)((trigger >> SHIFT_TRIGGER_LAYER_VALUE) & 0b_1111);
+                    value = (int)((maskTrigger >> SHIFT_TRIGGER_LAYER_VALUE) & 0b_1111);
                     break;
                 case TileTrigger.Interact:
-                    value = (int)((trigger >> SHIFT_TRIGGER_INTERACT_VALUE) & 0b_0011_1111_1111);
+                    value = (int)((maskTrigger >> SHIFT_TRIGGER_INTERACT_VALUE) & 0b_0011_1111_1111);
                     break;
             }
 
@@ -155,7 +157,7 @@ namespace DataType
         }
         public float GetScale(TileSize type = TileSize.Default)
         {
-            float scale = (0 != (info >> SHIFT_INFO_SCALE)) ? 0.5f : 1f;
+            float scale = (0 != (maskInfo >> SHIFT_INFO_SCALE)) ? 0.5f : 1f;
             return TileUtility.GetScale(type, scale);
         }
         public float GetYValue(int keyMy, Vector3 point)
@@ -166,7 +168,7 @@ namespace DataType
             int quarant      = TileUtility.GetTriangleIndex(point - pivot, scale_half);
 
             //각 포인트에 해당하는 높이 구해서...
-            long height = (long)(move >> 16);
+            long height = (long)(maskMove >> 16);
             Vector3[] points = TileUtility.GetQuarantPoints(pivot, GetScale(), height, quarant);
 
             //평면의 방정식에 대입하면 y값을 구할 수 있다. (유의: 왼손 좌표계)
@@ -178,17 +180,17 @@ namespace DataType
             return -(normal.x * point.x + normal.z * point.z - d) / normal.y;
         }
 
-        //Tile Map Sampling에서만 사용
+        //Only for Tile Map Sampling
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-        public int Info { get => info; }
-        public int Move { get => (int)(move & 0xFFFF); }
-        public long Height { get => (long)(move >> 16); }
-        public int Trigger { get => trigger; }
+        public int Info { get => maskInfo; }
+        public int Move { get => (int)(maskMove & 0xFFFF); }
+        public long Height { get => (long)(maskMove >> 16); }
+        public int Trigger { get => maskTrigger; }
         public Tile_t(int info, int trigger, int move, long height)
         {
-            this.info    = (byte)info;
-            this.trigger = (ushort)trigger;
-            this.move    = (ulong)((height << 16) | (long)move);
+            this.maskInfo    = (byte)info;
+            this.maskTrigger = (ushort)trigger;
+            this.maskMove    = (ulong)((height << 16) | (long)move);
         }
 #endif
     }
