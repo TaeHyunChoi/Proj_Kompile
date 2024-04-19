@@ -17,7 +17,6 @@ public class MapTileComponent : MonoBehaviour
     [SerializeField] 
     private int  valueInteract;
 #endif
-
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
     private void Awake()
     {
@@ -41,8 +40,8 @@ public class MapTileComponent : MonoBehaviour
         }
 
         Dev_MapSampler.InitTile(transform, mesh, scale, layer, info, trigger);
-#endif
     }
+#endif
 }
 public class TransMapTile : IRoutineUpdater
 {

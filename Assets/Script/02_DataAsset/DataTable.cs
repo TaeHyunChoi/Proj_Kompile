@@ -61,6 +61,28 @@ public static class DataTable
         map = default(MapData);
         return false;
     }
+    public static Dictionary<int, T> LoadMappingData<T>(string fileName) where T : struct
+    {
+        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapTileData", fileName + ".dat");
+        if (File.Exists(filePath))
+        {
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
+            FileStream fileStream = File.Open(filePath, FileMode.Open);
+
+            // 파일에서 데이터를 역직렬화하여 Dictionary에 로드
+            Dictionary<int, T> map = (Dictionary<int, T>)binaryFormatter.Deserialize(fileStream);
+
+            fileStream.Close();
+            return map;
+        }
+        else
+        {
+            Debug.LogError("파일이 존재하지 않습니다.");
+        }
+
+        return null;
+    }
+
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
 
@@ -159,27 +181,5 @@ public static class DataTable
         binaryFormatter.Serialize(fileStream, data);
         fileStream.Close();
     }
-    public static Dictionary<int, T> LoadMappingData<T>(string fileName) where T : struct
-    {
-        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapTileData", fileName + ".dat");
-        if (File.Exists(filePath))
-        {
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            FileStream fileStream = File.Open(filePath, FileMode.Open);
-
-            // 파일에서 데이터를 역직렬화하여 Dictionary에 로드
-            Dictionary<int, T> map = (Dictionary<int, T>)binaryFormatter.Deserialize(fileStream);
-
-            fileStream.Close();
-            return map;
-        }
-        else
-        {
-            Debug.LogError("파일이 존재하지 않습니다.");
-        }
-
-        return null;
-    }
-
 #endif
 }
