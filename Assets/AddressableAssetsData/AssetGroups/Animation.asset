@@ -17,41 +17,6 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: a00b46e57dbf6ef49bd181dab2b4a5cd
   m_SerializeEntries:
-  - m_GUID: 6963e368ae9c010409014b7bda28de92
-    m_Address: EVENT
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Animation
-  - m_GUID: c6a779701f9c0664aa295717bf0dcb74
-    m_Address: HIT
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Animation
-  - m_GUID: 67bc47a3d1d8ee942a990b8aa01228bd
-    m_Address: IDLE
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Animation
-  - m_GUID: 210ba075433cf6a44bd611af6b4fda5c
-    m_Address: MOVE
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Animation
-  - m_GUID: a1ad10a46d010cb4285ed5d155033405
-    m_Address: SKILL
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Animation
-  - m_GUID: 6d3a14532ced77c4a8ac4d1bf40d057c
-    m_Address: UnitAnimeCtrl
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Animation
-  - m_GUID: 9373cb5cdd673164399ad13f142b428d
-    m_Address: UnitAOC
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Animation
   - m_GUID: 2466c4e372c648c43bfc48a108520ba6
     m_Address: ATAHO_HIT
     m_ReadOnly: 0
