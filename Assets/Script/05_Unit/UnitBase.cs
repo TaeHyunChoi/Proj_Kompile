@@ -2,62 +2,62 @@
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
-public class UnitBase : MonoBehaviour
+public class UnitBase
 {
-    public AnimatorOverrideController aoc;
+    public Transform transform { get; set; }
     private Animator animator;
+    private AnimationClip[] animationClips;
 
-    public AnimationClip[] clips;
-    private string[] addresses = new string[] { "ATAHO_IDLE", "ATAHO_SKILL", "ATAHO_HIT" }; //for test
-    private AsyncOperationHandle<GameObject>[] loadHandles;
-
-
-    private void Awake()
+    public async Task<UnitBase> AwakeAsync(int indexUnit, Transform transform)
     {
-        //애니메이터 설정
+        this.transform = transform;
         animator = transform.GetComponent<Animator>();
-        UnityEngine.Assertions.Assert.IsNotNull(animator);
-        aoc = new AnimatorOverrideController(animator.runtimeAnimatorController);
 
-        //TODO: Awake()에서 이렇게 호출하는게 바람직한가..?
-        //차라리 MonoBehavior 상속 안 받고 처리하는 게 나을 수도 있겠다.
-        //그러면 new() 사용하기 좋다. => Invoke, Coroutine 사용 안하니까 굳이 안써도 되겠다?
-        Task taskLoadAnime = InitAnimation();
-        while (false == taskLoadAnime.IsCompletedSuccessfully)
+        //그룹별로 끌어오지 않고, '배운 스킬까지만' 불러오는 방법도 가능할 것 같은데...
+        string groupCode = GetAnimeGroupCode(indexUnit);
+        AsyncOperationHandle<IList<AnimationClip>> handle = Addressables.LoadAssetsAsync<AnimationClip>(groupCode, null);
+        await handle.Task;
+
+        animationClips = new List<AnimationClip>(handle.Result).ToArray();
+
+        //TODO: 필요한 만큼만 애니메이션 클립 로드 (ex. 아직 배우지 않은 스킬을 로드할 필요 없음)
+        //for (int i = 0; i < animationClips.Length; ++i)
+        //{
+        //    if (false == ShouldLoadAnimationClip(indexUnit, i))
+        //    {
+        //        animationClips[i] = null;
+        //    }
+        //}
+
+        UnityEngine.Assertions.Assert.IsNotNull(animationClips, "Null Anime Clip: " + groupCode);
+
+        foreach (var clip in animationClips)
         {
-            continue;
+            Debug.Log(groupCode + " " + clip.name);
         }
 
-        for (int i = 0; i < clips.Length; i++)
-        {
-            AnimationClip clip = clips[i];
-            string clipName = addresses[i];
-            UnityEngine.Assertions.Assert.IsNotNull(clipName);
-            aoc[clipName] = clip;
-        }
+        handle.Task.Dispose();
+        return this;
     }
-    public async Task InitAnimation()
-    {
-        //애니메이션 클립 가져오기
-        loadHandles = new AsyncOperationHandle<GameObject>[addresses.Length];
-        clips = new AnimationClip[addresses.Length];
-        for (int i = 0; i < addresses.Length; i++)
-        {
-            string address = addresses[i];
-            AnimationClip clip = await AssetMgr.LoadAssetAsync<AnimationClip>(address);
-            UnityEngine.Assertions.Assert.IsNotNull(clip);
-            clips[i] = clip;
-        }
-    }
-    private void OnDestroy()
-    {
-        clips = null;
 
-        if (false == AssetMgr.ReleaseAsset(addresses))
+    private string GetAnimeGroupCode(int index)
+    {
+        switch (index)
         {
-            Debug.LogError($"Can`t Release Asset: Animation Clips)");
+            case 0: return "Anime_Ataho";
+
         }
-        addresses = null;
+        return null;
+    }
+    private bool ShouldLoadAnimationClip(int indexUnit, int indexClip)
+    { 
+        return true;
     }
 }
+
+//TODO: 문서에 기록할 것
+//1. animation override controller 삭제
+//2. animation controller 삭제
+//이유: 상태 전환을 직접하려고 함. 2d sprite이므로 mixed, offset duration 등의 기능이 필요 없음.

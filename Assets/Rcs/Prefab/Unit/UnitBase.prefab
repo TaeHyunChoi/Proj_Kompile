@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 2661480014977142764}
   - component: {fileID: 5710677464469744475}
   - component: {fileID: 2266342005852781286}
-  - component: {fileID: 3850673696909711409}
   m_Layer: 10
   m_Name: UnitBase
   m_TagString: Untagged
@@ -106,26 +105,3 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
---- !u!114 &3850673696909711409
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6867064432740900801}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6e374f27df09c640b3387fe54262861, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  animator: {fileID: 2266342005852781286}
-  walkAnimationReference:
-    m_AssetGUID: 3c8c1d2ca36ac1740b355d0dc9e0e779
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0
-  runAnimationReference:
-    m_AssetGUID: 
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0

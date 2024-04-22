@@ -27,6 +27,16 @@ public class AssetMgr
         return asset;
     }
 
+
+    public static async Task<T> SpawnUnit<T>(int index, Transform parent) where T : UnitBase, new()
+    {
+        GameObject obj = await InstantiateGameObjectAsync("UnitBase", parent, true);
+        T unit = new T();
+        await unit.AwakeAsync(index, obj.transform);
+
+        return unit;
+    }
+
     public static bool ReleaseAsset(int instanceID)
     {
         Addressables.Release<GameObject>(Handlers[instanceID]);

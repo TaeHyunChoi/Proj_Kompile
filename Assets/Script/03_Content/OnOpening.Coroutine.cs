@@ -43,10 +43,10 @@ public partial class OnOpening // Coroutine
                         imageLogo.color = new Color(1f, 1f, 1f, alpha);
                         return index;
                     }
-                    break;
-                default:
                     Main.InputMgr.ReleaseUpdater();
                     instance.Set();
+                    break;
+                default:
                     return -1;
             }
             return state = index + 1;

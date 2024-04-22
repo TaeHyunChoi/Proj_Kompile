@@ -17,12 +17,13 @@ public class UnitMgr
     }
     public async Task InitAsync(Transform level)
     {
-        GameObject obj = await AssetMgr.InstantiateGameObjectAsync("UnitBase", transform, true);
-        UnitPlayer player = obj.AddComponent<UnitPlayer>();
+        Debug.Log("For Test: Set Player");
+        UnitPlayer player = await AssetMgr.SpawnUnit<UnitPlayer>(0, transform);
         player.transform.position = new Vector3(0.5f, 0f, 0.5f);
         Main.Instance.SetPlayer(player);
         pool.Add(player);
 
         //UnitBase[] npc = level.GetComponentsInChildren<UnitBase>(true);
+        //Set npc...
     }
 }
