@@ -105,6 +105,6 @@ public class UITitle : UIBase, IInputHandler
     public override void Dispose()
     {
         GameObject.Destroy(gameObject);
-        AssetMgr.ReleaseAsset(gameObject.GetInstanceID());
+        AssetMgr.ReleaseGameObject(gameObject.GetInstanceID());
     }
 }

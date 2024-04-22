@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 
 public class AssetMgr
 {
-    private static Dictionary<int, AsyncOperationHandle<GameObject>> Handlers = new Dictionary<int, AsyncOperationHandle<GameObject>>();
-    private static Dictionary<string, AsyncOperationHandle> Assets = new Dictionary<string, AsyncOperationHandle>();
+    private static Dictionary<int, AsyncOperationHandle> objectHandlers = new Dictionary<int, AsyncOperationHandle>();
+    private static Dictionary<string, AsyncOperationHandle> assetHandler = new Dictionary<string, AsyncOperationHandle>();
+
 
     public static async Task<GameObject> InstantiateGameObjectAsync(string address, Transform parent, bool isOn)
     {
@@ -16,46 +17,64 @@ public class AssetMgr
         GameObject go = await handle.Task;
         go.SetActive(isOn);
 
-        Handlers.Add(go.GetInstanceID(), handle);
+        objectHandlers.Add(go.GetInstanceID(), handle);
         return go;
     }
-    public static async Task<T> LoadAssetAsync<T>(string address)
+
+    public static Task<T> LoadAssetAsync<T>(string address)
     {
         AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
-        T asset = await handle.Task;
-        Assets.Add(address, handle);
-        return asset;
+        assetHandler.Add(address, handle);
+        return handle.Task;
+    }
+
+    public static Task<IList<T>> LoadAssetsInGroupAsync<T>(string groupCode)
+    {
+        AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(groupCode, null);
+        assetHandler.Add(groupCode, handle);
+        return handle.Task;
     }
 
 
     public static async Task<T> SpawnUnit<T>(int index, Transform parent) where T : UnitBase, new()
     {
         GameObject obj = await InstantiateGameObjectAsync("UnitBase", parent, true);
-        T unit = new T();
-        await unit.AwakeAsync(index, obj.transform);
 
+        T unit = new();
+        unit.Awake(index, obj.transform);
+
+        string groupCode = GetAnimeGroupCode(index);
+        Task<IList<AnimationClip>> taskAnimeClips = LoadAssetsInGroupAsync<AnimationClip>(groupCode);
+        await taskAnimeClips;
+        UnityEngine.Assertions.Assert.IsNotNull(taskAnimeClips.Result, "Null Anime Clip: " + groupCode);
+
+        AnimationClip[] clips = new List<AnimationClip>(taskAnimeClips.Result).ToArray();
+        unit.SetAnimeClips(clips);
+
+        taskAnimeClips.Dispose();
         return unit;
     }
 
-    public static bool ReleaseAsset(int instanceID)
+    public static string GetAnimeGroupCode(int index)
     {
-        Addressables.Release<GameObject>(Handlers[instanceID]);
-        return Handlers.Remove(instanceID);
-    }
-    public static bool ReleaseAsset(string[] address)
-    {
-        string key;
-        for (int i = 0; i < address.Length; ++i)
+        switch (index)
         {
-            key = address[i];
-            Addressables.Release(Assets[key]);
+            case 0: return "Anime_Ataho";
 
-            if (false == Assets.Remove(key))
-            {
-                return false;
-            }
         }
+        return null;
+    }
 
-        return true;
+    public static bool ReleaseGameObject(int instanceID)
+    {
+        Addressables.Release(objectHandlers[instanceID]);
+        return objectHandlers.Remove(instanceID);
+    }
+
+    //TODO: 확인 필요 - IList<T>도 일괄 해제되는가?
+    public static bool ReleaseGroupAsset(string groupCode)
+    {
+        Addressables.Release(assetHandler[groupCode]);
+        return assetHandler.Remove(groupCode);
     }
 }

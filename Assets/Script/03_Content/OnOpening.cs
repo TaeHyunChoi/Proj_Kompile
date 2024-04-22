@@ -57,7 +57,7 @@ public partial class OnOpening : ContentBase
     {
         GameObject obj = transform.gameObject;
         GameObject.Destroy(obj);
-        if (false == AssetMgr.ReleaseAsset(obj.GetInstanceID()))
+        if (false == AssetMgr.ReleaseGameObject(obj.GetInstanceID()))
         {
             Debug.LogError($"Can`t Release Asset: {obj.name}({obj.GetInstanceID()})");
         }
