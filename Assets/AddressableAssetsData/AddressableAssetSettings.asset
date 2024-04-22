@@ -45,7 +45,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8c1aebe7a878e864c898be4f6a5fbf03, type: 2}
   - {fileID: 11400000, guid: 4f06c112f0368fe4ba6acbbc5b50081a, type: 2}
   - {fileID: 11400000, guid: 4afff99a462bf1e4993eb148b179146b, type: 2}
-  - {fileID: 11400000, guid: 665b7e5d6cc74da42bdd1c30011ac046, type: 2}
   - {fileID: 11400000, guid: 252ef3ea854ccaf4c991b37a251cd8ac, type: 2}
   - {fileID: 11400000, guid: 545de1e87fdc44c4bacebacc5476aed7, type: 2}
   - {fileID: 11400000, guid: 73221712e29e8f844bbd4b537324ed3d, type: 2}
@@ -90,11 +89,12 @@ MonoBehaviour:
   m_LabelTable:
     m_LabelNames:
     - default
-    - Sprite
-    - prefab
-    - Materials
-    - External
-    - Anime_Ataho
+    - .anim
+    - .animCtrl
+    - .mat
+    - .sprite
+    - .prefab
+    - .external
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 0d418115f10642c4d81f37ea0df76de7, type: 2}

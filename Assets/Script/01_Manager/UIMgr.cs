@@ -11,22 +11,22 @@ public class UIMgr
     public Canvas OverlayCanvas { get => canvasOverlay; }
     public Canvas CameraCanvas  { get => canvasCamera; }
 
-    public async Task InitAsync(GameState state)
+    public async Task InitAsync(EGameStateFlag state)
     {
         switch (state)
         {
-            case GameState.Opening:
+            case EGameStateFlag.Opening:
                 cache = new UIBase[1];
                 GameObject obj = await AssetMgr.InstantiateGameObjectAsync("UITitle", CameraCanvas.transform, false);
                 UITitle title = obj.AddComponent<UITitle>();
-                cache[(byte)UIType.Title] = title;
+                cache[(byte)EUIType.Title] = title;
                 break;
-            case GameState.Field:
+            case EGameStateFlag.Field:
                 Debug.Log("Need to dev: UI.InitAsync(Field)");
                 break;
         }
     }
-    public void Pop(UIType type, bool isOn)
+    public void Pop(EUIType type, bool isOn)
     {
         cache[(byte)type].Pop(isOn);
     }

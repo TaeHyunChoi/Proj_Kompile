@@ -1,8 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using static EAnimeCodeToString;
 
 public abstract class UnitBase
 {
@@ -18,24 +15,34 @@ public abstract class UnitBase
         animator = transform.GetComponent<Animator>();
 
     }
-    public void SetAnimeClips(AnimationClip[] clips)
+    public void SetAnimeController(RuntimeAnimatorController controller)
     {
-        animationClips = clips;
-
-        string groupCode = AssetMgr.GetAnimeGroupCode(indexUnit);
-        foreach (var clip in animationClips)
+        animator.runtimeAnimatorController = controller;
+        PlayAnime(IDLE_FRONT);
+    }
+    protected void PlayAnime(EAnimeCodeToString code)
+    {
+        string anime = null;
+        switch (code)
         {
-            Debug.Log(groupCode + "_" + clip.name);
+            default:
+                anime = code.ToString();
+                break;
+            case NONE:
+                break;
         }
+
+        animator.Play(anime, 0);
     }
 
-    ~UnitBase()
+    //소멸자가 명시적으로 호출되지 않는다고 하니... 직접 Release()하겠다.
+    public bool Release()
     {
         //TODO: 오브젝트 풀링 고려?
         GameObject.Destroy(transform.gameObject);
 
-        string groupCode = AssetMgr.GetAnimeGroupCode(indexUnit);
-        AssetMgr.ReleaseGroupAsset(groupCode);
+        string address = AssetMgr.GetAssetAddress(EAssetType.AnimCtrl, indexUnit);
+        return AssetMgr.ReleaseAsset(address);
     }
 }
 

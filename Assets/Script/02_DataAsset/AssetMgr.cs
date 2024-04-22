@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 public class AssetMgr
 {
-    private static Dictionary<int, AsyncOperationHandle> objectHandlers = new Dictionary<int, AsyncOperationHandle>();
-    private static Dictionary<string, AsyncOperationHandle> assetHandler = new Dictionary<string, AsyncOperationHandle>();
+    private static Dictionary<int,    AsyncOperationHandle> objectHandlers = new Dictionary<int,    AsyncOperationHandle>();
+    private static Dictionary<string, AsyncOperationHandle> assetHandler   = new Dictionary<string, AsyncOperationHandle>();
 
-
+    // Init Object
     public static async Task<GameObject> InstantiateGameObjectAsync(string address, Transform parent, bool isOn)
     {
         AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
@@ -20,22 +20,6 @@ public class AssetMgr
         objectHandlers.Add(go.GetInstanceID(), handle);
         return go;
     }
-
-    public static Task<T> LoadAssetAsync<T>(string address)
-    {
-        AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
-        assetHandler.Add(address, handle);
-        return handle.Task;
-    }
-
-    public static Task<IList<T>> LoadAssetsInGroupAsync<T>(string groupCode)
-    {
-        AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(groupCode, null);
-        assetHandler.Add(groupCode, handle);
-        return handle.Task;
-    }
-
-
     public static async Task<T> SpawnUnit<T>(int index, Transform parent) where T : UnitBase, new()
     {
         GameObject obj = await InstantiateGameObjectAsync("UnitBase", parent, true);
@@ -43,38 +27,55 @@ public class AssetMgr
         T unit = new();
         unit.Awake(index, obj.transform);
 
-        string groupCode = GetAnimeGroupCode(index);
-        Task<IList<AnimationClip>> taskAnimeClips = LoadAssetsInGroupAsync<AnimationClip>(groupCode);
-        await taskAnimeClips;
-        UnityEngine.Assertions.Assert.IsNotNull(taskAnimeClips.Result, "Null Anime Clip: " + groupCode);
+        string address = GetAssetAddress(EAssetType.AnimCtrl, index);
+        UnityEngine.Assertions.Assert.IsNotNull(address, "Can`t Find Asset Address: " + address);
 
-        AnimationClip[] clips = new List<AnimationClip>(taskAnimeClips.Result).ToArray();
-        unit.SetAnimeClips(clips);
+        Task<RuntimeAnimatorController> taskController = LoadAssetAsync<RuntimeAnimatorController>(address);
+        await taskController;
+        UnityEngine.Assertions.Assert.IsNotNull(taskController.Result, "Can`t Find Asset Data: " + address);
+        unit.SetAnimeController(taskController.Result);
 
-        taskAnimeClips.Dispose();
+        taskController.Dispose();
         return unit;
     }
 
-    public static string GetAnimeGroupCode(int index)
+    // Load Asset
+    public static string GetAssetAddress(EAssetType type, int code)
     {
+        int index = (byte)type * 10000 + code;
+
         switch (index)
         {
-            case 0: return "Anime_Ataho";
+            // Unit
+            case 01_0000: return "AnimCtrl_Ataho";
+            case 01_0001: return "AnimCtrl_Linxhang";
+            case 01_0002: return "AnimeCtrl_Smashu";
 
+                // UI
+                //...
+
+                // Sound
+                // ...
         }
+
         return null;
     }
+    private static Task<T> LoadAssetAsync<T>(string address)
+    {
+        AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
+        assetHandler.Add(address, handle);
+        return handle.Task;
+    }
 
+    // Release Asset
     public static bool ReleaseGameObject(int instanceID)
     {
         Addressables.Release(objectHandlers[instanceID]);
         return objectHandlers.Remove(instanceID);
     }
-
-    //TODO: 확인 필요 - IList<T>도 일괄 해제되는가?
-    public static bool ReleaseGroupAsset(string groupCode)
+    public static bool ReleaseAsset(string code)
     {
-        Addressables.Release(assetHandler[groupCode]);
-        return assetHandler.Remove(groupCode);
+        Addressables.Release(assetHandler[code]);
+        return assetHandler.Remove(code);
     }
 }

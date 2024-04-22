@@ -1,11 +1,11 @@
 using UnityEngine;
-using static Index.IDxInput;
+using static Index.IDxInput.EInput;
 
 public class InputMgr : MonoBehaviour
 {
-    private IInputHandler      updater;         //update
-    private IFixedInputHandler fixedUpdater;    //fixed update
-    private int input;                          //ÀÔ·Â°ª
+    private IInputHandler         updater;         //update
+    private IFixedInputHandler    fixedUpdater;    //fixed update
+    private Index.IDxInput.EInput input;
 
     public void Update()
     {

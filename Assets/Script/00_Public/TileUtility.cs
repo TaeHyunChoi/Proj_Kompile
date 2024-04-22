@@ -284,13 +284,13 @@ public static class TileUtility
 
         return -1;
     }
-    public static Vector3 GetDirection(int input)
+    public static Vector3 GetDirection(EInput input)
     {
         Vector3 dir = Vector3.zero;
-        if (true == Compare(input, UP)    || true == Compare(input, UP_HOLD))    { dir += Vector3.forward; }
-        if (true == Compare(input, DOWN)  || true == Compare(input, DOWN_HOLD))  { dir += Vector3.back; }
-        if (true == Compare(input, LEFT)  || true == Compare(input, LEFT_HOLD))  { dir += Vector3.left; }
-        if (true == Compare(input, RIGHT) || true == Compare(input, RIGHT_HOLD)) { dir += Vector3.right; }
+        if (true == Compare(input, EInput.UP)    || true == Compare(input, EInput.UP_HOLD))    { dir += Vector3.forward; }
+        if (true == Compare(input, EInput.DOWN)  || true == Compare(input, EInput.DOWN_HOLD))  { dir += Vector3.back; }
+        if (true == Compare(input, EInput.LEFT)  || true == Compare(input, EInput.LEFT_HOLD))  { dir += Vector3.left; }
+        if (true == Compare(input, EInput.RIGHT) || true == Compare(input, EInput.RIGHT_HOLD)) { dir += Vector3.right; }
 
         dir.Normalize();
         return CMath.FloorToVector(dir, 3);

@@ -46,22 +46,22 @@ public class UITitle : UIBase, IInputHandler
 
         items[select].color += new Color(0, 0, 0, delta * 0.75f);
     }
-    public void Input(int input)
+    public void Input(EInput input)
     {
-        if (Compare(input, UP))
+        if (Compare(input, EInput.UP))
         {
             SetItemColor(select, 0f); //prev
             select = (select - 1 + itemCount) % itemCount;
 
             SetItemColor(select, alphaMin); //next
         }
-        else if (Compare(input, DOWN))
+        else if (Compare(input, EInput.DOWN))
         {
             SetItemColor(select, 0f);
             select = (select + 1 + itemCount) % itemCount;
             SetItemColor(select, alphaMin);
         }
-        else if (Compare(input, ENTER, ACTION))
+        else if (Compare(input, EInput.ENTER, EInput.ACTION))
         {
             SetItemColor(select, alphaMax);
             enabled = false;
@@ -70,7 +70,7 @@ public class UITitle : UIBase, IInputHandler
             {
                 case 0:
                     Debug.Log("New game For Test (map code: 100)");
-                    Main.SceneMgr.LoadSceneAsync(GameState.Field, 100);
+                    Main.SceneMgr.LoadSceneAsync(EGameStateFlag.Field, 100);
                     break;
                 case 1:
                     Debug.Log("Saved Data List");
@@ -88,7 +88,7 @@ public class UITitle : UIBase, IInputHandler
             }
 
         }
-        else if (Compare(input, CANCEL))
+        else if (Compare(input, EInput.CANCEL))
         {
             if (!enabled)
             {

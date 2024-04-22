@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using CMathf;
 using UnityEngine;
 
 // enum
-public enum SceneState : byte
+public enum ESceneState : byte
 { 
     None,
     Load,
@@ -12,7 +11,7 @@ public enum SceneState : byte
     Pause,
     Leave,
 }
-public enum Stat
+public enum EStat
 { 
     HP = 0,
     MP,
@@ -27,9 +26,28 @@ public enum Stat
     LUK,
     CNT
 }
+public enum EAssetType : byte
+{ 
+    None     = 0,
+    AnimCtrl = 1,
+}
+public enum EAnimeCodeToString
+{ 
+    NONE,
+
+    IDLE_FRONT,
+    IDLE_BACK,
+    IDLE_LEFT,
+    IDLE_RIGHT,
+
+    MOVE_FRONT,
+    MOVE_BACK,
+    MOVE_LEFT,
+    MOVE_RIGHT,
+} //해당 자료형 값에 .ToString()하겠다는 뜻으로 접미사 ToString을 붙임
 
 [Flags]
-public enum GameState : byte
+public enum EGameStateFlag : byte
 { 
     None    = 0,
     Opening = 1 << 4,
@@ -37,7 +55,7 @@ public enum GameState : byte
     Battle  = 1 << 6,
     Event   = 1 << 7
 }
-public enum UIType : byte
+public enum EUIType : byte
 {
     Title = 0,
 }
@@ -46,33 +64,39 @@ namespace Index
 {
     public static class IDxInput
     {
-        public const int DOWN   = 1 << 0;
-        public const int UP     = 1 << 1;
-        public const int LEFT   = 1 << 2;
-        public const int RIGHT  = 1 << 3;
-        public const int ENTER  = 1 << 4;
-        public const int CANCEL = 1 << 5;
-        public const int ESCAPE = 1 << 6;
-        public const int ACTION = 1 << 7;
+        private const int BIT_HOLD = 8;
 
-        private const int BIT_HOLD    = 8;
-        public  const int DOWN_HOLD   = 1 << (DOWN + BIT_HOLD);
-        public  const int UP_HOLD     = 1 << (UP + BIT_HOLD);
-        public  const int LEFT_HOLD   = 1 << (LEFT + BIT_HOLD);
-        public  const int RIGHT_HOLD  = 1 << (RIGHT + BIT_HOLD);
-        public  const int ENTER_HOLD  = 1 << (ENTER + BIT_HOLD);
-        public  const int CANCEL_HOLD = 1 << (CANCEL + BIT_HOLD);
-        public  const int ESCAPE_HOLD = 1 << (ESCAPE + BIT_HOLD);
-        public  const int ACTION_HOLD = 1 << (ACTION + BIT_HOLD);
-        public  const int MASK_HOLD   = 0x0F << BIT_HOLD;
+        //조금이라도 메모리를 연속적으로 사용하기 위하여 Enum으로 처리
+        [Flags]
+        public enum EInput
+        {
+            DOWN    = 1 << 0,
+            UP      = 1 << 1,
+            LEFT    = 1 << 2,
+            RIGHT   = 1 << 3,
+            ENTER   = 1 << 4,
+            CANCEL  = 1 << 5,
+            ESCAPE  = 1 << 6,
+            ACTION  = 1 << 7,
 
-        public const int ALL = 0xFF;
+            DOWN_HOLD   = 1 << (DOWN + BIT_HOLD),
+            UP_HOLD     = 1 << (UP + BIT_HOLD),
+            LEFT_HOLD   = 1 << (LEFT + BIT_HOLD),
+            RIGHT_HOLD  = 1 << (RIGHT + BIT_HOLD),
+            ENTER_HOLD  = 1 << (ENTER + BIT_HOLD),
+            CANCEL_HOLD = 1 << (CANCEL + BIT_HOLD),
+            ESCAPE_HOLD = 1 << (ESCAPE + BIT_HOLD),
+            ACTION_HOLD = 1 << (ACTION + BIT_HOLD),
+            MASK_HOLD   = 0x0F << BIT_HOLD,
 
-        public static bool Compare(int input, int compare)
+            ALL         = 0xFF
+        }
+
+        public static bool Compare(EInput input, EInput compare)
         {
             return (input & compare) != 0;
         }
-        public static bool Compare(int input, params int[] compares)
+        public static bool Compare(EInput input, params EInput[] compares)
         {
             for (int i = 0; i < compares.Length; ++i)
             {
@@ -83,10 +107,6 @@ namespace Index
             }
 
             return false;
-        }
-        public static bool AnyKeyHold(int input)
-        {
-            return (input & MASK_HOLD) > 0;
         }
     }
     public static class IDxTile

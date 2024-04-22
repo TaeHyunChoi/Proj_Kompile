@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using Index;
+using static Index.IDxInput;
 
 public partial class OnOpening // Coroutine
 {
@@ -51,10 +51,10 @@ public partial class OnOpening // Coroutine
             }
             return state = index + 1;
         }
-        public void Input(int input)
+        public void Input(EInput input)
         {
             //정해진 입력 이외는 처리하지 않음
-            if (false == IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ACTION))
+            if (false == Compare(input, EInput.ENTER, EInput.ACTION))
             {
                 return;
             }
@@ -89,7 +89,7 @@ public partial class OnOpening // Coroutine
             instance.Set();
             return -1;
         }
-        public void Input(int input)
+        public void Input(EInput input)
         {
 
         }

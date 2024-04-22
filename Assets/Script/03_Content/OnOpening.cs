@@ -45,7 +45,7 @@ public partial class OnOpening : ContentBase
                 break;
             case 3:
                 Main.InputMgr.ReleaseUpdater();
-                Main.UIMgr.Pop(UIType.Title, true);
+                Main.UIMgr.Pop(EUIType.Title, true);
                 break;
             default:
                 return;

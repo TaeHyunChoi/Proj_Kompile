@@ -16,7 +16,7 @@ public partial class SceneMgr // Coroutine
             switch (index)
             {
                 case 0:
-                    Main.SceneMgr.SetState(SceneState.Load);
+                    Main.SceneMgr.SetState(ESceneState.Load);
                     curtain.gameObject.SetActive(true);
                     break;
                 case 1:
@@ -32,7 +32,7 @@ public partial class SceneMgr // Coroutine
                     Main.Instance.Release();
                     Transform transformCameraCanvas = Main.UIMgr.CameraCanvas.transform;
                     taskOpening = OnOpening.InitAsync(transformCameraCanvas);
-                    taskUI      = Main.UIMgr.InitAsync(GameState.Opening);
+                    taskUI      = Main.UIMgr.InitAsync(EGameStateFlag.Opening);
                     break;
                 case 4:
                     if (false == taskOpening.IsCompletedSuccessfully
@@ -47,7 +47,7 @@ public partial class SceneMgr // Coroutine
                 default:
                     taskOpening.Dispose();
                     taskUI.Dispose();
-                    Main.SceneMgr.SetState(SceneState.Play);
+                    Main.SceneMgr.SetState(ESceneState.Play);
                     return -1;
             }
 
@@ -72,7 +72,7 @@ public partial class SceneMgr // Coroutine
             switch (index)
             {
                 case 0:
-                    Main.SceneMgr.state = SceneState.Leave;
+                    Main.SceneMgr.state = ESceneState.Leave;
                     curtain.alpha = 0;
                     curtain.gameObject.SetActive(true);
                     break;
@@ -86,7 +86,7 @@ public partial class SceneMgr // Coroutine
                     break;
                 case 2:
                     //TODO: dev Mapdata (using grid?)
-                    Main.SceneMgr.state = SceneState.Load;
+                    Main.SceneMgr.state = ESceneState.Load;
                     string sceneName = string.Empty;
                     int chapter = mapData.Code / 100;
                     switch (chapter)
@@ -106,7 +106,7 @@ public partial class SceneMgr // Coroutine
                     Main.Instance.Release();
                     Transform level = GameObject.FindWithTag("Field").transform;
                     taskField = OnField.InitAsync(level, mapData);
-                    taskUI    = Main.UIMgr.InitAsync(GameState.Field);
+                    taskUI    = Main.UIMgr.InitAsync(EGameStateFlag.Field);
                     break;
                 case 5:
                     if (false == taskField.IsCompletedSuccessfully

@@ -3,20 +3,20 @@ using UnityEngine;
 public partial class SceneMgr
 {
     private CanvasGroup loadingCurtain;
-    private SceneState state;
+    private ESceneState state;
 
-    public void LoadSceneAsync(GameState next, int code = -1)
+    public void LoadSceneAsync(EGameStateFlag next, int code = -1)
     {
         Main.InputMgr.ReleaseUpdater();
         Main.InputMgr.ReleaseFixedUpdater();
 
         switch (next)
         {
-            case GameState.Opening:
+            case EGameStateFlag.Opening:
                 LoadOpeningScene opening = new LoadOpeningScene(loadingCurtain);
                 CoroutineUpdater.SetHandler(new CCoroutine<LoadOpeningScene>(opening));
                 break;
-            case GameState.Field:
+            case EGameStateFlag.Field:
                 if (true == DataTable.TryGetMapData(code, out MapData map))
                 {
                     LoadFieldScene level = new LoadFieldScene(loadingCurtain, map);
@@ -30,7 +30,7 @@ public partial class SceneMgr
                 break;
         }
     }
-    public void SetState(SceneState state)
+    public void SetState(ESceneState state)
     {
         this.state = state;
     }

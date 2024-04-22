@@ -104,18 +104,18 @@ public struct UnitData : IDataSetter
         name = data["Name"];
         group = byte.Parse(data["Group"]);
 
-        statDefault = new int[(int)Stat.CNT];
-        statDefault[(int)Stat.HP ] = int.Parse(data["HP"]);
-        statDefault[(int)Stat.MP ] = int.Parse(data["MP"]);
-        statDefault[(int)Stat.EXP] = 0;
-        statDefault[(int)Stat.STR] = int.Parse(data["STR"]);
-        statDefault[(int)Stat.CON] = int.Parse(data["CON"]);
-        statDefault[(int)Stat.INT] = int.Parse(data["INT"]);
-        statDefault[(int)Stat.WIS] = int.Parse(data["WIS"]);
-        statDefault[(int)Stat.DEX] = int.Parse(data["DEX"]);
-        statDefault[(int)Stat.AGI] = int.Parse(data["AGI"]);
-        statDefault[(int)Stat.CHA] = int.Parse(data["CHA"]);
-        statDefault[(int)Stat.LUK] = int.Parse(data["LUK"]);
+        statDefault = new int[(int)EStat.CNT];
+        statDefault[(int)EStat.HP ] = int.Parse(data["HP"]);
+        statDefault[(int)EStat.MP ] = int.Parse(data["MP"]);
+        statDefault[(int)EStat.EXP] = 0;
+        statDefault[(int)EStat.STR] = int.Parse(data["STR"]);
+        statDefault[(int)EStat.CON] = int.Parse(data["CON"]);
+        statDefault[(int)EStat.INT] = int.Parse(data["INT"]);
+        statDefault[(int)EStat.WIS] = int.Parse(data["WIS"]);
+        statDefault[(int)EStat.DEX] = int.Parse(data["DEX"]);
+        statDefault[(int)EStat.AGI] = int.Parse(data["AGI"]);
+        statDefault[(int)EStat.CHA] = int.Parse(data["CHA"]);
+        statDefault[(int)EStat.LUK] = int.Parse(data["LUK"]);
 
         rcsCode = data["RcsCode"];
     }

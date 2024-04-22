@@ -54,7 +54,7 @@ public class Main : MonoBehaviour
 
     private void Start()
     {
-        mgrScene.LoadSceneAsync(GameState.Opening);
+        mgrScene.LoadSceneAsync(EGameStateFlag.Opening);
         Application.targetFrameRate = frameRate;
     }
 
