@@ -10,6 +10,7 @@ public class UITitle : UIBase, IInputHandler
     private int itemCount;
     private float delta;
     private float alphaMax = 0.6f, alphaMin = 0.3f;
+    private float offsetTime;
 
     private void Awake()
     {
@@ -22,6 +23,7 @@ public class UITitle : UIBase, IInputHandler
         }
 
         select = 0;
+        offsetTime = 0f;
     }
     private void Start()
     {
@@ -48,20 +50,7 @@ public class UITitle : UIBase, IInputHandler
     }
     public void Input(EInput input)
     {
-        if (Compare(input, EInput.UP))
-        {
-            SetItemColor(select, 0f); //prev
-            select = (select - 1 + itemCount) % itemCount;
-
-            SetItemColor(select, alphaMin); //next
-        }
-        else if (Compare(input, EInput.DOWN))
-        {
-            SetItemColor(select, 0f);
-            select = (select + 1 + itemCount) % itemCount;
-            SetItemColor(select, alphaMin);
-        }
-        else if (Compare(input, EInput.ENTER, EInput.ACTION))
+        if (Compare(input, EInput.ENTER, EInput.ACTION))
         {
             SetItemColor(select, alphaMax);
             enabled = false;
@@ -88,12 +77,32 @@ public class UITitle : UIBase, IInputHandler
             }
 
         }
-        else if (Compare(input, EInput.CANCEL))
+        if (Compare(input, EInput.CANCEL))
         {
             if (!enabled)
             {
                 enabled = true;
             }
+        }
+
+        if (Time.time < offsetTime)
+        {
+            return;
+        }
+        offsetTime = Time.time + Time.fixedDeltaTime * 10f;
+
+        if (Compare(input, EInput.UP))
+        {
+            SetItemColor(select, 0f); //prev
+            select = (select - 1 + itemCount) % itemCount;
+
+            SetItemColor(select, alphaMin); //next
+        }
+        if (Compare(input, EInput.DOWN))
+        {
+            SetItemColor(select, 0f);
+            select = (select + 1 + itemCount) % itemCount;
+            SetItemColor(select, alphaMin);
         }
     }
     private void SetItemColor(int index, float alpha)
