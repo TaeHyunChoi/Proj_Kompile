@@ -26,8 +26,15 @@ public class OnField : ContentBase, IFixedInputHandler
     //현재 필드에서 입력을 받으면 Player를 이동시킨다. (플레이어 이동이므로 I"Fixed"InputHandler 받음)
     public void Input(Index.IDxInput.EInput input)
     {
-        Vector3 dir = TileUtility.GetDirection(input);
-        Main.Player.Move(tileMap, dir);
+        if (Index.IDxInput.EInput.NONE == input)
+        {
+            Main.Player.Stop();
+        }
+        else
+        {
+            Vector3 dir = TileUtility.GetDirection(input);
+            Main.Player.Move(tileMap, dir);
+        }
     }
     private OnField(Transform level, MapData data)
     {

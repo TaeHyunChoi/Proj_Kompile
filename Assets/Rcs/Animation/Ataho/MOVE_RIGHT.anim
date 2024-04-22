@@ -31,15 +31,6 @@ AnimationClip:
         outWeight: 0
       - serializedVersion: 3
         time: 0.6666667
-        value: 0
-        inSlope: Infinity
-        outSlope: Infinity
-        tangentMode: 103
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 0.68333334
         value: 1
         inSlope: Infinity
         outSlope: Infinity
@@ -50,7 +41,7 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    attribute: m_FlipY
+    attribute: m_FlipX
     path: 
     classID: 212
     script: {fileID: 0}
@@ -87,7 +78,7 @@ AnimationClip:
     genericBindings:
     - serializedVersion: 2
       path: 0
-      attribute: 1444465954
+      attribute: 555744692
       script: {fileID: 0}
       typeID: 212
       customType: 0
@@ -144,15 +135,6 @@ AnimationClip:
         outWeight: 0
       - serializedVersion: 3
         time: 0.6666667
-        value: 0
-        inSlope: Infinity
-        outSlope: Infinity
-        tangentMode: 103
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 0.68333334
         value: 1
         inSlope: Infinity
         outSlope: Infinity
@@ -163,7 +145,7 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    attribute: m_FlipY
+    attribute: m_FlipX
     path: 
     classID: 212
     script: {fileID: 0}

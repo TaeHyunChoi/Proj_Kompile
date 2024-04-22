@@ -70,6 +70,8 @@ namespace Index
         [Flags]
         public enum EInput
         {
+            NONE    = 0,
+
             DOWN    = 1 << 0,
             UP      = 1 << 1,
             LEFT    = 1 << 2,
@@ -79,11 +81,11 @@ namespace Index
             ESCAPE  = 1 << 6,
             ACTION  = 1 << 7,
 
-            DOWN_HOLD   = 1 << (DOWN + BIT_HOLD),
-            UP_HOLD     = 1 << (UP + BIT_HOLD),
-            LEFT_HOLD   = 1 << (LEFT + BIT_HOLD),
-            RIGHT_HOLD  = 1 << (RIGHT + BIT_HOLD),
-            ENTER_HOLD  = 1 << (ENTER + BIT_HOLD),
+            DOWN_HOLD   = 1 << (DOWN   + BIT_HOLD),
+            UP_HOLD     = 1 << (UP     + BIT_HOLD),
+            LEFT_HOLD   = 1 << (LEFT   + BIT_HOLD),
+            RIGHT_HOLD  = 1 << (RIGHT  + BIT_HOLD),
+            ENTER_HOLD  = 1 << (ENTER  + BIT_HOLD),
             CANCEL_HOLD = 1 << (CANCEL + BIT_HOLD),
             ESCAPE_HOLD = 1 << (ESCAPE + BIT_HOLD),
             ACTION_HOLD = 1 << (ACTION + BIT_HOLD),
@@ -100,7 +102,7 @@ namespace Index
         {
             for (int i = 0; i < compares.Length; ++i)
             {
-                if ((input & compares[i]) != 0)
+                if (0 != (input & compares[i]))
                 {
                     return true;
                 }
