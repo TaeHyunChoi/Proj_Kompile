@@ -10,7 +10,7 @@ public class AssetMgr
     private static Dictionary<int,    AsyncOperationHandle> objectHandlers = new Dictionary<int,    AsyncOperationHandle>();
     private static Dictionary<string, AsyncOperationHandle> assetHandler   = new Dictionary<string, AsyncOperationHandle>();
 
-    // Init Object
+    // Init/Load Asset
     public static async Task<GameObject> InstantiateGameObjectAsync(string address, Transform parent, bool isOn)
     {
         AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
@@ -20,6 +20,14 @@ public class AssetMgr
         objectHandlers.Add(go.GetInstanceID(), handle);
         return go;
     }
+    private static Task<T> LoadAssetAsync<T>(string address)
+    {
+        AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
+        assetHandler.Add(address, handle);
+        return handle.Task;
+    }
+
+    // Spawn Unit
     public static async Task<T> SpawnUnit<T>(int index, Transform parent) where T : UnitBase, new()
     {
         GameObject obj = await InstantiateGameObjectAsync("UnitBase", parent, true);
@@ -38,8 +46,6 @@ public class AssetMgr
         taskController.Dispose();
         return unit;
     }
-
-    // Load Asset
     public static string GetAssetAddress(EAssetType type, int code)
     {
         int index = (byte)type * 10000 + code;
@@ -59,12 +65,6 @@ public class AssetMgr
         }
 
         return null;
-    }
-    private static Task<T> LoadAssetAsync<T>(string address)
-    {
-        AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
-        assetHandler.Add(address, handle);
-        return handle.Task;
     }
 
     // Release Asset
