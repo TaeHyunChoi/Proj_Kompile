@@ -5,13 +5,11 @@ using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
 {
-    private Camera    mMainCam;
-    private Transform mTarget;
-    [SerializeField] 
-    private Vector3 mOffset;
-    [SerializeField] 
-    private Quaternion mRotation;
+    private readonly Vector3    OFFSET   = new Vector3(0f, 3f, -2f);
+    private readonly Quaternion ROTATION = Quaternion.Euler(50f, 0f, 0f);
 
+    private Camera     mMainCam;
+    private Transform  mTarget;
 
     private void Awake() 
     {
@@ -20,8 +18,8 @@ public class CameraFollow : MonoBehaviour
     }
     public void SetFollow(Transform target)
     {
-        this.mTarget = target;
-        transform.SetPositionAndRotation(mOffset, mRotation);
+        mTarget = target;
+        transform.SetPositionAndRotation(OFFSET, ROTATION);
         enabled = true;
     }
     public void SetFOV(float scale)
@@ -35,6 +33,6 @@ public class CameraFollow : MonoBehaviour
 
     private void LateUpdate() 
     {
-        transform.position = mTarget.position + mOffset;
+        transform.position = mTarget.position + OFFSET;
     }
 }

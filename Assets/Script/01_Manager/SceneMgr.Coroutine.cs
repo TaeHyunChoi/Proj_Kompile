@@ -20,6 +20,7 @@ public partial class SceneMgr // Coroutine
                     mCurtainCanvas.gameObject.SetActive(true);
                     break;
                 case 1:
+                    Main.Instance.Release();
                     mLoadAsyncOper = SceneManager.LoadSceneAsync("010_OpeningScene", LoadSceneMode.Single);
                     break;
                 case 2:
@@ -29,7 +30,6 @@ public partial class SceneMgr // Coroutine
                     }
                     break;
                 case 3:
-                    Main.Instance.Release();
                     Transform transformCameraCanvas = Main.UIMgr.CanvasCamera.transform;
                     mTaskOpening = OnOpening.InitAsync(transformCameraCanvas);
                     mTaskLoadUI      = Main.UIMgr.InitAsync(EGameStateFlag.Opening);
