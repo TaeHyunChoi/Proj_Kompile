@@ -52,7 +52,6 @@ public class CoroutineUpdater : MonoBehaviour
             UnityEngine.Assertions.Assert.IsNotNull(handler, "Handler is null;");
             return;
         }
-
         instance.enabled = true;
 
         //List 중에 빈 자리에 채워 넣는다.

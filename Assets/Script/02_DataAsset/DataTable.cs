@@ -3,31 +3,21 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
-using DataType;
+using DataStruct;
 
-/// <summary>
-/// [목표] CSV 데이터 불러오기 최적화 (속도 향상을 위하여 안정성은 상대적으로 낮춤)
-/// [방법] (1)기존 string → byte[] 로 읽어오기 (2)Generic<T> 활용하여 코드 재사용성 높이기
-/// [비고] Job System을 사용하여 멀티 스레딩으로 CSV를 불러오려 했으나 'reference type은 Job struct에서 사용할 수 없다'는 제한이 있어 기각.
-/// </summary>
 public static class DataTable
 {
-    private static List<SkillData> tableSkill;
-    private static List<ItemData>  tableItem;
-    private static List<UnitData>  tableUnit;
-    private static List<MapData>   tableMap;
-
-    public static List<SkillData> SkillTable { get => tableSkill; }
-    public static List<ItemData>  ItemTable  { get => tableItem; }
-    public static List<UnitData>  UnitTable  { get => tableUnit; }
-    public static List<MapData>   MapTable   { get => tableMap; }
+    public static List<SkillData> SkillTable { get; private set; }
+    public static List<ItemData>  ItemTable  { get; private set; }
+    public static List<UnitData>  UnitTable  { get; private set; }
+    public static List<MapData>   MapTable   { get; private set; }
 
     public static void LoadTable()
     {
-        tableSkill = ReadBinary<SkillData>("SkillData.bin");
-        tableItem  = ReadBinary<ItemData>("ItemData.bin");
-        tableUnit  = ReadBinary<UnitData>("UnitData.bin");
-        tableMap   = ReadBinary<MapData>("MapData.bin");
+        SkillTable = ReadBinary<SkillData>("SkillData.bin");
+        ItemTable  = ReadBinary<ItemData>("ItemData.bin");
+        UnitTable  = ReadBinary<UnitData>("UnitData.bin");
+        MapTable   = ReadBinary<MapData>("MapData.bin");
     }
     public static List<T> ReadBinary<T>(string fileName) where T : struct, IDataSetter
     {
@@ -49,9 +39,9 @@ public static class DataTable
     }
     public static bool TryGetMapData(int code, out MapData map)
     {
-        for (int i = 0; i < tableMap.Count; ++i)
+        for (int i = 0; i < MapTable.Count; ++i)
         {
-            map = tableMap[i];
+            map = MapTable[i];
             if (code == map.Code)
             {
                 return true;
@@ -86,13 +76,13 @@ public static class DataTable
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
 
-    //.csv (기획자, 에디터에서 .bin 파일로 변환 필요)
+    // (for 기획자) custom editor 사용하여 csv 파일을 .bin 파일로 변환
     public static void LoadCSVTable()
     {
-        tableSkill = LoadTable<SkillData>("SkillData");
-        tableItem = LoadTable<ItemData>("ItemData");
-        tableUnit = LoadTable<UnitData>("UnitData");
-        tableMap = LoadTable<MapData>("MapData");
+        SkillTable = LoadTable<SkillData>("SkillData");
+        ItemTable  = LoadTable<ItemData>("ItemData");
+        UnitTable  = LoadTable<UnitData>("UnitData");
+        MapTable   = LoadTable<MapData>("MapData");
     }
     private static List<T> LoadTable<T>(string fileName) where T : IDataSetter, new()
     {

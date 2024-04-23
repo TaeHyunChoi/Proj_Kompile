@@ -9,7 +9,8 @@ public partial class OnOpening : ContentBase
 
     public static async Task<OnOpening> InitAsync(Transform canvas_camera)
     {
-        GameObject go = await AssetMgr.InstantiateGameObjectAsync("OpeningGame", canvas_camera, true);
+        string code = AssetMgr.GetAssetAddress(EAssetType.Prefab, (int)EPrefabType.OpeningGame);
+        GameObject go = await AssetMgr.InstantiateGameObjectAsync(code, canvas_camera, true);
         OnOpening opening = new OnOpening(go.transform);
         return opening;
     }
@@ -17,7 +18,7 @@ public partial class OnOpening : ContentBase
     {
         instance = this;
         this.transform = transform;
-        state = 0;
+        mState = 0;
 
         Image[] img = transform.GetComponentsInChildren<Image>();
         for (int i = 0; i < img.Length; ++i)
@@ -28,7 +29,7 @@ public partial class OnOpening : ContentBase
 
     public void Set()
     {
-        switch (state)
+        switch (mState)
         {
             case 0:
                 Main.Instance.SetContent(this);
@@ -44,14 +45,13 @@ public partial class OnOpening : ContentBase
                 CoroutineUpdater.SetHandler(new CCoroutine<OpeningTitle>(title));
                 break;
             case 3:
-                Main.InputMgr.ReleaseUpdater();
                 Main.UIMgr.Pop(EUIType.Title, true);
                 break;
             default:
                 return;
         }
 
-        state += 1;
+        mState += 1;
     }
     public override void Dispose()
     {

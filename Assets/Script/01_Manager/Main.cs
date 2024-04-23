@@ -4,86 +4,74 @@ public class Main : MonoBehaviour
 {
     //TODO: FrameRate는 추후에 Config.cs 등에게 넘기기
     [SerializeField]
-    private int frameRate = 144; 
+    private int mFrameRate = 144; 
 
-    //singleton
-    private static Main instance;
+    public static Main          Instance { get; private set; }
+    public static UnitPlayer    Player   { get; set; }
+    public static InputMgr      InputMgr { get; private set; }
+    public static SceneMgr      SceneMgr { get; private set; }
+    public static UnitMgr       UnitMgr  { get; private set; }
+    public static UIMgr         UIMgr    { get; private set; }
+    public static CameraFollow  Cam      { get; private set; }
 
-    //manager
-    private InputMgr     mgrInput;
-    private UnitMgr      mgrUnit;
-    private UIMgr        mgrUI;
-    private SceneMgr     mgrScene;
-    private CameraFollow camFollower;
+    private ContentBase mContent;
 
-    //content
-    private UnitPlayer player;
-    private ContentBase content;
-
-    //getter
-    public static Main          Instance { get => instance; }
-    public static UnitPlayer    Player   { get => instance.player; }
-    public static InputMgr      InputMgr { get => instance.mgrInput; }
-    public static SceneMgr      SceneMgr { get => instance.mgrScene; }
-    public static UnitMgr       UnitMgr  { get => instance.mgrUnit; }
-    public static UIMgr         UIMgr    { get => instance.mgrUI; }
-    public static CameraFollow  Cam      { get => instance.camFollower; }
-
+    // Main.cs
     private void Awake()
     {
-        //Singleton
-        if (instance != null)
+        //like Singleton
+        if (Instance != null)
         {
             Destroy(gameObject);
             return;
         }
-        instance = this;
+        Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        //Init DataTable
         DataTable.LoadTable();
         //TODO: Load Player Saved Data
 
-        //Init Manager
-        mgrInput = transform.GetComponent<InputMgr>();
-        mgrUI    = new UIMgr   (transform.Find("UI"));
-        mgrUnit  = new UnitMgr (transform.Find("Unit"));
-        mgrScene = new SceneMgr(transform.Find("Scene"));
-        camFollower      = Camera.main.transform.GetComponent<CameraFollow>();
+        InputMgr = transform.GetComponent<InputMgr>();
+        Cam      = Camera.main.transform.GetComponent<CameraFollow>();
+        UIMgr    = new UIMgr   (transform.Find("UI"));
+        UnitMgr  = new UnitMgr (transform.Find("Unit"));
+        SceneMgr = new SceneMgr(transform.Find("Scene"));
     }
-
     private void Start()
     {
-        mgrScene.LoadSceneAsync(EGameStateFlag.Opening);
-        Application.targetFrameRate = frameRate;
+        SceneMgr.LoadSceneAsync(EGameStateFlag.Opening);
+        Application.targetFrameRate = mFrameRate;
+    }
+    private void Update()
+    {
+        UnitMgr.Update();
     }
 
     // set func()
-    public void SetContent(ContentBase content) //여기서 type을 받는게 깔끔하려나.. 아니면 하지 않거나?
+    public void SetContent(ContentBase content)
     {
-        this.content = content;
-
-        //IInputHandler가 없으면 null을 반환 => 그대로 Release까지 가능
-        mgrInput.SetUpdater(content as IInputHandler);
-        mgrInput.SetFixedUpdater(content as IFixedInputHandler);
+        mContent = content;
+        InputMgr.Updater      = content as IInputHandler;
+        InputMgr.FixedUpdater = content as IFixedInputHandler;
     }
     public void SetFieldLayer(int layer)
     {
-        OnField field = content as OnField;
+        OnField field = mContent as OnField;
         UnityEngine.Assertions.Assert.IsNotNull(field, "field is null;");
         field.TransLayer(layer);
     }
-    public void SetPlayer(UnitPlayer unit)
+    public void SetPlayer(UnitPlayer player)
     {
-        player = unit;
-        camFollower.SetFollow(player.transform);
+        UnityEngine.Assertions.Assert.IsNotNull(player, "null player;");
+        Player = player;
+        Cam.SetFollow(player.Transform);
     }
 
     public void Release()
     {
-        if (null != content)
+        if (null != mContent)
         {
-            content.Dispose();
+            mContent.Dispose();
         }
 
         UIMgr.Release();

@@ -11,7 +11,7 @@ public class MapTileComponent : MonoBehaviour
     [SerializeField] 
     private float scale = 1f;
     [SerializeField] 
-    private TileTrigger trigger;
+    private ETileTriggerType trigger;
     [SerializeField] 
     private byte valueLayer;
     [SerializeField] 
@@ -25,16 +25,16 @@ public class MapTileComponent : MonoBehaviour
         int info = (1f != scale) ? (1 << SHIFT_INFO_SCALE) : 0;
         int trigger = (int)this.trigger;
 
-        if (0 != (TileTrigger.Scale & this.trigger))
+        if (0 != (ETileTriggerType.Scale & this.trigger))
         {
             int scaleDown = (1f == scale) ? 1 : 0;
             trigger |= scaleDown << SHIFT_TRIGGER_SCALE_VALUE;
         }
-        if (0 != (TileTrigger.Layer & this.trigger))
+        if (0 != (ETileTriggerType.Layer & this.trigger))
         {
             trigger |= valueLayer << SHIFT_TRIGGER_LAYER_VALUE;
         }
-        if (0 != (TileTrigger.Event & this.trigger))
+        if (0 != (ETileTriggerType.Event & this.trigger))
         {
             trigger |= valueInteract << SHIFT_TRIGGER_INTERACT_VALUE;
         }

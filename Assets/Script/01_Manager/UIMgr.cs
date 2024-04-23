@@ -3,23 +3,20 @@ using UnityEngine;
 
 public class UIMgr
 {
-    private UIBase[] cache;
-
-    private Canvas canvasOverlay;
-    private Canvas canvasCamera;
-
-    public Canvas OverlayCanvas { get => canvasOverlay; }
-    public Canvas CameraCanvas  { get => canvasCamera; }
+    private UIBase[] mUICache;
+    public Canvas CanvasOverlay { get; private set; }
+    public Canvas CanvasCamera  { get; private set; }
 
     public async Task InitAsync(EGameStateFlag state)
     {
         switch (state)
         {
             case EGameStateFlag.Opening:
-                cache = new UIBase[1];
-                GameObject obj = await AssetMgr.InstantiateGameObjectAsync("UITitle", CameraCanvas.transform, false);
+                mUICache = new UIBase[1];
+                string code = AssetMgr.GetAssetAddress(EAssetType.UI, (int)EUIType.Title);
+                GameObject obj = await AssetMgr.InstantiateGameObjectAsync(code, CanvasCamera.transform, false);
                 UITitle title = obj.AddComponent<UITitle>();
-                cache[(byte)EUIType.Title] = title;
+                mUICache[(byte)EUIType.Title] = title;
                 break;
             case EGameStateFlag.Field:
                 Debug.Log("Need to dev: UI.InitAsync(Field)");
@@ -28,25 +25,22 @@ public class UIMgr
     }
     public void Pop(EUIType type, bool isOn)
     {
-        cache[(byte)type].Pop(isOn);
+        Main.InputMgr.Updater = null;
+        mUICache[(byte)type].Pop(isOn);
     }
     public void Release()
     {
-        if (null == cache)
-        {
-            return;
-        }
+        UnityEngine.Assertions.Assert.IsNotNull(mUICache, "null ui cache");
 
-        for (int i = 0; i < cache.Length; ++i)
+        for (int i = 0; i < mUICache.Length; ++i)
         {
-            cache[i].Dispose();
+            mUICache[i].Dispose();
         }
-        cache = null;
     }
 
     public UIMgr(Transform transform)
     {
-        canvasOverlay = transform.GetChild(0).GetComponent<Canvas>();
-        canvasCamera = transform.GetChild(1).GetComponent<Canvas>();
+        CanvasOverlay = transform.GetChild(0).GetComponent<Canvas>();
+        CanvasCamera  = transform.GetChild(1).GetComponent<Canvas>();
     }
 }
