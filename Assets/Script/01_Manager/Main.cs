@@ -16,7 +16,10 @@ public class Main : MonoBehaviour
 
     private ContentBase mContent;
 
-    // Main.cs
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+    float deltaTime = 0.0f;
+#endif
+
     private void Awake()
     {
         //like Singleton
@@ -45,6 +48,10 @@ public class Main : MonoBehaviour
     private void Update()
     {
         UnitMgr.Update();
+
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+        deltaTime += (Time.deltaTime - deltaTime) * 0.1f;
+#endif
     }
 
     // set func()
@@ -71,9 +78,27 @@ public class Main : MonoBehaviour
     {
         if (null != mContent)
         {
-            mContent.Dispose();
+            mContent.Release();
         }
 
         UIMgr.Release();
     }
+
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+    private void OnGUI()
+    {
+        int w = Screen.width, h = Screen.height;
+
+        GUIStyle style = new GUIStyle();
+
+        Rect rect = new Rect(0, 0, w, h * 2 / 100);
+        style.alignment = TextAnchor.UpperLeft;
+        style.fontSize = h * 2 / 50;
+        style.normal.textColor = new Color(0f, 1f, 0f, 1f);
+        float msec = deltaTime * 1000.0f;
+        float fps = 1.0f / deltaTime;
+        string text = string.Format("{0:0.0} ms ({1:0.} fps)", msec, fps);
+        GUI.Label(rect, text, style);
+    }
+#endif
 }

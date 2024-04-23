@@ -16,3 +16,9 @@ public interface IFixedInputHandler
 {
     public void Input(Index.IDxInput.EInput input);
 }
+public interface IUnitUpdater
+{
+    public void Update();
+}
+
+

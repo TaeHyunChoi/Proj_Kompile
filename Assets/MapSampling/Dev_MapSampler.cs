@@ -55,7 +55,7 @@ public class Dev_MapSampler : MonoBehaviour
             Vector3 B = TileUtility.SnappingPoint(transform.TransformPoint(vertices[t1]), 0.125f, 3);
             Vector3 C = TileUtility.SnappingPoint(transform.TransformPoint(vertices[t2]), 0.125f, 3);
 
-            SetTileData(A, B, C, scale, layer, info, trigger);
+            SetTileDataRecursive(A, B, C, scale, layer, info, trigger);
         }
     }
 
@@ -92,7 +92,7 @@ public class Dev_MapSampler : MonoBehaviour
 
         return y << shift;
     }
-    private static void SetTileData(Vector3 p0, Vector3 p1, Vector3 p2, float scale, byte layer, int info, int trigger)
+    private static void SetTileDataRecursive(Vector3 p0, Vector3 p1, Vector3 p2, float scale, byte layer, int info, int trigger)
     {
         float v0to1 = CMath.Floor(Vector3.Distance(new Vector3(p0.x, 0, p0.z), new Vector3(p1.x, 0, p1.z)), 3);
         float v1to2 = CMath.Floor(Vector3.Distance(new Vector3(p1.x, 0, p1.z), new Vector3(p2.x, 0, p2.z)), 3);
@@ -126,8 +126,8 @@ public class Dev_MapSampler : MonoBehaviour
         if (scale_half < diagonal)
         {
             Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 3);
-            SetTileData(p0, p1, midPoint, scale, layer, info, trigger);
-            SetTileData(p0, p2, midPoint, scale, layer, info, trigger);
+            SetTileDataRecursive(p0, p1, midPoint, scale, layer, info, trigger);
+            SetTileDataRecursive(p0, p2, midPoint, scale, layer, info, trigger);
         }
         //대상 삼각형을 찾으면 Tile_t에 정보를 저장한다.
         else

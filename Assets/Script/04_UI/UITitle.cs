@@ -112,7 +112,7 @@ public class UITitle : UIBase, IInputHandler
         mSelectionItems[index].color = new Color(target.r, target.g, target.b, alpha);
     }
 
-    public override void Dispose()
+    public override void Release()
     {
         GameObject.Destroy(gameObject);
         AssetMgr.ReleaseGameObject(gameObject.GetInstanceID());

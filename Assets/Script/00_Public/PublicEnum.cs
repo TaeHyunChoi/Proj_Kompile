@@ -1,4 +1,5 @@
 ﻿using System;
+using static Index.IDxTile;
 using CMathf;
 using UnityEngine;
 
@@ -55,7 +56,6 @@ public enum EAnimeCodeToString
     MOVE_LEFT,
     MOVE_RIGHT,
 }
-
 [Flags]
 public enum EGameStateFlag : byte
 { 
@@ -68,4 +68,23 @@ public enum EGameStateFlag : byte
 public enum EUIType : byte
 {
     Title = 0,
+}
+
+[Flags]
+public enum ETileTriggerType : ushort
+{
+    None = 0,
+    Scale = 1 << SHIFT_TRIGGER_SCALE,
+    Layer = 1 << SHIFT_TRIGGER_LAYER,
+    Event = 1 << SHIFT_TRIGGER_INTERACT
+}
+public enum ETileSizeType : byte
+{
+    Default,
+    Half,
+    Quater,
+    Inverse,
+    Default_Inverse,
+    Half_inverse,
+    Quater_inverse
 }

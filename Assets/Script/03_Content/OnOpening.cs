@@ -53,7 +53,7 @@ public partial class OnOpening : ContentBase
 
         mState += 1;
     }
-    public override void Dispose()
+    public override void Release()
     {
         GameObject obj = transform.gameObject;
         GameObject.Destroy(obj);

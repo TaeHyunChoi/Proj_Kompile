@@ -68,7 +68,7 @@ public class OnField : ContentBase, IFixedInputHandler
             }
         }
     }
-    public override void Dispose()
+    public override void Release()
     {
 
     }

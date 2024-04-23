@@ -5,24 +5,6 @@ using CMathf;
 using static Index.IDxTile;
 using static Index.IDxInput;
 
-[Flags]
-public enum ETileTriggerType : ushort
-{
-    None = 0,
-    Scale = 1 << SHIFT_TRIGGER_SCALE,
-    Layer = 1 << SHIFT_TRIGGER_LAYER,
-    Event = 1 << SHIFT_TRIGGER_INTERACT
-}
-public enum ETileSizeType : byte
-{
-    Default,
-    Half,
-    Quater,
-    Inverse,
-    Default_Inverse,
-    Half_inverse,
-    Quater_inverse
-}
 public static class TileUtility
 {
     private struct TriangleCollision
@@ -215,14 +197,17 @@ public static class TileUtility
     }
     public static int GetKeyByPoint(int layer, Vector3 point, float scale)
     {
+        //최소, 최대 범위 체크 (에러코드: -1로 설정)
         if (0 > point.x || 128 < point.x || 0 > point.z || 128 < point.z)
         {
             return -1;
         }
-
         Vector3 pivot = GetPivotByPoint(point, scale);
+
+        //나눗셈 연산을 피하고자 역수 계산 시 미리 저장한 값을 가져온다 (GetScale(););
         float scale_inverse = GetScale(ETileSizeType.Default_Inverse, scale);
 
+        //타일의 스케일이 0.5f인 경우, 추가 연산이 필요하다.
         int key = layer << SHIFT_KEY_LAYER;
         if (0 != pivot.x % 1f)
         {
@@ -773,16 +758,20 @@ public static class TileUtility
         float dist = CMath.Floor(scale * SIZE_QUATER - Time.fixedDeltaTime, 3);
         for (int i = 0; i < index; ++i)
         {
+            //대상 삼각형에 대하여
             TriangleCollision triangle = triangles[i];
 
+            //서로 맞닿는가?
             if (false == triangle.IsIntersected(goal, dist))
             {
                 continue;
             }
+            //대상 삼각형은 실제하는 데이터인가? (존재하는 타일이 있는가?)
             if (false == map.TryGetValue(triangle.Key, out DataStruct.STile tileChecked))
             {
                 return false;
             }
+            //대상 삼각형의 위치로 이동할 수 있는가? (충돌이 없는가?)
             if (false == tileChecked.IsMovable(triangle.Index))
             {
                 return false;

@@ -5,15 +5,16 @@ using UnityEngine;
 
 public class UnitMgr
 {
-    private List<UnitBase> mUnitPool;
-
-    //코딩 스탠타드를 따르면 mTransform이지만, 관용적인? transform이 더 가독성이 높으므로 예외적으로 명명
-    private Transform transform;        
+    private List<UnitBase>     mUnitPool;
+    private List<IUnitUpdater> mUnitUpdater;
+    private Transform          transform;        
 
     public UnitMgr(Transform transform)
     {
-        mUnitPool = new List<UnitBase>();
         this.transform = transform;
+
+        mUnitPool = new List<UnitBase>();
+        mUnitUpdater = new List<IUnitUpdater>();
     }
     public async Task InitAsync(Transform level)
     {
@@ -28,11 +29,13 @@ public class UnitMgr
         //...
     }
 
+    // UnitMgr.cs -> Main.Update()에서 호출
     public void Update()
     {
-        //for (int i = 0; i < pool.Count; ++i)
-        //{
-        //    pool[i].Update();
-        //}
+        for (int i = 0; i < mUnitUpdater.Count; ++i)
+        {
+            mUnitUpdater[i].Update();
+        }
     }
 }
+

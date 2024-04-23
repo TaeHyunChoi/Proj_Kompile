@@ -236,8 +236,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aadfeff32f9b93841b56a962f1460fba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mOffset: {x: 0, y: 2.5, z: -1.5}
-  mRotation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!4 &676284650
 Transform:
   m_ObjectHideFlags: 0

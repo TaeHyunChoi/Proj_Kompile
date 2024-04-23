@@ -11,11 +11,9 @@ namespace DataStruct
     public struct STile
     {
         //total 10 bytes
-        private byte maskInfo;    //  8 bits: scale(1), state(7)
-        private ushort maskTrigger; // 15 bits:  scale_trigger_flag(1),    scale_trigger_value(1),
-                                    //           layer_trigger_flag(1),    layer_trigger_value(4),
-                                    //           interact_trigger_flag(1), interact_trigger_value(7)
-        private ulong maskMove;    // 55 bits: height(13*3), move(16)
+        private byte   maskInfo;
+        private ushort maskTrigger;
+        private ulong  maskMove;
 
         public bool IsMovable(int indexTriangle)
         {

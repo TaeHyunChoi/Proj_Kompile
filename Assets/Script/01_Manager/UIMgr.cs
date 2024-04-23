@@ -38,7 +38,7 @@ public class UIMgr
                 break;
             }
 
-            mUICache[i].Dispose();
+            mUICache[i].Release();
         }
     }
 

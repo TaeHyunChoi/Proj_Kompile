@@ -55,7 +55,7 @@ public partial class SceneMgr // Coroutine
 
         public LoadOpeningScene(CanvasGroup curtain)
         {
-            this.mCurtainCanvas = curtain;
+            mCurtainCanvas = curtain;
         }
     }
     public class LoadFieldScene : IRoutineUpdater

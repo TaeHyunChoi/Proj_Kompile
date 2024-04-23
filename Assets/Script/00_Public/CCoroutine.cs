@@ -1,6 +1,6 @@
 ﻿public class CCoroutineHandler
 {
-    protected int index;
+    protected int mindex;
     public virtual bool MoveNext()
     {
         return false;
@@ -8,20 +8,20 @@
 }
 public class CCoroutine<T> : CCoroutineHandler where T : class, IRoutineUpdater
 {
-    private T routine;
+    private T mRoutine;
 
     public CCoroutine(T data)
     {
-        this.routine = data;
-        index = 0;
+        this.mRoutine = data;
+        mindex = 0;
     }
     public override bool MoveNext()
     {
-        index = routine.MoveNext(index);
+        mindex = mRoutine.MoveNext(mindex);
 
-        if (-1 == index)
+        if (-1 == mindex)
         {
-            routine = null;
+            mRoutine = null;
             return false;
         }
 
