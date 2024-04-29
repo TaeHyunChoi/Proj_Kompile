@@ -17,7 +17,6 @@ public class UnitPlayer : UnitBase
     public void Move(Dictionary<int, STile> map, Vector3 dirInput)
     {
         Vector3 position = transform.position;
-
         //직전 이동 방향과 같은 방향이면 시계 방향으로, 그렇지 않다면 반시계 방향으로 탐색한다.
         float sign = Mathf.Sign(Vector3.Cross(dirInput, mDirectionBefore).y) >= 0 ? 1f : -1f;
         for (int i = 0; i < INTERVAL_ROTATION.Length; ++i)
@@ -103,6 +102,9 @@ public class UnitPlayer : UnitBase
                 return;
             }
         }
+
+        //만약 이동불가한 경우가 있다면? 부동 소수점 기준을 1자리 올린다. (소수점 3자리 -> 소수점 2자리)
+        transform.position = TileUtility.SnappingPoint(position, Time.fixedDeltaTime * 10f, 2); ;
     }
     public void StopMove()
     {

@@ -17,7 +17,7 @@ public class Main : MonoBehaviour
     private ContentBase mContent;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-    float deltaTime = 0.0f;
+    private float deltaTime = 0.0f;
 #endif
 
     private void Awake()
