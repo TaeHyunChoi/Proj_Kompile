@@ -1,62 +1,80 @@
 using UnityEngine;
 using static Index.IDxInput;
+using CMathf;
 
 public class InputMgr : MonoBehaviour
 {
-    private IInputHandler      updater;         //update
-    private IFixedInputHandler fixedUpdater;    //fixed update
-    private int input;                          //입력값
+    public IInputHandler      Updater { get; set; }
+    public IFixedInputHandler FixedUpdater { get; set; }
 
-    public void Update()
+    private EInput mInputNow;
+    private EInput mInputPrev;
+
+    //InputMgr.cs
+    private void Update()
     {
+        mInputNow = EInput.NONE;
+
         //Button Down
-        if (Input.GetButtonDown("DOWN"))    { input |= DOWN;   }
-        if (Input.GetButtonDown("UP"))      { input |= UP;     }
-        if (Input.GetButtonDown("LEFT"))    { input |= LEFT;   }
-        if (Input.GetButtonDown("RIGHT"))   { input |= RIGHT;  }
-        if (Input.GetButtonDown("ENTER"))   { input |= ENTER;  }
-        if (Input.GetButtonDown("CANCEL"))  { input |= CANCEL; }
-        if (Input.GetButtonDown("ESCAPE"))  { input |= ESCAPE; }
-        if (Input.GetButtonDown("ACTION"))  { input |= ACTION; }
+        if (Input.GetButtonDown("DOWN"))    { mInputNow |= EInput.DOWN;   }
+        if (Input.GetButtonDown("UP"))      { mInputNow |= EInput.UP;     }
+        if (Input.GetButtonDown("LEFT"))    { mInputNow |= EInput.LEFT;   }
+        if (Input.GetButtonDown("RIGHT"))   { mInputNow |= EInput.RIGHT;  }
+
+        if (Input.GetButtonDown("ENTER"))   { mInputNow |= EInput.ENTER;  }
+        if (Input.GetButtonDown("CANCEL"))  { mInputNow |= EInput.CANCEL; }
+        if (Input.GetButtonDown("ESCAPE"))  { mInputNow |= EInput.ESCAPE; }
+        if (Input.GetButtonDown("ACTION"))  { mInputNow |= EInput.ACTION; }
 
         //Button Hold
-        if (Input.GetButton("DOWN"))        { input |= DOWN_HOLD;   }
-        if (Input.GetButton("UP"))          { input |= UP_HOLD;     }
-        if (Input.GetButton("LEFT"))        { input |= LEFT_HOLD;   }
-        if (Input.GetButton("RIGHT"))       { input |= RIGHT_HOLD;  }
-        if (Input.GetButton("ACTION"))      { input |= ACTION_HOLD; }
+        if (Input.GetButton("DOWN"))        { mInputNow |= EInput.DOWN_HOLD;   }
+        if (Input.GetButton("UP"))          { mInputNow |= EInput.UP_HOLD;     }
+        if (Input.GetButton("LEFT"))        { mInputNow |= EInput.LEFT_HOLD;   }
+        if (Input.GetButton("RIGHT"))       { mInputNow |= EInput.RIGHT_HOLD;  }
+        if (Input.GetButton("ACTION"))      { mInputNow |= EInput.ACTION_HOLD; }
 
-        if (0 != input
-            && null != updater)
+        //기본 입력을 키보드로 상정했으나 조이스틱 레버에 대응하고자 코드를 추가하였다.
+#if USING_JOYSTICK
+        float x = Input.GetAxisRaw("Horizontal");
+        float z = Input.GetAxisRaw("Vertical");
+        if      (x > 0) { mInputNow |= (EInput.RIGHT | EInput.RIGHT_HOLD); }
+        else if (x < 0) { mInputNow |= (EInput.LEFT  | EInput.LEFT_HOLD); }
+        if      (z > 0) { mInputNow |= (EInput.UP    | EInput.UP_HOLD); }
+        else if (z < 0) { mInputNow |= (EInput.DOWN  | EInput.DOWN_HOLD); }
+#endif
+
+        //마지막 입력까지 처리 후, 입력이 이어지지 않으면 Input()을 호출하지 않는다.
+        if (EInput.NONE != mInputNow || EInput.NONE != mInputPrev)
         {
-            updater.Input(input);
-            input = 0;
+            if (null != Updater)
+            {
+                Updater.Input(mInputNow);
+                mInputPrev = mInputNow;
+            }
         }
     }
     private void FixedUpdate()
     {
-        if (0 != input
-            && null != fixedUpdater)
+        if (EInput.NONE != mInputNow || EInput.NONE != mInputPrev)
         {
-            fixedUpdater.Input(input);
-            input = 0;
+            if (null != FixedUpdater)
+            {
+                FixedUpdater.Input(mInputNow);
+                mInputPrev = mInputNow;
+            }
         }
     }
-    public void SetUpdater(IInputHandler getter)
-    {
-        updater = getter;
-    }
-    public void SetFixedUpdater(IFixedInputHandler fixedGetter)
-    {
-        fixedUpdater = fixedGetter;
-    }
 
-    public void ReleaseUpdater()
+    public static Vector3 GetInputDirection(EInput input)
     {
-        updater = null;
-    }
-    public void ReleaseFixedUpdater()
-    {
-        fixedUpdater = null;
+        Vector3 dir = Vector3.zero;
+
+        if (true == Compare(input, EInput.UP)    || true == Compare(input, EInput.UP_HOLD))    { dir += Vector3.forward; }
+        if (true == Compare(input, EInput.DOWN)  || true == Compare(input, EInput.DOWN_HOLD))  { dir += Vector3.back; }
+        if (true == Compare(input, EInput.LEFT)  || true == Compare(input, EInput.LEFT_HOLD))  { dir += Vector3.left; }
+        if (true == Compare(input, EInput.RIGHT) || true == Compare(input, EInput.RIGHT_HOLD)) { dir += Vector3.right; }
+
+        dir.Normalize();
+        return CMath.FloorToVector(dir, 3);
     }
 }

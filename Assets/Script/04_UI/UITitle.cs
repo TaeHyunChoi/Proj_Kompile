@@ -4,28 +4,31 @@ using static Index.IDxInput;
 
 public class UITitle : UIBase, IInputHandler
 {
-    private Image[] items;
+    private static readonly float ALPHA_MAX = 0.6f;
+    private static readonly float ALPHA_MIN = 0.3f;
 
-    private int select;
-    private int itemCount;
-    private float delta;
-    private float alphaMax = 0.6f, alphaMin = 0.3f;
+    private Image[] mSelectionItems;
+    private int   mSelect;
+    private int   mItemCount;
+    private float mDeltaTime;
+    private float mOffsetTime;
 
     private void Awake()
     {
         Image[] images = transform.GetChild(0).GetComponentsInChildren<Image>(true);
-        items = new Image[images.Length - 1];
-        itemCount = images.Length - 1;
+        mSelectionItems = new Image[images.Length - 1];
+        mItemCount = images.Length - 1;
         for (int i = 1; i < images.Length; ++i)
         {
-            items[i - 1] = images[i];
+            mSelectionItems[i - 1] = images[i];
         }
 
-        select = 0;
+        mSelect = 0;
+        mOffsetTime = 0f;
     }
     private void Start()
     {
-        Main.InputMgr.SetUpdater(this);
+        Main.InputMgr.Updater = this;
     }
     public override void Pop(bool isOn)
     {
@@ -35,42 +38,29 @@ public class UITitle : UIBase, IInputHandler
 
     private void Update()
     {
-        if (items[select].color.a <= alphaMin)
+        if (mSelectionItems[mSelect].color.a <= ALPHA_MIN)
         {
-            delta = Time.deltaTime;
+            mDeltaTime = Time.deltaTime;
         }
-        else if (items[select].color.a >= alphaMax)
+        else if (mSelectionItems[mSelect].color.a >= ALPHA_MAX)
         {
-            delta = -Time.deltaTime;
+            mDeltaTime = -Time.deltaTime;
         }
 
-        items[select].color += new Color(0, 0, 0, delta * 0.75f);
+        mSelectionItems[mSelect].color += new Color(0, 0, 0, mDeltaTime * 0.75f);
     }
-    public void Input(int input)
+    public void Input(EInput input)
     {
-        if (Compare(input, UP))
+        if (Compare(input, EInput.ENTER, EInput.ACTION))
         {
-            SetItemColor(select, 0f); //prev
-            select = (select - 1 + itemCount) % itemCount;
-
-            SetItemColor(select, alphaMin); //next
-        }
-        else if (Compare(input, DOWN))
-        {
-            SetItemColor(select, 0f);
-            select = (select + 1 + itemCount) % itemCount;
-            SetItemColor(select, alphaMin);
-        }
-        else if (Compare(input, ENTER, ACTION))
-        {
-            SetItemColor(select, alphaMax);
+            SetItemColor(mSelect, ALPHA_MAX);
             enabled = false;
 
-            switch (select)
+            switch (mSelect)
             {
                 case 0:
                     Debug.Log("New game For Test (map code: 100)");
-                    Main.SceneMgr.LoadSceneAsync(GameState.Field, 100);
+                    Main.SceneMgr.LoadSceneAsync(EGameStateFlag.Field, 100);
                     break;
                 case 1:
                     Debug.Log("Saved Data List");
@@ -88,23 +78,43 @@ public class UITitle : UIBase, IInputHandler
             }
 
         }
-        else if (Compare(input, CANCEL))
+        if (Compare(input, EInput.CANCEL))
         {
             if (!enabled)
             {
                 enabled = true;
             }
         }
+
+        if (Time.time < mOffsetTime)
+        {
+            return;
+        }
+        mOffsetTime = Time.time + Time.fixedDeltaTime * 10f;
+
+        if (Compare(input, EInput.UP))
+        {
+            SetItemColor(mSelect, 0f); //prev
+            mSelect = (mSelect - 1 + mItemCount) % mItemCount;
+
+            SetItemColor(mSelect, ALPHA_MIN); //next
+        }
+        if (Compare(input, EInput.DOWN))
+        {
+            SetItemColor(mSelect, 0f);
+            mSelect = (mSelect + 1 + mItemCount) % mItemCount;
+            SetItemColor(mSelect, ALPHA_MIN);
+        }
     }
     private void SetItemColor(int index, float alpha)
     {
-        Color target = items[index].color;
-        items[index].color = new Color(target.r, target.g, target.b, alpha);
+        Color target = mSelectionItems[index].color;
+        mSelectionItems[index].color = new Color(target.r, target.g, target.b, alpha);
     }
 
-    public override void Dispose()
+    public override void Release()
     {
         GameObject.Destroy(gameObject);
-        AssetManager.ReleaseAsset(gameObject.GetInstanceID());
+        AssetMgr.ReleaseGameObject(gameObject.GetInstanceID());
     }
 }

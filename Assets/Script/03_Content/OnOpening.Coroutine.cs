@@ -1,85 +1,85 @@
 using UnityEngine;
 using UnityEngine.UI;
-using Index;
+using static Index.IDxInput;
 
 public partial class OnOpening // Coroutine
 {
     private class OpeningLogo : IRoutineUpdater, IInputHandler
     {
-        private Image imageLogo;
-        private float wait;
-        private float alpha;
-        private int state;
+        private Image mLogoImage;
+        private float mWaitTime;
+        private float mAlpha;
+        private int   mState;
 
         public int MoveNext(int index)
         {
-            if (state != index)
+            if (mState != index)
             {
-                index = state;
+                index = mState;
             }
 
             switch (index)
             {
                 case 0:
-                    if (alpha < 1)
+                    if (mAlpha < 1)
                     {
-                        alpha += Time.deltaTime * 0.75f;
-                        imageLogo.color = new Color(1f, 1f, 1f, alpha);
+                        mAlpha += Time.deltaTime * 0.75f;
+                        mLogoImage.color = new Color(1f, 1f, 1f, mAlpha);
                         return index;
                     }
-                    alpha = 1f;
+                    mAlpha = 1f;
                     break;
                 case 1:
-                    if (wait < 1f)
+                    if (mWaitTime < 1f)
                     {
-                        wait += Time.deltaTime;
+                        mWaitTime += Time.deltaTime;
                         return index;
                     }
                     break;
                 case 2:
-                    if (alpha > 0)
+                    if (mAlpha > 0)
                     {
-                        alpha -= Time.deltaTime * 2f;
-                        imageLogo.color = new Color(1f, 1f, 1f, alpha);
+                        mAlpha -= Time.deltaTime * 2f;
+                        mLogoImage.color = new Color(1f, 1f, 1f, mAlpha);
                         return index;
                     }
+                    Main.InputMgr.Updater = null;
+                    instance.Set();
                     break;
                 default:
-                    Main.InputMgr.ReleaseUpdater();
-                    instance.Set();
                     return -1;
             }
-            return state = index + 1;
+            return mState = index + 1;
         }
-        public void Input(int input)
+        public void Input(EInput input)
         {
             //정해진 입력 이외는 처리하지 않음
-            if (false == IDxInput.Compare(input, IDxInput.ENTER, IDxInput.ACTION))
+            if (false == Compare(input, EInput.ENTER, EInput.ACTION))
             {
                 return;
             }
 
             //현재 코루틴의 상태값이 0일 때에만 입력 처리 (0 == state)
-            if (0 == state)
+            if (0 == mState)
             {
-                alpha = 1f;
-                imageLogo.color = new Color(1f, 1f, 1f, alpha);
+                mAlpha = 1f;
+                mLogoImage.color = new Color(1f, 1f, 1f, mAlpha);
 
                 //코루틴 단계를 0에서 2로 점프한다.
-                state = 2;
+                mState = 2;
             }
         }
 
         public OpeningLogo(Transform transform)
         {
             transform.gameObject.SetActive(true);
-            imageLogo = transform.GetComponent<Image>();
+            mLogoImage = transform.GetComponent<Image>();
             //imageLogo.color = new Color(1f, 1f, 1f, 0f);
-            alpha = 0;
-            wait = 0;
-            state = 0;
+            mAlpha = 0;
+            mWaitTime = 0;
+            mState = 0;
 
-            Main.InputMgr.SetUpdater(this);
+            Main.InputMgr.Updater = this;
         }
     }
     private class OpeningDemo : IRoutineUpdater, IInputHandler
@@ -89,7 +89,7 @@ public partial class OnOpening // Coroutine
             instance.Set();
             return -1;
         }
-        public void Input(int input)
+        public void Input(EInput input)
         {
 
         }
@@ -100,73 +100,73 @@ public partial class OnOpening // Coroutine
     }
     private class OpeningTitle : IRoutineUpdater
     {
-        private Image[] images; //logo_upper, logo_lower, flash
-        private RectTransform[] rect;
-        private Vector2[] pos;
+        private Image[]         mImages; //logo_upper, logo_lower, flash
+        private RectTransform[] mRects;
+        private Vector2[]       mPositions;
 
-        private float logoSpeed = 4000f;
-        private float passedtime = 0f;
-        private float movingTime = 0.75f;
-        private float flashSpeed = 5f;
-        private float dist;
-        private float alpha = 0;
+        private float mLogoSpeed = 4000f;
+        private float mPassedTime = 0f;
+        private float mMovingTime = 0.75f;
+        private float mFlashSpeed = 5f;
+        private float mDist;
+        private float mAlpah = 0;
 
         public OpeningTitle(Transform transform)
         {
-            rect = new RectTransform[2];
-            pos = new Vector2[2];
-            dist = logoSpeed * movingTime;
+            mRects = new RectTransform[2];
+            mPositions = new Vector2[2];
+            mDist = mLogoSpeed * mMovingTime;
 
             //all images.alpha = 0f;
-            images = transform.GetComponentsInChildren<Image>();
-            for (int i = 0; i < images.Length; ++i)
+            mImages = transform.GetComponentsInChildren<Image>();
+            for (int i = 0; i < mImages.Length; ++i)
             {
-                images[i].color = new Color(1f, 1f, 1f, 0f);
+                mImages[i].color = new Color(1f, 1f, 1f, 0f);
             }
 
             //logo_upper
-            rect[0] = images[0].GetComponent<RectTransform>();
-            rect[0].anchoredPosition = new Vector3(rect[0].anchoredPosition.x, rect[0].anchoredPosition.y + dist);
-            pos[0] = rect[0].anchoredPosition;
+            mRects[0] = mImages[0].GetComponent<RectTransform>();
+            mRects[0].anchoredPosition = new Vector3(mRects[0].anchoredPosition.x, mRects[0].anchoredPosition.y + mDist);
+            mPositions[0] = mRects[0].anchoredPosition;
 
             //logo_lower
-            rect[1] = images[1].GetComponent<RectTransform>();
-            rect[1].anchoredPosition = new Vector3(rect[1].anchoredPosition.x, rect[1].anchoredPosition.y - dist);
-            pos[1] = rect[1].anchoredPosition;
+            mRects[1] = mImages[1].GetComponent<RectTransform>();
+            mRects[1].anchoredPosition = new Vector3(mRects[1].anchoredPosition.x, mRects[1].anchoredPosition.y - mDist);
+            mPositions[1] = mRects[1].anchoredPosition;
         }
         public int MoveNext(int index)
         {
             switch (index)
             {
                 case 0:
-                    images[0].color = images[1].color = new Color(1f, 1f, 1f, 1f);
+                    mImages[0].color = mImages[1].color = new Color(1f, 1f, 1f, 1f);
                     break;
                 case 1:
-                    float ratio = passedtime / movingTime;
-                    rect[0].anchoredPosition = new Vector3(pos[0].x, pos[0].y - dist * ratio);
-                    rect[1].anchoredPosition = new Vector3(pos[1].x, pos[1].y + dist * ratio);
+                    float ratio = mPassedTime / mMovingTime;
+                    mRects[0].anchoredPosition = new Vector3(mPositions[0].x, mPositions[0].y - mDist * ratio);
+                    mRects[1].anchoredPosition = new Vector3(mPositions[1].x, mPositions[1].y + mDist * ratio);
 
-                    if (movingTime > passedtime)
+                    if (mMovingTime > mPassedTime)
                     {
-                        passedtime += Time.deltaTime;
+                        mPassedTime += Time.deltaTime;
                         return index;
                     }
-                    alpha = 0;
+                    mAlpah = 0;
                     break;
                 case 2:
                     //flash
-                    alpha += Time.deltaTime * flashSpeed;
-                    images[2].color = new Color(1, 1, 1, alpha);
-                    if (alpha < 1f)
+                    mAlpah += Time.deltaTime * mFlashSpeed;
+                    mImages[2].color = new Color(1, 1, 1, mAlpah);
+                    if (mAlpah < 1f)
                     {
                         return index;
                     }
-                    alpha = 1f;
+                    mAlpah = 1f;
                     break;
                 case 3:
-                    alpha -= Time.deltaTime * (flashSpeed * 0.6f);
-                    images[2].color = new Color(1, 1, 1, alpha);
-                    if (alpha > 0f)
+                    mAlpah -= Time.deltaTime * (mFlashSpeed * 0.6f);
+                    mImages[2].color = new Color(1, 1, 1, mAlpah);
+                    if (mAlpah > 0f)
                     {
                         return index;
                     }

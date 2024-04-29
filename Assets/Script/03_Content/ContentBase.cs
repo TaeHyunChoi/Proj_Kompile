@@ -1,5 +1,5 @@
 public abstract class ContentBase
 {
-    protected int state = 0;
-    public abstract void Dispose();
+    protected int mState = 0;
+    public abstract void Release();
 }

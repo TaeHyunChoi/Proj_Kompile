@@ -1,53 +1,52 @@
 ﻿using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using DataStruct;
 
 public partial class SceneMgr // Coroutine
 {
     public class LoadOpeningScene : IRoutineUpdater
     {
-        private AsyncOperation  loadAsync;
-        private CanvasGroup     curtain;
-        private Task<OnOpening> taskOpening;
-        private Task            taskUI;
+        private AsyncOperation  mLoadAsyncOper;
+        private CanvasGroup     mCurtainCanvas;
+        private Task<OnOpening> mTaskOpening;
+        private Task            mTaskLoadUI;
 
         public int MoveNext(int index)
         {
             switch (index)
             {
                 case 0:
-                    Main.SceneMgr.SetState(SceneState.Load);
-                    curtain.gameObject.SetActive(true);
+                    mCurtainCanvas.gameObject.SetActive(true);
                     break;
                 case 1:
-                    loadAsync = SceneManager.LoadSceneAsync("010_OpeningScene", LoadSceneMode.Single);
+                    Main.Instance.Release();
+                    mLoadAsyncOper = SceneManager.LoadSceneAsync("010_OpeningScene", LoadSceneMode.Single);
                     break;
                 case 2:
-                    if (false == loadAsync.isDone)
+                    if (false == mLoadAsyncOper.isDone)
                     {
                         return index;
                     }
                     break;
                 case 3:
-                    Main.Instance.Release();
-                    Transform transformCameraCanvas = Main.UIMgr.CameraCanvas.transform;
-                    taskOpening = OnOpening.InitAsync(transformCameraCanvas);
-                    taskUI      = Main.UIMgr.InitAsync(GameState.Opening);
+                    Transform transformCameraCanvas = Main.UIMgr.CanvasCamera.transform;
+                    mTaskOpening = OnOpening.InitAsync(transformCameraCanvas);
+                    mTaskLoadUI      = Main.UIMgr.InitAsync(EGameStateFlag.Opening);
                     break;
                 case 4:
-                    if (false == taskOpening.IsCompletedSuccessfully
-                        || false == taskUI.IsCompletedSuccessfully)
+                    if (false == mTaskOpening.IsCompletedSuccessfully
+                        || false == mTaskLoadUI.IsCompletedSuccessfully)
                     {
                         return index;
                     }
 
-                    taskOpening.Result.Set();
-                    curtain.gameObject.SetActive(false);
+                    mTaskOpening.Result.Set();
+                    mCurtainCanvas.gameObject.SetActive(false);
                     break;
                 default:
-                    taskOpening.Dispose();
-                    taskUI.Dispose();
-                    Main.SceneMgr.SetState(SceneState.Play);
+                    mTaskOpening.Dispose();
+                    mTaskLoadUI.Dispose();
                     return -1;
             }
 
@@ -56,48 +55,46 @@ public partial class SceneMgr // Coroutine
 
         public LoadOpeningScene(CanvasGroup curtain)
         {
-            this.curtain = curtain;
+            mCurtainCanvas = curtain;
         }
     }
     public class LoadFieldScene : IRoutineUpdater
     {
-        private AsyncOperation loadAsync;
-        private CanvasGroup curtain;
-        private Task<OnField> taskField;
-        private Task taskUI;
-        private MapData mapData;
+        private AsyncOperation  mLoadAsyncOper;
+        private CanvasGroup     mCurtainCanvas;
+        private Task<OnField>   mTaskField;
+        private Task            mTaskLoadUI;
+        private MapData         mMapData;
 
         public int MoveNext(int index)
         {
             switch (index)
             {
                 case 0:
-                    Main.SceneMgr.state = SceneState.Leave;
-                    curtain.alpha = 0;
-                    curtain.gameObject.SetActive(true);
+                    mCurtainCanvas.alpha = 0;
+                    mCurtainCanvas.gameObject.SetActive(true);
                     break;
                 case 1:
-                    if (curtain.alpha < 1)
+                    if (mCurtainCanvas.alpha < 1)
                     {
-                        curtain.alpha += Time.fixedDeltaTime;
+                        mCurtainCanvas.alpha += Time.fixedDeltaTime;
                         return index;
                     }
-                    curtain.alpha = 1;
+                    mCurtainCanvas.alpha = 1;
                     break;
                 case 2:
                     //TODO: dev Mapdata (using grid?)
-                    Main.SceneMgr.state = SceneState.Load;
                     string sceneName = string.Empty;
-                    int chapter = mapData.Code / 100;
+                    int chapter = mMapData.Code / 100;
                     switch (chapter)
                     {
                         case 0: sceneName = "010_OpeningScene"; break;
                         case 1: sceneName = "020_FieldTestScene"; break;
                     }
-                    loadAsync = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+                    mLoadAsyncOper = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
                     break;
                 case 3:
-                    if (false == loadAsync.isDone)
+                    if (false == mLoadAsyncOper.isDone)
                     {
                         return index;
                     }
@@ -105,27 +102,27 @@ public partial class SceneMgr // Coroutine
                 case 4:
                     Main.Instance.Release();
                     Transform level = GameObject.FindWithTag("Field").transform;
-                    taskField = OnField.InitAsync(level, mapData);
-                    taskUI    = Main.UIMgr.InitAsync(GameState.Field);
+                    mTaskField = OnField.InitAsync(level, mMapData);
+                    mTaskLoadUI    = Main.UIMgr.InitAsync(EGameStateFlag.Field);
                     break;
                 case 5:
-                    if (false == taskField.IsCompletedSuccessfully
-                        || false == taskUI.IsCompletedSuccessfully)
+                    if (false == mTaskField.IsCompletedSuccessfully
+                        || false == mTaskLoadUI.IsCompletedSuccessfully)
                     {
                         return index;
                     }
                     break;
                 case 6:
-                    if (curtain.alpha > 0)
+                    if (mCurtainCanvas.alpha > 0)
                     {
-                        curtain.alpha -= Time.fixedDeltaTime * 3;
+                        mCurtainCanvas.alpha -= Time.fixedDeltaTime * 3;
                         return index;
                     }
-                    curtain.gameObject.SetActive(false);
+                    mCurtainCanvas.gameObject.SetActive(false);
                     break;
                 default:
-                    taskField.Dispose();
-                    taskUI.Dispose();
+                    mTaskField.Dispose();
+                    mTaskLoadUI.Dispose();
                     return -1;
             }
 
@@ -134,8 +131,8 @@ public partial class SceneMgr // Coroutine
 
         public LoadFieldScene(CanvasGroup curtain, MapData map)
         {
-            this.curtain = curtain;
-            mapData = map;
+            mCurtainCanvas = curtain;
+            mMapData = map;
         }
     }
 }

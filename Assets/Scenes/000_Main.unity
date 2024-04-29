@@ -162,10 +162,10 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 676284649}
+  - component: {fileID: 676284650}
   - component: {fileID: 676284648}
   - component: {fileID: 676284647}
-  - component: {fileID: 676284650}
+  - component: {fileID: 676284649}
   m_Layer: 0
   m_Name: Camera
   m_TagString: MainCamera
@@ -224,22 +224,7 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!4 &676284649
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 676284646}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 682805039}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &676284650
+--- !u!114 &676284649
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -251,8 +236,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aadfeff32f9b93841b56a962f1460fba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offset: {x: 0, y: 3, z: -3}
-  rotation: {x: 0.42261827, y: 0, z: 0, w: 0.90630776}
+--- !u!4 &676284650
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 676284646}
+  m_LocalRotation: {x: 0.42261827, y: 0, z: 0, w: 0.9063079}
+  m_LocalPosition: {x: 0, y: 2, z: 4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 682805039}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 50, y: 0, z: 0}
 --- !u!1 &682805037
 GameObject:
   m_ObjectHideFlags: 0
@@ -284,7 +282,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f08deb5c3fc29f444b6150003280c33a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  frameRate: 60
+  mFrameRate: 144
 --- !u!4 &682805039
 Transform:
   m_ObjectHideFlags: 0
@@ -297,7 +295,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 676284649}
+  - {fileID: 676284650}
   - {fileID: 1761018591}
   - {fileID: 621258068}
   - {fileID: 1906446510}

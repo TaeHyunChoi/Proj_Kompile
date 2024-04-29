@@ -5,28 +5,26 @@ using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
 {
-    private Camera mainCam;
-    private Transform target;
-    [SerializeField] 
-    private Vector3 offset;
-    [SerializeField] 
-    private Quaternion rotation;
+    private readonly Vector3    OFFSET   = new Vector3(0f, 3f, -2f);
+    private readonly Quaternion ROTATION = Quaternion.Euler(50f, 0f, 0f);
 
+    private Camera     mMainCam;
+    private Transform  mTarget;
 
     private void Awake() 
     {
-        mainCam = transform.GetComponent<Camera>();
+        mMainCam = transform.GetComponent<Camera>();
         enabled = false;
     }
     public void SetFollow(Transform target)
     {
-        this.target = target;
-        transform.SetPositionAndRotation(offset, rotation);
+        mTarget = target;
+        transform.SetPositionAndRotation(OFFSET, ROTATION);
         enabled = true;
     }
     public void SetFOV(float scale)
     {
-        mainCam.fieldOfView = 60f * scale;
+        mMainCam.fieldOfView = 60f * scale;
     }
     public void StopFollow()
     {
@@ -35,6 +33,6 @@ public class CameraFollow : MonoBehaviour
 
     private void LateUpdate() 
     {
-        transform.position = target.position + offset;
+        transform.position = mTarget.position + OFFSET;
     }
 }

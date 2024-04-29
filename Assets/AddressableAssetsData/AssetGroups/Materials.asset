@@ -22,21 +22,25 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Materials
+    - .mat
   - m_GUID: 55761278c7767cd4bb6351223c2b1615
     m_Address: Assets/Rcs/Material/Mat_Inner.mat
     m_ReadOnly: 0
     m_SerializedLabels:
     - Materials
+    - .mat
   - m_GUID: 7c239f7a73296084b8337c2cf88f1e68
     m_Address: Assets/Rcs/Material/Mat_Slope.mat
     m_ReadOnly: 0
     m_SerializedLabels:
     - Materials
+    - .mat
   - m_GUID: 62f7f048581d2d04bbbd95a1f14d504d
     m_Address: Assets/Rcs/Material/Mat_Trans.mat
     m_ReadOnly: 0
     m_SerializedLabels:
     - Materials
+    - .mat
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

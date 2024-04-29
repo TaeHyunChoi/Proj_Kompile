@@ -10,9 +10,15 @@ public interface IRoutineUpdater
 }
 public interface IInputHandler
 {
-    public void Input(int input);
+    public void Input(Index.IDxInput.EInput input);
 }
 public interface IFixedInputHandler
 {
-    public void Input(int input);
+    public void Input(Index.IDxInput.EInput input);
 }
+public interface IUnitUpdater
+{
+    public void Update();
+}
+
+

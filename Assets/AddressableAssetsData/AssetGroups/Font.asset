@@ -22,11 +22,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - External
+    - .external
   - m_GUID: 4eaf7c80d69976242a3db1ed7da693af
     m_Address: NanumBarunGothic-YetHangul
     m_ReadOnly: 0
     m_SerializedLabels:
     - External
+    - .external
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

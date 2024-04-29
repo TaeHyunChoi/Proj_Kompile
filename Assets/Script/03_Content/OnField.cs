@@ -1,44 +1,49 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using DataType;
-using System;
+using DataStruct;
 
 public class OnField : ContentBase, IFixedInputHandler
 {
-    private Dictionary<int, Tile_t> tileMap;
-    private MapTileComponent[] tiles;
-    private Transform level;
+    private Dictionary<int, STile> mTileMap;
+    private MapTileComponent[]     mTileComponents;
+    private Transform              mTransformLevel;
 
     public static async Task<OnField> InitAsync(Transform level, MapData data)
     {
         OnField field = new OnField(level, data);
 
-        Task task = Main.UnitMgr.InitAsync(level);
-        await task;
-        task.Dispose();
+        Task taskInitField = Main.UnitMgr.InitAsync(level);
+        await taskInitField;
+        taskInitField.Dispose();
 
         Main.Instance.SetContent(field);
         return field;
     }
 
-    //현재 필드에서 입력을 받으면 Player를 이동시킨다. (플레이어 이동이므로 I"Fixed"InputHandler 받음)
-    public void Input(int input)
+    public void Input(Index.IDxInput.EInput input)
     {
-        Vector3 dir = TileUtility.GetDirection(input);
-        Main.Player.Move(tileMap, dir);
+        if (Index.IDxInput.EInput.NONE == input)
+        {
+            Main.Player.StopMove();
+        }
+        else
+        {
+            Vector3 dir = InputMgr.GetInputDirection(input);
+            Main.Player.Move(mTileMap, dir);
+        }
     }
     private OnField(Transform level, MapData data)
     {
-        tileMap = DataTable.LoadMappingData<Tile_t>("020_FieldTest");
-        this.level = level;
+        mTileMap = DataTable.LoadMappingData<STile>("020_FieldTest");
+        UnityEngine.Assertions.Assert.IsNotNull(mTileMap, "Null time map");
+        this.mTransformLevel = level;
 
-        tiles = level.GetComponentsInChildren<MapTileComponent>(true);
+        mTileComponents = level.GetComponentsInChildren<MapTileComponent>(true);
         MapTileComponent tile;
-        for (int i = 0; i < tiles.Length; ++i)
+        for (int i = 0; i < mTileComponents.Length; ++i)
         {
-            tile = tiles[i];
+            tile = mTileComponents[i];
             tile.gameObject.SetActive(0 == tile.Layer);
         }
     }
@@ -46,14 +51,13 @@ public class OnField : ContentBase, IFixedInputHandler
     //OnField.cs
     public void TransLayer(int layer)
     {
-        //Task.Run(), Job System 등을 고려했으나 Unity API를 사용하므로 기각..
-        tiles = level.GetComponentsInChildren<MapTileComponent>(true);
+        mTileComponents = mTransformLevel.GetComponentsInChildren<MapTileComponent>(true);
 
         MapTileComponent tile;
-        for (int i = 0; i < tiles.Length; ++i)
+        for (int i = 0; i < mTileComponents.Length; ++i)
         {
-            tile = tiles[i];
-            if (layer == tile.Layer)
+            tile = mTileComponents[i];
+            if (tile.Layer == layer)
             {
                 TransMapTile trans = new TransMapTile(tile);
                 CoroutineUpdater.SetHandler(new CCoroutine<TransMapTile>(trans));
@@ -64,7 +68,7 @@ public class OnField : ContentBase, IFixedInputHandler
             }
         }
     }
-    public override void Dispose()
+    public override void Release()
     {
 
     }

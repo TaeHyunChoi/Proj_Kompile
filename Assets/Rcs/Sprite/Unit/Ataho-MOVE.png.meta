@@ -47,9 +47,9 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 75
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
-  spriteGenerateFallbackPhysicsShape: 1
+  spriteGenerateFallbackPhysicsShape: 0
   alphaUsage: 1
   alphaIsTransparency: 1
   spriteTessellationDetail: -1
@@ -104,7 +104,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Ataho-MOVE_0
+      name: Ataho-MOVE_F0
       rect:
         serializedVersion: 2
         x: 0
@@ -125,7 +125,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_1
+      name: Ataho-MOVE_F1
       rect:
         serializedVersion: 2
         x: 49
@@ -146,7 +146,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_2
+      name: Ataho-MOVE_F2
       rect:
         serializedVersion: 2
         x: 98
@@ -167,7 +167,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_3
+      name: Ataho-MOVE_F3
       rect:
         serializedVersion: 2
         x: 145
@@ -188,7 +188,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_4
+      name: Ataho-MOVE_F4
       rect:
         serializedVersion: 2
         x: 194
@@ -209,7 +209,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_5
+      name: Ataho-MOVE_L0
       rect:
         serializedVersion: 2
         x: 240
@@ -230,7 +230,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_6
+      name: Ataho-MOVE_L1
       rect:
         serializedVersion: 2
         x: 288
@@ -251,7 +251,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_7
+      name: Ataho-MOVE_L2
       rect:
         serializedVersion: 2
         x: 336
@@ -272,7 +272,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_8
+      name: Ataho-MOVE_L3
       rect:
         serializedVersion: 2
         x: 384
@@ -293,7 +293,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_9
+      name: Ataho-MOVE_L4
       rect:
         serializedVersion: 2
         x: 432
@@ -335,7 +335,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_11
+      name: Ataho-MOVE_B0
       rect:
         serializedVersion: 2
         x: 0
@@ -356,7 +356,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_12
+      name: Ataho-MOVE_B1
       rect:
         serializedVersion: 2
         x: 49
@@ -377,7 +377,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_13
+      name: Ataho-MOVE_B2
       rect:
         serializedVersion: 2
         x: 98
@@ -398,7 +398,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_14
+      name: Ataho-MOVE_B3
       rect:
         serializedVersion: 2
         x: 145
@@ -419,7 +419,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ataho-MOVE_15
+      name: Ataho-MOVE_B4
       rect:
         serializedVersion: 2
         x: 194
@@ -439,111 +439,6 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: Ataho-MOVE_16
-      rect:
-        serializedVersion: 2
-        x: 239
-        y: 0
-        width: 36
-        height: 61
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 18dbdd032852403428317a9d5b67ff6f
-      internalID: 1555122296
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ataho-MOVE_17
-      rect:
-        serializedVersion: 2
-        x: 288
-        y: 0
-        width: 35
-        height: 60
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 7a0b0bd6810bd814ea4a82f6cffa4efa
-      internalID: -1833294871
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ataho-MOVE_18
-      rect:
-        serializedVersion: 2
-        x: 337
-        y: 0
-        width: 34
-        height: 59
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: d62eb6366e7ddeb4093c0670f18eb56c
-      internalID: 713099272
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ataho-MOVE_19
-      rect:
-        serializedVersion: 2
-        x: 384
-        y: 0
-        width: 35
-        height: 60
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 99b414f17152f074394fd442282551ef
-      internalID: -203531161
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Ataho-MOVE_20
-      rect:
-        serializedVersion: 2
-        x: 433
-        y: 0
-        width: 34
-        height: 59
-      alignment: 7
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 078fcb4ddd09f714a9ea8ec48220515f
-      internalID: 1884956127
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -555,27 +450,27 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Ataho-MOVE_0: 1214362488
       Ataho-MOVE_20: 1884956127
-      Ataho-MOVE_4: 1278490010
-      Ataho-MOVE_8: 704666080
-      Ataho-MOVE_9: -1146463295
-      Ataho-MOVE_14: -102386135
+      Ataho-MOVE_B3: -102386135
       Ataho-MOVE_10: 1619401646
-      Ataho-MOVE_13: -605495092
+      Ataho-MOVE_F1: -2008527664
+      Ataho-MOVE_F3: 1545338889
       Ataho-MOVE_19: -203531161
-      Ataho-MOVE_2: 296753067
-      Ataho-MOVE_3: 1545338889
+      Ataho-MOVE_L3: 704666080
+      Ataho-MOVE_L4: -1146463295
+      Ataho-MOVE_F0: 1214362488
       Ataho-MOVE_17: -1833294871
-      Ataho-MOVE_15: 2047999526
-      Ataho-MOVE_11: -1433504377
+      Ataho-MOVE_B4: 2047999526
       Ataho-MOVE_16: 1555122296
-      Ataho-MOVE_6: 408163992
-      Ataho-MOVE_5: 902347727
-      Ataho-MOVE_12: 859208249
+      Ataho-MOVE_B0: -1433504377
+      Ataho-MOVE_L1: 408163992
+      Ataho-MOVE_L2: -1701915448
+      Ataho-MOVE_F4: 1278490010
+      Ataho-MOVE_B1: 859208249
+      Ataho-MOVE_F2: 296753067
       Ataho-MOVE_18: 713099272
-      Ataho-MOVE_7: -1701915448
-      Ataho-MOVE_1: -2008527664
+      Ataho-MOVE_L0: 902347727
+      Ataho-MOVE_B2: -605495092
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

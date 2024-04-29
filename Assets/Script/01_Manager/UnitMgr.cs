@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -6,23 +5,37 @@ using UnityEngine;
 
 public class UnitMgr
 {
-    private List<UnitBase> pool;
-    private Transform transform;
-
+    private List<UnitBase>     mUnitPool;
+    private List<IUnitUpdater> mUnitUpdater;
+    private Transform          transform;        
 
     public UnitMgr(Transform transform)
     {
-        pool = new List<UnitBase>();
         this.transform = transform;
+
+        mUnitPool = new List<UnitBase>();
+        mUnitUpdater = new List<IUnitUpdater>();
     }
     public async Task InitAsync(Transform level)
     {
-        GameObject obj = await AssetManager.InstantiateAsync("UnitBase", transform, true);
-        UnitPlayer player = obj.AddComponent<UnitPlayer>();
-        player.transform.position = new Vector3(0.5f, 0f, 0.5f);
-        Main.Instance.SetPlayer(player);
-        pool.Add(player);
+        Debug.Log("For Test: Set Player");
+        UnitPlayer unitPlayer = await AssetMgr.SpawnUnit<UnitPlayer>(0, transform);
+        mUnitPool.Add(unitPlayer);
 
-        //UnitBase[] npc = level.GetComponentsInChildren<UnitBase>(true);
+        Main.Instance.SetPlayer(unitPlayer);
+        unitPlayer.Transform.position = new Vector3(0.5f, 0f, 0.5f);
+
+        //TODO: level 관련 처리
+        //...
+    }
+
+    // UnitMgr.cs -> Main.Update()에서 호출
+    public void Update()
+    {
+        for (int i = 0; i < mUnitUpdater.Count; ++i)
+        {
+            mUnitUpdater[i].Update();
+        }
     }
 }
+

@@ -1,25 +1,25 @@
 using UnityEngine;
+using DataStruct;
 
 public partial class SceneMgr
 {
-    private CanvasGroup loadingCurtain;
-    private SceneState state;
+    private CanvasGroup mCurtainCanvas;
 
-    public void LoadSceneAsync(GameState next, int code = -1)
+    public void LoadSceneAsync(EGameStateFlag next, int code = -1)
     {
-        Main.InputMgr.ReleaseUpdater();
-        Main.InputMgr.ReleaseFixedUpdater();
+        Main.InputMgr.Updater      = null;
+        Main.InputMgr.FixedUpdater = null;
 
         switch (next)
         {
-            case GameState.Opening:
-                LoadOpeningScene opening = new LoadOpeningScene(loadingCurtain);
+            case EGameStateFlag.Opening:
+                LoadOpeningScene opening = new LoadOpeningScene(mCurtainCanvas);
                 CoroutineUpdater.SetHandler(new CCoroutine<LoadOpeningScene>(opening));
                 break;
-            case GameState.Field:
+            case EGameStateFlag.Field:
                 if (true == DataTable.TryGetMapData(code, out MapData map))
                 {
-                    LoadFieldScene level = new LoadFieldScene(loadingCurtain, map);
+                    LoadFieldScene level = new LoadFieldScene(mCurtainCanvas, map);
                     CoroutineUpdater.SetHandler(new CCoroutine<LoadFieldScene>(level));
                 }
                 else
@@ -30,15 +30,11 @@ public partial class SceneMgr
                 break;
         }
     }
-    public void SetState(SceneState state)
-    {
-        this.state = state;
-    }
 
     public SceneMgr(Transform transform)
     {
         transform = transform.GetChild(0);
-        loadingCurtain = transform.GetComponent<CanvasGroup>();
-        loadingCurtain.gameObject.SetActive(false);
+        mCurtainCanvas = transform.GetComponent<CanvasGroup>();
+        mCurtainCanvas.gameObject.SetActive(false);
     }
 }

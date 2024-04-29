@@ -60,12 +60,29 @@ SpriteAtlas:
     - {fileID: 2800000, guid: 2a72e19e5dd1e744d892abdd0edb0ec5, type: 3}
     - {fileID: 2800000, guid: 90dc6834fb8452543979ca3814f2c61d, type: 3}
     - {fileID: 2800000, guid: 6321b1a3783c82f4cab1f3b635cef5c9, type: 3}
+    - {fileID: 2800000, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
     bindAsDefault: 1
     isAtlasV2: 0
     cachedData: {fileID: 0}
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
   - {fileID: 21300000, guid: fd49d3e00730c094f8c4f0835671717e, type: 3}
+  - {fileID: 1619401646, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: -1146463295, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: 704666080, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: -1701915448, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: 408163992, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: 902347727, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: 1278490010, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: -2008527664, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: 1214362488, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: 1545338889, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: 296753067, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: 859208249, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: -1433504377, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: -102386135, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: -605495092, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
+  - {fileID: 2047999526, guid: b4574621a64ce434f8e7e69509800ddb, type: 3}
   - {fileID: 971035646, guid: 6cdf7481830ec914ca8f8efe1941965a, type: 3}
   - {fileID: 1429613254, guid: 6cdf7481830ec914ca8f8efe1941965a, type: 3}
   - {fileID: -240114093, guid: 6cdf7481830ec914ca8f8efe1941965a, type: 3}
@@ -292,6 +309,22 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 545e285f4b7b1774891caf808e77b583, type: 3}
   m_PackedSpriteNamesToIndex:
   - Icon_Mode
+  - Ataho-MOVE_10
+  - Ataho-MOVE_L4
+  - Ataho-MOVE_L3
+  - Ataho-MOVE_L2
+  - Ataho-MOVE_L1
+  - Ataho-MOVE_L0
+  - Ataho-MOVE_F4
+  - Ataho-MOVE_F1
+  - Ataho-MOVE_F0
+  - Ataho-MOVE_F3
+  - Ataho-MOVE_F2
+  - Ataho-MOVE_B1
+  - Ataho-MOVE_B0
+  - Ataho-MOVE_B3
+  - Ataho-MOVE_B2
+  - Ataho-MOVE_B4
   - ataho_70
   - ataho_71
   - ataho_72
