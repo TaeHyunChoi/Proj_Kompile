@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+[System.Obsolete]
 public class Main : MonoBehaviour
 {
     //TODO: FrameRate는 추후에 Config.cs 등에게 넘기기

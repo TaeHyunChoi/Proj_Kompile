@@ -6,8 +6,6 @@ namespace Index
     {
         private const int SHIFT_BIT_HOLD = 8;
 
-        //조금이라도 메모리를 연속적으로 사용하기 위하여 Enum으로 처리
-        //상수처럼 사용하므로 필드명을 대문자로 작성함
         [Flags]
         public enum EInput
         {

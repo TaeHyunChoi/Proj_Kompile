@@ -1,7 +1,9 @@
 using UnityEngine;
 using static Index.IDxInput;
 using CMathf;
+using System;
 
+[Obsolete]
 public class InputMgr : MonoBehaviour
 {
     public IInputHandler      Updater { get; set; }
@@ -33,7 +35,6 @@ public class InputMgr : MonoBehaviour
         if (Input.GetButton("RIGHT"))       { mInputNow |= EInput.RIGHT_HOLD;  }
         if (Input.GetButton("ACTION"))      { mInputNow |= EInput.ACTION_HOLD; }
 
-        //기본 입력을 키보드로 상정했으나 조이스틱 레버에 대응하고자 코드를 추가하였다.
 #if USING_JOYSTICK
         float x = Input.GetAxisRaw("Horizontal");
         float z = Input.GetAxisRaw("Vertical");
@@ -43,7 +44,6 @@ public class InputMgr : MonoBehaviour
         else if (z < 0) { mInputNow |= (EInput.DOWN  | EInput.DOWN_HOLD); }
 #endif
 
-        //마지막 입력까지 처리 후, 입력이 이어지지 않으면 Input()을 호출하지 않는다.
         if (EInput.NONE != mInputNow || EInput.NONE != mInputPrev)
         {
             if (null != Updater)

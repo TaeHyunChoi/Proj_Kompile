@@ -1,7 +1,5 @@
 ﻿using System;
 using static Index.IDxTile;
-using CMathf;
-using UnityEngine;
 
 // enum
 public enum ESceneState : byte

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 public interface IDataSetter
 {
@@ -8,6 +9,7 @@ public interface IRoutineUpdater
 {
     public int MoveNext(int index);
 }
+[Obsolete]
 public interface IInputHandler
 {
     public void Input(Index.IDxInput.EInput input);
@@ -16,6 +18,7 @@ public interface IFixedInputHandler
 {
     public void Input(Index.IDxInput.EInput input);
 }
+
 public interface IUnitUpdater
 {
     public void Update();

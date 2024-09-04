@@ -53,19 +53,16 @@ public partial class OnOpening // Coroutine
         }
         public void Input(EInput input)
         {
-            //정해진 입력 이외는 처리하지 않음
             if (false == Compare(input, EInput.ENTER, EInput.ACTION))
             {
                 return;
             }
 
-            //현재 코루틴의 상태값이 0일 때에만 입력 처리 (0 == state)
             if (0 == mState)
             {
                 mAlpha = 1f;
                 mLogoImage.color = new Color(1f, 1f, 1f, mAlpha);
 
-                //코루틴 단계를 0에서 2로 점프한다.
                 mState = 2;
             }
         }
