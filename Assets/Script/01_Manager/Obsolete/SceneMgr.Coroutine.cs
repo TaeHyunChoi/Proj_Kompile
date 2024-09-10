@@ -5,59 +5,6 @@ using DataStruct;
 
 public partial class SceneMgr // Coroutine
 {
-    public class LoadOpeningScene : IRoutineUpdater
-    {
-        private AsyncOperation  mLoadAsyncOper;
-        private CanvasGroup     mCurtainCanvas;
-        private Task<OnOpening> mTaskOpening;
-        private Task            mTaskLoadUI;
-
-        public int MoveNext(int index)
-        {
-            switch (index)
-            {
-                case 0:
-                    mCurtainCanvas.gameObject.SetActive(true);
-                    break;
-                case 1:
-                    Main.Instance.Release();
-                    mLoadAsyncOper = SceneManager.LoadSceneAsync("010_OpeningScene", LoadSceneMode.Single);
-                    break;
-                case 2:
-                    if (false == mLoadAsyncOper.isDone)
-                    {
-                        return index;
-                    }
-                    break;
-                case 3:
-                    Transform transformCameraCanvas = Main.UIMgr.CanvasCamera.transform;
-                    mTaskOpening = OnOpening.InitAsync(transformCameraCanvas);
-                    mTaskLoadUI      = Main.UIMgr.InitAsync(EGameStateFlag.Opening);
-                    break;
-                case 4:
-                    if (false == mTaskOpening.IsCompletedSuccessfully
-                        || false == mTaskLoadUI.IsCompletedSuccessfully)
-                    {
-                        return index;
-                    }
-
-                    mTaskOpening.Result.Set();
-                    mCurtainCanvas.gameObject.SetActive(false);
-                    break;
-                default:
-                    mTaskOpening.Dispose();
-                    mTaskLoadUI.Dispose();
-                    return -1;
-            }
-
-            return index + 1;
-        }
-
-        public LoadOpeningScene(CanvasGroup curtain)
-        {
-            mCurtainCanvas = curtain;
-        }
-    }
     public class LoadFieldScene : IRoutineUpdater
     {
         private AsyncOperation  mLoadAsyncOper;

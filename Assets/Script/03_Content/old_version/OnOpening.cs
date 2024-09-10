@@ -2,19 +2,19 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-public partial class OnOpening : ContentBase
+public partial class OnOpening 
 {
     private static OnOpening instance;
     private Transform transform;
+    private byte mState;
 
     public static async Task<OnOpening> InitAsync(Transform canvas_camera)
     {
-        string code = AssetMgr.GetAssetAddress(EAssetType.Prefab, (int)EPrefabType.OpeningGame);
-        GameObject go = await AssetMgr.InstantiateGameObjectAsync(code, canvas_camera, true);
+        GameObject go = await AssetMgr.InstantiatePrefabAsync(EAsset.OpeningGame, canvas_camera, true);
         OnOpening opening = new OnOpening(go.transform);
         return opening;
     }
-    private OnOpening(Transform transform)
+    public OnOpening(Transform transform)
     {
         instance = this;
         this.transform = transform;
@@ -32,7 +32,6 @@ public partial class OnOpening : ContentBase
         switch (mState)
         {
             case 0:
-                Main.Instance.SetContent(this);
                 OpeningLogo logo = new OpeningLogo(transform.GetChild(0));
                 CoroutineUpdater.SetHandler(new CCoroutine<OpeningLogo>(logo));
                 break;
@@ -52,14 +51,5 @@ public partial class OnOpening : ContentBase
         }
 
         mState += 1;
-    }
-    public override void Release()
-    {
-        GameObject obj = transform.gameObject;
-        GameObject.Destroy(obj);
-        if (false == AssetMgr.ReleaseGameObject(obj.GetInstanceID()))
-        {
-            Debug.LogError($"Can`t Release Asset: {obj.name}({obj.GetInstanceID()})");
-        }
     }
 }

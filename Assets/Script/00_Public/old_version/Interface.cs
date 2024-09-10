@@ -9,16 +9,18 @@ public interface IRoutineUpdater
 {
     public int MoveNext(int index);
 }
+
 [Obsolete]
 public interface IInputHandler
 {
     public void Input(Index.IDxInput.EInput input);
 }
+[Obsolete]
 public interface IFixedInputHandler
 {
     public void Input(Index.IDxInput.EInput input);
 }
-
+[Obsolete]
 public interface IUnitUpdater
 {
     public void Update();

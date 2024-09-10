@@ -25,12 +25,26 @@ public enum EStat
     LUK,
     CNT
 }
-public enum EAssetType : byte
+
+public enum EAsset
+{ 
+    NONE = 0,
+
+    UnitBase,
+    AnimCtrl_Ataho,
+    AnimCtrl_Linxhang,
+    AnimeCtrl_Smashu,
+
+    OpeningGame,
+    UITitle,
+}
+
+public enum EAssetType
 { 
     None        = 0,
-    AnimCtrl    = 1,
-    Prefab      = 2,
-    UI          = 3,
+    AnimCtrl    = 10000,
+    Prefab      = 20000,
+    UI          = 30000,
 }
 public enum EPrefabType
 { 

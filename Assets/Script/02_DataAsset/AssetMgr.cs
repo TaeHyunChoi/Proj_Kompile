@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -10,6 +12,18 @@ public class AssetMgr
     private static Dictionary<string, AsyncOperationHandle> mAssetHandler   = new Dictionary<string, AsyncOperationHandle>();
 
     // Init/Load Asset
+    public static async Task<GameObject> InstantiatePrefabAsync(EAsset type, Transform parent, bool isOn)
+    {
+        string assetAddress = GetAddress(type);
+
+        AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetAddress, parent);
+        GameObject go = await handle.Task;
+        go.SetActive(isOn);
+
+        mObjectHandlers.Add(go.GetInstanceID(), handle);
+        return go;
+    }
+
     public static async Task<GameObject> InstantiateGameObjectAsync(string address, Transform parent, bool isOn)
     {
         AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
@@ -45,6 +59,27 @@ public class AssetMgr
 
         taskController.Dispose();
         return unit;
+    }
+
+    public static string GetAddress(EAsset code)
+    {
+        return code switch
+        {
+            /* unit */
+            EAsset.UnitBase          => "UnitBase",
+            EAsset.AnimCtrl_Ataho    => "AnimCtrl_Ataho",
+            EAsset.AnimCtrl_Linxhang => "AnimCtrl_Linxhang",
+            EAsset.AnimeCtrl_Smashu  => "AnimeCtrl_Smashu",
+
+            /* ui */
+            EAsset.UITitle => "UITitle",
+
+            /* content */
+            EAsset.OpeningGame => "OpeningGame",
+
+            /* default */
+            _ => null,
+        };
     }
     public static string GetAssetAddress(EAssetType type, int code)
     {

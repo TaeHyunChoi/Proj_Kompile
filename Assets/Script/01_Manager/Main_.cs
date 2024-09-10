@@ -1,10 +1,13 @@
 using UnityEngine;
 using static Index.IDxInput;
 
-public class Main_ : MonoBehaviour
+public partial class Main_ : MonoBehaviour
 {
     public static Main_ Instance { get; private set; }
+
     private MapSceneManager_ mMapSceneMgr;
+    private UIManager_ mUIMgr;
+    private AssetManager_ mAssetMgr;
 
 
     private EInput mInputReserved;
@@ -22,13 +25,14 @@ public class Main_ : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         /* Initialize Managers */
-        mMapSceneMgr = new MapSceneManager_();
+        mMapSceneMgr = new MapSceneManager_(Instance.transform);
+        mUIMgr       = new UIManager_(Instance.transform);
+        mAssetMgr    = new AssetManager_();
     }
     private void Start()
     {
-        mMapSceneMgr.PlayOpening();
+        mMapSceneMgr.LoadScene_Opening();
     }
-
 
     /* main loop */
     private void Update()
@@ -59,7 +63,6 @@ public class Main_ : MonoBehaviour
     //{
     //      camera?
     //}
-
 
     private EInput Update_Input()
     {

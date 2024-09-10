@@ -7,3 +7,9 @@ public enum EGameState
     EventScene,
     UI,
 }
+
+public enum EScene
+{ 
+    Opening = 0,
+
+}

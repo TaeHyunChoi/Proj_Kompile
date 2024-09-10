@@ -1,14 +1,21 @@
 
+using UnityEngine;
 using static Index.IDxInput;
+using IECoroutine;
 
 public class MapSceneManager_
 {
-    public void PlayOpening()
+    private CanvasGroup mLoadingCurtain;
+    public MapSceneManager_(Transform mainTransform)
     {
-        //프리팹 생성부터 쭉쭉- 이걸 어떻게 묶어야 가독성이 좋아지려나..
-        //이거 코루틴 3개 묶어서 처리하는 것도 가능하긴 한디..
-        //OpeningLogo logo = new OpeningLogo(transform.GetChild(0));
-        //CoroutineUpdater.SetHandler(new CCoroutine<OpeningLogo>(logo));
+        Transform canvasTransform = mainTransform.Find("CanvasCurtain");
+        mLoadingCurtain = canvasTransform.GetComponentInChildren<CanvasGroup>();
+    }
+
+    public void LoadScene_Opening()
+    {
+        var opening = new IELoadOpeningScene(mLoadingCurtain);
+        CoroutineUpdater.SetHandler(new CCoroutine<IELoadOpeningScene>(opening));
     }
 
     public void InputOpening(EInput input)
