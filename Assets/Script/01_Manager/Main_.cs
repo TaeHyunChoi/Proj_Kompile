@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using static Index.IDxInput;
 
@@ -7,11 +9,14 @@ public partial class Main_ : MonoBehaviour
 
     private MapSceneManager_ mMapSceneMgr;
     private UIManager_ mUIMgr;
-    private AssetManager_ mAssetMgr;
+    // AssetMgr은 staic으로 사용 중;
 
+    private List<CCoroutineHandler> mHandlers;
 
     private EInput mInputReserved;
     private EGameState mGameState;
+
+    public EInput InputReserved { get => mInputReserved; }
 
     private void Awake()
     {
@@ -24,10 +29,17 @@ public partial class Main_ : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+
+        /* Initialize Coroutine Updater */
+        mHandlers = new List<CCoroutineHandler>();
+
+
         /* Initialize Managers */
-        mMapSceneMgr = new MapSceneManager_(Instance.transform);
-        mUIMgr       = new UIManager_(Instance.transform);
-        mAssetMgr    = new AssetManager_();
+        Transform uiTransform = transform.Find("UI");
+        mMapSceneMgr = new MapSceneManager_(uiTransform);
+        mUIMgr       = new UIManager_(uiTransform);
+
+
     }
     private void Start()
     {
@@ -37,14 +49,8 @@ public partial class Main_ : MonoBehaviour
     /* main loop */
     private void Update()
     {
-        var input = Update_Input();
-        switch (mGameState)
-        {
-            case EGameState.Opening: mMapSceneMgr.InputOpening(input); break;
-            default:
-                mInputReserved = input;
-                return;
-        }
+        mInputReserved = Update_Input();
+        Update_Coroutine();
     }
     //private void FixedUpdate()
     //{
@@ -87,5 +93,50 @@ public partial class Main_ : MonoBehaviour
         if (Input.GetButton("ACTION")) { input |= EInput.ACTION_HOLD; }
 
         return input;
+    }
+    private void Update_Coroutine()
+    {
+        int index = -1;
+        for (int i = 0; i < mHandlers.Count; ++i)
+        {
+            if (null == mHandlers[i])
+            {
+                continue;
+            }
+            if (false == mHandlers[i].MoveNext())
+            {
+                mHandlers[i] = null;
+                continue;
+            }
+
+            index = i;
+        }
+
+        if (-1 == index)
+        {
+            GC.Collect(0, GCCollectionMode.Optimized);
+        }
+    }
+
+    public void AddCoroutine(CCoroutineHandler handler)
+    {
+        if (null == handler)
+        {
+            UnityEngine.Assertions.Assert.IsNotNull(handler, "Handler is null;");
+            return;
+        }
+
+        //List 중에 빈 자리에 채워 넣는다.
+        for (int i = 0; i < mHandlers.Count; ++i)
+        {
+            if (null == mHandlers[i])
+            {
+                mHandlers[i] = handler;
+                return;
+            }
+        }
+
+        //빈 자리가 없다면 List에 추가한다.
+        mHandlers.Add(handler);
     }
 }

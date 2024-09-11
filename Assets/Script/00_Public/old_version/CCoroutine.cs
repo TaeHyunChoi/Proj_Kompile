@@ -1,6 +1,8 @@
 ﻿public class CCoroutineHandler
 {
     protected int mindex;
+    public bool IsDone { get => -1 == mindex; }
+
     public virtual bool MoveNext()
     {
         return false;

@@ -69,10 +69,10 @@ public class InputMgr : MonoBehaviour
     {
         Vector3 dir = Vector3.zero;
 
-        if (true == Compare(input, EInput.UP)    || true == Compare(input, EInput.UP_HOLD))    { dir += Vector3.forward; }
-        if (true == Compare(input, EInput.DOWN)  || true == Compare(input, EInput.DOWN_HOLD))  { dir += Vector3.back; }
-        if (true == Compare(input, EInput.LEFT)  || true == Compare(input, EInput.LEFT_HOLD))  { dir += Vector3.left; }
-        if (true == Compare(input, EInput.RIGHT) || true == Compare(input, EInput.RIGHT_HOLD)) { dir += Vector3.right; }
+        if (true == input.Contains(EInput.UP    | EInput.UP_HOLD))    { dir += Vector3.forward; }
+        if (true == input.Contains(EInput.DOWN  | EInput.DOWN_HOLD))  { dir += Vector3.back;    }
+        if (true == input.Contains(EInput.LEFT  | EInput.LEFT_HOLD))  { dir += Vector3.left;    }
+        if (true == input.Contains(EInput.RIGHT | EInput.RIGHT_HOLD)) { dir += Vector3.right;   }
 
         dir.Normalize();
         return CMath.FloorToVector(dir, 3);

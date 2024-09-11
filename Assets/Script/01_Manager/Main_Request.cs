@@ -14,7 +14,7 @@ public partial class Main_ // Main_Request
     }
 
     /* Asset */
-    public async Task<GameObject> RequestAssetAysnc_GetPrefab(EAsset type, Transform parent)
+    public async Task<GameObject> RequestAssetAysnc_Instantiate(EAsset type, Transform parent)
     {
         string code = AssetMgr.GetAddress(type);
         return await AssetMgr.InstantiateGameObjectAsync(code, parent, true);

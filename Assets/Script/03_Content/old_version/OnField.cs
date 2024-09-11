@@ -60,7 +60,7 @@ public class OnField : ContentBase, IFixedInputHandler
             if (tile.Layer == layer)
             {
                 TransMapTile trans = new TransMapTile(tile);
-                CoroutineUpdater.SetHandler(new CCoroutine<TransMapTile>(trans));
+                Main_.Instance.AddCoroutine(new CCoroutine<TransMapTile>(trans));
             }
             else
             {

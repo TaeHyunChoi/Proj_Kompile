@@ -51,7 +51,7 @@ public class UITitle : UIBase, IInputHandler
     }
     public void Input(EInput input)
     {
-        if (Compare(input, EInput.ENTER, EInput.ACTION))
+        if(true == input.Contains(EInput.ENTER | EInput.ACTION))
         {
             SetItemColor(mSelect, ALPHA_MAX);
             enabled = false;
@@ -78,7 +78,8 @@ public class UITitle : UIBase, IInputHandler
             }
 
         }
-        if (Compare(input, EInput.CANCEL))
+
+        if(true == input.Contains(EInput.CANCEL))
         {
             if (!enabled)
             {
@@ -92,14 +93,15 @@ public class UITitle : UIBase, IInputHandler
         }
         mOffsetTime = Time.time + Time.fixedDeltaTime * 10f;
 
-        if (Compare(input, EInput.UP))
+        if(true == input.Contains(EInput.UP))
         {
             SetItemColor(mSelect, 0f); //prev
             mSelect = (mSelect - 1 + mItemCount) % mItemCount;
 
             SetItemColor(mSelect, ALPHA_MIN); //next
         }
-        if (Compare(input, EInput.DOWN))
+
+        if (true == input.Contains(EInput.DOWN))
         {
             SetItemColor(mSelect, 0f);
             mSelect = (mSelect + 1 + mItemCount) % mItemCount;

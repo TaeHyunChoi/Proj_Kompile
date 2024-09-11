@@ -33,22 +33,33 @@ namespace Index
             ALL = 0xFF
         }
 
-        public static bool Compare(EInput input, EInput compare)
+        public static bool Contains(this EInput input, EInput compares)
         {
-            return 0 != (input & compare);
+            return 0 != (input & compares);
         }
-        public static bool Compare(EInput input, params EInput[] compares)
+
+        public static bool ComparesTo(this EInput input, params EInput[] compares)
         {
+            EInput flag = EInput.NONE;
             for (int i = 0; i < compares.Length; ++i)
             {
-                if (0 != (input & compares[i]))
-                {
-                    return true;
-                }
+                flag |= compares[i];
             }
 
-            return false;
+            return 0 != (input & flag);
         }
+        //public static bool Compare(EInput input, params EInput[] compares)
+        //{
+        //    for (int i = 0; i < compares.Length; ++i)
+        //    {
+        //        if (0 != (input & compares[i]))
+        //        {
+        //            return true;
+        //        }
+        //    }
+
+        //    return false;
+        //}
     }
     public static class IDxTile
     {
