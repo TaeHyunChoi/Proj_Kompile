@@ -14,7 +14,6 @@ public partial class Main_ : MonoBehaviour
     private List<CCoroutineHandler> mHandlers;
 
     private EInput mInputReserved;
-    private EGameState mGameState;
 
     public EInput InputReserved { get => mInputReserved; }
 

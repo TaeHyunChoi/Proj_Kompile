@@ -2,12 +2,15 @@
 using System.Threading.Tasks;
 using UnityEngine;
 using DataStruct;
+using IECoroutine;
 
 public class OnField : ContentBase, IFixedInputHandler
 {
     private Dictionary<int, STile> mTileMap;
     private MapTileComponent[]     mTileComponents;
     private Transform              mTransformLevel;
+
+    private Main_ mMain { get => Main_.Instance; }
 
     public static async Task<OnField> InitAsync(Transform level, MapData data)
     {
@@ -60,7 +63,7 @@ public class OnField : ContentBase, IFixedInputHandler
             if (tile.Layer == layer)
             {
                 TransMapTile trans = new TransMapTile(tile);
-                Main_.Instance.AddCoroutine(new CCoroutine<TransMapTile>(trans));
+                mMain.AddCoroutine(new CCoroutine<TransMapTile>(trans));
             }
             else
             {

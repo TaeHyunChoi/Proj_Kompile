@@ -11,7 +11,7 @@ namespace IECoroutine
     public class IEOpeningScene : IRoutineUpdater
     {
         private AsyncOperation mLoadAsyncOper;
-        private CanvasGroup mCurtainCanvas;
+        private CanvasGroup    mCurtainCanvas;
 
         private Task<GameObject> mTaskGetOpening;
         private Task<GameObject> mTaskGetUITitle;
@@ -19,7 +19,7 @@ namespace IECoroutine
         private Transform mParentTransform;
         private CCoroutineHandler mCoroutineHandler;
 
-        private Main_ Main { get => Main_.Instance; }
+        private Main_ mMain { get => Main_.Instance; }
 
         public int MoveNext(int index)
         {
@@ -38,11 +38,11 @@ namespace IECoroutine
 
                 /* load prefabs */
                 case 2:
-                    Transform transformCameraCanvas = Main.RequestUI_GetCanvasCamera().transform;
-                    Transform transformOverlayCanvas = Main.RequestUI_GetCanvasOverlay().transform;
+                    Transform transformCameraCanvas  = mMain.GetUICanvasCamera().transform;
+                    Transform transformOverlayCanvas = mMain.GetUICanvasOverlay().transform;
 
-                    mTaskGetOpening = Main.RequestAssetAysnc_Instantiate(EAsset.OpeningGame, transformCameraCanvas);
-                    mTaskGetUITitle = Main.RequestAssetAysnc_Instantiate(EAsset.UITitle, transformOverlayCanvas);
+                    mTaskGetOpening = mMain.InstantiateAssetAysnc(EAsset.OpeningGame, transformCameraCanvas);
+                    mTaskGetUITitle = mMain.InstantiateAssetAysnc(EAsset.UITitle, transformOverlayCanvas);
                     break;
                 case 3:
                     if (false == mTaskGetOpening.IsCompletedSuccessfully
@@ -52,13 +52,20 @@ namespace IECoroutine
                     }
 
                     mParentTransform = mTaskGetOpening.Result.transform;
+                    for (int i = 0; i < mParentTransform.childCount; ++i)
+                    {
+                        mParentTransform.GetChild(i).gameObject.SetActive(false);
+                    }
+
+                    mTaskGetUITitle.Result.SetActive(false);
+                    mCurtainCanvas.gameObject.SetActive(false);
                     break;
 
                 /* play logo */
                 case 4:
                     IEOpeningLogo logo = new IEOpeningLogo(mParentTransform.GetChild(0));
                     mCoroutineHandler = new CCoroutine<IEOpeningLogo>(logo);
-                    Main.AddCoroutine(mCoroutineHandler);
+                    mMain.AddCoroutine(mCoroutineHandler);
                     break;
                 case 5:
                     if (false == mCoroutineHandler.IsDone)
@@ -71,7 +78,7 @@ namespace IECoroutine
                 case 6:
                     IEOpeningDemo demo = new IEOpeningDemo(mParentTransform.GetChild(1));
                     mCoroutineHandler = new CCoroutine<IEOpeningDemo>(demo);
-                    Main.AddCoroutine(mCoroutineHandler);
+                    mMain.AddCoroutine(mCoroutineHandler);
                     break;
                 case 7:
                     if (false == mCoroutineHandler.IsDone)
@@ -84,7 +91,7 @@ namespace IECoroutine
                 case 8:
                     IEOpeningTitle title = new IEOpeningTitle(mParentTransform.GetChild(2));
                     mCoroutineHandler = new CCoroutine<IEOpeningTitle>(title);
-                    Main.AddCoroutine(mCoroutineHandler);
+                    mMain.AddCoroutine(mCoroutineHandler);
                     break;
                 case 9:
                     if (false == mCoroutineHandler.IsDone)
@@ -95,7 +102,7 @@ namespace IECoroutine
 
                 /* set ui title */
                 case 10:
-                    global::Main.UIMgr.Pop(EUIType.Title, true);
+                    mTaskGetUITitle.Result.SetActive(true);
                     break;
 
                 /* dispose */
@@ -116,7 +123,6 @@ namespace IECoroutine
 
             return index + 1;
         }
-
 
         public IEOpeningScene(CanvasGroup curtain)
         {
@@ -196,6 +202,7 @@ namespace IECoroutine
         }
         public IEOpeningDemo(Transform transform)
         {
+            transform.gameObject.SetActive(true);
             Debug.Log("Need to dev: Play Demo");
         }
     }
@@ -215,35 +222,33 @@ namespace IECoroutine
 
         public IEOpeningTitle(Transform transform)
         {
+            transform.gameObject.SetActive(true);
+
             mRects = new RectTransform[2];
             mPositions = new Vector2[2];
             mDist = mLogoSpeed * mMovingTime;
-
-            //all images.alpha = 0f;
             mImages = transform.GetComponentsInChildren<Image>();
-            for (int i = 0; i < mImages.Length; ++i)
-            {
-                mImages[i].color = new Color(1f, 1f, 1f, 0f);
-            }
 
             //logo_upper
             mRects[0] = mImages[0].GetComponent<RectTransform>();
             mRects[0].anchoredPosition = new Vector3(mRects[0].anchoredPosition.x, mRects[0].anchoredPosition.y + mDist);
             mPositions[0] = mRects[0].anchoredPosition;
+            mImages[0].color = new Color(1f, 1f, 1f, 1f);
 
             //logo_lower
             mRects[1] = mImages[1].GetComponent<RectTransform>();
             mRects[1].anchoredPosition = new Vector3(mRects[1].anchoredPosition.x, mRects[1].anchoredPosition.y - mDist);
             mPositions[1] = mRects[1].anchoredPosition;
+            mImages[1].color = new Color(1f, 1f, 1f, 1f);
+
+            //flash
+            mImages[2].color = new Color(1f, 1f, 1f, 0f);
         }
         public int MoveNext(int index)
         {
             switch (index)
             {
                 case 0:
-                    mImages[0].color = mImages[1].color = new Color(1f, 1f, 1f, 1f);
-                    break;
-                case 1:
                     float ratio = mPassedTime / mMovingTime;
                     mRects[0].anchoredPosition = new Vector3(mPositions[0].x, mPositions[0].y - mDist * ratio);
                     mRects[1].anchoredPosition = new Vector3(mPositions[1].x, mPositions[1].y + mDist * ratio);
@@ -255,8 +260,8 @@ namespace IECoroutine
                     }
                     mAlpah = 0;
                     break;
-                case 2:
-                    //flash
+                case 1:
+                    // flash on
                     mAlpah += Time.deltaTime * mFlashSpeed;
                     mImages[2].color = new Color(1, 1, 1, mAlpah);
                     if (mAlpah < 1f)
@@ -265,7 +270,8 @@ namespace IECoroutine
                     }
                     mAlpah = 1f;
                     break;
-                case 3:
+                case 2:
+                    // flash off
                     mAlpah -= Time.deltaTime * (mFlashSpeed * 0.6f);
                     mImages[2].color = new Color(1, 1, 1, mAlpah);
                     if (mAlpah > 0f)

@@ -4,6 +4,8 @@ using IECoroutine;
 public class MapSceneManager_
 {
     private CanvasGroup mLoadingCurtain;
+    private Main_ mMain { get => Main_.Instance; }
+
     public MapSceneManager_(Transform transform)
     {
         Transform canvasTransform = transform.Find("CanvasCurtain");
@@ -13,6 +15,6 @@ public class MapSceneManager_
     public void LoadScene_Opening()
     {
         var opening = new IEOpeningScene(mLoadingCurtain);
-        Main_.Instance.AddCoroutine(new CCoroutine<IEOpeningScene>(opening));
+        mMain.AddCoroutine(new CCoroutine<IEOpeningScene>(opening));
     }
 }

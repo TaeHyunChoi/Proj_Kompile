@@ -1,14 +1,10 @@
 ﻿using System;
 using static Index.IDxTile;
 
-// enum
-public enum ESceneState : byte
-{ 
-    None,
-    Load,
-    Play,
-    Pause,
-    Leave,
+
+public enum EScene
+{
+    Opening = 0,
 }
 public enum EStat
 { 
@@ -25,7 +21,6 @@ public enum EStat
     LUK,
     CNT
 }
-
 public enum EAsset
 { 
     NONE = 0,
@@ -38,7 +33,6 @@ public enum EAsset
     OpeningGame,
     UITitle,
 }
-
 public enum EAssetType
 { 
     None        = 0,

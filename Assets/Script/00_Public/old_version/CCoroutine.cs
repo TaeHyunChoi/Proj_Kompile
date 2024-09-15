@@ -12,9 +12,9 @@ public class CCoroutine<T> : CCoroutineHandler where T : class, IRoutineUpdater
 {
     private T mRoutine;
 
-    public CCoroutine(T data)
+    public CCoroutine(T coroutine)
     {
-        this.mRoutine = data;
+        mRoutine = coroutine;
         mindex = 0;
     }
     public override bool MoveNext()

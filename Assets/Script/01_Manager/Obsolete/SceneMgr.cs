@@ -5,6 +5,8 @@ public partial class SceneMgr
 {
     private CanvasGroup mCurtainCanvas;
 
+    private Main_ mMain { get => Main_.Instance; }
+
     public void LoadSceneAsync(EGameStateFlag next, int code = -1)
     {
         switch (next)
@@ -17,7 +19,7 @@ public partial class SceneMgr
                 if (true == DataTable.TryGetMapData(code, out MapData map))
                 {
                     LoadFieldScene level = new LoadFieldScene(mCurtainCanvas, map);
-                    Main_.Instance.AddCoroutine(new CCoroutine<LoadFieldScene>(level));
+                    mMain.AddCoroutine(new CCoroutine<LoadFieldScene>(level));
                 }
                 else
                 {
