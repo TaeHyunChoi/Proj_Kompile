@@ -5,6 +5,7 @@ using static Index.IDxTile;
 public enum EScene
 {
     Opening = 0,
+    Field,
 }
 public enum EStat
 { 
@@ -74,6 +75,31 @@ public enum EGameStateFlag : byte
 public enum EUIType : byte
 {
     Title = 0,
+    Count
+}
+public enum EUIGroup
+{
+    None = 0,
+
+    Title,
+    //title
+    //title:  select
+
+    Field,
+    //content: field
+    //field:  interact
+    //field:  region sign
+
+    Battle,
+    //content: battle
+    //battle: select
+
+    Status,
+    //status
+    //stat
+    //equip
+    //skill
+    //hud
 }
 
 [Flags]
@@ -93,4 +119,10 @@ public enum ETileSizeType : byte
     Default_Inverse,
     Half_inverse,
     Quater_inverse
+}
+
+
+public static class UtilEnum
+{
+    public static int ToInt(this EUIType type) => (int)type;
 }

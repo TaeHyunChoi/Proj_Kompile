@@ -12,9 +12,12 @@ public class MapSceneManager_
         mLoadingCurtain = canvasTransform.GetComponentInChildren<CanvasGroup>();
     }
 
-    public void LoadScene_Opening()
+    public void StartGame()
     {
-        var opening = new IEOpeningScene(mLoadingCurtain);
-        mMain.AddCoroutine(new CCoroutine<IEOpeningScene>(opening));
+        IRoutineUpdater loadScene  = new IELoadScene("010_OpeningScene");
+        IRoutineUpdater enterScene = new IEOpeningScene(mLoadingCurtain);
+
+        IERoutine routine = new IERoutine(loadScene, enterScene);
+        mMain.AddCoroutine(routine);
     }
 }

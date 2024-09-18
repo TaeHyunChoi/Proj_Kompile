@@ -37,29 +37,6 @@ namespace Index
         {
             return 0 != (input & compares);
         }
-
-        public static bool ComparesTo(this EInput input, params EInput[] compares)
-        {
-            EInput flag = EInput.NONE;
-            for (int i = 0; i < compares.Length; ++i)
-            {
-                flag |= compares[i];
-            }
-
-            return 0 != (input & flag);
-        }
-        //public static bool Compare(EInput input, params EInput[] compares)
-        //{
-        //    for (int i = 0; i < compares.Length; ++i)
-        //    {
-        //        if (0 != (input & compares[i]))
-        //        {
-        //            return true;
-        //        }
-        //    }
-
-        //    return false;
-        //}
     }
     public static class IDxTile
     {

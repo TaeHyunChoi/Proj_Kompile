@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using static Index.IDxInput;
@@ -11,11 +10,9 @@ public partial class Main_ : MonoBehaviour
     private UIManager_ mUIMgr;
     // AssetMgr은 staic으로 사용 중;
 
-    private List<CCoroutineHandler> mHandlers;
+    private List<IERoutine> mHandlers;
 
     private EInput mInputReserved;
-
-    public EInput InputReserved { get => mInputReserved; }
 
     private void Awake()
     {
@@ -30,7 +27,7 @@ public partial class Main_ : MonoBehaviour
 
 
         /* Initialize Coroutine Updater */
-        mHandlers = new List<CCoroutineHandler>();
+        mHandlers = new List<IERoutine>();
 
 
         /* Initialize Managers */
@@ -42,7 +39,7 @@ public partial class Main_ : MonoBehaviour
     }
     private void Start()
     {
-        mMapSceneMgr.LoadScene_Opening();
+        mMapSceneMgr.StartGame();
     }
 
     /* main loop */
@@ -51,24 +48,29 @@ public partial class Main_ : MonoBehaviour
         mInputReserved = Update_Input();
         Update_Coroutine();
     }
-    //private void FixedUpdate()
-    //{
-    //    var input = mInputReserved;
-    //    switch (mGameState)
-    //    {
-    //        case EGameState.Field:
-    //            // ...
-    //            break;
-    //        default:
-    //            //mInputReserved = input;
-    //            return;
-    //    }
-    //}
-    //private void LateUpdate()
-    //{
-    //      camera?
-    //}
+    /*
+    private void FixedUpdate()
+    {
+        var input = mInputReserved;
+        switch (mGameState)
+        {
+            case EGameState.Field:
+                // ...
+                break;
+            default:
+                //mInputReserved = input;
+                return;
+        }
+    }
+     */
+    /*
+    private void LateUpdate()
+    {
+        camera ?
+    }     
+     */
 
+    /* input */
     private EInput Update_Input()
     {
         var input = EInput.NONE;
@@ -93,31 +95,31 @@ public partial class Main_ : MonoBehaviour
 
         return input;
     }
+
+    /* coroutine */
     private void Update_Coroutine()
     {
-        int index = -1;
         for (int i = 0; i < mHandlers.Count; ++i)
         {
+            // empty space => continue;
             if (null == mHandlers[i])
             {
                 continue;
             }
-            if (false == mHandlers[i].MoveNext())
+
+            // playing => continue;
+            if (true == mHandlers[i].MoveNext())
             {
-                mHandlers[i] = null;
                 continue;
             }
-
-            index = i;
-        }
-
-        if (-1 == index)
-        {
-            GC.Collect(0, GCCollectionMode.Optimized);
+            // end => dispose;
+            else
+            {
+                mHandlers[i] = null;
+            }
         }
     }
-
-    public void AddCoroutine(CCoroutineHandler handler)
+    public void AddCoroutine(IERoutine handler)
     {
         if (null == handler)
         {
@@ -125,7 +127,7 @@ public partial class Main_ : MonoBehaviour
             return;
         }
 
-        //List 중에 빈 자리에 채워 넣는다.
+        // Fill in the empty spaces.
         for (int i = 0; i < mHandlers.Count; ++i)
         {
             if (null == mHandlers[i])
@@ -135,7 +137,7 @@ public partial class Main_ : MonoBehaviour
             }
         }
 
-        //빈 자리가 없다면 List에 추가한다.
+        // If there is no empty space, add it to the list.
         mHandlers.Add(handler);
     }
 }

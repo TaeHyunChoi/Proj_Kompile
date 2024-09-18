@@ -4,47 +4,82 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using static Index.IDxInput;
+using UnityEngine.Assertions;
 
 namespace IECoroutine
 {
-    #region Opening
+    public class IELoadingCurtainOn : IRoutineUpdater
+    {
+        public int MoveNext(int index)
+        {
+            return -1;
+        }
+    }
+    public class IELoadingCurtainOff : IRoutineUpdater
+    {
+        public int MoveNext(int index)
+        {
+            return -1;
+        }
+    }
+    public class IEClear : IRoutineUpdater
+    {
+        public int MoveNext(int index)
+        {
+            return -1;
+        }
+    }
+
+
+    public class IELoadScene : IRoutineUpdater
+    {
+        private readonly AsyncOperation mLoadAsyncOper;
+
+        public IELoadScene(string mapCode)
+        {
+            mLoadAsyncOper = SceneManager.LoadSceneAsync(mapCode, LoadSceneMode.Single);
+        }
+        public int MoveNext(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    if (false == mLoadAsyncOper.isDone)
+                    {
+                        return index;
+                    }
+                    break;
+                default:
+                    return -1;
+            }
+
+            return index + 1;
+        }
+    }
     public class IEOpeningScene : IRoutineUpdater
     {
-        private AsyncOperation mLoadAsyncOper;
         private CanvasGroup    mCurtainCanvas;
 
         private Task<GameObject> mTaskGetOpening;
         private Task<GameObject> mTaskGetUITitle;
 
         private Transform mParentTransform;
-        private CCoroutineHandler mCoroutineHandler;
-
+        private IERoutine mPlayOpeningRoutine;
         private Main_ mMain { get => Main_.Instance; }
 
         public int MoveNext(int index)
         {
             switch (index)
             {
-                /* load scene */
+                /* load prefabs */
                 case 0:
-                    mLoadAsyncOper = SceneManager.LoadSceneAsync("010_OpeningScene", LoadSceneMode.Single);
+                    Transform transformCameraCanvas = mMain.UI_GetCanvasCamera().transform;
+                    Transform transformOverlayCanvas = mMain.UI_GetCanvasOverlay().transform;
+
+                    mTaskGetOpening = mMain.Asset_InstantiateAysnc(EAsset.OpeningGame, transformCameraCanvas);
+                    mTaskGetUITitle = mMain.Asset_InstantiateAysnc(EAsset.UITitle, transformOverlayCanvas);
                     break;
                 case 1:
-                    if (false == mLoadAsyncOper.isDone)
-                    {
-                        return index;
-                    }
-                    break;
-
-                /* load prefabs */
-                case 2:
-                    Transform transformCameraCanvas  = mMain.GetUICanvasCamera().transform;
-                    Transform transformOverlayCanvas = mMain.GetUICanvasOverlay().transform;
-
-                    mTaskGetOpening = mMain.InstantiateAssetAysnc(EAsset.OpeningGame, transformCameraCanvas);
-                    mTaskGetUITitle = mMain.InstantiateAssetAysnc(EAsset.UITitle, transformOverlayCanvas);
-                    break;
-                case 3:
                     if (false == mTaskGetOpening.IsCompletedSuccessfully
                         || false == mTaskGetUITitle.IsCompletedSuccessfully)
                     {
@@ -60,64 +95,34 @@ namespace IECoroutine
                     mTaskGetUITitle.Result.SetActive(false);
                     mCurtainCanvas.gameObject.SetActive(false);
                     break;
-
-                /* play logo */
-                case 4:
-                    IEOpeningLogo logo = new IEOpeningLogo(mParentTransform.GetChild(0));
-                    mCoroutineHandler = new CCoroutine<IEOpeningLogo>(logo);
-                    mMain.AddCoroutine(mCoroutineHandler);
-                    break;
-                case 5:
-                    if (false == mCoroutineHandler.IsDone)
-                    {
-                        return index;
-                    }
-                    break;
-
-                /* play demo */
-                case 6:
-                    IEOpeningDemo demo = new IEOpeningDemo(mParentTransform.GetChild(1));
-                    mCoroutineHandler = new CCoroutine<IEOpeningDemo>(demo);
-                    mMain.AddCoroutine(mCoroutineHandler);
-                    break;
-                case 7:
-                    if (false == mCoroutineHandler.IsDone)
-                    {
-                        return index;
-                    }
-                    break;
-
-                /* play title */
-                case 8:
+                case 2:
+                    IEOpeningLogo  logo  = new IEOpeningLogo(mParentTransform.GetChild(0));
+                    IEOpeningDemo  demo  = new IEOpeningDemo(mParentTransform.GetChild(1));
                     IEOpeningTitle title = new IEOpeningTitle(mParentTransform.GetChild(2));
-                    mCoroutineHandler = new CCoroutine<IEOpeningTitle>(title);
-                    mMain.AddCoroutine(mCoroutineHandler);
+
+                    mPlayOpeningRoutine = new IERoutine(logo, demo, title);
+                    mMain.AddCoroutine(mPlayOpeningRoutine);
                     break;
-                case 9:
-                    if (false == mCoroutineHandler.IsDone)
+                case 3:
+                    if (false == mPlayOpeningRoutine.IsDone)
                     {
                         return index;
                     }
-                    break;
 
-                /* set ui title */
-                case 10:
-                    mTaskGetUITitle.Result.SetActive(true);
+                    IEUITItle uititle = new IEUITItle(mTaskGetUITitle.Result);
+                    mMain.AddCoroutine(new IERoutine(uititle));
                     break;
-
-                /* dispose */
                 default:
                     mTaskGetOpening.Dispose();
                     mTaskGetUITitle.Dispose();
 
-                    mLoadAsyncOper   = null;
-                    mCurtainCanvas   = null;
-                    mTaskGetOpening  = null;
-                    mTaskGetUITitle  = null;
-                    mParentTransform = null;
-                    mCoroutineHandler       = null;
+                    mCurtainCanvas      = null;
+                    mTaskGetOpening     = null;
+                    mTaskGetUITitle     = null;
+                    mParentTransform    = null;
+                    mPlayOpeningRoutine = null;
 
-                    GC.Collect(0, GCCollectionMode.Forced);
+                    GC.Collect(0, GCCollectionMode.Optimized);
                     return -1;
             }
 
@@ -130,20 +135,20 @@ namespace IECoroutine
             mCurtainCanvas.gameObject.SetActive(true);
         }
     }
+
+
     public class IEOpeningLogo : IRoutineUpdater
     {
         private readonly Image mLogoImage;
         private float mWaitTime;
         private float mAlpha;
-        private int   mState;
-
-        private Main_ Main { get => Main_.Instance; }
+        private int mState;
 
         public int MoveNext(int index)
         {
             /* input */
             if (0 == mState
-                && true == Main.InputReserved.Contains(EInput.ENTER | EInput.ACTION))
+                && true == Main_.Input_Get().Contains(EInput.ENTER | EInput.ACTION))
             {
                 mAlpha = 1f;
                 mLogoImage.color = new Color(1f, 1f, 1f, mAlpha);
@@ -212,7 +217,7 @@ namespace IECoroutine
         private readonly RectTransform[] mRects;
         private readonly Vector2[] mPositions;
 
-        private readonly float mLogoSpeed  = 4000f;
+        private readonly float mLogoSpeed = 4000f;
         private readonly float mFlashSpeed = 5f;
         private readonly float mMovingTime = 0.75f;
         private readonly float mDist;
@@ -286,7 +291,192 @@ namespace IECoroutine
             return index + 1;
         }
     }
-    #endregion
 
 
+    public class IEUITItle : IRoutineUpdater
+    {
+        private readonly float ALPHA_MAX = 0.6f;
+        private readonly float ALPHA_MIN = 0.3f;
+        private readonly float OFFSET_TIME = 0.2f;
+
+        private readonly Image[] mSelectionItems;
+        private readonly int mItemCount;
+
+        private float mDeltaTime;
+        private float mOffsetTime;
+        private int mSelect;
+
+        private Main_ mMain => Main_.Instance;
+
+        public IEUITItle(GameObject obj)
+        {
+            obj.SetActive(true);
+            Transform transform = obj.transform;
+
+            mMain.UI_AddNew(EUIType.Title, obj);
+            mMain.UI_Open(EUIType.Title);
+
+            Image[] images = transform.GetChild(0).GetComponentsInChildren<Image>(true);
+            mSelectionItems = new Image[images.Length - 1];
+            mItemCount = images.Length - 1;
+            for (int i = 1; i < images.Length; ++i)
+            {
+                mSelectionItems[i - 1] = images[i];
+            }
+
+            mSelect = 0;
+            mOffsetTime = OFFSET_TIME;
+        }
+        public int MoveNext(int index)
+        {
+            index = Input(Main_.Input_Get(), index);
+
+            switch (index)
+            {
+                case 0:
+                    if (mSelectionItems[mSelect].color.a <= ALPHA_MIN)
+                    {
+                        mDeltaTime = Time.deltaTime;
+                    }
+                    else if (mSelectionItems[mSelect].color.a >= ALPHA_MAX)
+                    {
+                        mDeltaTime = -Time.deltaTime;
+                    }
+
+                    mSelectionItems[mSelect].color += new Color(0, 0, 0, mDeltaTime * 0.75f);
+                    break;
+                default:
+                    return -1;
+            }
+
+            return index;
+        }
+        public int Input(EInput input, int index)
+        {
+            if (true == input.Contains(EInput.ENTER | EInput.ACTION))
+            {
+                SetItemColor(mSelect, ALPHA_MAX);
+
+                switch (mSelect)
+                {
+                    case 0:
+                        Debug.Log("New game For Test (map code: 100)");
+                        //mMain.ChangeScene(EGameStateFlag.Field, 100);
+                        //Main.SceneMgr.LoadSceneAsync(EGameStateFlag.Field, 100);
+                        break;
+                    case 1:
+                        Debug.Log("Saved Data List");
+                        break;
+                    case 2:
+                        Debug.Log("Option window");
+                        break;
+                    case 3:
+#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+                        UnityEditor.EditorApplication.isPlaying = false;
+#else
+                        Application.Quit();
+#endif
+                        break;
+                    default:
+                        Assert.IsFalse(false, $"Wrong Input Index: IEUITItle.Input({mSelect})");
+                        break;
+                }
+
+                return -1;
+            }
+            if (true == input.Contains(EInput.CANCEL))
+            {
+                Debug.Log("Cancel");
+                mOffsetTime = 0;
+            }
+
+            mOffsetTime -= Time.deltaTime;
+            if (0 > mOffsetTime) 
+            { 
+                mOffsetTime = 0; 
+            }
+
+            // block successive input
+            if (true == input.Contains(EInput.UP_HOLD | EInput.DOWN_HOLD))
+            {
+                if (0 < mOffsetTime) 
+                { 
+                    return index; 
+                }
+            }
+
+            bool isUp   = input.Contains(EInput.UP | EInput.UP_HOLD);
+            bool isDown = input.Contains(EInput.DOWN | EInput.DOWN_HOLD);
+
+            if (true == isUp || true == isDown)
+            {
+                // prev
+                SetItemColor(mSelect, 0f);
+
+                // loop index (0 ~ 3)
+                mSelect = isUp ? mSelect - 1 : mSelect + 1;
+                mSelect = (mSelect + mItemCount) % mItemCount;
+
+                // next
+                SetItemColor(mSelect, ALPHA_MIN);
+
+                // reset-offset
+                mOffsetTime = OFFSET_TIME;
+            }
+
+            //if (true == input.Contains(EInput.UP | EInput.UP_HOLD))
+            //{
+            //    SetItemColor(mSelect, 0f); //prev
+            //    mSelect = (mSelect - 1 + mItemCount) % mItemCount;
+            //    SetItemColor(mSelect, ALPHA_MIN); //next
+
+            //    mOffsetTime = OFFSET_TIME;
+            //}
+            //if (true == input.Contains(EInput.DOWN | EInput.DOWN_HOLD))
+            //{
+            //    SetItemColor(mSelect, 0f);
+            //    mSelect = (mSelect + 1 + mItemCount) % mItemCount;
+            //    SetItemColor(mSelect, ALPHA_MIN);
+
+            //    mOffsetTime = OFFSET_TIME;
+            //}
+
+            return index;
+        }
+        private void SetItemColor(int index, float alpha)
+        {
+            Color target = mSelectionItems[index].color;
+            mSelectionItems[index].color = new Color(target.r, target.g, target.b, alpha);
+        }
+    }
+
+
+    public class IEFieldScene : IRoutineUpdater
+    {
+
+        public IEFieldScene(CanvasGroup loadingCurtain, int sceneIndex)
+        {
+
+        }
+
+        public int MoveNext(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    break;
+                default:
+                    return -1;
+            }
+
+            return index + 1;
+        }
+    }
+    public class IEEnterField : IRoutineUpdater
+    {
+        public int MoveNext(int index)
+        {
+            return -1;
+        }
+    }
 }

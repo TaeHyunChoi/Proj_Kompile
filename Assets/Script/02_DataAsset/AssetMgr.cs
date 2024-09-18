@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -12,18 +10,6 @@ public class AssetMgr
     private static Dictionary<string, AsyncOperationHandle> mAssetHandler   = new Dictionary<string, AsyncOperationHandle>();
 
     // Init/Load Asset
-    public static async Task<GameObject> InstantiatePrefabAsync(EAsset type, Transform parent, bool isOn)
-    {
-        string assetAddress = GetAddress(type);
-
-        AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetAddress, parent);
-        GameObject go = await handle.Task;
-        go.SetActive(isOn);
-
-        mObjectHandlers.Add(go.GetInstanceID(), handle);
-        return go;
-    }
-
     public static async Task<GameObject> InstantiateGameObjectAsync(string address, Transform parent, bool isOn)
     {
         AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
