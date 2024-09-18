@@ -17,4 +17,15 @@ public class UIManager_
     public void AddNew(EUIType type, GameObject obj) => mUICache[type.ToInt()] = new UIComponent(type, obj);
     public void Open(EUIType type) => mUICache[type.ToInt()].Open();
     public void Close(EUIType type) => mUICache[type.ToInt()].Close();
+    public void Clear(EUIGroup exceptGroupType)
+    {
+        for (int i = 0; i < mUICache.Length; ++i)
+        {
+            if (exceptGroupType != mUICache[i].UIGroup)
+            {
+                mUICache[i].Close();
+                AssetMgr.ReleaseGameObject(mUICache[i].InstanceID);
+            }
+        }
+    }
 }

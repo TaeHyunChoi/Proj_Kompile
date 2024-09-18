@@ -12,17 +12,17 @@ public class OnField : ContentBase, IFixedInputHandler
 
     private Main_ mMain { get => Main_.Instance; }
 
-    public static async Task<OnField> InitAsync(Transform level, MapData data)
-    {
-        OnField field = new OnField(level, data);
+    //public static async Task<OnField> InitAsync(Transform level, MapData data)
+    //{
+    //    OnField field = new OnField(level, data);
 
-        Task taskInitField = Main.UnitMgr.InitAsync(level);
-        await taskInitField;
-        taskInitField.Dispose();
+    //    Task taskInitField = Main.UnitMgr.InitAsync(level);
+    //    await taskInitField;
+    //    taskInitField.Dispose();
 
-        Main.Instance.SetContent(field);
-        return field;
-    }
+    //    Main.Instance.SetContent(field);
+    //    return field;
+    //}
 
     public void Input(Index.IDxInput.EInput input)
     {
@@ -36,20 +36,20 @@ public class OnField : ContentBase, IFixedInputHandler
             Main.Player.Move(mTileMap, dir);
         }
     }
-    private OnField(Transform level, MapData data)
-    {
-        mTileMap = DataTable.LoadMappingData<STile>("020_FieldTest");
-        UnityEngine.Assertions.Assert.IsNotNull(mTileMap, "Null time map");
-        this.mTransformLevel = level;
+    //private OnField(Transform level, MapData data)
+    //{
+    //    mTileMap = DataTable.LoadMappingData<STile>("020_FieldTest");
+    //    UnityEngine.Assertions.Assert.IsNotNull(mTileMap, "Null time map");
+    //    this.mTransformLevel = level;
 
-        mTileComponents = level.GetComponentsInChildren<MapTileComponent>(true);
-        MapTileComponent tile;
-        for (int i = 0; i < mTileComponents.Length; ++i)
-        {
-            tile = mTileComponents[i];
-            tile.gameObject.SetActive(0 == tile.Layer);
-        }
-    }
+    //    mTileComponents = level.GetComponentsInChildren<MapTileComponent>(true);
+    //    MapTileComponent tile;
+    //    for (int i = 0; i < mTileComponents.Length; ++i)
+    //    {
+    //        tile = mTileComponents[i];
+    //        tile.gameObject.SetActive(0 == tile.Layer);
+    //    }
+    //}
 
     //OnField.cs
     public void TransLayer(int layer)

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Mono.Cecil.Cil;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -92,6 +93,21 @@ public class AssetMgr
     }
 
     // Release Asset
+    public static void ClearAll()
+    {
+        foreach (AsyncOperationHandle handler in mObjectHandlers.Values)
+        {
+            GameObject.Destroy(handler.Result as GameObject);
+            Addressables.Release(handler);
+        }
+        mObjectHandlers.Clear();
+
+        foreach (string code in mAssetHandler.Keys)
+        {
+            Addressables.Release(mAssetHandler[code]);
+        }
+        mAssetHandler.Clear();
+    }
     public static bool ReleaseGameObject(int instanceID)
     {
         Addressables.Release(mObjectHandlers[instanceID]);

@@ -8,29 +8,69 @@ using UnityEngine.Assertions;
 
 namespace IECoroutine
 {
+    /* scene : loading curtain */
     public class IELoadingCurtainOn : IRoutineUpdater
     {
+        private readonly CanvasGroup mLoadingCurtain;
+        public IELoadingCurtainOn(CanvasGroup loadingCurtain)
+        {
+            mLoadingCurtain = loadingCurtain;
+            mLoadingCurtain.gameObject.SetActive(true);
+            mLoadingCurtain.alpha = 0f;
+        }
+
         public int MoveNext(int index)
         {
-            return -1;
+            switch (index)
+            {
+                case 0:
+                    mLoadingCurtain.alpha += Time.deltaTime;
+                    if (1 > mLoadingCurtain.alpha)
+                    {
+                        return index;
+                    }
+                    mLoadingCurtain.alpha = 1f;
+                    break;
+                default:
+                    return -1;
+            }
+
+            return index + 1;
         }
     }
     public class IELoadingCurtainOff : IRoutineUpdater
     {
-        public int MoveNext(int index)
+        private readonly CanvasGroup mLoadingCurtain;
+
+        public IELoadingCurtainOff(CanvasGroup loadingCurtain)
         {
-            return -1;
+            mLoadingCurtain = loadingCurtain;
+            //mLoadingCurtain.gameObject.SetActive(true);
+            mLoadingCurtain.alpha = 1f;
         }
-    }
-    public class IEClear : IRoutineUpdater
-    {
+
         public int MoveNext(int index)
         {
-            return -1;
+            switch (index)
+            {
+                case 0:
+                    mLoadingCurtain.alpha -= Time.deltaTime;
+                    if (0 < mLoadingCurtain.alpha)
+                    {
+                        return index;
+                    }
+                    mLoadingCurtain.alpha = 0f;
+                    mLoadingCurtain.gameObject.SetActive(false);
+                    break;
+                default:
+                    return -1;
+            }
+
+            return index + 1;
         }
     }
 
-
+    /* scene : load async*/
     public class IELoadScene : IRoutineUpdater
     {
         private readonly AsyncOperation mLoadAsyncOper;
@@ -136,7 +176,7 @@ namespace IECoroutine
         }
     }
 
-
+    /* content: opening */
     public class IEOpeningLogo : IRoutineUpdater
     {
         private readonly Image mLogoImage;
@@ -292,7 +332,7 @@ namespace IECoroutine
         }
     }
 
-
+    /* ui */
     public class IEUITItle : IRoutineUpdater
     {
         private readonly float ALPHA_MAX = 0.6f;
@@ -360,9 +400,8 @@ namespace IECoroutine
                 switch (mSelect)
                 {
                     case 0:
-                        Debug.Log("New game For Test (map code: 100)");
-                        //mMain.ChangeScene(EGameStateFlag.Field, 100);
-                        //Main.SceneMgr.LoadSceneAsync(EGameStateFlag.Field, 100);
+                        Debug.Log("New game For Test (map code: 900)");
+                        mMain.MapScene_EnterField(900);
                         break;
                     case 1:
                         Debug.Log("Saved Data List");
@@ -449,33 +488,24 @@ namespace IECoroutine
             mSelectionItems[index].color = new Color(target.r, target.g, target.b, alpha);
         }
     }
-
-
-    public class IEFieldScene : IRoutineUpdater
+    public class IEClearUI : IRoutineUpdater
     {
-
-        public IEFieldScene(CanvasGroup loadingCurtain, int sceneIndex)
+        public IEClearUI(EUIGroup exceptGroupType)
         {
-
+            Main_.Instance.UI_Clear(exceptGroupType);
         }
-
         public int MoveNext(int index)
         {
-            switch (index)
-            {
-                case 0:
-                    break;
-                default:
-                    return -1;
-            }
-
-            return index + 1;
+            return -1;
         }
     }
-    public class IEEnterField : IRoutineUpdater
+
+    /* asset */
+    public class IEClearAllAsset : IRoutineUpdater
     {
         public int MoveNext(int index)
         {
+            Main_.Instance.Asset_ClearAll();
             return -1;
         }
     }

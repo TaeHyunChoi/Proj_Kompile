@@ -1,3 +1,4 @@
+using IECoroutine;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -16,6 +17,7 @@ public partial class Main_ // Main_Request
     public void UI_AddNew(EUIType type, GameObject obj) => mUIMgr.AddNew(type, obj);
     public void UI_Open(EUIType type) => mUIMgr.Open(type);
     public void UI_Close(EUIType type) => mUIMgr.Close(type);
+    public void UI_Clear(EUIGroup groupType) => mUIMgr.Clear(groupType);
 
 
     /* Asset */
@@ -24,8 +26,8 @@ public partial class Main_ // Main_Request
         string code = AssetMgr.GetAddress(type);
         return await AssetMgr.InstantiateGameObjectAsync(code, parent, true);
     }
-
+    public void Asset_ClearAll() => AssetMgr.ClearAll();
 
     /* Scene */
-
+    public void MapScene_EnterField(int code) => mMapSceneMgr.EnterFieldScene(code);
 }

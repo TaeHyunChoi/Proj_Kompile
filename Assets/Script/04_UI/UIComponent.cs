@@ -1,17 +1,20 @@
 using UnityEngine;
 
-public class UIComponent
+public struct UIComponent
 {
-    private EUIGroup   mhGroup;
-    private EUIType    mhType;
+    //private EUIType    mhType;
+    //public EUIType  UIType => mhType;
+
     private GameObject mhGameObject;
+    private EUIGroup   mhGroup;
+    private int mhInstanceID;
 
     public EUIGroup UIGroup => mhGroup;
-    public EUIType  UIType => mhType;
+    public int InstanceID => mhInstanceID;
 
     public UIComponent(EUIType type, GameObject obj)
     {
-        mhType = type;
+        //mhType = type;
         switch (type)
         {
             case EUIType.Title: mhGroup = EUIGroup.Title;   break;
@@ -19,6 +22,7 @@ public class UIComponent
         }
 
         mhGameObject = obj;
+        mhInstanceID = obj.GetInstanceID();
     }
 
     public void Open()
