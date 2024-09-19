@@ -45,7 +45,6 @@ namespace IECoroutine
         public IELoadingCurtainOff(CanvasGroup loadingCurtain)
         {
             mLoadingCurtain = loadingCurtain;
-            //mLoadingCurtain.gameObject.SetActive(true);
             mLoadingCurtain.alpha = 1f;
         }
 
@@ -173,6 +172,17 @@ namespace IECoroutine
         {
             mCurtainCanvas = curtain;
             mCurtainCanvas.gameObject.SetActive(true);
+        }
+    }
+    public class IEClearMapSceneObjects : IRoutineUpdater
+    {
+        public IEClearMapSceneObjects()
+        {
+            Main_.Instance.MapScene_Clear();
+        }
+        public int MoveNext(int index)
+        {
+            return -1;
         }
     }
 
@@ -353,7 +363,7 @@ namespace IECoroutine
             obj.SetActive(true);
             Transform transform = obj.transform;
 
-            mMain.UI_AddNew(EUIType.Title, obj);
+            //mMain.UI_AddNew(EUIType.Title, obj);
             mMain.UI_Open(EUIType.Title);
 
             Image[] images = transform.GetChild(0).GetComponentsInChildren<Image>(true);

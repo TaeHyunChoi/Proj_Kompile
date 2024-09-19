@@ -2,12 +2,9 @@ using UnityEngine;
 
 public struct UIComponent
 {
-    //private EUIType    mhType;
-    //public EUIType  UIType => mhType;
-
     private GameObject mhGameObject;
     private EUIGroup   mhGroup;
-    private int mhInstanceID;
+    private int        mhInstanceID;
 
     public EUIGroup UIGroup => mhGroup;
     public int InstanceID => mhInstanceID;

@@ -1,9 +1,11 @@
 using UnityEngine;
 using IECoroutine;
+using System.Collections.Generic;
 
 public class MapSceneManager_
 {
     private CanvasGroup mLoadingCurtain;
+    private List<int> mInstanceIDCache;
 
     private Main_ mMain { get => Main_.Instance; }
 
@@ -11,6 +13,7 @@ public class MapSceneManager_
     {
         Transform canvasTransform = transform.Find("CanvasCurtain");
         mLoadingCurtain = canvasTransform.GetComponentInChildren<CanvasGroup>();
+        mInstanceIDCache = new List<int>();
     }
 
     public void StartGame()
@@ -23,24 +26,22 @@ public class MapSceneManager_
     }
     public void EnterFieldScene(int fieldSceneCode)
     {
-        IRoutineUpdater loadScene;
         string mapCode;
         switch (fieldSceneCode)
         {
             case 900: mapCode = "020_FieldTestScene"; break;
-            default:
-                return;
+            default:  return;
         }
-        loadScene = new IELoadScene(mapCode);
 
-        IRoutineUpdater curtainOn = new IELoadingCurtainOn(mLoadingCurtain);
-        IRoutineUpdater curtainOff = new IELoadingCurtainOff(mLoadingCurtain);
-
-        IRoutineUpdater clearUI = new IEClearUI(exceptGroupType: EUIGroup.Field);
+        var curtainOn     = new IELoadingCurtainOn(mLoadingCurtain);
+        var clearUI       = new IEClearUI(exceptGroupType: EUIGroup.Field);
+        var clearMapScene = new IEClearMapSceneObjects();
+        var loadScene     = new IELoadScene(mapCode);
+        var curtainOff    = new IELoadingCurtainOff(mLoadingCurtain);
 
         IERoutine enterFieldRoutine = new IERoutine(curtainOn,
                                                     clearUI,
-                                                    // clear prefab
+                                                    clearMapScene,
                                                     loadScene,
                                                     // set field unit      
                                                     // set field camera
@@ -48,5 +49,16 @@ public class MapSceneManager_
                                                     curtainOff);
 
         mMain.AddCoroutine(enterFieldRoutine);
+    }
+
+    public void AddNewObject(int instanceID) => mInstanceIDCache.Add(instanceID);
+    public void ClearObjects()
+    {
+        for (int i = 0; i < mInstanceIDCache.Count; ++i)
+        {
+            AssetMgr.ReleaseGameObject(mInstanceIDCache[i]);
+        }
+
+        mInstanceIDCache.Clear();
     }
 }
