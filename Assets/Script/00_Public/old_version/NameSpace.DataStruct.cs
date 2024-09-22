@@ -48,17 +48,13 @@ namespace DataStruct
         }
         public float GetYValue(int keyMy, Vector3 point)
         {
-            //point가 속한 삼각형 인덱스를 구한다.
             Vector3 pivot = TileUtility.GetPivotByKey(keyMy, GetScale());
             float scale_half = GetScale(ETileSizeType.Half);
             int triangle = TileUtility.GetTriangleIndex(point - pivot, scale_half);
 
-            //각 포인트에 해당하는 높이 구한다. (배열을 사용하지 않기 위해 out 3번 사용...)
-            //[주의!] 유니티는 "왼손 좌표계"이므로 외적 계산을 반대로 생각해야 한다...
             long height = (long)(maskMove >> 16);
             TileUtility.GetTrianglePoints(pivot, GetScale(), height, triangle, out Vector3 p0, out Vector3 p1, out Vector3 p2);
 
-            //평면의 방정식에 대입하면 y값을 구할 수 있다.
             Vector3 normal = Vector3.Cross(p1 - p0, p2 - p0);
             normal.Normalize();
             normal = CMath.FloorToVector(normal, 3);
@@ -82,7 +78,6 @@ namespace DataStruct
 #endif
     }
 
-    //아래 자료구조는 미완성. 개발 현황에 따라 내용이 달라질 예정
     [Serializable]
     public struct SkillData : IDataSetter
     {

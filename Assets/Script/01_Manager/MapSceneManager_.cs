@@ -43,7 +43,7 @@ public class MapSceneManager_
                                                     clearUI,
                                                     clearMapScene,
                                                     loadScene,
-                                                    // set field unit      
+                                                    // set field unit (playable, npc, ...)
                                                     // set field camera
                                                     // set field ui       
                                                     curtainOff);
