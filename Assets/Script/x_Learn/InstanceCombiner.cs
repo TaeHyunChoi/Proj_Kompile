@@ -43,4 +43,14 @@ public class InstanceCombiner : MonoBehaviour
         AssetDatabase.CreateAsset(meshToSave, path);
         AssetDatabase.SaveAssets();
     }
+
+    //for test
+    private void Start()
+    {
+        var tileSample = transform.GetComponentsInChildren<x_MapTileSampler>();
+        for (int i = 0; i < tileSample.Length; ++i)
+        {
+            tileSample[i].Set();
+        }
+    }
 }

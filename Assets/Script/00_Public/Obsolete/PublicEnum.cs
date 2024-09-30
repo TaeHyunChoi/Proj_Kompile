@@ -121,6 +121,13 @@ public enum ETileSizeType : byte
     Quater_inverse
 }
 
+public enum x_ETileTriggerType : byte
+{
+    None = 0,
+    Scale,
+    Layer,
+    Event
+}
 
 public static class UtilEnum
 {
