@@ -57,7 +57,7 @@ namespace DataStruct
 
             Vector3 normal = Vector3.Cross(p1 - p0, p2 - p0);
             normal.Normalize();
-            normal = CMath.FloorToVector(normal, 3);
+            normal = CMath.Truncate(normal, 3);
             float d = Vector3.Dot(normal, p0);
 
             return -(normal.x * point.x + normal.z * point.z - d) / normal.y;

@@ -7,7 +7,7 @@ using IECoroutine;
 public class OnField : ContentBase, IFixedInputHandler
 {
     private Dictionary<int, STile> mTileMap;
-    private MapTileComponent[]     mTileComponents;
+    private x_MapTileComponent[]     mTileComponents;
     private Transform              mTransformLevel;
 
     private Main_ mMain { get => Main_.Instance; }
@@ -52,11 +52,13 @@ public class OnField : ContentBase, IFixedInputHandler
     //}
 
     //OnField.cs
+    [System.Obsolete]
     public void TransLayer(int layer)
     {
-        mTileComponents = mTransformLevel.GetComponentsInChildren<MapTileComponent>(true);
+        /*
+        mTileComponents = mTransformLevel.GetComponentsInChildren<x_MapTileComponent>(true);
 
-        MapTileComponent tile;
+        x_MapTileComponent tile;
         for (int i = 0; i < mTileComponents.Length; ++i)
         {
             tile = mTileComponents[i];
@@ -70,6 +72,7 @@ public class OnField : ContentBase, IFixedInputHandler
                 tile.gameObject.SetActive(false);
             }
         }
+        */
     }
     public override void Release()
     {

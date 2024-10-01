@@ -75,6 +75,6 @@ public class InputMgr : MonoBehaviour
         if (true == input.Contains(EInput.RIGHT | EInput.RIGHT_HOLD)) { dir += Vector3.right;   }
 
         dir.Normalize();
-        return CMath.FloorToVector(dir, 3);
+        return CMath.Truncate(dir);
     }
 }

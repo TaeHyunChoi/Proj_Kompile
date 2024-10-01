@@ -2,10 +2,13 @@
 using UnityEngine;
 using DataStruct;
 using CMathf;
+using System;
 
 #if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-public class Dev_MapSampler : MonoBehaviour
+[Obsolete]
+public class x_Dev_MapSampler : MonoBehaviour
 {
+    /*
     [SerializeField] private Transform transformRsc;
     [SerializeField] private GeometryUtility tester;
     private static Dictionary<int, STile> map = new Dictionary<int, STile>();
@@ -189,5 +192,6 @@ public class Dev_MapSampler : MonoBehaviour
         float scale = tile.GetScale(ETileSizeType.Default);
         Debug.Log($"{key}:{TileUtility.GetPivotByKey(key, scale):F3}(scale:{scale}, info:{info} trigger:{trigger}) m:{move} l:{link}\nh:{height}");
     }
+    */
 }
 #endif

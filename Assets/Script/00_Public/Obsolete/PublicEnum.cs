@@ -1,7 +1,6 @@
 ﻿using System;
 using static Index.IDxTile;
 
-
 public enum EScene
 {
     Opening = 0,
@@ -63,15 +62,6 @@ public enum EAnimeCodeToString
     MOVE_LEFT,
     MOVE_RIGHT,
 }
-[Flags]
-public enum EGameStateFlag : byte
-{ 
-    None    = 0,
-    Opening = 1 << 4,
-    Field   = 1 << 5,
-    Battle  = 1 << 6,
-    Event   = 1 << 7
-}
 public enum EUIType : byte
 {
     Title = 0,
@@ -121,12 +111,14 @@ public enum ETileSizeType : byte
     Quater_inverse
 }
 
-public enum x_ETileTriggerType : byte
+[Flags]
+public enum ETileTriggerFlag : byte
 {
     None = 0,
     Scale,
     Layer,
-    Event
+    Interact,
+    EventScene
 }
 
 public static class UtilEnum

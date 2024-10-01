@@ -47,7 +47,7 @@ public class InstanceCombiner : MonoBehaviour
     //for test
     private void Start()
     {
-        var tileSample = transform.GetComponentsInChildren<x_MapTileSampler>();
+        var tileSample = transform.GetComponentsInChildren<MapTileSampler>();
         for (int i = 0; i < tileSample.Length; ++i)
         {
             tileSample[i].Set();

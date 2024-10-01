@@ -1,8 +1,11 @@
+using System;
 using UnityEngine;
 using static Index.IDxTile;
 
-public class MapTileComponent : MonoBehaviour
+[Obsolete]
+public class x_MapTileComponent : MonoBehaviour
 {
+    /*
     [SerializeField]
     private byte layer;
     public byte Layer { get => layer; }
@@ -39,9 +42,10 @@ public class MapTileComponent : MonoBehaviour
             trigger |= valueInteract << SHIFT_TRIGGER_INTERACT_VALUE;
         }
 
-        Dev_MapSampler.InitTile(transform, mesh, scale, layer, info, trigger);
+        x_Dev_MapSampler.InitTile(transform, mesh, scale, layer, info, trigger);
     }
 #endif
+        */
 }
 public class TransMapTile : IRoutineUpdater
 {
@@ -51,7 +55,7 @@ public class TransMapTile : IRoutineUpdater
     private Material   material;
     private Color      color;
 
-    public TransMapTile(MapTileComponent tile)
+    public TransMapTile(x_MapTileComponent tile)
     {
         gameObject = tile.gameObject;
         material = tile.GetComponent<MeshRenderer>().material;
