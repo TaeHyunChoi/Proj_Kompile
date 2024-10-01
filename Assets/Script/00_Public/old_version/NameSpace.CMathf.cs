@@ -37,34 +37,34 @@ namespace CMathf
         //    return new Vector3(x, y, z);
         //}
 
-        public static float Truncate(float value, int exponent = 3)
-        {
-            float d, d_invert;
-            switch (exponent)
-            {
-                case 2:
-                    d = 100f;
-                    d_invert = 0.01f; 
-                    break;
-                case 3:
-                    d = 1000f;
-                    d_invert = 0.001f; 
-                    break;
-                default: 
-                    d = Mathf.Pow(10, exponent);
-                    d_invert = 1 / d; 
-                    break;
-            }
-
-            return (float)(Math.Truncate(value * d) * d_invert);
-        }
-        public static Vector3 Truncate(Vector3 value, int exponent = 3)
+        public static Vector3 Truncate(this Vector3 value, int exponent = 3)
         {
             var x = Truncate(value.x, exponent);
             var y = Truncate(value.y, exponent);
             var z = Truncate(value.z, exponent);
 
             return new Vector3(x, y, z);
+        }
+        private static float Truncate(float value, int exponent = 3)
+        {
+            float d, d_invert;
+            switch (exponent)
+            {
+                case 2:
+                    d = 100f;
+                    d_invert = 0.01f;
+                    break;
+                case 3:
+                    d = 1000f;
+                    d_invert = 0.001f;
+                    break;
+                default:
+                    d = Mathf.Pow(10, exponent);
+                    d_invert = 1 / d;
+                    break;
+            }
+
+            return (float)(Math.Truncate(value * d) * d_invert);
         }
     }
 }

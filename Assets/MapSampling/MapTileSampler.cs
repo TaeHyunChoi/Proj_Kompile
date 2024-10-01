@@ -1,4 +1,5 @@
 using CMathf;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class MapTileSampler : MonoBehaviour
@@ -12,48 +13,92 @@ public class MapTileSampler : MonoBehaviour
     [SerializeField]
     private byte triggerValue;
 
-    private short gridIndex;
-    private short tileIndex;
+    private short gridFlagIndex;
+    private short tileFlagIndex;
     private long  collide;
 
     public void Set()
     {
         var scale = isHalfScale ? 0.5f : 1f;
 
-        Vector3 center = CMath.Truncate(transform.position, exponent: 3);
-        var x = center.x;
-        var y = center.y;
-        var z = center.z;
-        var sign_x = x < 0 ? -1 : 1;
-        var sign_y = y < 0 ? -1 : 1;
-        var sign_z = z < 0 ? -1 : 1;
+        Vector3 center = transform.position.Truncate();
+        float sign_x = (center.x < 0) ? -1 : 1;
+        float sign_y = (center.y < 0) ? -1 : 1;
+        float sign_z = (center.z < 0) ? -1 : 1;
 
-        /* tile pivot */
-        var tile_x     = x - sign_x * (x % scale);
-        var tile_y     = y - sign_y * (y % scale);
-        var tile_z     = z - sign_z * (z % scale);
-        var tile_pivot = new Vector3(tile_x, tile_y, tile_z);
+        /* tile pivot point */
+        float tile_x = center.x - (sign_x * (center.x % scale));
+        float tile_y = center.y - (sign_y * (center.y % scale));
+        float tile_z = center.z - (sign_z * (center.z % scale));
         if (true == isHalfScale)
         {
-            tile_pivot += new Vector3(0.125f, 0, 0);
+            tile_x -= 0.25f;
         }
 
-        /* grid pivot */
-        var grid_x = Mathf.Floor(x / 32);
-        var grid_y = Mathf.Floor(y / 4);
-        var grid_z = Mathf.Floor(z / 32);
-        var grid_pivot = new Vector3(grid_x, grid_y, grid_z);
-        grid_pivot = CMath.Truncate(grid_pivot);
-        
-        Debug.Log($"{transform.position:F3} * {scale}f\ngrid_pivot:{grid_pivot:F3}, tile_pivot:{tile_pivot:F3}");
+        /* grid flag */
+        int grid_x = Mathf.FloorToInt(tile_x / 32);
+        int grid_y = Mathf.FloorToInt(tile_y / 4);
+        int grid_z = Mathf.FloorToInt(tile_z / 32);
+        gridFlagIndex = SetGridFlag(grid_x, grid_y, grid_z);
 
-        /* pivot diff */
-        var diff = tile_pivot - grid_pivot;
-
-        /* grid index, tile index*/
-
+        /* tile flag */
+        Vector3 tile_pivot = new Vector3(tile_x, tile_y, tile_z).Truncate();
+        Vector3 grid_pivot = new Vector3(grid_x * 32, grid_y * 4, grid_z * 32).Truncate();
+        tileFlagIndex = SetTileIndex(tile_pivot - grid_pivot);
 
         // info = layer, trigger_type, trigger_value
 
+    }
+
+    private short SetGridFlag(int grid_x, int grid_y, int grid_z)
+    {
+        int BIT_GRID_X_SIGN = 15;
+        int BIT_GRID_X = 10;
+        int BIT_GRID_Y_SIGN = 9;
+        int BIT_GRID_Y = 6;
+        int BIT_GRID_Z_SIGN = 5;
+        int BIT_GRID_Z = 0;
+
+        int gridFlag = 0;
+
+        if (grid_x < 0)
+        {
+            gridFlag |= 1 << BIT_GRID_X_SIGN;
+            gridFlag |= (-grid_x) << BIT_GRID_X;
+        }
+        else
+        {
+            //gridFlag |= 0;
+            gridFlag |= grid_x << BIT_GRID_X;
+        }
+
+        if (grid_y < 0)
+        {
+            gridFlag |= 1 << BIT_GRID_Y_SIGN;
+            gridFlag |= (-grid_y) << BIT_GRID_Y;
+        }
+        else
+        {
+            //gridFlag |= 0;
+            gridFlag |= grid_y << BIT_GRID_Y;
+        }
+
+        if (grid_z < 0)
+        {
+            gridFlag |= 1 << BIT_GRID_Z_SIGN;
+            gridFlag |= (-grid_z) << BIT_GRID_Z;
+        }
+        else
+        {
+            //gridFlag |= 0;
+            gridFlag |= grid_z << BIT_GRID_Z;
+        }
+
+        return (short)gridFlag;
+    }
+    private short SetTileIndex(Vector3 diff)
+    {
+        //플래그 뭐더라?
+        return 0;
     }
 }

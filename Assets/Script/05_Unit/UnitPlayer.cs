@@ -26,7 +26,7 @@ public class UnitPlayer : UnitBase
             dirRotated.Normalize();
 
             dirRotated *= Time.fixedDeltaTime * SPEED_MOVE * mScale;
-            Vector3 goal = CMath.Truncate(position + dirRotated, 3);
+            Vector3 goal = (position + dirRotated).Truncate();
 
             int keyGoal = TileUtility.GetKeyByPoint(mLayer, /*Vector3*/ goal, mScale);
             keyGoal = TileUtility.GetKeyByRelativeCoord(map, keyGoal, x: 0, z: 0);

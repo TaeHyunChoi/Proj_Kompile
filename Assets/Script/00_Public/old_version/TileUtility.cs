@@ -822,7 +822,7 @@ public static class TileUtility
             z += (dist - diff);
         }
 
-        return CMath.Truncate(new Vector3(x, y, z), exponent);
+        return new Vector3(x, y, z).Truncate(exponent);
     }
 #endif
 }
