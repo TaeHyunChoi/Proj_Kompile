@@ -224,6 +224,8 @@ namespace DataStruct
         private long  collideFlag;
 
         public long ColliderFlag => collideFlag;
+        public long MoveFlag     => (collideFlag >> 3 * 13);
+        public long HeightFlag   => (collideFlag & 0x003F_FFFF_FFFF);
 
         public MapTileData(short index, short info, long collide)
         {

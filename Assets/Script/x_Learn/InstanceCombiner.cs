@@ -70,6 +70,26 @@ public class InstanceCombiner : MonoBehaviour
             }
         }
 
+        foreach (var data in table.Values)
+        {
+            string log = string.Empty;
+            var heightFlag = data.HeightFlag;
+
+            Debug.Log($"{System.Convert.ToString(heightFlag, 2)}");
+
+            for (int i = 0; i < 13; ++i)
+            {
+                log += (heightFlag >> (i * 3)) & 0b_0111;
+
+                if (12 != i)
+                {
+                    log += ", ";
+                }
+            }
+
+            Debug.Log("height: " + log);
+        }
+
         // 완료 후엔? 이렇게 저렇게 합니다. 그런데 이제 Mesh를 추가한...
         // 
     }

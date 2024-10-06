@@ -17,6 +17,7 @@ public class MapTileSampler : MonoBehaviour
     [HideInInspector] public Vector3     debug_gridPivot;
     [HideInInspector] public short       debug_gridIndex;
     [HideInInspector] public MapTileData debug_data;
+    [HideInInspector] public bool IsHalf => isHalfScale;
 
     public (long, MapTileData) Set()
     {
@@ -66,10 +67,6 @@ public class MapTileSampler : MonoBehaviour
         float tile_x = center.x - (sign_x * (center.x % scale));
         float tile_y = center.y - (sign_y * (center.y % scale));
         float tile_z = center.z - (sign_z * (center.z % scale));
-        if (true == isHalfScale)
-        {
-            tile_x -= 0.25f;
-        }
 
         return new Vector3(tile_x, tile_y, tile_z).Truncate();
     }
@@ -265,15 +262,15 @@ public class MapTileSampler : MonoBehaviour
         else
         {
             //get point, get pivot
-            Vector3 pointCenter = GetSnappingPoint((p0 + p1 + p2) * 0.333f, scale_quater * 0.5f);
+            Vector3 pointCenter = GetSnappingPoint((p0 + p1 + p2) * 0.333f, scale_quater/* * 0.5f*/);
 
             //set flag
             long movable = 1 << TileUtility.GetTriangleIndex((pointCenter - pivot).Truncate(), scale_half);
-            collide |= movable;
+            collide |= movable << (13 * 3);
 
             long height = 0;
 
-            float scale_quater_inverse = (1 / (scale * 0.25f)).Truncate();
+            float scale_quater_inverse = (1 / scale_quater).Truncate();
             height |= GetHeightFlag(p0 - pivot, scale_quater_inverse);
             height |= GetHeightFlag(p1 - pivot, scale_quater_inverse);
             height |= GetHeightFlag(p2 - pivot, scale_quater_inverse);
@@ -282,11 +279,12 @@ public class MapTileSampler : MonoBehaviour
 
         return collide;
     }
-    private long GetHeightFlag(Vector3 diff, float size_quater_inverse)
+    private long GetHeightFlag(Vector3 diff, float scale_quater_inverse)
     {
-        int  x = (int) (diff.x * size_quater_inverse);
-        long y = (long)(diff.y * size_quater_inverse);  //y: 0 ~ 4 (0b000 ~ 0b100)
-        int  z = (int) (diff.z * size_quater_inverse);
+        diff = diff.Truncate();
+        int  x = (int) (diff.x * scale_quater_inverse);
+        long y = (long)(diff.y * scale_quater_inverse);  //y: 0 ~ 4 (0b000 ~ 0b100)
+        int  z = (int) (diff.z * scale_quater_inverse);
 
         int shift;
         switch (x * 10 + z)
