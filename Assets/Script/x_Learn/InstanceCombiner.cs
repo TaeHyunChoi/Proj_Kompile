@@ -47,10 +47,30 @@ public class InstanceCombiner : MonoBehaviour
     //for test
     private void Start()
     {
+
+        Dictionary<long, DataStruct.MapTileData> table = new Dictionary<long, DataStruct.MapTileData>();
+        //Dictionary<short, Mesh> 계속 추가하며 쌓으면 되나본데?
+        //그런데 각 grid별 tile count가 필요하구나? 흠.. 이걸 어떻게 더해야 하는지 생각을 못했네.
+
         var tileSample = transform.GetComponentsInChildren<MapTileSampler>();
         for (int i = 0; i < tileSample.Length; ++i)
         {
-            tileSample[i].Set();
+            (long, DataStruct.MapTileData) tile = tileSample[i].Set();
+
+            var index = tile.Item1;
+            var data  = tile.Item2;
+
+            if (false == table.ContainsKey(index))
+            {
+                table.Add(index, data);
+            }
+            else
+            {
+                table[index] |= data;
+            }
         }
+
+        // 완료 후엔? 이렇게 저렇게 합니다. 그런데 이제 Mesh를 추가한...
+        // 
     }
 }

@@ -45,7 +45,7 @@ public class x_MapTileComponent : MonoBehaviour
         x_Dev_MapSampler.InitTile(transform, mesh, scale, layer, info, trigger);
     }
 #endif
-        */
+        //*/
 }
 public class TransMapTile : IRoutineUpdater
 {

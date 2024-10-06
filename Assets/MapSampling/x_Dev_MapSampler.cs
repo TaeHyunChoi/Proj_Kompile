@@ -8,7 +8,7 @@ using System;
 [Obsolete]
 public class x_Dev_MapSampler : MonoBehaviour
 {
-    /*
+    //*
     [SerializeField] private Transform transformRsc;
     [SerializeField] private GeometryUtility tester;
     private static Dictionary<int, STile> map = new Dictionary<int, STile>();
@@ -48,7 +48,7 @@ public class x_Dev_MapSampler : MonoBehaviour
             Vector3 normal = normal1;
             if (normal2.y < normal.y) { normal = normal2; }
             if (normal3.y < normal.y) { normal = normal3; }
-            normal = CMath.FloorToVector(normal, 3);
+            normal = normal.Truncate();
             if (0 >= normal.y)
             {
                 continue;
@@ -66,7 +66,7 @@ public class x_Dev_MapSampler : MonoBehaviour
     private static long GetHeightFlag(Vector3 diff, float size_quater_inverse)
     {
         //diff = PTile.SnappingPoint(diff, size_quater, 3);
-        diff = CMath.FloorToVector(diff, 3);
+        diff = diff.Truncate();
         int x  = (int) (diff.x * size_quater_inverse);
         long y = (long)(diff.y * size_quater_inverse);  //y: 0 ~ 4 (0b000 ~ 0b100)
         int z  = (int) (diff.z * size_quater_inverse);
@@ -128,7 +128,7 @@ public class x_Dev_MapSampler : MonoBehaviour
         //삼각형 중 가장 긴 변이 단위 길이(scale_half)보다 같거나 짧을 때까지 재귀호출
         if (scale_half < diagonal)
         {
-            Vector3 midPoint = CMath.FloorToVector((p1 + p2) * 0.5f, 3);
+            Vector3 midPoint = ((p1 + p2) * 0.5f).Truncate();
             SetTileDataRecursive(p0, p1, midPoint, scale, layer, info, trigger);
             SetTileDataRecursive(p0, p2, midPoint, scale, layer, info, trigger);
         }
@@ -192,6 +192,6 @@ public class x_Dev_MapSampler : MonoBehaviour
         float scale = tile.GetScale(ETileSizeType.Default);
         Debug.Log($"{key}:{TileUtility.GetPivotByKey(key, scale):F3}(scale:{scale}, info:{info} trigger:{trigger}) m:{move} l:{link}\nh:{height}");
     }
-    */
+    //*/
 }
 #endif

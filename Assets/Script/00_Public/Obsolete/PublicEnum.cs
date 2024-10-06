@@ -115,7 +115,7 @@ public enum ETileSizeType : byte
 public enum ETileTriggerFlag : byte
 {
     None = 0,
-    Scale,
+    //Scale,
     Layer,
     Interact,
     EventScene

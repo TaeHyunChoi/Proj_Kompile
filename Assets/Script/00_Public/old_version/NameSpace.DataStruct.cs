@@ -7,7 +7,7 @@ namespace DataStruct
     using CMathf;
     using static Index.IDxTile;
 
-    [Serializable]
+    [Obsolete][Serializable]
     public struct STile
     {
         //total 10 bytes
@@ -215,5 +215,33 @@ namespace DataStruct
             Mob = temp.ToArray();
         }
     }
+    
+    [SerializeField]
+    public struct MapTileData
+    {
+        private short indexFlag; // grid index | tile index 라고 한다면...
+        private short infoFlag;
+        private long  collideFlag;
 
+        public long ColliderFlag => collideFlag;
+
+        public MapTileData(short index, short info, long collide)
+        {
+            indexFlag = index;
+            infoFlag = info;
+            collideFlag = collide;
+        }
+        public static MapTileData operator |(MapTileData a, MapTileData b)
+        {
+            if (a.indexFlag != b.indexFlag)
+            {
+                return a;
+            }
+
+            var infoFlag    = (short)(a.infoFlag   | b.infoFlag   );
+            var collideFlag = (long)(a.collideFlag | b.collideFlag);
+
+            return new MapTileData(a.indexFlag, infoFlag, collideFlag);
+        }
+    }
 }

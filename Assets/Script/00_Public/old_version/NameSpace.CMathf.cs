@@ -5,14 +5,14 @@ namespace CMathf
 
     public static class CMath
     {
-        public static float Floor(float value, int exponent = 3)
+        public static float Floor(float value, int digits = 3)
         {
-            float d = (int)Mathf.Pow(10, exponent);
+            float d = (int)Mathf.Pow(10, digits);
             float sign = value < 0 ? -1 : 1;
             value *= sign;
 
             float d_invert;
-            switch (exponent)
+            switch (digits)
             {
                 case 2: d_invert = 0.01f; break;
                 case 3: d_invert = 0.001f; break;
@@ -21,9 +21,9 @@ namespace CMathf
 
             return sign * (int)(value * d) * d_invert;
         }
-        public static int FloorToInt(float value, int exponent = 3)
+        public static int FloorToInt(float value, int digits = 3)
         {
-            return (int)Floor(value, exponent);
+            return (int)Floor(value, digits);
         }
         //public static Vector3 FloorToVector(Vector3 value, int exponent = 3)
         //{
@@ -37,34 +37,45 @@ namespace CMathf
         //    return new Vector3(x, y, z);
         //}
 
-        public static Vector3 Truncate(this Vector3 value, int exponent = 3)
+        public static Vector3 Truncate(this Vector3 value, int digits = 3)
         {
-            var x = Truncate(value.x, exponent);
-            var y = Truncate(value.y, exponent);
-            var z = Truncate(value.z, exponent);
+            var x = Truncate(value.x, digits);
+            var y = Truncate(value.y, digits);
+            var z = Truncate(value.z, digits);
 
             return new Vector3(x, y, z);
         }
-        private static float Truncate(float value, int exponent = 3)
+        public static float Truncate(this float value, int digits = 3)
         {
-            float d, d_invert;
-            switch (exponent)
-            {
-                case 2:
-                    d = 100f;
-                    d_invert = 0.01f;
-                    break;
-                case 3:
-                    d = 1000f;
-                    d_invert = 0.001f;
-                    break;
-                default:
-                    d = Mathf.Pow(10, exponent);
-                    d_invert = 1 / d;
-                    break;
-            }
+            //float d, d_invert;
+            //switch (exponent)
+            //{
+            //    case 2:
+            //        d = 100f;
+            //        d_invert = 0.01f;
+            //        break;
+            //    case 3:
+            //        d = 1000f;
+            //        d_invert = 0.001f;
+            //        break;
+            //    default:
+            //        d = Mathf.Pow(10, exponent);
+            //        d_invert = 1 / d;
+            //        break;
+            //}
 
-            return (float)(Math.Truncate(value * d) * d_invert);
+            return (float)Math.Round(value, digits);
+            //return (float)(Math.Truncate(value * d) * d_invert);
+            //value *= d;
+            //value = (value >= 0) ? MathF.Floor(value) : MathF.Ceiling(value);
+            ////return value * d_invert;
+            //return (float)Math.Round(value * d_invert, 3);
         }
+
+        public static Vector3Int ToInt(this Vector3 value)
+        {
+            return new Vector3Int((int)value.x, (int)value.y, (int)value.z);
+        }
+
     }
 }
