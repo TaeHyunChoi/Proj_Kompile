@@ -15,21 +15,23 @@ public class MapTile : Editor
     {
         mapTileSample = (MapTileSampler)target;
 
-        showSetData = EditorGUILayout.Foldout(showSetData, "Set Data");
-        if (showSetData)
-        {
-            base.OnInspectorGUI();
-        }
+        base.OnInspectorGUI();
 
-        EditorGUILayout.Space();
+        //showSetData = EditorGUILayout.Foldout(showSetData, "Set Data");
+        //if (showSetData)
+        //{
+        //    base.OnInspectorGUI();
+        //}
 
-        showDebugData = EditorGUILayout.Foldout(showDebugData, "Debug Data");
-        if (showDebugData)
-        {
-            DrawGridLabel();
-            DrawMoveLabel();
-            DrawHeightLabel();
-        }
+        //EditorGUILayout.Space();
+
+        //showDebugData = EditorGUILayout.Foldout(showDebugData, "Debug Data");
+        //if (showDebugData)
+        //{
+        //    DrawGridLabel();
+        //    DrawMoveLabel();
+        //    DrawHeightLabel();
+        //}
     }
     private void DrawGridLabel()
     {

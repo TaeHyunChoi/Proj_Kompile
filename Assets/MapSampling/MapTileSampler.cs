@@ -13,11 +13,66 @@ public class MapTileSampler : MonoBehaviour
     [SerializeField]
     private int triggerValue;
 
-    // debug
+    private Vector3 gridPivot;
+    private short   gridIndexFlag;
+    private short   tileIndexFlag;
+    private short   tileInfoFlag;
+    private long    collisionFlag;
+
+    /* grid info */
+    public Vector3  GridPivot     { get { return gridPivot;     } }
+    public short    GridIndexFlag { get { return gridIndexFlag; } }
+
+    /* tile info */
+    public short    IndexFlag     { get { return tileIndexFlag; } }
+    public short    InfoFlag      { get { return tileInfoFlag;  } }
+    public long     CollisionFlag { get { return collisionFlag; } }
+    public bool     IsHalfScale   { get { return isHalfScale;   } }
+
+
+    // debug : 얘도 교통정리 해야겠구만.
     [HideInInspector] public Vector3     debug_gridPivot;
     [HideInInspector] public short       debug_gridIndex;
     [HideInInspector] public MapTileData debug_data;
     [HideInInspector] public bool IsHalf => isHalfScale;
+
+    public void Init()
+    {
+        /* transform => tile pivot*/
+        Vector3 tilePivot = GetTilePivotFromCenter(transform.position);
+
+        /* grid index flag */
+        int grid_x = Mathf.FloorToInt(tilePivot.x / 32);
+        int grid_y = Mathf.FloorToInt(tilePivot.y / 4);
+        int grid_z = Mathf.FloorToInt(tilePivot.z / 32);
+        gridIndexFlag = GetGridIndexFlag(grid_x, grid_y, grid_z);
+
+
+        /* tile index flag */
+        gridPivot = new Vector3(grid_x * 32, grid_y * 4, grid_z * 32).Truncate();
+        Vector3Int diffInt = (tilePivot - gridPivot).ToInt();
+        tileIndexFlag = GetTileIndexFlag(diffInt);
+
+        /* tile info */
+        tileInfoFlag = GetTileInfoFlag();
+
+        /* collide */
+        collisionFlag = GetCollideFlag(tilePivot);
+
+        /* for debug */
+        debug_gridIndex = gridIndexFlag;
+        debug_gridPivot = gridPivot;
+        debug_data = new MapTileData(tileIndexFlag, tileInfoFlag, collisionFlag);
+
+        // 필요한 정보를 꺼내어 주면 되겠구나..?
+        // grid index
+        // tile index
+        // tile info
+        // collision
+        // mesh
+    }
+
+
 
     public (long, MapTileData) Set()
     {
@@ -309,5 +364,28 @@ public class MapTileSampler : MonoBehaviour
         shift *= 3;
 
         return y << shift;
+    }
+
+    public static MapTileSampler operator |(MapTileSampler a, MapTileSampler b)
+    {
+        if (a.gridIndexFlag != b.gridIndexFlag)
+        {
+            return a;
+        }
+
+        if (a.tileIndexFlag != b.tileIndexFlag)
+        {
+            return a;
+        }
+
+        a.tileInfoFlag  |= b.tileInfoFlag;
+        a.collisionFlag |= b.collisionFlag;
+
+        // info 정보가 sub-tile마다 다를 수 있다 => 이럴 바엔 그냥 나누는 게 맞나? 
+        // info에 무슨 정보가 담기니? layer, trigger_type, trigger_value;
+        //그래서 trigger collider가 nav agent 느낌과 다른 것 같기도 하고?
+
+
+        return a;
     }
 }

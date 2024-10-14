@@ -216,6 +216,7 @@ namespace DataStruct
         }
     }
     
+
     [SerializeField]
     public struct MapTileData
     {
