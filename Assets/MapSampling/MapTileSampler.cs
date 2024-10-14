@@ -4,42 +4,53 @@ using DataStruct;
 
 public class MapTileSampler : MonoBehaviour
 {
-    [SerializeField]
-    private ETileTriggerFlag triggerType; // : byte
+    //[SerializeField]
+    //private ETileTriggerFlag triggerType; // : byte
+    //[SerializeField]
+    //private int triggerValue;
+
     [SerializeField]
     private bool isHalfScale;
     [SerializeField]
     private int meshLayer;
-    [SerializeField]
-    private int triggerValue;
+
+    private MeshFilter meshFilter;
 
     private Vector3 gridPivot;
-    private short   gridIndexFlag;
-    private short   tileIndexFlag;
-    private short   tileInfoFlag;
-    private long    collisionFlag;
+    private Vector3 tilePivot;
+    private short gridIndexFlag;
+    private short tileIndexFlag;
+    private short tileInfoFlag;
+    private long collisionFlag;
 
     /* grid info */
-    public Vector3  GridPivot     { get { return gridPivot;     } }
-    public short    GridIndexFlag { get { return gridIndexFlag; } }
+    public Vector3 GridPivot      { get { return gridPivot; } }
+    public short GridIndexFlag    { get { return gridIndexFlag; } }
 
     /* tile info */
+    public Vector3 TilePivot      { get { return tilePivot; } }
     public short    IndexFlag     { get { return tileIndexFlag; } }
     public short    InfoFlag      { get { return tileInfoFlag;  } }
     public long     CollisionFlag { get { return collisionFlag; } }
     public bool     IsHalfScale   { get { return isHalfScale;   } }
+    public MeshFilter     MeshFilter { get { return meshFilter; } }
 
 
     // debug : 얘도 교통정리 해야겠구만.
-    [HideInInspector] public Vector3     debug_gridPivot;
-    [HideInInspector] public short       debug_gridIndex;
-    [HideInInspector] public MapTileData debug_data;
+    //[HideInInspector] public Vector3     debug_gridPivot;
+    //[HideInInspector] public short       debug_gridIndex;
+    //[HideInInspector] public MapTileData debug_data;
     [HideInInspector] public bool IsHalf => isHalfScale;
+
+    //처음부터 bit_flag 사용하지 말고, 저장할 때에 했어도 좋았을 듯?
 
     public void Init()
     {
+        /* mesh */
+        meshFilter = transform.GetComponent<MeshFilter>();
+
         /* transform => tile pivot*/
-        Vector3 tilePivot = GetTilePivotFromCenter(transform.position);
+        tilePivot = GetTilePivotFromCenter(transform.position);
 
         /* grid index flag */
         int grid_x = Mathf.FloorToInt(tilePivot.x / 32);
@@ -60,9 +71,11 @@ public class MapTileSampler : MonoBehaviour
         collisionFlag = GetCollideFlag(tilePivot);
 
         /* for debug */
-        debug_gridIndex = gridIndexFlag;
-        debug_gridPivot = gridPivot;
-        debug_data = new MapTileData(tileIndexFlag, tileInfoFlag, collisionFlag);
+        //debug_gridIndex = gridIndexFlag;
+        //debug_gridPivot = gridPivot;
+        //debug_data = new MapTileData(tileIndexFlag, tileInfoFlag, collisionFlag);
+
+
 
         // 필요한 정보를 꺼내어 주면 되겠구나..?
         // grid index
@@ -103,9 +116,9 @@ public class MapTileSampler : MonoBehaviour
         collide = GetCollideFlag(tilePivot);
 
         /* for debug */
-        debug_gridIndex = gridIndex;
-        debug_gridPivot = grid_pivot;
-        debug_data = new MapTileData(tileIndexFlag, tileInfo, collide);
+        //debug_gridIndex = gridIndex;
+        //debug_gridPivot = grid_pivot;
+        //debug_data = new MapTileData(tileIndexFlag, tileInfo, collide);
 
         return ((long)gridIndex << 16 | (long)tileIndexFlag, new MapTileData(tileIndexFlag, tileInfo, collide));
     }
@@ -186,25 +199,25 @@ public class MapTileSampler : MonoBehaviour
     private short GetTileInfoFlag()
     {
         int shiftMeshLayer    = 13;
-        int shiftTriggerType  =  9;
-        int shiftTriggerValue =  0;
+        //int shiftTriggerType  =  9;
+        //int shiftTriggerValue =  0;
 
         int infoFlag = 0;
         infoFlag |= meshLayer << shiftMeshLayer;
-        infoFlag |= (int)triggerType << shiftTriggerType;
-        infoFlag |= triggerValue << shiftTriggerValue;
+        // 차라리 필드의 속성(ex. 비, 눈, 진흙, .. 을 넣는게 좋겠다.)
+        //infoFlag |= (int)triggerType << shiftTriggerType;
+        //infoFlag |= triggerValue << shiftTriggerValue;
 
         return (short)infoFlag;
     }
     private long GetCollideFlag(Vector3 tilePivot)
     {
+        Mesh mesh = meshFilter.sharedMesh;
         long collide = 0;
-        var mesh = transform.GetComponent<MeshFilter>().mesh;
-
-        Quaternion rot = transform.rotation;
+        Quaternion rot     = transform.rotation;
         Vector3[] vertices = mesh.vertices;
-        Vector3[] normals = mesh.normals;
-        int[] triangles = mesh.triangles;
+        Vector3[] normals  = mesh.normals;
+        int[] triangles    = mesh.triangles;
 
         for (int t = 0; t < triangles.Length; t += 3)
         {
@@ -380,12 +393,6 @@ public class MapTileSampler : MonoBehaviour
 
         a.tileInfoFlag  |= b.tileInfoFlag;
         a.collisionFlag |= b.collisionFlag;
-
-        // info 정보가 sub-tile마다 다를 수 있다 => 이럴 바엔 그냥 나누는 게 맞나? 
-        // info에 무슨 정보가 담기니? layer, trigger_type, trigger_value;
-        //그래서 trigger collider가 nav agent 느낌과 다른 것 같기도 하고?
-
-
         return a;
     }
 }

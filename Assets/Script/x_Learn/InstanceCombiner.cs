@@ -48,9 +48,8 @@ public class InstanceCombiner : MonoBehaviour
     private void Start()
     {
         Dictionary<long, MapTileSampler> data = new Dictionary<long, MapTileSampler>();
-        Dictionary<long, DataStruct.MapTileData> table = new Dictionary<long, DataStruct.MapTileData>();
-        //Dictionary<short, Mesh> 계속 추가하며 쌓으면 되나본데?
-        //그런데 각 grid별 tile count가 필요하구나? 흠.. 이걸 어떻게 더해야 하는지 생각을 못했네.
+        Dictionary<short, List<MeshFilter>> gridMeshFilter = new Dictionary<short, List<MeshFilter>>();
+        //Dictionary<long, DataStruct.MapTileData> table = new Dictionary<long, DataStruct.MapTileData>();
 
         var samples = transform.GetComponentsInChildren<MapTileSampler>();
         MapTileSampler sample;
@@ -65,45 +64,45 @@ public class InstanceCombiner : MonoBehaviour
                 data.Add(index, sample);
             }
             else
-            { 
-                // operator로 값 갱신하자.
+            {
+                data[index] |= sample;
             }
-
-            //var index = tile.Item1;
-            //var data  = tile.Item2;
-
-            //if (false == table.ContainsKey(index))
-            //{
-            //    table.Add(index, data);
-            //}
-            //else
-            //{
-            //    table[index] |= data;
-            //}
         }
 
-        //foreach (var data in table.Values)
-        //{
-        //    string log = string.Empty;
-        //    var heightFlag = data.HeightFlag;
-
-        //    Debug.Log($"{System.Convert.ToString(heightFlag, 2)}");
-
-        //    for (int i = 0; i < 13; ++i)
-        //    {
-        //        log += (heightFlag >> (i * 3)) & 0b_0111;
-
-        //        if (12 != i)
-        //        {
-        //            log += ", ";
-        //        }
-        //    }
-
-        //    Debug.Log("height: " + log);
-        //}
 
 
-        // 완료 후엔? 이렇게 저렇게 합니다. 그런데 이제 Mesh를 추가한...
-        // 
+        foreach (MapTileSampler sampler in data.Values)
+        {
+            var gridIndexFlag = sampler.GridIndexFlag;
+            if (false == gridMeshFilter.ContainsKey(sampler.GridIndexFlag))
+            {
+                gridMeshFilter.Add(gridIndexFlag, new List<MeshFilter>());
+            }
+
+            gridMeshFilter[gridIndexFlag].Add(sampler.MeshFilter);
+        }
+
+        foreach (var meshFilters in gridMeshFilter.Values)
+        {
+            var combine = new CombineInstance[meshFilters.Count];
+            for (int i = 0; i < meshFilters.Count; ++i)
+            {
+                combine[i].mesh = meshFilters[i].mesh;
+                combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
+            }
+
+            var mesh = new Mesh();
+            mesh.CombineMeshes(combine);
+
+            //grid 별로 위에서 합친 mesh를 저장하여 파일로 만들면 된다ㅠㅠㅠ
+
+            // for test
+            //GameObject obj = new GameObject("temp", typeof(MeshFilter), typeof(MeshRenderer));
+            //obj.transform.position = Vector3.zero;
+            //obj.transform.GetComponent<MeshFilter>().mesh = mesh;
+            //obj.transform.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Sprites-Default");
+        }
+
+        gameObject.SetActive(false);
     }
 }
