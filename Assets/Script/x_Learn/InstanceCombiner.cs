@@ -6,46 +6,13 @@ using UnityEngine;
 /// </summary>
 public class InstanceCombiner : MonoBehaviour
 {
-    [SerializeField] private List<MeshFilter> listMeshFilters;
-    [SerializeField] private MeshFilter targetMesh;
+    //인스펙터에 버튼 걸 수 있니?
 
-    [ContextMenu("Combine Meshes")]
-    private void CombineMesh()
-    {
-        var combine = new CombineInstance[listMeshFilters.Count];
+    //[SerializeField] private List<MeshFilter> listMeshFilters;
+    //[SerializeField] private MeshFilter targetMesh;
 
-        for (int i = 0; i < listMeshFilters.Count; ++i)
-        {
-            combine[i].mesh = listMeshFilters[i].sharedMesh;
-            combine[i].transform = listMeshFilters[i].transform.localToWorldMatrix;
-        }
-
-        var mesh = new Mesh();
-        mesh.CombineMeshes(combine);
-
-        targetMesh.mesh = mesh;
-        SaveMesh(targetMesh.sharedMesh, gameObject.name, false, true);
-
-        print($"<color=#20E7B0>Combine Meshes was Successful!</color>");
-    }
-    private void SaveMesh(Mesh mesh, string name, bool makeNewInstance, bool optimizeMesh)
-    {
-        string path = EditorUtility.SaveFilePanel("Save Seperate Mesh Asset", "Assets/", name, "asset");
-        path = FileUtil.GetProjectRelativePath(path);
-
-        Mesh meshToSave = (makeNewInstance) ? Object.Instantiate(mesh) as Mesh : mesh;
-
-        if (optimizeMesh)
-        {
-            MeshUtility.Optimize(meshToSave);
-        }
-
-        AssetDatabase.CreateAsset(meshToSave, path);
-        AssetDatabase.SaveAssets();
-    }
-
-    //for test
-    private void Start()
+    [ContextMenu("Save NavMesh, Mesh")]
+    public void Save()
     {
         Dictionary<long, MapTileSampler> data = new Dictionary<long, MapTileSampler>();
         Dictionary<short, List<MeshFilter>> gridMeshFilter = new Dictionary<short, List<MeshFilter>>();
@@ -69,8 +36,6 @@ public class InstanceCombiner : MonoBehaviour
             }
         }
 
-
-
         foreach (MapTileSampler sampler in data.Values)
         {
             var gridIndexFlag = sampler.GridIndexFlag;
@@ -82,8 +47,9 @@ public class InstanceCombiner : MonoBehaviour
             gridMeshFilter[gridIndexFlag].Add(sampler.MeshFilter);
         }
 
-        foreach (var meshFilters in gridMeshFilter.Values)
+        foreach (var key in gridMeshFilter.Keys)
         {
+            var meshFilters = gridMeshFilter[key];
             var combine = new CombineInstance[meshFilters.Count];
             for (int i = 0; i < meshFilters.Count; ++i)
             {
@@ -93,8 +59,7 @@ public class InstanceCombiner : MonoBehaviour
 
             var mesh = new Mesh();
             mesh.CombineMeshes(combine);
-
-            //grid 별로 위에서 합친 mesh를 저장하여 파일로 만들면 된다ㅠㅠㅠ
+            SaveMesh(mesh, $"NavMesh_{key}", false, true);
 
             // for test
             //GameObject obj = new GameObject("temp", typeof(MeshFilter), typeof(MeshRenderer));
@@ -103,6 +68,21 @@ public class InstanceCombiner : MonoBehaviour
             //obj.transform.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Sprites-Default");
         }
 
-        gameObject.SetActive(false);
+        //gameObject.SetActive(false);
+    }
+    private void SaveMesh(Mesh mesh, string name, bool makeNewInstance, bool optimizeMesh)
+    {
+        string path = EditorUtility.SaveFilePanel("Save Seperate Mesh Asset", "Assets/", name, "asset");
+        path = FileUtil.GetProjectRelativePath(path);
+
+        Mesh meshToSave = (makeNewInstance) ? Object.Instantiate(mesh) as Mesh : mesh;
+
+        if (optimizeMesh)
+        {
+            MeshUtility.Optimize(meshToSave);
+        }
+
+        AssetDatabase.CreateAsset(meshToSave, path);
+        AssetDatabase.SaveAssets();
     }
 }
