@@ -223,11 +223,7 @@ namespace DataStruct
         private short indexFlag; // grid index | tile index 라고 한다면...
         private short infoFlag;
         private long  collideFlag;
-
-        public long ColliderFlag => collideFlag;
-        public long MoveFlag     => (collideFlag >> 3 * 13);
-        public long HeightFlag   => (collideFlag & 0x003F_FFFF_FFFF);
-
+        
         public MapTileData(short index, short info, long collide)
         {
             indexFlag = index;

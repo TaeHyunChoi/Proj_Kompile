@@ -1,22 +1,19 @@
+using MapSampling;
 using UnityEditor;
-using UnityEngine;
 
-[CustomEditor(typeof(MapTileSampler))]
+[CustomEditor(typeof(MapSampling.MapTile))]
 public class MapTile : Editor
 {
-    MapTileSampler mapTileSample;
-
-    private bool showSetData;
-    private bool showDebugData;
-
-
-
+    // MapTileSampler mapTileSample;
+    //
+    // private bool showSetData;
+    // private bool showDebugData;
+    
     public override void OnInspectorGUI()
     {
-        mapTileSample = (MapTileSampler)target;
-
         base.OnInspectorGUI();
-
+        
+        // mapTileSample = (MapTileSampler)target;
         //showSetData = EditorGUILayout.Foldout(showSetData, "Set Data");
         //if (showSetData)
         //{
