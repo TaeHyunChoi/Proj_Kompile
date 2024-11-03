@@ -3,6 +3,8 @@ using UnityEngine;
 using System.Threading.Tasks;
 using DataStruct;
 using UnityEditor;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
 
 namespace MapSampling
 {
@@ -13,6 +15,9 @@ namespace MapSampling
         public static readonly object Locker = new();
         private Dictionary<long, MapTileData> _dataDic    = new();
         private Dictionary<long, List<MeshFilter>> _meshDic = new();
+        
+        private readonly string _assetGroupName = "MapMesh";
+        private readonly string _assetLabelName = "MapNavMesh";
         
         public async void Save()
         {
@@ -30,13 +35,14 @@ namespace MapSampling
             // save data
             
             // combine mesh
+            //이것도 비동기로 할 수 있겠는데?
             foreach (var key in _meshDic.Keys)
             {
                 var meshFilters = _meshDic[key];
                 var combine = new CombineInstance[meshFilters.Count];
                 for (var i = 0; i < meshFilters.Count; i++)
                 {
-                    combine[i].mesh = meshFilters[i].mesh;
+                    combine[i].mesh = meshFilters[i].sharedMesh;
                     combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
                 }
                 
@@ -57,8 +63,8 @@ namespace MapSampling
         
         private void SaveMesh(Mesh mesh, string assetName, bool makeNewInstance, bool optimizeMesh)
         {
-            var path = EditorUtility.SaveFilePanel("Save Separate Mesh Asset", "Assets/", assetName, "asset");
-            path = FileUtil.GetProjectRelativePath(path);
+            var path = "Assets/Rcs/MapNav/" + assetName + ".asset";
+            // path = FileUtil.GetProjectRelativePath(path);
 
             var meshToSave = (makeNewInstance) ? Object.Instantiate(mesh) as Mesh : mesh;
 
@@ -67,7 +73,39 @@ namespace MapSampling
                 MeshUtility.Optimize(meshToSave);
             }
 
+            // 이미 같은 이름의 에셋이 있는지 확인합니다.
+            // if (AssetDatabase.LoadAssetAtPath<Mesh>(path) != null)
+            // {
+            //     if (!EditorUtility.DisplayDialog("Asset already exists", 
+            //             "An asset with this name already exists. Do you want to overwrite it?", 
+            //             "Yes", "No"))
+            //     {
+            //         return;
+            //     }
+            // }
+            
             AssetDatabase.CreateAsset(meshToSave, path);
+            
+            // Addressable Assets에 등록
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            var group = settings.FindGroup(_assetGroupName);
+
+            if (group is not null)
+            {
+                // Addressable 에셋 생성
+                var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);
+                entry.SetAddress(assetName);
+                entry.labels.Add(_assetLabelName);
+                
+                EditorUtility.SetDirty(settings);
+                settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
+            }
+            else
+            {
+                Debug.LogError("Addressable Asset Group not found.");
+                return;
+            }
+            
             AssetDatabase.SaveAssets();
         }
     }

@@ -48,6 +48,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 252ef3ea854ccaf4c991b37a251cd8ac, type: 2}
   - {fileID: 11400000, guid: 545de1e87fdc44c4bacebacc5476aed7, type: 2}
   - {fileID: 11400000, guid: 73221712e29e8f844bbd4b537324ed3d, type: 2}
+  - {fileID: 11400000, guid: f357adf0a25bcb046bd86f3b3f180d40, type: 2}
   m_BuildSettings:
     m_CompileScriptsInVirtualMode: 0
     m_CleanupStreamingAssetsAfterBuilds: 1
@@ -95,6 +96,7 @@ MonoBehaviour:
     - .sprite
     - .prefab
     - .external
+    - .MapNavMesh
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 0d418115f10642c4d81f37ea0df76de7, type: 2}
