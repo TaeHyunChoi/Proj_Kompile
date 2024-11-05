@@ -17,28 +17,8 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: d20cb78037ea68b4c9806d32461477c7
   m_SerializeEntries:
-  - m_GUID: 7e6ace743b58ef445a9244cce3b75ef2
-    m_Address: NavMesh_576
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - MapNavMesh
-  - m_GUID: ad54104caf8a0d347b8da2ec03c03089
-    m_Address: NavMesh_-31135
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - MapNavMesh
-  - m_GUID: 0518fc01f0e1ee242b4ac31a74ff7404
-    m_Address: NavMesh_-31711
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - MapNavMesh
-  - m_GUID: 965b3620c8a0801479a22957238bcf7a
-    m_Address: NavMesh_-31168
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - MapNavMesh
-  - m_GUID: 1217f68694c32c34f9db5e770a46711c
-    m_Address: NavMesh_-31744
+  - m_GUID: 713cf55744741f54084188b56d200c07
+    m_Address: NavMesh_0
     m_ReadOnly: 0
     m_SerializedLabels:
     - MapNavMesh

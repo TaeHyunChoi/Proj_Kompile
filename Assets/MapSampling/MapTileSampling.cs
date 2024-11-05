@@ -64,25 +64,18 @@ namespace MapSampling
         private void SaveMesh(Mesh mesh, string assetName, bool makeNewInstance, bool optimizeMesh)
         {
             var path = "Assets/Rcs/MapNav/" + assetName + ".asset";
-            // path = FileUtil.GetProjectRelativePath(path);
-
+            
+            // 이미 같은 이름의 에셋이 있는지 확인합니다.
+            if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
+            {
+                AssetDatabase.DeleteAsset(path);
+            }
+            
             var meshToSave = (makeNewInstance) ? Object.Instantiate(mesh) as Mesh : mesh;
-
             if (optimizeMesh)
             {
                 MeshUtility.Optimize(meshToSave);
             }
-
-            // 이미 같은 이름의 에셋이 있는지 확인합니다.
-            // if (AssetDatabase.LoadAssetAtPath<Mesh>(path) != null)
-            // {
-            //     if (!EditorUtility.DisplayDialog("Asset already exists", 
-            //             "An asset with this name already exists. Do you want to overwrite it?", 
-            //             "Yes", "No"))
-            //     {
-            //         return;
-            //     }
-            // }
             
             AssetDatabase.CreateAsset(meshToSave, path);
             

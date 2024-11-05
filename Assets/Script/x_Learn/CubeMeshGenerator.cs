@@ -39,7 +39,7 @@ public class CubeMeshGenerator : MonoBehaviour
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.uv = uv;
-        // mesh.RecalculateNormals();
+        mesh.RecalculateNormals();
 
         // 에셋 저장 경로
         string assetPath = "Assets/CubeMesh_TopOrigin.asset";
@@ -90,7 +90,7 @@ public class DiagonalCutCubeMeshGenerator : MonoBehaviour
         mesh.uv = uv;
 
         // 조명 처리를 위한 Normals 계산
-        // mesh.RecalculateNormals();
+        mesh.RecalculateNormals();
 
         // 에셋 저장 경로
         string assetPath = "Assets/DiagonalCutCubeMesh.asset";
