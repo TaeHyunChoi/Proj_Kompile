@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using CMathf;
 using DataStruct;
@@ -29,8 +30,12 @@ namespace MapSampling
 
             /* transform => tile pivot*/
             // rotation에 따라 pivot tile_pivot의 위치가 달라지네... 이것도 만들어서 추가하면 된다?
-            _tilePivot = GetTilePivotFromCenter(transform.position);
+            //_tilePivot = GetTilePivotFromCenter(transform.position);
+            _tilePivot = GetTilePivot(transform);
+            Debug.Log(_tilePivot);
 
+            return;
+            
             /* grid index flag */
             var gridX = Mathf.FloorToInt(_tilePivot.x / 32);
             var gridY = Mathf.FloorToInt(_tilePivot.y / 4);
@@ -87,6 +92,23 @@ namespace MapSampling
             var collide = GetCollideFlag(tilePivot);
 
             return ((uint)(gridIndex << 16) | (ushort)tileIndexFlag, new MapTileData(tileIndexFlag, tileInfo, collide));
+        }
+
+        private Vector3 GetTilePivot(Transform tileTransform)
+        {
+            var pivot = tileTransform.position;
+            var rotation =  tileTransform.rotation.eulerAngles.ToInt();
+            var y = Math.Abs(rotation.y);
+            
+            switch (y)
+            {
+                case 90:  pivot += new Vector3(0, -1, 0);  break;
+                case 180: pivot += new Vector3(-1, 0, -1); break;
+                case 270: pivot += new Vector3(-1, 0, 0);  break;
+                default: break;
+            }
+
+            return pivot.Truncate();
         }
 
         private Vector3 GetTilePivotFromCenter(Vector3 center)
