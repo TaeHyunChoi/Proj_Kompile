@@ -217,7 +217,7 @@ namespace DataStruct
     }
     
 
-    [SerializeField]
+    [Serializable]
     public struct MapTileData
     {
         private short indexFlag; // grid index | tile index 라고 한다면...

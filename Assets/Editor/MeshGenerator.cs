@@ -114,6 +114,130 @@ public class MeshGenerator : MonoBehaviour
         SaveMeshAsset("NavMesh_Cube_0", mesh);
     }
 
+    [MenuItem("Tools/NavTileMesh/Create/NavMesh_CubePartial_0")]
+    public static void GenerateNavTileMesh_CubePartial_0()
+    {
+        Vector3[] vertices =
+        {
+            new Vector3(0f, 0f, 0f),
+            new Vector3(1f, 0f, 1f),
+            new Vector3(0f, 0f, 1f),
+            new Vector3(0f, -1f, 0f),
+            new Vector3(1f, -1f, 1f),
+            new Vector3(0f, -1f, 1f),
+        };
+
+        int[] triangles = 
+        {
+            0,2,1,
+            0,1,3,
+            1,4,3,
+            
+            1,2,5,
+            1,5,4,
+            
+            0,5,2,
+            0,3,5,
+            
+            3,5,4
+        };
+
+        Vector3[] normals =
+        {
+            Vector3.up,
+            Vector3.up,
+            Vector3.up,
+            Vector3.down,
+            Vector3.down,
+            Vector3.down,
+        };
+        
+        var mesh = new Mesh()
+        {
+            vertices  = vertices,
+            triangles = triangles,
+            normals   = normals
+        };
+        
+        SaveMeshAsset("NavMesh_CubePartial_0", mesh);
+    }
+    
+    [MenuItem("Tools/NavTileMesh/Create/NavMesh_CubePartial_1")]
+    public static void GenerateNavTileMesh_CubePartial_1()
+    {
+        Vector3[] vertices =
+        {
+            new Vector3(0f, 0f, 0f),
+            new Vector3(0.5f, 0f, 0f),
+            new Vector3(0.5f, -1f, 0f),
+            new Vector3(0f, -1f, 0f),
+            new Vector3(1f, 0f, 0.5f),
+            new Vector3(1f, -1f, 0.5f),
+            new Vector3(1f, 0f, 1f),
+            new Vector3(1f, -1f, 1f),
+            new Vector3(0f, 0f, 1f),
+            new Vector3(0f, -1f, 1f),
+            new Vector3(0.5f, 0f, 0.5f),
+        };
+
+        int[] triangles = 
+        {
+            0,1,2,
+            2,3,0,
+            1,4,5,
+            5,2,1,
+            4,6,7,
+            7,5,4,
+            6,9,7,
+            8,9,6,
+            0,8,9,
+            0,9,3,
+            0,8,6,
+            0,10,1,
+            10,6,4,
+            1,10,4,
+            0,9,8,
+            0,3,9
+        };
+
+        // 위에만 잘 보이면 된다는거 아니오..?
+        Vector3[] normals =
+        {
+            Vector3.up,
+            Vector3.up,
+            Vector3.down,
+            Vector3.down,
+            Vector3.up,
+            Vector3.down,
+            Vector3.up,
+            Vector3.down,
+            Vector3.up,
+            Vector3.down,
+            Vector3.up,
+        };
+        
+        var mesh = new Mesh()
+        {
+            vertices  = vertices,
+            triangles = triangles,
+            normals   = normals
+        };
+        
+
+        // // UV 좌표 설정 : unused.
+        // mesh.uv = new[]
+        // {
+        //     Vector2.zero, 
+        //     Vector2.zero, 
+        //     Vector2.zero,
+        //     Vector2.zero, 
+        //     Vector2.zero, 
+        //     Vector2.zero,
+        // };
+
+        SaveMeshAsset("NavMesh_CubePartial_1", mesh);
+    }
+    
     //// Slope ////
 
     [MenuItem("Tools/NavTileMesh/Create/NavMesh_Slope_0")]

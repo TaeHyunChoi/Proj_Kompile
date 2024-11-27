@@ -28,6 +28,7 @@ namespace MapSampling
             _meshFilter = transform.GetComponent<MeshFilter>();
 
             /* transform => tile pivot*/
+            // rotation에 따라 pivot tile_pivot의 위치가 달라지네... 이것도 만들어서 추가하면 된다?
             _tilePivot = GetTilePivotFromCenter(transform.position);
 
             /* grid index flag */
@@ -40,7 +41,7 @@ namespace MapSampling
             var diffInt = (_tilePivot - _gridPivot).ToInt();
 
             _tileIndexFlag = GetTileIndexFlag(diffInt);
-            _tileInfoFlag = GetTileInfoFlag();
+            _tileInfoFlag  = GetTileInfoFlag();
             _collisionFlag = GetCollideFlag(_tilePivot);
 
             lock (MapTileSampling.Locker)
@@ -340,45 +341,19 @@ namespace MapSampling
             int shift;
             switch (x * 10 + z)
             {
-                case 00:
-                    shift = 0;
-                    break;
-                case 20:
-                    shift = 1;
-                    break;
-                case 40:
-                    shift = 2;
-                    break;
-                case 02:
-                    shift = 3;
-                    break;
-                case 22:
-                    shift = 4;
-                    break;
-                case 42:
-                    shift = 5;
-                    break;
-                case 04:
-                    shift = 6;
-                    break;
-                case 24:
-                    shift = 7;
-                    break;
-                case 44:
-                    shift = 8;
-                    break;
-                case 11:
-                    shift = 9;
-                    break;
-                case 31:
-                    shift = 10;
-                    break;
-                case 13:
-                    shift = 11;
-                    break;
-                case 33:
-                    shift = 12;
-                    break;
+                case 00: shift =  0; break;
+                case 20: shift =  1; break;
+                case 40: shift =  2; break;
+                case 02: shift =  3; break;
+                case 22: shift =  4; break;
+                case 42: shift =  5; break;
+                case 04: shift =  6; break;
+                case 24: shift =  7; break;
+                case 44: shift =  8; break;
+                case 11: shift =  9; break;
+                case 31: shift = 10; break;
+                case 13: shift = 11; break;
+                case 33: shift = 12; break;
                 default:
                     Debug.LogError($"{diff:F3} {x},{z} => {y}");
                     return 0;

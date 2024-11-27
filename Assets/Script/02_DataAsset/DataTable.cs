@@ -171,5 +171,15 @@ public static class DataTable
         binaryFormatter.Serialize(fileStream, data);
         fileStream.Close();
     }
+    public static void WriteBinaryMappingData<T>(Dictionary<long, T> data, string fileName) where T : struct
+    {
+        var binaryFormatter = new BinaryFormatter();
+        var filePath = Path.Combine(Application.dataPath, "Rcs", "bin", fileName + ".dat");
+        var fileStream = File.Create(filePath);
+
+        // Dictionary 직렬화
+        binaryFormatter.Serialize(fileStream, data);
+        fileStream.Close();
+    }
 #endif
 }

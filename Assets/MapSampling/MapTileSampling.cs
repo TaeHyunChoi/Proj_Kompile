@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading.Tasks;
@@ -33,9 +34,9 @@ namespace MapSampling
             await Task.WhenAll(initTasks);      
             
             // save data
+            DataTable.WriteBinaryMappingData<MapTileData>(_dataDic, "MapTileData");
             
-            // combine mesh
-            //이것도 비동기로 할 수 있겠는데?
+            // combine mesh : 이것도 비동기로 할 수 있겠는데?
             foreach (var key in _meshDic.Keys)
             {
                 var meshFilters = _meshDic[key];
@@ -103,3 +104,4 @@ namespace MapSampling
         }
     }
 }
+#endif
