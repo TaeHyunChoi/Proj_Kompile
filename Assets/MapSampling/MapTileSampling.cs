@@ -6,6 +6,7 @@ using DataStruct;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
+using UnityEngine.Diagnostics;
 
 namespace MapSampling
 {
@@ -33,24 +34,34 @@ namespace MapSampling
             }
             await Task.WhenAll(initTasks);      
             
+            //debug.log
+            foreach (var tile in _dataDic)
+            {
+                var key = tile.Key;
+                var mapTile = tile.Value;
+                Debug.Log(UtilMap.UtilMapTile.GetTilePivot(mapTile.IndexFlag));
+            }
+            
             // save data
             DataTable.WriteBinaryMappingData<MapTileData>(_dataDic, "MapTileData");
             
+            
             // combine mesh : 이것도 비동기로 할 수 있겠는데?
-            foreach (var key in _meshDic.Keys)
-            {
-                var meshFilters = _meshDic[key];
-                var combine = new CombineInstance[meshFilters.Count];
-                for (var i = 0; i < meshFilters.Count; i++)
-                {
-                    combine[i].mesh = meshFilters[i].sharedMesh;
-                    combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
-                }
-                
-                var mesh = new Mesh();
-                mesh.CombineMeshes(combine);
-                SaveMesh(mesh, $"NavMesh_{key}", false, true);
-            }
+            // foreach (var key in _meshDic.Keys)
+            // {
+            //     var meshFilters = _meshDic[key];
+            //     var combine = new CombineInstance[meshFilters.Count];
+            //     for (var i = 0; i < meshFilters.Count; i++)
+            //     {
+            //         combine[i].mesh = meshFilters[i].sharedMesh;
+            //         combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
+            //     }
+            //     
+            //     var mesh = new Mesh();
+            //     mesh.CombineMeshes(combine);
+            //     SaveMesh(mesh, $"NavMesh_{key}", false, true);
+            // }
+            
             
             // dispose refs
             for (var i = 0; i < tiles.Length; i++)

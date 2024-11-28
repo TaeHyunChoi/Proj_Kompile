@@ -29,13 +29,8 @@ namespace MapSampling
             _meshFilter = transform.GetComponent<MeshFilter>();
 
             /* transform => tile pivot*/
-            // rotation에 따라 pivot tile_pivot의 위치가 달라지네... 이것도 만들어서 추가하면 된다?
-            //_tilePivot = GetTilePivotFromCenter(transform.position);
             _tilePivot = GetTilePivot(transform);
-            Debug.Log(_tilePivot);
 
-            return;
-            
             /* grid index flag */
             var gridX = Mathf.FloorToInt(_tilePivot.x / 32);
             var gridY = Mathf.FloorToInt(_tilePivot.y / 4);
@@ -52,7 +47,7 @@ namespace MapSampling
             lock (MapTileSampling.Locker)
             {
                 var tileKey = (_gridIndexFlag << 16) | (ushort)_tileIndexFlag;
-                var data = new MapTileData(_tileIndexFlag, _tileInfoFlag, _collisionFlag);
+                var data = new MapTileData(tileKey, _tileInfoFlag, _collisionFlag);
 
                 if (false == dataDic.TryAdd(tileKey, data))
                 {
@@ -68,31 +63,31 @@ namespace MapSampling
             }
         }
 
-        public (long, MapTileData) Set()
-        {
-            /* transform => tile pivot*/
-            var tilePivot = GetTilePivotFromCenter(transform.position);
-
-            /* grid index flag */
-            var gridX = Mathf.FloorToInt(tilePivot.x / 32);
-            var gridY = Mathf.FloorToInt(tilePivot.y / 4);
-            var gridZ = Mathf.FloorToInt(tilePivot.z / 32);
-            var gridIndex = GetGridIndexFlag(gridX, gridY, gridZ);
-
-
-            /* tile index flag */
-            var gridPivot = new Vector3(gridX * 32, gridY * 4, gridZ * 32).Truncate();
-            var diffInt = (tilePivot - gridPivot).ToInt();
-            var tileIndexFlag = GetTileIndexFlag(diffInt);
-
-            /* tile info */
-            var tileInfo = GetTileInfoFlag();
-
-            /* collide */
-            var collide = GetCollideFlag(tilePivot);
-
-            return ((uint)(gridIndex << 16) | (ushort)tileIndexFlag, new MapTileData(tileIndexFlag, tileInfo, collide));
-        }
+        // public (long, MapTileData) Set()
+        // {
+        //     /* transform => tile pivot*/
+        //     var tilePivot = GetTilePivotFromCenter(transform.position);
+        //
+        //     /* grid index flag */
+        //     var gridX = Mathf.FloorToInt(tilePivot.x / 32);
+        //     var gridY = Mathf.FloorToInt(tilePivot.y / 4);
+        //     var gridZ = Mathf.FloorToInt(tilePivot.z / 32);
+        //     var gridIndex = GetGridIndexFlag(gridX, gridY, gridZ);
+        //
+        //
+        //     /* tile index flag */
+        //     var gridPivot = new Vector3(gridX * 32, gridY * 4, gridZ * 32).Truncate();
+        //     var diffInt = (tilePivot - gridPivot).ToInt();
+        //     var tileIndexFlag = GetTileIndexFlag(diffInt);
+        //
+        //     /* tile info */
+        //     var tileInfo = GetTileInfoFlag();
+        //
+        //     /* collide */
+        //     var collide = GetCollideFlag(tilePivot);
+        //
+        //     return ((uint)(gridIndex << 16) | (ushort)tileIndexFlag, new MapTileData(tileIndexFlag, tileInfo, collide));
+        // }
 
         private Vector3 GetTilePivot(Transform tileTransform)
         {
@@ -102,7 +97,7 @@ namespace MapSampling
             
             switch (y)
             {
-                case 90:  pivot += new Vector3(0, -1, 0);  break;
+                case 90:  pivot += new Vector3(0, 0, -1);  break;
                 case 180: pivot += new Vector3(-1, 0, -1); break;
                 case 270: pivot += new Vector3(-1, 0, 0);  break;
                 default: break;
@@ -111,21 +106,21 @@ namespace MapSampling
             return pivot.Truncate();
         }
 
-        private Vector3 GetTilePivotFromCenter(Vector3 center)
-        {
-            center.Truncate();
-
-            var scale = isHalfScale ? 0.5f : 1f;
-            var signX = (center.x < 0) ? -1 : 1;
-            var signY = (center.y < 0) ? -1 : 1;
-            var signZ = (center.z < 0) ? -1 : 1;
-
-            var tileX = center.x - (signX * (center.x % scale));
-            var tileY = center.y - (signY * (center.y % scale));
-            var tileZ = center.z - (signZ * (center.z % scale));
-
-            return new Vector3(tileX, tileY, tileZ).Truncate();
-        }
+        // private Vector3 GetTilePivotFromCenter(Vector3 center)
+        // {
+        //     center.Truncate();
+        //
+        //     var scale = isHalfScale ? 0.5f : 1f;
+        //     var signX = (center.x < 0) ? -1 : 1;
+        //     var signY = (center.y < 0) ? -1 : 1;
+        //     var signZ = (center.z < 0) ? -1 : 1;
+        //
+        //     var tileX = center.x - (signX * (center.x % scale));
+        //     var tileY = center.y - (signY * (center.y % scale));
+        //     var tileZ = center.z - (signZ * (center.z % scale));
+        //
+        //     return new Vector3(tileX, tileY, tileZ).Truncate();
+        // }
 
         private static short GetGridIndexFlag(int pointX, int pointY, int pointZ)
         {

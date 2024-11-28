@@ -220,11 +220,16 @@ namespace DataStruct
     [Serializable]
     public struct MapTileData
     {
-        private short indexFlag; // grid index | tile index 라고 한다면...
+        private int indexFlag;
         private short infoFlag;
         private long  collideFlag;
-        
-        public MapTileData(short index, short info, long collide)
+
+        public int IndexFlag
+        {
+            get => indexFlag;
+        }
+
+        public MapTileData(int index, short info, long collide)
         {
             indexFlag = index;
             infoFlag = info;
