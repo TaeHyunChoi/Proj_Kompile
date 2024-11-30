@@ -1,8 +1,8 @@
-using UnityEngine;
-
-namespace  UtilMap
+namespace  Script.Util
 {
-    public static class UtilMapTile
+    using UnityEngine;
+    
+    public static class MapTile
     {
         //grid shift
         private const byte ShiftGrid = 16;

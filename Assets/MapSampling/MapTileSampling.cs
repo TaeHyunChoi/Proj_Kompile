@@ -39,7 +39,7 @@ namespace MapSampling
             {
                 var key = tile.Key;
                 var mapTile = tile.Value;
-                Debug.Log(UtilMap.UtilMapTile.GetTilePivot(mapTile.IndexFlag));
+                Debug.Log(Util.MapTile.GetTilePivot(mapTile.IndexFlag));
             }
             
             // save data
