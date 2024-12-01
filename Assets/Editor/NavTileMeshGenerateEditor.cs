@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 
-public class MeshGenerator : MonoBehaviour
+public class NavTileMeshGenerateEditor : MonoBehaviour
 {
     private static void SaveMeshAsset(string assetName, Mesh mesh)
     {
@@ -17,9 +17,8 @@ public class MeshGenerator : MonoBehaviour
 
         Debug.Log("Mesh asset created: " + assetName);
     }
-
-    //// Cube ////
     
+    //// Cube ////
     [MenuItem("Tools/NavTileMesh/Create/NavMesh_Cube_0")]
     public static void GenerateNavTileMesh_CubeDefault()
     {

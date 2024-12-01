@@ -2,7 +2,7 @@ namespace  Script.Util
 {
     using UnityEngine;
     
-    public static class MapTile
+    public static class MapTileVector
     {
         //grid shift
         private const byte ShiftGrid = 16;

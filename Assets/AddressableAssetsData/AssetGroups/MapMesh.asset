@@ -16,12 +16,7 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: d20cb78037ea68b4c9806d32461477c7
-  m_SerializeEntries:
-  - m_GUID: 6c259c0d7db8a994daab139896c0ffe2
-    m_Address: NavMesh_0
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - MapNavMesh
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

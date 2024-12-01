@@ -10,13 +10,15 @@ using UnityEngine.Diagnostics;
 
 namespace MapSampling
 {
+    using Script.Util;
+    
     /// <summary> reference link: https://www.youtube.com/watch?v=K-zw3QFaTqg
     /// </summary>
     public class MapTileSampling : MonoBehaviour
     {
-        public static readonly object Locker = new();
-        private Dictionary<long, MapTileData> _dataDic    = new();
-        private Dictionary<long, List<MeshFilter>> _meshDic = new();
+        // public static readonly object Locker = new();
+        private ConcurrentDictionary<long, MapTileData> _dataDic = new();
+        private ConcurrentDictionary<long, List<MeshFilter>> _meshDic = new();
         
         private readonly string _assetGroupName = "MapMesh";
         private readonly string _assetLabelName = "MapNavMesh";
@@ -39,11 +41,11 @@ namespace MapSampling
             {
                 var key = tile.Key;
                 var mapTile = tile.Value;
-                Debug.Log(Util.MapTile.GetTilePivot(mapTile.IndexFlag));
+                Debug.Log(Script.Util.MapTileVector.GetTilePivot(mapTile.IndexFlag));
             }
             
             // save data
-            DataTable.WriteBinaryMappingData<MapTileData>(_dataDic, "MapTileData");
+            // DataTable.WriteBinaryMappingData<MapTileData>(_dataDic, "MapTileData");
             
             
             // combine mesh : 이것도 비동기로 할 수 있겠는데?

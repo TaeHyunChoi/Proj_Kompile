@@ -1,13 +1,44 @@
+using System.Collections;
+
 namespace Script.Util
 {
     using System;
     using System.Collections.Generic;
     
-    public class ConcurrentDictionary<TKey, TValue>
+    public class ConcurrentDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
         private readonly Dictionary<TKey, TValue> _dictionary = new Dictionary<TKey, TValue>();
         private readonly ReaderWriterLock _lock = new ReaderWriterLock();
-
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        
+        public TValue this[TKey key]
+        {
+            get
+            {
+                _lock.EnterReadLock();
+                try
+                {
+                    return _dictionary[key];
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
+            }
+            set
+            {
+                _lock.EnterWriteLock();
+                try
+                {
+                    _dictionary[key] = value;
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+            }
+        }
+        
         public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
         {
             _lock.EnterReadLock();
@@ -25,11 +56,13 @@ namespace Script.Util
             try
             {
                 // 다시 확인 (다른 스레드가 추가했을 수 있음)
-                if (!_dictionary.TryGetValue(key, out var value))
+                if (_dictionary.TryGetValue(key, out var value))
                 {
-                    value = valueFactory(key);
-                    _dictionary[key] = value;
+                    return value;
                 }
+                
+                value = valueFactory(key);
+                _dictionary[key] = value;
 
                 return value;
             }
@@ -88,6 +121,23 @@ namespace Script.Util
             finally
             {
                 _lock.ExitWriteLock();
+            }
+        }
+
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                // 내부 딕셔너리를 복사하여 반복
+                foreach (var kvp in _dictionary)
+                {
+                    yield return kvp;
+                }
+            }
+            finally
+            {
+                _lock.ExitReadLock();
             }
         }
     }

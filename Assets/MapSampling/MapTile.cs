@@ -1,12 +1,13 @@
-using System;
-using System.Collections.Generic;
-using CMathf;
-using DataStruct;
-using UnityEngine;
-using System.Threading.Tasks;
-
 namespace MapSampling
 {
+    using System;
+    using System.Collections.Generic;
+    using CMathf;
+    using DataStruct;
+    using UnityEngine;
+    using System.Threading.Tasks;
+    using Script.Util;
+    
     public class MapTile : MonoBehaviour
     {
         [SerializeField] private bool isHalfScale;
@@ -21,7 +22,7 @@ namespace MapSampling
         private short _tileInfoFlag;
         private long _collisionFlag;
 
-        public async Task Init(Dictionary<long, MapTileData> dataDic, Dictionary<long, List<MeshFilter>> meshDic)
+        public async Task Init(ConcurrentDictionary<long, MapTileData> dataDic, ConcurrentDictionary<long, List<MeshFilter>> meshDic)
         {
             await Task.Yield();
 
@@ -44,51 +45,15 @@ namespace MapSampling
             _tileInfoFlag  = GetTileInfoFlag();
             _collisionFlag = GetCollideFlag(_tilePivot);
 
-            lock (MapTileSampling.Locker)
+            var tileKey = (_gridIndexFlag << 16) | (ushort)_tileIndexFlag;
+            var data = new MapTileData(tileKey, _tileInfoFlag, _collisionFlag);
+
+            if (false == dataDic.TryAdd(tileKey, data))
             {
-                var tileKey = (_gridIndexFlag << 16) | (ushort)_tileIndexFlag;
-                var data = new MapTileData(tileKey, _tileInfoFlag, _collisionFlag);
-
-                if (false == dataDic.TryAdd(tileKey, data))
-                {
-                    dataDic[tileKey] = data;
-                }
-
-                if (false == meshDic.ContainsKey(_gridIndexFlag))
-                {
-                    meshDic.Add(_gridIndexFlag, new List<MeshFilter>());
-                }
-
-                meshDic[_gridIndexFlag].Add(_meshFilter);
+                dataDic[tileKey] = data;
             }
         }
-
-        // public (long, MapTileData) Set()
-        // {
-        //     /* transform => tile pivot*/
-        //     var tilePivot = GetTilePivotFromCenter(transform.position);
-        //
-        //     /* grid index flag */
-        //     var gridX = Mathf.FloorToInt(tilePivot.x / 32);
-        //     var gridY = Mathf.FloorToInt(tilePivot.y / 4);
-        //     var gridZ = Mathf.FloorToInt(tilePivot.z / 32);
-        //     var gridIndex = GetGridIndexFlag(gridX, gridY, gridZ);
-        //
-        //
-        //     /* tile index flag */
-        //     var gridPivot = new Vector3(gridX * 32, gridY * 4, gridZ * 32).Truncate();
-        //     var diffInt = (tilePivot - gridPivot).ToInt();
-        //     var tileIndexFlag = GetTileIndexFlag(diffInt);
-        //
-        //     /* tile info */
-        //     var tileInfo = GetTileInfoFlag();
-        //
-        //     /* collide */
-        //     var collide = GetCollideFlag(tilePivot);
-        //
-        //     return ((uint)(gridIndex << 16) | (ushort)tileIndexFlag, new MapTileData(tileIndexFlag, tileInfo, collide));
-        // }
-
+        
         private Vector3 GetTilePivot(Transform tileTransform)
         {
             var pivot = tileTransform.position;
@@ -105,22 +70,6 @@ namespace MapSampling
 
             return pivot.Truncate();
         }
-
-        // private Vector3 GetTilePivotFromCenter(Vector3 center)
-        // {
-        //     center.Truncate();
-        //
-        //     var scale = isHalfScale ? 0.5f : 1f;
-        //     var signX = (center.x < 0) ? -1 : 1;
-        //     var signY = (center.y < 0) ? -1 : 1;
-        //     var signZ = (center.z < 0) ? -1 : 1;
-        //
-        //     var tileX = center.x - (signX * (center.x % scale));
-        //     var tileY = center.y - (signY * (center.y % scale));
-        //     var tileZ = center.z - (signZ * (center.z % scale));
-        //
-        //     return new Vector3(tileX, tileY, tileZ).Truncate();
-        // }
 
         private static short GetGridIndexFlag(int pointX, int pointY, int pointZ)
         {
