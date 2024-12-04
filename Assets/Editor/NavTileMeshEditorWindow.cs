@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,19 +6,19 @@ public class NavTileMeshEditorWindow : EditorWindow
 {
     private int[] heights = new int[13]; // 12개의 int 값
     private string fileName = "default_name"; // 파일 이름
+    private const float heightPerUnit = 0.125f;
 
     [MenuItem("Tools/Custom Editor Window")]
     public static void ShowWindow()
     {
-        GetWindow<NavTileMeshEditorWindow>("Custom Editor Window");
+        GetWindow<NavTileMeshEditorWindow>("Nav Tile Mesh Editor");
     }
 
     private void OnGUI()
     {
         // File name input
         GUILayout.Space(5);
-        // 굵은 레이블 스타일 정의
-        GUIStyle boldLabelStyle = new GUIStyle(GUI.skin.label)
+        var boldLabelStyle = new GUIStyle(GUI.skin.label)
         {
             fontStyle = FontStyle.Bold // 글씨를 굵게 설정
         };
@@ -48,11 +47,12 @@ public class NavTileMeshEditorWindow : EditorWindow
 
         DrawInputRow(new[] { "h0", "h1", "h2" }, new[] { 0, 1, 2 }, startX, startY, fieldWidth, spacing);
         GUILayout.Space(startY);
-
-        if (GUILayout.Button("Save Data"))
+        
+        if (GUILayout.Button("Save Mesh"))
         {
             SaveData();
         }
+        
     }
 
     private void DrawInputRow(string[] labels, int[] indices, float startX, float startY, float fieldWidth, float spacing)
@@ -84,19 +84,44 @@ public class NavTileMeshEditorWindow : EditorWindow
             Debug.LogError("Fail to Mesh asset created[TrySetMesh]: " + fileName);
             return;
         }
-        
-        // save mesh
-        var path = "Assets/Rcs/MapNav/Mesh/" + fileName + ".asset";
-        
+
+        // create|save mesh
+        var path = "Assets/Rcs/NavTile/Mesh/NavTileMesh_" + fileName + ".asset";
         if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
         {
             AssetDatabase.DeleteAsset(path);
         }
-
         AssetDatabase.CreateAsset(mesh, path);
         AssetDatabase.SaveAssets();
-
         Debug.Log("Mesh asset created: " + fileName);
+        
+        // create|save prefab for test
+        path = "Assets/Editor/Prefab/nav_" + fileName + "_test.prefab";
+        bool isSuccess;
+        var testPrefab = new GameObject(fileName);
+        {
+            var filter = testPrefab.AddComponent<MeshFilter>();
+            filter.mesh = mesh;
+            var renderer = testPrefab.AddComponent<MeshRenderer>();
+            var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Rcs/Material/Mat_Inner.mat");
+            renderer.sharedMaterial = material;
+            
+            PrefabUtility.SaveAsPrefabAsset(testPrefab, path, out isSuccess);
+        }
+
+
+        if (true == isSuccess)
+        {
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Success to Create NavTile Prefab: " + fileName);
+        }
+        else
+        {
+            Debug.LogError("Fail to Create NavTile Prefab: " + fileName);
+        }
+        
+        DestroyImmediate(testPrefab);
     }
 
     private bool TrySetMeshFields(out Vector3[] points, out int triangleFlag)
@@ -127,10 +152,11 @@ public class NavTileMeshEditorWindow : EditorWindow
                     return false;
             }
 
-            var h = heights[i] * 0.25f;
+            var h = heights[i];
             if (h >= 0)
             {
-                points[i] = vertex + new Vector3(0, h, 0);
+                var height = h * heightPerUnit;
+                points[i] = vertex + new Vector3(0, height, 0);
             }
             else
             {
