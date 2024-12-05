@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2607708368163674205}
   - component: {fileID: 3683010998947905757}
   - component: {fileID: 6896630404531112971}
+  - component: {fileID: 5803204230287271197}
   m_Layer: 0
   m_Name: nav_plain_test
   m_TagString: Untagged
@@ -83,3 +84,16 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &5803204230287271197
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2767730262054965785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8aa5dcc8b8abde7429628bdb7484ec32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  heightFlag: 0

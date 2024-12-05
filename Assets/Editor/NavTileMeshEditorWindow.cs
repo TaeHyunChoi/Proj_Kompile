@@ -55,7 +55,9 @@ public class NavTileMeshEditorWindow : EditorWindow
         GUILayout.Space(1);
         if (GUILayout.Button("Clear Height"))
         {
-            for (int i = 0; i < heights.Length; i++)
+            GUI.FocusControl(null);
+            
+            for (var i = 0; i < heights.Length; i++)
             {
                 heights[i] = 0;
             }
