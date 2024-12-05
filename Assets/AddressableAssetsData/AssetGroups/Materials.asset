@@ -17,26 +17,8 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 6a35f84ebc30db249948466f7e9fd7a6
   m_SerializeEntries:
-  - m_GUID: 896943f4adac8944b852787bdeaa8b86
-    m_Address: Test_BG
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Materials
-    - .mat
   - m_GUID: 55761278c7767cd4bb6351223c2b1615
-    m_Address: Assets/Rcs/Material/Mat_Inner.mat
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Materials
-    - .mat
-  - m_GUID: 7c239f7a73296084b8337c2cf88f1e68
-    m_Address: Assets/Rcs/Material/Mat_Slope.mat
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Materials
-    - .mat
-  - m_GUID: 62f7f048581d2d04bbbd95a1f14d504d
-    m_Address: Assets/Rcs/Material/Mat_Trans.mat
+    m_Address: Assets/Rcs/Material/Mat_Plain.mat
     m_ReadOnly: 0
     m_SerializedLabels:
     - Materials

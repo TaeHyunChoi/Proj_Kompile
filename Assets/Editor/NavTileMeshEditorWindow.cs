@@ -46,11 +46,19 @@ public class NavTileMeshEditorWindow : EditorWindow
         startY += 30;
 
         DrawInputRow(new[] { "h0", "h1", "h2" }, new[] { 0, 1, 2 }, startX, startY, fieldWidth, spacing);
-        GUILayout.Space(startY);
+        GUILayout.Space(startY - 30);
         
         if (GUILayout.Button("Save Mesh"))
         {
             SaveData();
+        }
+        GUILayout.Space(1);
+        if (GUILayout.Button("Clear Height"))
+        {
+            for (int i = 0; i < heights.Length; i++)
+            {
+                heights[i] = 0;
+            }
         }
         
     }
@@ -97,6 +105,11 @@ public class NavTileMeshEditorWindow : EditorWindow
         
         // create|save prefab for test
         path = "Assets/Editor/Prefab/nav_" + fileName + "_test.prefab";
+        if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
+        {
+            AssetDatabase.DeleteAsset(path);
+        }
+        
         bool isSuccess;
         var testPrefab = new GameObject(fileName);
         {
@@ -105,6 +118,9 @@ public class NavTileMeshEditorWindow : EditorWindow
             var renderer = testPrefab.AddComponent<MeshRenderer>();
             var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Rcs/Material/Mat_Inner.mat");
             renderer.sharedMaterial = material;
+
+            var navTileMesh = testPrefab.AddComponent<NavTileMesh>();
+            navTileMesh.Initialize(heights);
             
             PrefabUtility.SaveAsPrefabAsset(testPrefab, path, out isSuccess);
         }
@@ -265,7 +281,6 @@ public class NavTileMeshEditorWindow : EditorWindow
         var flag = triangleFlag;
         var triangles = new List<int>();
         int triangleIndex = 0;
-        int vertexIndex = 0;
         
         while (flag > 0)
         {
@@ -300,8 +315,8 @@ public class NavTileMeshEditorWindow : EditorWindow
             flag >>= 1;
         }
 
-        Vector3[] normals = new Vector3[points.Length];
-        for (int i = 0; i < points.Length; ++i)
+        var normals = new Vector3[points.Length];
+        for (var i = 0; i < points.Length; ++i)
         {
             normals[i] = Vector3.up;
         }
