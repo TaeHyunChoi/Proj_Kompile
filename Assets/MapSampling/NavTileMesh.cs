@@ -8,14 +8,12 @@ using UnityEngine.Serialization;
 public class NavTileMesh : MonoBehaviour
 {
     [SerializeField] private ulong naviMask;
-    [SerializeField] private uint  infoMask;
+    // naviMask에 scale 값 안 넣었음;
+    // 추후에 infoMask 넣으면 되겠다.
     
-    [SerializeField] private Vector3 tilePivot;
-    [SerializeField] private Vector3 gridPivot;
-    
-    public void SetData(int[] heights)
+    public void InitHeightMask(int[] heights)
     {
-        int i = 0;
+        Int32 i = 0;
         foreach (int height in heights)
         {
             ulong h;
@@ -32,7 +30,6 @@ public class NavTileMesh : MonoBehaviour
             i += 4;
         }
     }
-
     public async Task  BakeMesh()
     {
         await Task.Yield();
@@ -45,41 +42,111 @@ public class NavTileMesh : MonoBehaviour
             return;
         }
 
-        naviMask = GetHeightMaskRotated(rot);
+        var key = GetNavTileKey(rot);
+        naviMask = GetNaviMaskRotated(rot);
+        
         // get rotate pivot
     }
 
     
-    // Pivot
-    private Vector3 GetPivotRotated(int rot)
+    // Key(pivot)
+    private uint GetNavTileKey(int rot)
     {
-        Vector3 point = transform.position;
+        uint key = 0;
+        GetPivotRotated(rot, out Vector3 gridPivot, out Vector3 tilePivot);
 
+        
+        //grid pivot 변환하고...
+        
+        // tilePivot을.. 변환하고..
+        
+        return key;
+    }
+    private void GetPivotRotated(int rot, out Vector3 gridPivot, out Vector3 tilePivot)
+    {
+        tilePivot = transform.position;
         switch (rot)
         {
-            case 90:
-                break;
-            case 180:
-                break;
-            case 270:
-                break;
-            default:
-                break;
+            case  90: tilePivot += new Vector3( 0f, 0f, -1f); break;
+            case 180: tilePivot += new Vector3(-1f, 0f, -1f); break;
+            case 270: tilePivot += new Vector3(-1f, 0f,  0f); break;
+            default: break;
+        }
+        
+        var gx = Mathf.FloorToInt(tilePivot.x / 32);
+        var gy = Mathf.FloorToInt(tilePivot.y / 4);
+        var gz = Mathf.FloorToInt(tilePivot.z / 32);
+        gridPivot = new Vector3(gx, gy, gz);
+    }
+    private ushort GetGridIndexFlag(int pointX, int pointY, int pointZ)
+    {
+        const byte shiftGridXSign = 15;
+        const byte shiftGridX = 10;
+        const byte shiftGridYSign = 9;
+        const byte shiftGridY = 6;
+        const byte shiftGridZSign = 5;
+        const byte shiftGridZ = 0;
+
+        var gridFlag = 0;
+
+        if (pointX < 0)
+        {
+            gridFlag |= 1 << shiftGridXSign;
+            gridFlag |= (-pointX) << shiftGridX;
+        }
+        else
+        {
+            gridFlag |= pointX << shiftGridX;
         }
 
-        return point;
-    }
+        if (pointY < 0)
+        {
+            gridFlag |= 1 << shiftGridYSign;
+            gridFlag |= (-pointY) << shiftGridY;
+        }
+        else
+        {
+            gridFlag |= pointY << shiftGridY;
+        }
 
+        if (pointZ < 0)
+        {
+            gridFlag |= 1 << shiftGridZSign;
+            gridFlag |= (-pointZ) << shiftGridZ;
+        }
+        else
+        {
+            gridFlag |= pointZ << shiftGridZ;
+        }
+
+        return (ushort)gridFlag;
+    }
+    private ushort GetTileIndexFlag(Vector3Int diffInt)
+    {
+        const byte shiftIsHalfScale = 15;
+        const byte shiftTileX = 9;
+        const byte shiftTileY = 6;
+        const byte shiftTileZ = 0;
+
+        var tileFlag = 0;
+        // tileFlag |= isHalfScale ? 1 << shiftIsHalfScale : 0;
+        tileFlag |= (diffInt.x) << shiftTileX;
+        tileFlag |= (diffInt.y) << shiftTileY;
+        tileFlag |= (diffInt.z) << shiftTileZ;
+
+        return (ushort)tileFlag;
+    }
+    
     
     // Height
-    private ulong GetHeightMaskRotated (int rot)
+    private ulong GetNaviMaskRotated (int rot)
     {
         ulong newMask = 0;
         
         var matrix = GetHeightMatrixRotated(rot);
         matrix = RotateMatrix(matrix, rot);
 
-        ulong mask;
+        ulong mask = 0;
         for (int i = 0; i < 13; ++i)
         {
             switch (i)
@@ -97,7 +164,7 @@ public class NavTileMesh : MonoBehaviour
                 case 10: mask = (ulong)matrix[0,0]; break;
                 case 11: mask = (ulong)matrix[2,0]; break;
                 case 12: mask = (ulong)matrix[4,0]; break;
-                default: mask = (ulong)0;           break;
+                default: break;
             }
 
             newMask |= mask << i * 4;
