@@ -26,13 +26,15 @@ namespace MapSampling
         public async void Save()
         {
             // set data
-            var tiles = FindObjectsOfType<MapTile>();
+            var tiles = FindObjectsOfType<NavTileMesh>();
+            // var tiles = FindObjectsOfType<MapTile>();
             var initTasks = new Task[tiles.Length];
 
             for (var i = 0; i < tiles.Length; i++)
             {
                 var t = i;
-                initTasks[t] = tiles[t].Init(_dataDic, _meshDic);
+                // initTasks[t] = tiles[t].Init(_dataDic, _meshDic);
+                initTasks[t] = tiles[t].BakeMesh();
             }
             await Task.WhenAll(initTasks);      
             

@@ -2,13 +2,17 @@ using System;
 using UnityEngine;
 using System.Threading.Tasks;
 using Script.Util;
+using UnityEngine.Serialization;
 
 [Serializable]
 public class NavTileMesh : MonoBehaviour
 {
-    [SerializeField]
-    private ulong heightFlag;
-
+    [SerializeField] private ulong naviMask;
+    [SerializeField] private uint  infoMask;
+    
+    [SerializeField] private Vector3 tilePivot;
+    [SerializeField] private Vector3 gridPivot;
+    
     public void SetData(int[] heights)
     {
         int i = 0;
@@ -24,36 +28,87 @@ public class NavTileMesh : MonoBehaviour
                 h = (ulong)height;
             }
 
-            heightFlag |= h << i;
+            naviMask |= h << i;
             i += 4;
         }
-        
-        Debug.Log("Set: " + Convert.ToString((long)heightFlag,2));
     }
 
     public async Task  BakeMesh()
     {
         await Task.Yield();
         
-        var rotY = transform.rotation.eulerAngles.y;
-        TestForRotate(rotY.ToInt());
+        var rot = (transform.rotation.eulerAngles.y).ToInt();
+        rot %= 360;
+        if (0 != rot % 90)
+        {
+            Debug.LogError($"Wrong Rotate: {rot}");
+            return;
+        }
+
+        naviMask = GetHeightMaskRotated(rot);
+        // get rotate pivot
     }
 
-
-
-    // 회전 대응
-    public void TestForRotate(int angle)
+    
+    // Pivot
+    private Vector3 GetPivotRotated(int rot)
     {
-        var matrix = GetHeightMatrix(angle);
-        //이걸 받아서 다시 heightFlag에 저장한다.
-        //
+        Vector3 point = transform.position;
+
+        switch (rot)
+        {
+            case 90:
+                break;
+            case 180:
+                break;
+            case 270:
+                break;
+            default:
+                break;
+        }
+
+        return point;
     }
 
-    // 확인 요망
-    private int[,] GetHeightMatrix(int angle)
+    
+    // Height
+    private ulong GetHeightMaskRotated (int rot)
+    {
+        ulong newMask = 0;
+        
+        var matrix = GetHeightMatrixRotated(rot);
+        matrix = RotateMatrix(matrix, rot);
+
+        ulong mask;
+        for (int i = 0; i < 13; ++i)
+        {
+            switch (i)
+            {
+                case  0: mask = (ulong)matrix[0,4]; break;
+                case  1: mask = (ulong)matrix[2,4]; break;
+                case  2: mask = (ulong)matrix[4,4]; break;
+                case  3: mask = (ulong)matrix[1,3]; break;
+                case  4: mask = (ulong)matrix[3,3]; break;
+                case  5: mask = (ulong)matrix[0,2]; break;
+                case  6: mask = (ulong)matrix[2,2]; break;
+                case  7: mask = (ulong)matrix[4,2]; break;
+                case  8: mask = (ulong)matrix[1,1]; break;
+                case  9: mask = (ulong)matrix[3,1]; break;
+                case 10: mask = (ulong)matrix[0,0]; break;
+                case 11: mask = (ulong)matrix[2,0]; break;
+                case 12: mask = (ulong)matrix[4,0]; break;
+                default: mask = (ulong)0;           break;
+            }
+
+            newMask |= mask << i * 4;
+        }
+        
+        return newMask;
+    }
+    private int[,] GetHeightMatrixRotated(int rot)
     {
         var matrix = new int[5, 5];
-        var flag = heightFlag;
+        var flag = naviMask;
         for (var i = 0; i < 13; i++)
         {
             var h = (int)(flag & 0b1111);
@@ -78,39 +133,35 @@ public class NavTileMesh : MonoBehaviour
             flag >>= 4;
         }
 
-        return RotateMatrix(matrix, angle);
+        return matrix;
     }
-    
-    private int[,] RotateMatrix(int[,] matrix, int angle)
+    private int[,] RotateMatrix(int[,] matrix, int rot)
     {
-        var n = matrix.GetLength(0); // 행렬 크기
-        var rotated = new int[n, n];
-
-        angle %= 360;
-        if (0 == angle)
+        if (0 == rot)
         {
             return matrix;
         }
-
+        
+        var n = matrix.GetLength(0); // 행렬 크기
+        var rotated = new int[n, n];
+        
         for (var i = 0; i < n; i++)
         {
             for (var j = 0; j < n; j++)
             {
-                switch (angle)
+                switch (rot)
                 {
-                    case 90:
+                    case 270:
                         rotated[j, n - 1 - i] = matrix[i, j];
                         break;
                     case 180:
                         rotated[n - 1 - i, n - 1 - j] = matrix[i, j];
                         break;
-                    case 270:
+                    case 90:
                         rotated[n - 1 - j, i] = matrix[i, j];
                         break;
-                    // default:
-                    //     rotated[i, j] = matrix[i, j];
-                    //     break;
-                        
+                    default:
+                        break;
                 }
             }
         }
