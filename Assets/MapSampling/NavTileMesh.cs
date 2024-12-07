@@ -8,10 +8,9 @@ using UnityEngine.Serialization;
 public class NavTileMesh : MonoBehaviour
 {
     [SerializeField] private ulong naviMask;
-    // naviMask에 scale 값 안 넣었음;
-    // 추후에 infoMask 넣으면 되겠다.
+    [SerializeField] private uint infoMask;
     
-    public void InitHeightMask(int[] heights)
+    public void InitNaviMask(int[] heights, bool isSmall)
     {
         Int32 i = 0;
         foreach (int height in heights)
@@ -29,98 +28,128 @@ public class NavTileMesh : MonoBehaviour
             naviMask |= h << i;
             i += 4;
         }
+
+        if (true == isSmall)
+        {
+            naviMask |= 1ul << i;
+        }
     }
     public async Task  BakeMesh()
     {
         await Task.Yield();
         
-        var rot = (transform.rotation.eulerAngles.y).ToInt();
+        int rot = (transform.rotation.eulerAngles.y).ToInt();
         rot %= 360;
         if (0 != rot % 90)
         {
             Debug.LogError($"Wrong Rotate: {rot}");
             return;
         }
-
-        var key = GetNavTileKey(rot);
-        naviMask = GetNaviMaskRotated(rot);
         
-        // get rotate pivot
+        // calculate (rotated) pivot
+        bool isSmall = (naviMask >> (4 * 13)) != 0;
+        GetPivotRotated(rot, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
+        
+        // get key mask
+        // get key mask
+        ushort gridKeyMask = GetGridKeyMask(gridPivot);
+        ushort tileKeyMask = GetTileKeyMask(gridPivot, tilePivot, isSmall);
+        
+        // get data mask
+        naviMask = GetNaviMaskRotated(rot); //12 bits left. 여기에 material index 넣어도 될 듯?
+        infoMask = 0;
+        
+        // save data
+        // dic<uint, dic<uint, NavTileMeshData> 로 저장해서 grid별로, grid+tile, data 별로 저장..
+        // 을 할거면 같이 묶을 필요가 없네? grid 별로 파일을 따로 만들테니까?
     }
 
     
     // Key(pivot)
-    private uint GetNavTileKey(int rot)
+    private void GetPivotRotated(int rot, bool isSmall, out Vector3 gridPivot, out Vector3 tilePivot)
     {
-        uint key = 0;
-        GetPivotRotated(rot, out Vector3 gridPivot, out Vector3 tilePivot);
-
-        
-        //grid pivot 변환하고...
-        
-        // tilePivot을.. 변환하고..
-        
-        return key;
-    }
-    private void GetPivotRotated(int rot, out Vector3 gridPivot, out Vector3 tilePivot)
-    {
-        tilePivot = transform.position;
+        // tile pivot
+        Vector3 rorated;
         switch (rot)
         {
-            case  90: tilePivot += new Vector3( 0f, 0f, -1f); break;
-            case 180: tilePivot += new Vector3(-1f, 0f, -1f); break;
-            case 270: tilePivot += new Vector3(-1f, 0f,  0f); break;
-            default: break;
+            case  90: rorated = new Vector3( 0f, 0f, -1f); break;
+            case 180: rorated = new Vector3(-1f, 0f, -1f); break;
+            case 270: rorated = new Vector3(-1f, 0f,  0f); break;
+            default:  rorated = Vector3.zero; break;
         }
-        
+        rorated *= isSmall ? 0.5f : 1f;
+        tilePivot = transform.position + rorated;
+
+        // grid pivot
         var gx = Mathf.FloorToInt(tilePivot.x / 32);
         var gy = Mathf.FloorToInt(tilePivot.y / 4);
         var gz = Mathf.FloorToInt(tilePivot.z / 32);
         gridPivot = new Vector3(gx, gy, gz);
     }
-    private ushort GetGridIndexFlag(int pointX, int pointY, int pointZ)
-    {
+    private ushort GetGridKeyMask(Vector3 gridPivot)
+    {        
         const byte shiftGridXSign = 15;
-        const byte shiftGridX = 10;
-        const byte shiftGridYSign = 9;
-        const byte shiftGridY = 6;
-        const byte shiftGridZSign = 5;
-        const byte shiftGridZ = 0;
+        const byte shiftGridX     = 10;
+        const byte shiftGridYSign =  9;
+        const byte shiftGridY     =  6;
+        const byte shiftGridZSign =  5;
+        const byte shiftGridZ     =  0;
+        
+        Vector3Int gridInt = gridPivot.ToInt();
+        
+        int gridFlag = 0;
 
-        var gridFlag = 0;
-
-        if (pointX < 0)
+        if (gridInt.x < 0)
         {
             gridFlag |= 1 << shiftGridXSign;
-            gridFlag |= (-pointX) << shiftGridX;
+            gridFlag |= (-gridInt.x) << shiftGridX;
         }
         else
         {
-            gridFlag |= pointX << shiftGridX;
+            gridFlag |= gridInt.x << shiftGridX;
         }
 
-        if (pointY < 0)
+        if (gridInt.y < 0)
         {
             gridFlag |= 1 << shiftGridYSign;
-            gridFlag |= (-pointY) << shiftGridY;
+            gridFlag |= (-gridInt.y) << shiftGridY;
         }
         else
         {
-            gridFlag |= pointY << shiftGridY;
+            gridFlag |= gridInt.y << shiftGridY;
         }
 
-        if (pointZ < 0)
+        if (gridInt.z < 0)
         {
             gridFlag |= 1 << shiftGridZSign;
-            gridFlag |= (-pointZ) << shiftGridZ;
+            gridFlag |= (-gridInt.z) << shiftGridZ;
         }
         else
         {
-            gridFlag |= pointZ << shiftGridZ;
+            gridFlag |= gridInt.z << shiftGridZ;
         }
 
         return (ushort)gridFlag;
     }
+
+    private ushort GetTileKeyMask(Vector3 gridPivot, Vector3 tilePivot, bool isSmall)
+    {
+        Vector3Int diffInt = (tilePivot - gridPivot).ToInt();
+        const byte shiftIsHalfScale = 15;
+        const byte shiftTileX = 9;
+        const byte shiftTileY = 6;
+        const byte shiftTileZ = 0;
+
+        int tileFlag = 0;
+        tileFlag |= isSmall ? 1 << shiftIsHalfScale : 0;
+        tileFlag |= (diffInt.x) << shiftTileX;
+        tileFlag |= (diffInt.y) << shiftTileY;
+        tileFlag |= (diffInt.z) << shiftTileZ;
+
+        return (ushort)tileFlag;
+    }
+
+
     private ushort GetTileIndexFlag(Vector3Int diffInt)
     {
         const byte shiftIsHalfScale = 15;

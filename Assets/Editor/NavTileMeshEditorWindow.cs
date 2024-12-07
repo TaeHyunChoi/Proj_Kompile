@@ -4,9 +4,11 @@ using UnityEngine;
 
 public class NavTileMeshEditorWindow : EditorWindow
 {
-    private int[] heights = new int[13]; // 12개의 int 값
-    private string fileName = "default_name"; // 파일 이름
     private const float heightPerUnit = 0.125f;
+    
+    private int[] inputHeights = new int[13]; // 12개의 int 값
+    private string inputFileName = "default_name"; // 파일 이름
+    private bool isSmall = false;
 
     [MenuItem("Tools/Custom Editor Window")]
     public static void ShowWindow()
@@ -23,7 +25,8 @@ public class NavTileMeshEditorWindow : EditorWindow
             fontStyle = FontStyle.Bold // 글씨를 굵게 설정
         };
         EditorGUILayout.LabelField("File Name", boldLabelStyle); // 레이블을 굵게 설정
-        fileName = EditorGUILayout.TextField(fileName);
+        inputFileName = EditorGUILayout.TextField(inputFileName);
+        isSmall = GUILayout.Toggle(isSmall, "Is Small");
 
         GUILayout.Space(5);
         GUILayout.Label("Input Values", EditorStyles.boldLabel);
@@ -31,7 +34,7 @@ public class NavTileMeshEditorWindow : EditorWindow
         float fieldWidth = 50; // IntField의 너비
         float spacing    = 10;   // 필드 간의 간격
         float startX     = 20;    // 시작 X 위치
-        float startY     = 70;    // 시작 Y 위치
+        float startY     = 85;    // 시작 Y 위치
 
         DrawInputRow(new[] { "h10", "h11", "h12" }, new[] { 10, 11, 12 }, startX, startY, fieldWidth, spacing);
         startY += 30;
@@ -57,9 +60,9 @@ public class NavTileMeshEditorWindow : EditorWindow
         {
             GUI.FocusControl(null);
             
-            for (var i = 0; i < heights.Length; i++)
+            for (var i = 0; i < inputHeights.Length; i++)
             {
-                heights[i] = 0;
+                inputHeights[i] = 0;
             }
         }
         
@@ -76,44 +79,50 @@ public class NavTileMeshEditorWindow : EditorWindow
             currentX += 30;
 
             // IntField
-            heights[indices[i]] = EditorGUI.IntField(new Rect(currentX, startY, fieldWidth, 20), heights[indices[i]]);
+            inputHeights[indices[i]] = EditorGUI.IntField(new Rect(currentX, startY, fieldWidth, 20), inputHeights[indices[i]]);
             currentX += fieldWidth + spacing;
         }
     }
 
     private void SaveData()
     {
+        string fName = inputFileName;
+        if (true == isSmall)
+        {
+            fName += "_s";
+        }
+
         if (false == TrySetMeshFields(out Vector3[] points, out int triangleFlag))
         {
-            Debug.LogError("Fail to Mesh asset created[TrySetMeshFields]: " + fileName);
+            Debug.LogError("Fail to Mesh asset created[TrySetMeshFields]: " + fName);
             return;
         }
 
         if (false == TrySetMesh(points, triangleFlag, out Mesh mesh))
         {
-            Debug.LogError("Fail to Mesh asset created[TrySetMesh]: " + fileName);
+            Debug.LogError("Fail to Mesh asset created[TrySetMesh]: " + fName);
             return;
         }
 
         // create|save mesh
-        var path = "Assets/Rcs/NavTile/Mesh/NavTileMesh_" + fileName + ".asset";
+        var path = "Assets/Rcs/NavTile/Mesh/NavTileMesh_" + fName + ".asset";
         if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
         {
             AssetDatabase.DeleteAsset(path);
         }
         AssetDatabase.CreateAsset(mesh, path);
         AssetDatabase.SaveAssets();
-        Debug.Log("Mesh asset created: " + fileName);
+        Debug.Log("Mesh asset created: " + fName);
         
         // create|save prefab for test
-        path = "Assets/Editor/Prefab/nav_" + fileName + "_test.prefab";
+        path = "Assets/Editor/Prefab/nav_" + fName + "_test.prefab";
         if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
         {
             AssetDatabase.DeleteAsset(path);
         }
         
         bool isSuccess;
-        var testPrefab = new GameObject(fileName);
+        var testPrefab = new GameObject(fName);
         {
             var filter = testPrefab.AddComponent<MeshFilter>();
             filter.mesh = mesh;
@@ -122,7 +131,7 @@ public class NavTileMeshEditorWindow : EditorWindow
             renderer.sharedMaterial = material;
 
             var navTileMesh = testPrefab.AddComponent<NavTileMesh>();
-            navTileMesh.InitHeightMask(heights);
+            navTileMesh.InitNaviMask(inputHeights, isSmall);
             
             PrefabUtility.SaveAsPrefabAsset(testPrefab, path, out isSuccess);
         }
@@ -132,11 +141,11 @@ public class NavTileMeshEditorWindow : EditorWindow
         {
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("Success to Create NavTile Prefab: " + fileName);
+            Debug.Log("Success to Create NavTile Prefab: " + fName);
         }
         else
         {
-            Debug.LogError("Fail to Create NavTile Prefab: " + fileName);
+            Debug.LogError("Fail to Create NavTile Prefab: " + fName);
         }
         
         DestroyImmediate(testPrefab);
@@ -147,7 +156,7 @@ public class NavTileMeshEditorWindow : EditorWindow
         points = new Vector3[13];
         triangleFlag = 0xFFFF;
         
-        for (var i = 0; i < heights.Length; i++)
+        for (var i = 0; i < inputHeights.Length; i++)
         {
             Vector3 vertex;
             switch (i)
@@ -170,11 +179,12 @@ public class NavTileMeshEditorWindow : EditorWindow
                     return false;
             }
 
-            var h = heights[i];
+            var h = inputHeights[i];
             if (h >= 0)
             {
+                var scale = isSmall ? 0.5f : 1f;
                 var height = h * heightPerUnit;
-                points[i] = vertex + new Vector3(0, height, 0);
+                points[i] = scale * (vertex + new Vector3(0, height, 0));
             }
             else
             {
