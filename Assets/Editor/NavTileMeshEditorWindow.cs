@@ -122,7 +122,7 @@ public class NavTileMeshEditorWindow : EditorWindow
             renderer.sharedMaterial = material;
 
             var navTileMesh = testPrefab.AddComponent<NavTileMesh>();
-            navTileMesh.Initialize(heights);
+            navTileMesh.SetData(heights);
             
             PrefabUtility.SaveAsPrefabAsset(testPrefab, path, out isSuccess);
         }

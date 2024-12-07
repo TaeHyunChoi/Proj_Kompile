@@ -4,7 +4,7 @@ namespace DataStruct
     using System.Text;
     using System.Collections.Generic;
     using UnityEngine;
-    using CMathf;
+    using Script.Util;
     using static Index.IDxTile;
 
     [Obsolete][Serializable]

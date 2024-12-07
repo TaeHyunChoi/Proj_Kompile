@@ -1,9 +1,9 @@
-namespace CMathf
+namespace Script.Util
 {
     using System;
     using UnityEngine;
 
-    public static class CMath
+    public static class UMath
     {
         public static float Floor(float value, int digits = 3)
         {
@@ -70,6 +70,11 @@ namespace CMathf
             //value = (value >= 0) ? MathF.Floor(value) : MathF.Ceiling(value);
             ////return value * d_invert;
             //return (float)Math.Round(value * d_invert, 3);
+        }
+
+        public static int ToInt(this float value, int digits = 3)
+        {
+            return (int)Truncate(value, digits);
         }
 
         public static Vector3Int ToInt(this Vector3 value)

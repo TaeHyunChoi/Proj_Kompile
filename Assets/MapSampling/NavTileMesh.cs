@@ -1,58 +1,84 @@
 using System;
 using UnityEngine;
+using System.Threading.Tasks;
+using Script.Util;
 
 [Serializable]
 public class NavTileMesh : MonoBehaviour
 {
     [SerializeField]
-    private long heightFlag;
+    private ulong heightFlag;
 
-    public void Initialize(int[] heights)
+    public void SetData(int[] heights)
     {
-        var i = 0;
-        foreach (long height in heights)
+        int i = 0;
+        foreach (int height in heights)
         {
-            var h = height;
+            ulong h;
             if (-1 == height)
             {
                 h = 0b1111;
+            }
+            else
+            {
+                h = (ulong)height;
             }
 
             heightFlag |= h << i;
             i += 4;
         }
         
-        Debug.Log("Initialized: " + Convert.ToString((long)heightFlag,2));
+        Debug.Log("Set: " + Convert.ToString((long)heightFlag,2));
     }
-    
-    
+
+    public async Task  BakeMesh()
+    {
+        await Task.Yield();
+        
+        var rotY = transform.rotation.eulerAngles.y;
+        TestForRotate(rotY.ToInt());
+    }
+
+
 
     // 회전 대응
     public void TestForRotate(int angle)
     {
-        // pivot
-        //pivot 계산도 함께 처리할까?
-        
-        // heights
-        var matrix = GetHeightMatrix();
-        int[,] rotated = RotateMatrix(matrix, angle);
+        var matrix = GetHeightMatrix(angle);
         //이걸 받아서 다시 heightFlag에 저장한다.
+        //
     }
 
     // 확인 요망
-    private int[,] GetHeightMatrix()
+    private int[,] GetHeightMatrix(int angle)
     {
-        int[,] result = new int[5, 5];
-        
-        //여기서부터...
+        var matrix = new int[5, 5];
+        var flag = heightFlag;
+        for (var i = 0; i < 13; i++)
+        {
+            var h = (int)(flag & 0b1111);
 
-        return result;
-    }
+            switch (i)
+            {
+                case  0: matrix[0,4] = h; break;
+                case  1: matrix[2,4] = h; break;
+                case  2: matrix[4,4] = h; break;
+                case  3: matrix[1,3] = h; break;
+                case  4: matrix[3,3] = h; break;
+                case  5: matrix[0,2] = h; break;
+                case  6: matrix[2,2] = h; break;
+                case  7: matrix[4,2] = h; break;
+                case  8: matrix[1,1] = h; break;
+                case  9: matrix[3,1] = h; break;
+                case 10: matrix[0,0] = h; break;
+                case 11: matrix[2,0] = h; break;
+                case 12: matrix[4,0] = h; break;
+            }
+            
+            flag >>= 4;
+        }
 
-    private int GetHeight(int index)
-    {
-        var flag = heightFlag >> (index * 4);
-        return (int)(flag & 0b1111);
+        return RotateMatrix(matrix, angle);
     }
     
     private int[,] RotateMatrix(int[,] matrix, int angle)

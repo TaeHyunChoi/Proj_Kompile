@@ -1,6 +1,6 @@
 using UnityEngine;
 using static Index.IDxInput;
-using CMathf;
+using Script.Util;
 using System;
 
 [Obsolete]

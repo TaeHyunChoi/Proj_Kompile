@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using CMathf;
 using static Index.IDxTile;
+using Script.Util;
 using static Index.IDxInput;
 
 public static class TileUtility
@@ -177,15 +177,15 @@ public static class TileUtility
     {
         float scale_inverse = GetScale(ETileSizeType.Default_Inverse, scale);
 
-        int cx = CMath.FloorToInt(point.x * scale_inverse, 3);
-        int cy = CMath.FloorToInt(point.y * scale_inverse, 3);
-        int cz = CMath.FloorToInt(point.z * scale_inverse, 3);
+        int cx = UMath.FloorToInt(point.x * scale_inverse, 3);
+        int cy = UMath.FloorToInt(point.y * scale_inverse, 3);
+        int cz = UMath.FloorToInt(point.z * scale_inverse, 3);
         Vector3 pivot = new Vector3(cx, cy, cz) * scale;
 
         if (1f != scale)
         {
             float scale_quater = scale * 0.25f;
-            float x = CMath.FloorToInt((point.x - scale_quater) * scale_inverse, 3);
+            float x = UMath.FloorToInt((point.x - scale_quater) * scale_inverse, 3);
             x *= scale;
             x += scale_quater;
 
@@ -755,7 +755,7 @@ public static class TileUtility
     // check is movable point
     public static bool IsMovable(Dictionary<int, DataStruct.STile> map, Vector3 goal, float scale)
     {
-        float dist = CMath.Floor(scale * SIZE_QUATER - Time.fixedDeltaTime, 3);
+        float dist = UMath.Floor(scale * SIZE_QUATER - Time.fixedDeltaTime, 3);
         for (int i = 0; i < index; ++i)
         {
             //대상 삼각형에 대하여
