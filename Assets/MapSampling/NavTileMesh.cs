@@ -54,7 +54,7 @@ public class NavTileMesh : MonoBehaviour
         ushort gridKeyMask = GetGridKeyMask(gridPivot);
         map.TryAdd(gridKeyMask, new ConcurrentDictionary<ulong, MapNavData>());
 
-        uint tileKeyMask = GetTileKeyMask(tilePivot - gridPivot, isSmall);
+        uint tileKeyMask = GetTileKeyMask(gridPivot, tilePivot, isSmall);
         naviMask = GetNaviMaskRotated(rot, isSmall); // ?? of 64 bits used
         infoMask = 0; // mesh index 넣어봅시다.
         map[gridKeyMask].TryAdd(tileKeyMask, new MapNavData(naviMask, infoMask));
@@ -77,9 +77,9 @@ public class NavTileMesh : MonoBehaviour
         tilePivot = transform.position + rotated;
 
         // grid pivot
-        var gx = Mathf.FloorToInt(tilePivot.x / 32) * 32;
-        var gy = Mathf.FloorToInt(tilePivot.y / 4)  *  4;
-        var gz = Mathf.FloorToInt(tilePivot.z / 32) * 32;
+        var gx = Mathf.FloorToInt(tilePivot.x / 32);
+        var gy = Mathf.FloorToInt(tilePivot.y / 4);
+        var gz = Mathf.FloorToInt(tilePivot.z / 32);
         gridPivot = new Vector3(gx, gy, gz);
     }
     private ushort GetGridKeyMask(Vector3 gridPivot)
@@ -127,10 +127,11 @@ public class NavTileMesh : MonoBehaviour
 
         return (ushort)gridFlag;
     }
-    private uint GetTileKeyMask(Vector3 diff, bool isSmall)
+    private uint GetTileKeyMask(Vector3 gridPivot, Vector3 tilePivot, bool isSmall)
     {
-        int mask = 0;
-        
+        gridPivot = new Vector3(gridPivot.x * 32, gridPivot.y * 4, gridPivot.z * 32);
+
+        Vector3 diff = tilePivot - gridPivot;
         if (true == isSmall)
         {
             diff *= 2f;
@@ -142,7 +143,8 @@ public class NavTileMesh : MonoBehaviour
         const byte shiftTileX = 14;
         const byte shiftTileY = 8;
         const byte shiftTileZ = 0;
-        
+
+        int mask = 0;
         mask |= isSmall ? 1 << shiftIsHalfScale : 0;
         mask |= (diffInt.x) << shiftTileX;
         mask |= (diffInt.y) << shiftTileY;
