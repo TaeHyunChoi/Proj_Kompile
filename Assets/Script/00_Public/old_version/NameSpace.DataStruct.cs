@@ -217,7 +217,7 @@ namespace DataStruct
     }
     
 
-    [Serializable]
+    [Obsolete][Serializable]
     public struct MapTileData
     {
         private int indexFlag;
@@ -246,6 +246,19 @@ namespace DataStruct
             var collideFlag = (long)(a.collideFlag | b.collideFlag);
 
             return new MapTileData(a.indexFlag, infoFlag, collideFlag);
+        }
+    }
+
+    [Serializable]
+    public struct MapNavData
+    {
+        [SerializeField] ulong naviMask;
+        [SerializeField] uint infoMask;
+
+        public MapNavData(ulong naviMask, uint infoMask)
+        {
+            this.naviMask = naviMask;
+            this.infoMask = infoMask;
         }
     }
 }

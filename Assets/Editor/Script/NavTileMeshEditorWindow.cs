@@ -151,10 +151,10 @@ public class NavTileMeshEditorWindow : EditorWindow
         DestroyImmediate(testPrefab);
     }
 
-    private bool TrySetMeshFields(out Vector3[] points, out int triangleFlag)
+    private bool TrySetMeshFields(out Vector3[] points, out int triangleMask)
     {
         points = new Vector3[13];
-        triangleFlag = 0xFFFF;
+        triangleMask = 0xFFFF;
         
         for (var i = 0; i < inputHeights.Length; i++)
         {
@@ -189,7 +189,7 @@ public class NavTileMeshEditorWindow : EditorWindow
             else
             {
                 // h = -1;
-                triangleFlag = this[i, triangleFlag]; // indexer
+                triangleMask = this[i, triangleMask]; // indexer
                 points[i] = new Vector3(-1f, -1f, -1f);
             }
         }
@@ -199,7 +199,7 @@ public class NavTileMeshEditorWindow : EditorWindow
     {
         get
         {
-            var full = 0xFFFF;
+            var full = 0xFFFFF;
             switch (except)
             {
                 case 0:
@@ -294,11 +294,10 @@ public class NavTileMeshEditorWindow : EditorWindow
         var triangles = new List<int>();
         int triangleIndex = 0;
         
-        while (flag > 0)
+        while (flag != 0)
         {
             if (0 != (flag & 1))
             {
-                int[] pArr;
                 switch (triangleIndex)
                 {
                     case 0: triangles.Add(0); triangles.Add(3); triangles.Add(1); break;
@@ -318,7 +317,7 @@ public class NavTileMeshEditorWindow : EditorWindow
                     case 14: triangles.Add(9); triangles.Add(11); triangles.Add(12); break;
                     case 15: triangles.Add(6); triangles.Add(11); triangles.Add(9); break;
                     default:
-                        Debug.LogError("Invalid triangle index[" + triangleIndex + "]: " + triangleIndex);
+                        Debug.LogError("Invalid triangle index[" + triangleIndex + "]: " );
                         return false;
                 }
             }

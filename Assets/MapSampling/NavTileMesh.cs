@@ -2,13 +2,13 @@ using System;
 using UnityEngine;
 using System.Threading.Tasks;
 using Script.Util;
-using UnityEngine.Serialization;
+using DataStruct;
 
 [Serializable]
 public class NavTileMesh : MonoBehaviour
 {
     [SerializeField] private ulong naviMask;
-    [SerializeField] private uint infoMask;
+    [SerializeField] private uint  infoMask;
     
     public void InitNaviMask(int[] heights, bool isSmall)
     {
@@ -34,56 +34,52 @@ public class NavTileMesh : MonoBehaviour
             naviMask |= 1ul << i;
         }
     }
-    public async Task  BakeMesh()
+    public async Task  BakeMesh(ConcurrentDictionary<uint, ConcurrentDictionary<ulong, MapNavData>> map)
     {
         await Task.Yield();
         
         int rot = (transform.rotation.eulerAngles.y).ToInt();
-        rot %= 360;
+        rot = (rot + 360) % 360;
         if (0 != rot % 90)
         {
             Debug.LogError($"Wrong Rotate: {rot}");
             return;
         }
-        
+
         // calculate (rotated) pivot
         bool isSmall = (naviMask >> (4 * 13)) != 0;
         GetPivotRotated(rot, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
         
         // get key mask
-        // get key mask
         ushort gridKeyMask = GetGridKeyMask(gridPivot);
-        ushort tileKeyMask = GetTileKeyMask(gridPivot, tilePivot, isSmall);
-        
-        // get data mask
-        naviMask = GetNaviMaskRotated(rot); //12 bits left. 여기에 material index 넣어도 될 듯?
-        infoMask = 0;
-        
-        // save data
-        // dic<uint, dic<uint, NavTileMeshData> 로 저장해서 grid별로, grid+tile, data 별로 저장..
-        // 을 할거면 같이 묶을 필요가 없네? grid 별로 파일을 따로 만들테니까?
-    }
+        map.TryAdd(gridKeyMask, new ConcurrentDictionary<ulong, MapNavData>());
 
+        uint tileKeyMask = GetTileKeyMask(tilePivot - gridPivot, isSmall);
+        naviMask = GetNaviMaskRotated(rot, isSmall); // ?? of 64 bits used
+        infoMask = 0; // mesh index 넣어봅시다.
+        map[gridKeyMask].TryAdd(tileKeyMask, new MapNavData(naviMask, infoMask));
+    }
+    
     
     // Key(pivot)
     private void GetPivotRotated(int rot, bool isSmall, out Vector3 gridPivot, out Vector3 tilePivot)
     {
         // tile pivot
-        Vector3 rorated;
+        Vector3 rotated;
         switch (rot)
         {
-            case  90: rorated = new Vector3( 0f, 0f, -1f); break;
-            case 180: rorated = new Vector3(-1f, 0f, -1f); break;
-            case 270: rorated = new Vector3(-1f, 0f,  0f); break;
-            default:  rorated = Vector3.zero; break;
+            case  90: rotated = new Vector3( 0f, 0f, -1f); break;
+            case 180: rotated = new Vector3(-1f, 0f, -1f); break;
+            case 270: rotated = new Vector3(-1f, 0f,  0f); break;
+            default:  rotated = Vector3.zero; break;
         }
-        rorated *= isSmall ? 0.5f : 1f;
-        tilePivot = transform.position + rorated;
+        rotated *= isSmall ? 0.5f : 1f;
+        tilePivot = transform.position + rotated;
 
         // grid pivot
-        var gx = Mathf.FloorToInt(tilePivot.x / 32);
-        var gy = Mathf.FloorToInt(tilePivot.y / 4);
-        var gz = Mathf.FloorToInt(tilePivot.z / 32);
+        var gx = Mathf.FloorToInt(tilePivot.x / 32) * 32;
+        var gy = Mathf.FloorToInt(tilePivot.y / 4)  *  4;
+        var gz = Mathf.FloorToInt(tilePivot.z / 32) * 32;
         gridPivot = new Vector3(gx, gy, gz);
     }
     private ushort GetGridKeyMask(Vector3 gridPivot)
@@ -131,22 +127,28 @@ public class NavTileMesh : MonoBehaviour
 
         return (ushort)gridFlag;
     }
-
-    private ushort GetTileKeyMask(Vector3 gridPivot, Vector3 tilePivot, bool isSmall)
+    private uint GetTileKeyMask(Vector3 diff, bool isSmall)
     {
-        Vector3Int diffInt = (tilePivot - gridPivot).ToInt();
-        const byte shiftIsHalfScale = 15;
-        const byte shiftTileX = 9;
-        const byte shiftTileY = 6;
+        int mask = 0;
+        
+        if (true == isSmall)
+        {
+            diff *= 2f;
+        }
+        Vector3Int diffInt = diff.ToInt();
+        
+        // scale ,x[sign,small_buffer,6], y[sign,small_buffer,4], z[sign,small_buffer,6]
+        const byte shiftIsHalfScale = 22;
+        const byte shiftTileX = 14;
+        const byte shiftTileY = 8;
         const byte shiftTileZ = 0;
+        
+        mask |= isSmall ? 1 << shiftIsHalfScale : 0;
+        mask |= (diffInt.x) << shiftTileX;
+        mask |= (diffInt.y) << shiftTileY;
+        mask |= (diffInt.z) << shiftTileZ;
 
-        int tileFlag = 0;
-        tileFlag |= isSmall ? 1 << shiftIsHalfScale : 0;
-        tileFlag |= (diffInt.x) << shiftTileX;
-        tileFlag |= (diffInt.y) << shiftTileY;
-        tileFlag |= (diffInt.z) << shiftTileZ;
-
-        return (ushort)tileFlag;
+        return (uint)mask;
     }
 
 
@@ -168,7 +170,7 @@ public class NavTileMesh : MonoBehaviour
     
     
     // Height
-    private ulong GetNaviMaskRotated (int rot)
+    private ulong GetNaviMaskRotated (int rot, bool isSmall)
     {
         ulong newMask = 0;
         
@@ -176,7 +178,8 @@ public class NavTileMesh : MonoBehaviour
         matrix = RotateMatrix(matrix, rot);
 
         ulong mask = 0;
-        for (int i = 0; i < 13; ++i)
+        int i = 0;
+        for (i = 0; i < 13; ++i)
         {
             switch (i)
             {
@@ -198,7 +201,12 @@ public class NavTileMesh : MonoBehaviour
 
             newMask |= mask << i * 4;
         }
-        
+
+        if (true == isSmall)
+        {
+            newMask |= 1ul << (4 * i);
+        }
+
         return newMask;
     }
     private int[,] GetHeightMatrixRotated(int rot)
@@ -264,4 +272,7 @@ public class NavTileMesh : MonoBehaviour
 
         return rotated;
     }
+    
+    
+    // Info
 }

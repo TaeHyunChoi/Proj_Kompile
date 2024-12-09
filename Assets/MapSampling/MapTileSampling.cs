@@ -16,12 +16,8 @@ namespace MapSampling
     /// </summary>
     public class MapTileSampling : MonoBehaviour
     {
-        // public static readonly object Locker = new();
-        // private ConcurrentDictionary<long, MapTileData> _dataDic = new();
-        // private ConcurrentDictionary<long, List<MeshFilter>> _meshDic = new();
+        private ConcurrentDictionary<uint, ConcurrentDictionary<ulong, MapNavData>> dataDic = new(); // <gridKey, <tileKey, data>>
 
-        
-        
         private readonly string _assetGroupName = "MapMesh";
         private readonly string _assetLabelName = "MapNavMesh";
         
@@ -34,13 +30,12 @@ namespace MapSampling
             for (var i = 0; i < tiles.Length; i++)
             {
                 var t = i;
-                // initTasks[t] = tiles[t].Init(_dataDic, _meshDic);
-                initTasks[t] = tiles[t].BakeMesh();
+                initTasks[t] = tiles[t].BakeMesh(dataDic);
             }
             await Task.WhenAll(initTasks);      
             
             // save data
-            // DataTable.WriteBinaryMappingData<MapTileData>(_dataDic, "MapTileData");
+            //DataTable.WriteBinaryMappingData<MapTileData>(dataDic, "MapTileData");
 
             // combine mesh : 이것도 비동기로 할 수 있겠는데?
             {
