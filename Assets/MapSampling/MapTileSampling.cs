@@ -35,10 +35,8 @@ namespace MapSampling
             await Task.WhenAll(initTasks);
 
             // save data
-            //DataTable.WriteBinaryMappingData<MapTileData>(dataDic, "MapTileData");
             foreach (var grid in dataDic)
             {
-                //MapNav_0_-1_3 이런 식으로 되어야 하는데?
                 DataTable.WriteBinaryMappingData<MapNavData>(grid.Value, $"MapNav_{grid.Key}");
             }
 

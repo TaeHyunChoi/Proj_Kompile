@@ -332,11 +332,18 @@ public class NavTileMeshEditorWindow : EditorWindow
             normals[i] = Vector3.up;
         }
 
+        var uvs = new Vector2[points.Length];
+        for (int i = 0; i < points.Length; i++)
+        {
+            uvs[i] = new Vector2(points[i].x, points[i].z);
+        }
+
         mesh = new Mesh()
         {
             vertices = points,
             triangles = triangles.ToArray(),
-            normals = normals
+            normals = normals,
+            uv = uvs
         };
         
         return true;
