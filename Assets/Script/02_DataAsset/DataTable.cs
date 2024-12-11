@@ -4,6 +4,7 @@ using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 using DataStruct;
+using Script.Util;
 
 public static class DataTable
 {
@@ -161,10 +162,10 @@ public static class DataTable
     }
 
     // map sampling
-    public static void WriteBinaryMappingData<T>(Dictionary<int, T> data, string fileName) where T : struct
+    public static void WriteBinaryMappingData<T>(ConcurrentDictionary<ulong, T> data, string fileName) where T : struct
     {
         BinaryFormatter binaryFormatter = new BinaryFormatter();
-        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapTileData", fileName + ".dat");
+        string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapNavData", fileName + ".dat");
         FileStream fileStream = File.Create(filePath);
 
         // Dictionary 직렬화

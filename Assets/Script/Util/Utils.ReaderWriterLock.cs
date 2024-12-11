@@ -1,7 +1,9 @@
 namespace Script.Util
 {
+    using System;
     using System.Threading;
 
+    [Serializable]
     public class ReaderWriterLock
     {
         private int _readers = 0; // 현재 읽는 중인 스레드 수

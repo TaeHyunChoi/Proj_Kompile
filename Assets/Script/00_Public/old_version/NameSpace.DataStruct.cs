@@ -253,7 +253,7 @@ namespace DataStruct
     public struct MapNavData
     {
         [SerializeField] ulong naviMask;
-        [SerializeField] uint infoMask;
+        [SerializeField] uint  infoMask;
 
         public MapNavData(ulong naviMask, uint infoMask)
         {

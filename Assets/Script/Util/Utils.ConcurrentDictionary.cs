@@ -4,11 +4,13 @@ namespace Script.Util
 {
     using System;
     using System.Collections.Generic;
-    
+
+    [Serializable]
     public class ConcurrentDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
         private readonly Dictionary<TKey, TValue> _dictionary = new Dictionary<TKey, TValue>();
         private readonly ReaderWriterLock _lock = new ReaderWriterLock();
+
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         
         public TValue this[TKey key]

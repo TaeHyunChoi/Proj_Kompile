@@ -32,10 +32,15 @@ namespace MapSampling
                 var t = i;
                 initTasks[t] = tiles[t].BakeMesh(dataDic);
             }
-            await Task.WhenAll(initTasks);      
-            
+            await Task.WhenAll(initTasks);
+
             // save data
             //DataTable.WriteBinaryMappingData<MapTileData>(dataDic, "MapTileData");
+            foreach (var grid in dataDic)
+            {
+                //MapNav_0_-1_3 이런 식으로 되어야 하는데?
+                DataTable.WriteBinaryMappingData<MapNavData>(grid.Value, $"MapNav_{grid.Key}");
+            }
 
             // combine mesh : 이것도 비동기로 할 수 있겠는데?
             {
@@ -61,7 +66,8 @@ namespace MapSampling
                 var t = i;
                 initTasks[t].Dispose();
             }
-            
+
+            AssetDatabase.Refresh();
             Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
         }
         
