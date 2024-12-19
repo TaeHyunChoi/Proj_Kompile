@@ -326,11 +326,11 @@ public class NavTileMeshEditorWindow : EditorWindow
             flag >>= 1;
         }
 
-        var normals = new Vector3[points.Length];
-        for (var i = 0; i < points.Length; ++i)
-        {
-            normals[i] = Vector3.up;
-        }
+        //var normals = new Vector3[points.Length];
+        //for (var i = 0; i < points.Length; ++i)
+        //{
+        //    normals[i] = Vector3.up;
+        //}
 
         var uvs = new Vector2[points.Length];
         for (int i = 0; i < points.Length; i++)
@@ -342,10 +342,11 @@ public class NavTileMeshEditorWindow : EditorWindow
         {
             vertices = points,
             triangles = triangles.ToArray(),
-            normals = normals,
+            //normals = normals,
             uv = uvs
         };
-        
+
+        mesh.RecalculateNormals();
         return true;
     }
 }
