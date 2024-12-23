@@ -19,6 +19,14 @@ public class TextureMerger : MonoBehaviour
 
         // 텍스처 생성
         Texture2D texture2D = new Texture2D(targetTextureWidth, targetTextureHeight, TextureFormat.RGBA32, false);
+
+        // 텍스처를 투명으로 초기화
+        Color[] clearPixels = new Color[targetTextureWidth * targetTextureHeight];
+        for (int i = 0; i < clearPixels.Length; i++)
+        {
+            clearPixels[i] = new Color(0, 0, 0, 0);
+        }
+        texture2D.SetPixels(clearPixels);
         texture2D.Apply();
 
         // 폴더에서 모든 스프라이트 로드

@@ -1,24 +1,25 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class NavTileRenderer : MonoBehaviour
 {
-    private MeshFilter   meshFilter;
+    private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
 
-    [SerializeField] int columnIndex = 0; // 텍스처의 열 인덱스
-    [SerializeField] int rowIndex = 0;    // 텍스처의 행 인덱스
-    [SerializeField] int spriteWidth = 128;
-    [SerializeField] int spriteHeight = 128;
+    [SerializeField] int columnIndex = 0;
+    [SerializeField] int rowIndex = 0;
+    [SerializeField] int spriteWidth = 256;
+    [SerializeField] int spriteHeight = 256;
 
     private void Awake()
     {
-        meshFilter   = transform.GetComponent<MeshFilter>();
+        meshFilter = transform.GetComponent<MeshFilter>();
         meshRenderer = transform.GetComponent<MeshRenderer>();
     }
     private void Start()
     {
-        Texture texture = meshRenderer.material.mainTexture;
-        int textureWidth  = texture.width;
+        Texture texture = meshRenderer.sharedMaterial.mainTexture;
+        int textureWidth = texture.width;
         int textureHeight = texture.height;
 
         // UV 좌표 계산
@@ -36,17 +37,12 @@ public class NavTileRenderer : MonoBehaviour
         {
             float u = Mathf.Lerp(uMin, uMax, vertices[i].x); // X축 기준
             float v = Mathf.Lerp(vMin, vMax, vertices[i].y); // Y축 기준
+
+            u = Mathf.Clamp01(u);
+            v = Mathf.Clamp01(v);
+
             uvs[i] = new Vector2(u, v);
         }
-
         mesh.uv = uvs;
-
-        //mesh.uv = new Vector2[]
-        //{
-        //    new Vector2(uMin, vMin),
-        //    new Vector2(uMax, vMin),
-        //    new Vector2(uMax, vMax),
-        //    new Vector2(uMin, vMax)
-        //};
     }
 }
