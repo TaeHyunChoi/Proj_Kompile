@@ -3,13 +3,14 @@ using UnityEngine;
 
 public class NavTileRenderer : MonoBehaviour
 {
-    private MeshFilter meshFilter;
-    private MeshRenderer meshRenderer;
+    private readonly int spriteWidth = 256;
+    private readonly int spriteHeight = 256;
 
-    [SerializeField] int columnIndex = 0;
-    [SerializeField] int rowIndex = 0;
-    [SerializeField] int spriteWidth = 256;
-    [SerializeField] int spriteHeight = 256;
+    [SerializeField] private int columnIndex = 0;
+    [SerializeField] private int rowIndex = 0;
+
+    private MeshFilter   meshFilter;
+    private MeshRenderer meshRenderer;
 
     private void Awake()
     {
