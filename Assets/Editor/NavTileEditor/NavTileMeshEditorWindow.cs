@@ -1,77 +1,63 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
+// 자료구조: VirtualVertex
 public partial class NavTileMeshEditorWindow
 {
     private struct VirtualVertex
     {
-        private const float heightUnitSize = 0.125f;
+        private const float HEIGHT_UNIT_VALUE = 0.125f;    //높이값의 단위. (height * 0.125f). 0 ~ 1의 값을 가진다.
 
-        private int index;
-        private int virtualIndex;
-        private float height;
+        public readonly int     Index;
+        public readonly Vector3 Vertex;
 
-        public VirtualVertex(int index, int vIndex, float h)
+        /// <param name="index">실제로 Mesh.triangles에 저장된 인덱스(순서)</param>
+        /// <param name="vIndex">입력값(inputHeights)의 인덱스(순서)</param>
+        /// <param name="height">입력한 높이값</param>
+        public VirtualVertex(int index, int vIndex, float height)
         {
-            this.index   = index;
-            virtualIndex = vIndex;
-            height       = h * heightUnitSize;
-        }
+            Index   = index;
 
-        public int Index
-        {
-            get
+            Vector3 vertex = new Vector3(0f, height * HEIGHT_UNIT_VALUE, 0f);
+            switch (vIndex)
             {
-                return index;
+                case  0: vertex += new Vector3(0f,    0f, 0f   ); break;
+                case  1: vertex += new Vector3(0.5f,  0f, 0f   ); break;
+                case  2: vertex += new Vector3(1f,    0f, 0f   ); break;
+                case  3: vertex += new Vector3(0.25f, 0f, 0.25f); break;
+                case  4: vertex += new Vector3(0.75f, 0f, 0.25f); break;
+                case  5: vertex += new Vector3(0f,    0f, 0.5f ); break;
+                case  6: vertex += new Vector3(0.5f,  0f, 0.5f ); break;
+                case  7: vertex += new Vector3(1f,    0f, 0.5f ); break;
+                case  8: vertex += new Vector3(0.25f, 0f, 0.75f); break;
+                case  9: vertex += new Vector3(0.75f, 0f, 0.75f); break;
+                case 10: vertex += new Vector3(0f,    0f, 1f   ); break;
+                case 11: vertex += new Vector3(0.5f,  0f, 1f   ); break;
+                case 12: vertex += new Vector3(1f,    0f, 1f   ); break;
+                default: break;
             }
-        }
-        public Vector3 Vertex
-        {
-            get
-            {
-                Vector3 vertex = new Vector3(0f, height, 0f);
 
-                switch (virtualIndex)
-                {
-                    case  0: vertex += new Vector3(0f, 0f, 0f);         break;
-                    case  1: vertex += new Vector3(0.5f, 0f, 0f);       break;
-                    case  2: vertex += new Vector3(1f, 0f, 0f);         break;
-                    case  3: vertex += new Vector3(0.25f, 0f, 0.25f);   break;
-                    case  4: vertex += new Vector3(0.75f, 0f, 0.25f);   break;
-                    case  5: vertex += new Vector3(0f, 0f, 0.5f);       break;
-                    case  6: vertex += new Vector3(0.5f, 0f, 0.5f);     break;
-                    case  7: vertex += new Vector3(1f, 0f, 0.5f);       break;
-                    case  8: vertex += new Vector3(0.25f, 0f, 0.75f);   break;
-                    case  9: vertex += new Vector3(0.75f, 0f, 0.75f);   break;
-                    case 10: vertex += new Vector3(0f, 0f, 1f);         break;
-                    case 11: vertex += new Vector3(0.5f, 0f, 1f);       break;
-                    case 12: vertex += new Vector3(1f, 0f, 1f);         break;
-                    default: break;
-                }
-
-                return vertex;
-            }
+            Vertex = vertex;
         }
     }
 }
 
+// Custom Editor + Create Asset
 public partial class NavTileMeshEditorWindow : EditorWindow
 {
-    private const int   TRIANGLE_FULL_MASK = 0b_1111_1111_1111_1111;
-    private const float heightPerUnit      = 0.125f;
+    private const int   TRIANGLE_FULL_MASK = 0b_1111_1111_1111_1111; //0xFFFF
     
-    private int[]  inputHeights  = new int[13]; // 12개의 int 값
-    private string inputFileName = "default_name"; // 파일 이름
-    private bool   isSmall       = false;
+    private int[]  inputHeights  = new int[13];    // 각 vertex의 height 입력값
+    private string inputFileName = "default_name"; // 에셋 파일 이름
+    private bool   isSmall       = false;          // (실내 등) 타일맵을 작게 만들 때 체크
 
+    // 커스텀 에디터 표기
     [MenuItem("Tools/Custom Editor Window")]
     public static void ShowWindow()
     {
         GetWindow<NavTileMeshEditorWindow>("Nav Tile Mesh Editor");
     }
-
     private void OnGUI()
     {
         // File name input
@@ -85,12 +71,12 @@ public partial class NavTileMeshEditorWindow : EditorWindow
         isSmall = GUILayout.Toggle(isSmall, "Is Small");
 
         GUILayout.Space(5);
-        GUILayout.Label("Input Values", EditorStyles.boldLabel);
+        GUILayout.Label("Input Vertex Height", EditorStyles.boldLabel);
         
         float fieldWidth = 50; // IntField의 너비
-        float spacing    = 10;   // 필드 간의 간격
-        float startX     = 20;    // 시작 X 위치
-        float startY     = 85;    // 시작 Y 위치
+        float spacing    = 10; // 필드 간의 간격
+        float startX     = 20; // 시작 X 위치
+        float startY     = 85; // 시작 Y 위치
 
         DrawInputRow(new[] { "h10", "h11", "h12" }, new[] { 10, 11, 12 }, startX, startY, fieldWidth, spacing);
         startY += 30;
@@ -105,12 +91,13 @@ public partial class NavTileMeshEditorWindow : EditorWindow
         startY += 30;
 
         DrawInputRow(new[] { "h0", "h1", "h2" }, new[] { 0, 1, 2 }, startX, startY, fieldWidth, spacing);
+
         GUILayout.Space(startY - 30);
-        
         if (GUILayout.Button("Save Mesh"))
         {
             SaveData();
         }
+
         GUILayout.Space(1);
         if (GUILayout.Button("Clear Height"))
         {
@@ -123,7 +110,6 @@ public partial class NavTileMeshEditorWindow : EditorWindow
         }
         
     }
-
     private void DrawInputRow(string[] labels, int[] indices, float startX, float startY, float fieldWidth, float spacing)
     {
         float currentX = startX;
@@ -139,6 +125,7 @@ public partial class NavTileMeshEditorWindow : EditorWindow
             currentX += fieldWidth + spacing;
         }
     }
+
 
     private void SaveData()
     {
@@ -157,6 +144,8 @@ public partial class NavTileMeshEditorWindow : EditorWindow
         }
 
         // set mesh data
+        // [comment] 나에게 필요한 값은 vertices, triangles 2개이지만
+        // 에디터에서 보기 좋게 확인하려고 uv, bounds, normals 데이터도 추가 (오직 에디터에서만 사용하는 데이터)
         Mesh mesh = new Mesh()
         {
             vertices = vertice.ToArray(),
@@ -166,7 +155,7 @@ public partial class NavTileMeshEditorWindow : EditorWindow
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
 
-        // create|save mesh
+        // create | save mesh
         var path = "Assets/Rcs/NavTile/Mesh/NavTileMesh_" + fName + ".asset";
         if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
         {
@@ -189,11 +178,12 @@ public partial class NavTileMeshEditorWindow : EditorWindow
             var filter = testPrefab.AddComponent<MeshFilter>();
             filter.mesh = mesh;
             var renderer = testPrefab.AddComponent<MeshRenderer>();
-            //var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Rcs/Material/Mat_Inner.mat");
-            renderer.sharedMaterial = default;
+            var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Editor/Texture/mat_test.mat"); //임의로 생성한 매터리얼
+            renderer.sharedMaterial = material;
 
-            var navTileMesh = testPrefab.AddComponent<NavTileMesh>();
-            navTileMesh.InitNaviMask(inputHeights, isSmall);
+            // 타일 정보를 유니티의 NavMesh를 Bake하는 것처럼 데이터 저장할 때 호출하는 함수
+            //var navTileMesh = testPrefab.AddComponent<NavTileMesh>();
+            //navTileMesh.InitNaviMask(inputHeights, isSmall);
             
             PrefabUtility.SaveAsPrefabAsset(testPrefab, path, out isSuccess);
         }
@@ -209,23 +199,28 @@ public partial class NavTileMeshEditorWindow : EditorWindow
             Debug.LogError("Fail to Create NavTile Prefab: " + fName);
         }
         
+        //testPrefab을 Scene에 생성했으나 필요 없으니 없앤다.
         DestroyImmediate(testPrefab);
     }
 
+    /// <summary> 입력받은 높이값[13]을 Mesh 정보로 변환하여 저장 </summary>
     private bool TryParse(out List<Vector3> vertice, out List<int> triangle, out List<Vector2> uv)
     {
         int triangleMask = TRIANGLE_FULL_MASK;
 
         // virtual vertice + vertice, uv
-        VirtualVertex[] virtualVertice = new VirtualVertex[inputHeights.Length];
-        VirtualVertex virtualVertex;
+        int length = inputHeights.Length;
+        VirtualVertex[] virtualVertices = new VirtualVertex[length];
+        VirtualVertex   virtualVertex;
         vertice = new List<Vector3>();
-        uv = new List<Vector2>();
+        uv      = new List<Vector2>();
+
+        // 가상 정보 생성 (Mesh.vertices 입력 순서와 입력 입력 순서의 싱크를 맞춤)
         {
             int mi = 0; // (mesh index) Mesh에 저장되는 실제 버텍스 순서 
-            int vi;     // (virtual index) NavTileMesh를 만들기 위해 개념적으로 사용하는 가상 순서
+            int vi;     // (virtual index) NavTileMesh를 만들기 위해 개념적으로 사용하는 가상 순서 (입력 순서와 동일)
 
-            for (vi = 0; vi < inputHeights.Length; ++vi)
+            for (vi = 0; vi < length; ++vi)
             {
                 int h = inputHeights[vi];
 
@@ -243,7 +238,7 @@ public partial class NavTileMeshEditorWindow : EditorWindow
                     triangleMask = GetTriangleMaskExcept(triangleMask, except: vi);
                 }
 
-                virtualVertice[vi] = virtualVertex;
+                virtualVertices[vi] = virtualVertex;
             }
         }
 
@@ -280,9 +275,9 @@ public partial class NavTileMeshEditorWindow : EditorWindow
                     default: return false;
                 }
 
-                triangle.Add(virtualVertice[vt1].Index);
-                triangle.Add(virtualVertice[vt2].Index);
-                triangle.Add(virtualVertice[vt3].Index);
+                triangle.Add(virtualVertices[vt1].Index);
+                triangle.Add(virtualVertices[vt2].Index);
+                triangle.Add(virtualVertices[vt3].Index);
 
             NEXT_LOOP:
                 triangleMask >>= 1;
@@ -292,6 +287,9 @@ public partial class NavTileMeshEditorWindow : EditorWindow
 
         return true;
     }
+
+    /// <summary> 높이값에 -1을 입력하면 꼭지점에서 제외. 
+    /// 꼭지점 1개라도 없으면 삼각형을 만들 수 없으므로 삼각형 대상에서 제외 </summary>
     private int GetTriangleMaskExcept(int mask, int except)
     {
         switch (except)
