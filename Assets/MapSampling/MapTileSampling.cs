@@ -1,12 +1,10 @@
 #if UNITY_EDITOR
-using System.Collections.Generic;
 using UnityEngine;
 using System.Threading.Tasks;
 using DataStruct;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
-using UnityEngine.Diagnostics;
 
 namespace MapSampling
 {

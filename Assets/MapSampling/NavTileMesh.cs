@@ -12,7 +12,7 @@ public class NavTileMesh : MonoBehaviour
     
     public void InitNaviMask(int[] heights, bool isSmall)
     {
-        Int32 i = 0;
+        int i = 0;
         foreach (int height in heights)
         {
             ulong h;
@@ -51,12 +51,15 @@ public class NavTileMesh : MonoBehaviour
         GetPivotRotated(rot, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
         
         // get key mask
+
+        // grid로 그룹 한 번 나누고
         ushort gridKeyMask = GetGridKeyMask(gridPivot);
         map.TryAdd(gridKeyMask, new ConcurrentDictionary<ulong, MapNavData>());
 
+        // grid 안에 tileKeyMask로 분류
         uint tileKeyMask = GetTileKeyMask(gridPivot, tilePivot, isSmall);
         naviMask = GetNaviMaskRotated(rot, isSmall); // ?? of 64 bits used
-        infoMask = 0; // mesh index 넣어봅시다.
+        infoMask = GetInfoMask();
         map[gridKeyMask].TryAdd(tileKeyMask, new MapNavData(naviMask, infoMask));
     }
     
@@ -153,23 +156,6 @@ public class NavTileMesh : MonoBehaviour
         return (uint)mask;
     }
 
-
-    private ushort GetTileIndexFlag(Vector3Int diffInt)
-    {
-        const byte shiftIsHalfScale = 15;
-        const byte shiftTileX = 9;
-        const byte shiftTileY = 6;
-        const byte shiftTileZ = 0;
-
-        var tileFlag = 0;
-        // tileFlag |= isHalfScale ? 1 << shiftIsHalfScale : 0;
-        tileFlag |= (diffInt.x) << shiftTileX;
-        tileFlag |= (diffInt.y) << shiftTileY;
-        tileFlag |= (diffInt.z) << shiftTileZ;
-
-        return (ushort)tileFlag;
-    }
-    
     
     // Height
     private ulong GetNaviMaskRotated (int rot, bool isSmall)
@@ -274,7 +260,12 @@ public class NavTileMesh : MonoBehaviour
 
         return rotated;
     }
-    
-    
+
+
     // Info
+    private uint GetInfoMask()
+    {
+        // not yet developed;
+        return 0;
+    }
 }
