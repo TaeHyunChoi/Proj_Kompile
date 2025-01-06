@@ -18,8 +18,8 @@ public class EditWindow : EditorWindow
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("[.csv] → [.bin]"))
         {
-            DataTable.LoadCSVTable();         //CSV 파일 읽어서
-            DataTable.WriteBinaryFiles();     //Binary 파일로 저장
+            x_DataTable.LoadCSVTable();         //CSV 파일 읽어서
+            x_DataTable.WriteBinaryFiles();     //Binary 파일로 저장
         }
         EditorGUILayout.EndHorizontal();
     }

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
@@ -6,7 +7,8 @@ using UnityEngine;
 using DataStruct;
 using Script.Util;
 
-public static class DataTable
+[Obsolete]
+public static class x_DataTable
 {
     public static List<SkillData> SkillTable { get; private set; }
     public static List<ItemData>  ItemTable  { get; private set; }

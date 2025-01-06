@@ -6,6 +6,7 @@ namespace DataStruct
     using UnityEngine;
     using Script.Util;
     using static Index.IDxTile;
+    using MessagePack;
 
     [Obsolete][Serializable]
     public struct STile
@@ -249,16 +250,16 @@ namespace DataStruct
         }
     }
 
-    [Serializable]
+    [MessagePackObject]
     public struct MapNavData
     {
-        [SerializeField] ulong naviMask;
-        [SerializeField] uint  infoMask;
+        [Key(0)] public ulong NaviMask { get; private set; }
+        [Key(1)] public uint  InfoMask { get; private set; }
 
         public MapNavData(ulong naviMask, uint infoMask)
         {
-            this.naviMask = naviMask;
-            this.infoMask = infoMask;
+            NaviMask = naviMask;
+            InfoMask = infoMask;
         }
     }
 }

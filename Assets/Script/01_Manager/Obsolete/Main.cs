@@ -21,7 +21,7 @@ public class Main : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        DataTable.LoadTable();
+        x_DataTable.LoadTable();
         //TODO: Load Player Saved Data
 
         InputMgr = transform.GetComponent<InputMgr>();

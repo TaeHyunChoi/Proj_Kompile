@@ -14,7 +14,7 @@ namespace MapSampling
     /// </summary>
     public class MapTileSampling : MonoBehaviour
     {
-        private ConcurrentDictionary<uint, ConcurrentDictionary<ulong, MapNavData>> dataDic = new(); // <gridKey, <tileKey, data>>
+        private ConcurrentDictionary<uint, ConcurrentDictionary<ulong, MapNavData>> dataDic; // <gridKey, <tileKey, data>>
 
         private readonly string _assetGroupName = "MapMesh";
         private readonly string _assetLabelName = "MapNavMesh";
@@ -35,7 +35,8 @@ namespace MapSampling
             // save data
             foreach (var grid in dataDic)
             {
-                DataTable.WriteBinaryMappingData<MapNavData>(grid.Value, $"MapNav_{grid.Key}");
+                //x_DataTable.WriteBinaryMappingData<MapNavData>(grid.Value, $"MapNav_{grid.Key}");
+                DataMgr.WriteBinaryMappingData<ConcurrentDictionary<ulong, MapNavData>>(grid.Value, $"NavData_{grid.Key}");
             }
 
             // combine mesh : 이것도 비동기로 할 수 있겠는데?
@@ -67,46 +68,46 @@ namespace MapSampling
             Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
         }
         
-        private void SaveMesh(Mesh mesh, string assetName, bool makeNewInstance, bool optimizeMesh)
-        {
-            var path = "Assets/Rcs/MapNav/" + assetName + ".asset";
+        //private void SaveMesh(Mesh mesh, string assetName, bool makeNewInstance, bool optimizeMesh)
+        //{
+        //    var path = "Assets/Rcs/MapNav/" + assetName + ".asset";
             
-            // 이미 같은 이름의 에셋이 있는지 확인합니다.
-            if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
-            {
-                AssetDatabase.DeleteAsset(path);
-            }
+        //    // 이미 같은 이름의 에셋이 있는지 확인합니다.
+        //    if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
+        //    {
+        //        AssetDatabase.DeleteAsset(path);
+        //    }
             
-            var meshToSave = (makeNewInstance) ? Object.Instantiate(mesh) as Mesh : mesh;
-            if (optimizeMesh)
-            {
-                MeshUtility.Optimize(meshToSave);
-            }
+        //    var meshToSave = (makeNewInstance) ? Object.Instantiate(mesh) as Mesh : mesh;
+        //    if (optimizeMesh)
+        //    {
+        //        MeshUtility.Optimize(meshToSave);
+        //    }
             
-            AssetDatabase.CreateAsset(meshToSave, path);
+        //    AssetDatabase.CreateAsset(meshToSave, path);
             
-            // Addressable Assets에 등록
-            var settings = AddressableAssetSettingsDefaultObject.Settings;
-            var group = settings.FindGroup(_assetGroupName);
+        //    // Addressable Assets에 등록
+        //    var settings = AddressableAssetSettingsDefaultObject.Settings;
+        //    var group = settings.FindGroup(_assetGroupName);
 
-            if (group is not null)
-            {
-                // Addressable 에셋 생성
-                var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);
-                entry.SetAddress(assetName);
-                entry.labels.Add(_assetLabelName);
+        //    if (group is not null)
+        //    {
+        //        // Addressable 에셋 생성
+        //        var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);
+        //        entry.SetAddress(assetName);
+        //        entry.labels.Add(_assetLabelName);
                 
-                EditorUtility.SetDirty(settings);
-                settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
-            }
-            else
-            {
-                Debug.LogError("Addressable Asset Group not found.");
-                return;
-            }
+        //        EditorUtility.SetDirty(settings);
+        //        settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
+        //    }
+        //    else
+        //    {
+        //        Debug.LogError("Addressable Asset Group not found.");
+        //        return;
+        //    }
             
-            AssetDatabase.SaveAssets();
-        }
+        //    AssetDatabase.SaveAssets();
+        //}
     }
 }
 #endif

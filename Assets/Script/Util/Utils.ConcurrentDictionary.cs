@@ -8,8 +8,17 @@ namespace Script.Util
     [Serializable]
     public class ConcurrentDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
-        private readonly Dictionary<TKey, TValue> _dictionary = new Dictionary<TKey, TValue>();
+        private readonly Dictionary<TKey, TValue> _dictionary;
         private readonly ReaderWriterLock _lock = new ReaderWriterLock();
+
+        public ConcurrentDictionary()
+        { 
+            // ???
+        }
+        public ConcurrentDictionary(Dictionary<TKey, TValue> dictionary)
+        {
+            _dictionary = dictionary;
+        }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         
