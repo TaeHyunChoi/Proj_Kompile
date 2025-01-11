@@ -1,10 +1,11 @@
 using System;
 using UnityEngine;
 using System.Threading.Tasks;
-
-// 폴더 구분도 해놔야지 이거...
 using Script.Util;
 using Script.Data;
+using Script.Index;
+
+// Render 도 들어가서 이거.. 클래스 이름도 한 번 바꿔야겠네...
 
 [Serializable]   // 에셋으로 저장하기 위함
 [ExecuteAlways]  // 에디터에서 텍스쳐 곧장 적용하기 위함
@@ -15,8 +16,8 @@ public class NavTileMesh : MonoBehaviour
 
     [Header("Render")]
     [SerializeField] private byte layer;
-    [SerializeField] private int  columnIndex;
-    [SerializeField] private int  rowIndex;
+
+    [SerializeField] private TextureIndex textureType;
 
     private MeshFilter   meshFilter;
     private MeshRenderer meshRenderer;
@@ -341,6 +342,11 @@ public class NavTileMesh : MonoBehaviour
         int textureHeight = texture.height;
 
         // UV 좌표 계산
+
+        // texture 몇 개씩 들어가는지 구하는 프로퍼티나 상수가 필요할 듯? 정리하면 되겠다.
+        int columnIndex = (int)textureType % 8;
+        int rowIndex    = (int)textureType / 8;
+
         float uMin = columnIndex * (SPRITE_WIDTH / (float)textureWidth);
         float uMax = (columnIndex + 1) * (SPRITE_WIDTH / (float)textureWidth);
         float vMin = 1.0f - (rowIndex + 1) * (SPRITE_HEIGHT / (float)textureHeight);

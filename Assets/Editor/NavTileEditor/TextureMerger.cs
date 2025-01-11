@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEditor;
+using System;
 using System.IO;
+using Script.Index;
 
 public class TextureMerger : MonoBehaviour
 {
@@ -31,6 +33,7 @@ public class TextureMerger : MonoBehaviour
 
         // 폴더에서 모든 스프라이트 로드
         string[] files = Directory.GetFiles(inputPath, "*.png");
+
         int columns = targetTextureWidth / spriteWidth;
         int rows = targetTextureHeight / spriteHeight;
 
@@ -41,11 +44,9 @@ public class TextureMerger : MonoBehaviour
         }
 
         // 스프라이트를 순차적으로 텍스처에 배치
+        string fileName;
         for (int i = 0; i < files.Length; i++)
         {
-            int xIndex = i % columns;
-            int yIndex = i / columns;
-
             // 파일 경로에서 텍스처 읽기
             string filePath = files[i];
             Texture2D spriteTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
@@ -55,6 +56,13 @@ public class TextureMerger : MonoBehaviour
                 Debug.LogError($"Failed to load texture: {filePath}");
                 continue;
             }
+
+            // 순서 조정 (enum에 맞춘다)
+            fileName = Path.GetFileName(files[i]).Replace(".png", "");
+            int index = (int)Enum.Parse(typeof(TextureIndex), fileName);
+
+            int xIndex = index % columns;
+            int yIndex = index / columns;
 
             // 스프라이트 데이터를 읽어와 타겟 텍스처에 삽입
             Color[] pixels = spriteTexture.GetPixels();
