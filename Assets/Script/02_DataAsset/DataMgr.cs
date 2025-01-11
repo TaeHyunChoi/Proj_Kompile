@@ -1,11 +1,11 @@
 using System.IO;
+using System.Collections.Generic;
 using UnityEngine;
 using MessagePack;
 using MessagePack.Formatters;
-using System.Collections.Generic;
-using Script.Util;
-using DataStruct;
 using MessagePack.Resolvers;
+using Script.Util;
+using Script.Data;
 
 public static partial class DataMgr
 {

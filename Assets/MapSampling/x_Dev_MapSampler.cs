@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using DataStruct;
 using Script.Util;
 using System;
 
