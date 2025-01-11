@@ -178,7 +178,7 @@ public partial class NavTileMeshEditorWindow : EditorWindow
             var filter = testPrefab.AddComponent<MeshFilter>();
             filter.mesh = mesh;
             var renderer = testPrefab.AddComponent<MeshRenderer>();
-            var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Editor/Texture/mat_test.mat"); //임의로 생성한 매터리얼
+            var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Editor/Texture/mat_NavTile_00.mat"); //임의로 생성한 매터리얼
             renderer.sharedMaterial = material;
 
             // 타일 정보를 유니티의 NavMesh를 Bake하는 것처럼 데이터 저장할 때 호출하는 함수

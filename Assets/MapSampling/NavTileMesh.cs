@@ -1,15 +1,30 @@
 using System;
 using UnityEngine;
 using System.Threading.Tasks;
-using Script.Util;
-using DataStruct;
 
-[Serializable]
+// 폴더 구분도 해놔야지 이거...
+using Script.Util;
+using Script.Data;
+
+[Serializable]   // 에셋으로 저장하기 위함
+[ExecuteAlways]  // 에디터에서 텍스쳐 곧장 적용하기 위함
 public class NavTileMesh : MonoBehaviour
 {
-    [SerializeField] private ulong naviMask;
-    [SerializeField] private uint  infoMask;
-    
+    private const int SPRITE_WIDTH  = 256;
+    private const int SPRITE_HEIGHT = 256;
+
+    [Header("Render")]
+    [SerializeField] private byte layer;
+    [SerializeField] private int  columnIndex;
+    [SerializeField] private int  rowIndex;
+
+    private MeshFilter   meshFilter;
+    private MeshRenderer meshRenderer;
+
+    private ulong naviMask;
+    private uint  infoMask;
+
+    // Bake(Set) NavMesh Info
     public void InitNaviMask(int[] heights, bool isSmall)
     {
         int i = 0;
@@ -34,47 +49,86 @@ public class NavTileMesh : MonoBehaviour
             naviMask |= 1ul << i;
         }
     }
-    public async Task  BakeMesh(ConcurrentDictionary<uint, ConcurrentDictionary<ulong, MapNavData>> map)
+    public async Task BakeMesh(ConcurrentDictionary<int, MapGridData> map)
     {
         await Task.Yield();
-        
-        int rot = (transform.rotation.eulerAngles.y).ToInt();
-        rot = (rot + 360) % 360;
-        if (0 != rot % 90)
+
+        // get: (rotated) pivot
+        bool isSmall = (naviMask >> (4 * 13)) != 0;
+        int rotInt = (transform.rotation.y).ToInt();
+        rotInt = (rotInt + 360) % 360;
+        if (rotInt % 90 != 0)
         {
-            Debug.LogError($"Wrong Rotate: {rot}");
+            Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
             return;
         }
 
-        // calculate (rotated) pivot
-        bool isSmall = (naviMask >> (4 * 13)) != 0;
-        GetPivotRotated(rot, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
-        
-        // get key mask
 
-        // grid로 그룹 한 번 나누고
-        ushort gridKeyMask = GetGridKeyMask(gridPivot);
-        map.TryAdd(gridKeyMask, new ConcurrentDictionary<ulong, MapNavData>());
+        // get: pivot key
+        GetPivotRotated(rotInt, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
+        int gridKey = GetGridKeyMask(gridPivot);
+        int tileKey = GetTileKeyMask(gridPivot, tilePivot, isSmall);
 
-        // grid 안에 tileKeyMask로 분류
-        uint tileKeyMask = GetTileKeyMask(gridPivot, tilePivot, isSmall);
-        naviMask = GetNaviMaskRotated(rot, isSmall); // ?? of 64 bits used
+
+        // set: map
+        map.TryAdd(gridKey, new MapGridData());
+
+
+        // set: map[grid].NavMesh
+        naviMask = GetNaviMaskRotated(rotInt, isSmall); // ?? of 64 bits used
         infoMask = GetInfoMask();
-        map[gridKeyMask].TryAdd(tileKeyMask, new MapNavData(naviMask, infoMask));
+        map[gridKey].TryAddNavMeshData(tileKey, new MapNavData(naviMask, infoMask));
+
+
+        // set: map[grid].Render
+        // ...
+
     }
-    
-    
-    // Key(pivot)
+
+#if !UNITY_EDITOR
+    private void Start()
+    {
+
+        Texture texture = meshRenderer.sharedMaterial.mainTexture;
+        int textureWidth = texture.width;
+        int textureHeight = texture.height;
+
+        // UV 좌표 계산
+        float uMin = columnIndex * (spriteWidth / (float)textureWidth);
+        float uMax = (columnIndex + 1) * (spriteWidth / (float)textureWidth);
+        float vMin = 1.0f - (rowIndex + 1) * (spriteHeight / (float)textureHeight);
+        float vMax = 1.0f - rowIndex * (spriteHeight / (float)textureHeight);
+
+        Mesh mesh = meshFilter.sharedMesh;
+
+        var uvs = mesh.uv;
+        var vertices = mesh.vertices;
+
+        for (int i = 0; i < uvs.Length; i++)
+        {
+            float u = Mathf.Lerp(uMin, uMax, vertices[i].x); // X축 기준
+            float v = Mathf.Lerp(vMin, vMax, vertices[i].y); // Y축 기준
+
+            u = Mathf.Clamp01(u);
+            v = Mathf.Clamp01(v);
+
+            uvs[i] = new Vector2(u, v);
+        }
+        mesh.uv = uvs;
+}
+#endif
+
+    // [NavMesh] Key(pivot)
     private void GetPivotRotated(int rot, bool isSmall, out Vector3 gridPivot, out Vector3 tilePivot)
     {
         // tile pivot
         Vector3 rotated;
         switch (rot)
         {
-            case  90: rotated = new Vector3( 0f, 0f, -1f); break;
+            case 90: rotated = new Vector3(0f, 0f, -1f); break;
             case 180: rotated = new Vector3(-1f, 0f, -1f); break;
-            case 270: rotated = new Vector3(-1f, 0f,  0f); break;
-            default:  rotated = Vector3.zero; break;
+            case 270: rotated = new Vector3(-1f, 0f, 0f); break;
+            default: rotated = Vector3.zero; break;
         }
         rotated *= isSmall ? 0.5f : 1f;
         tilePivot = transform.position + rotated;
@@ -85,17 +139,17 @@ public class NavTileMesh : MonoBehaviour
         var gz = Mathf.FloorToInt(tilePivot.z / 32);
         gridPivot = new Vector3(gx, gy, gz);
     }
-    private ushort GetGridKeyMask(Vector3 gridPivot)
-    {        
+    private int GetGridKeyMask(Vector3 gridPivot)
+    {
         const byte shiftGridXSign = 15;
-        const byte shiftGridX     = 10;
-        const byte shiftGridYSign =  9;
-        const byte shiftGridY     =  6;
-        const byte shiftGridZSign =  5;
-        const byte shiftGridZ     =  0;
-        
+        const byte shiftGridX = 10;
+        const byte shiftGridYSign = 9;
+        const byte shiftGridY = 6;
+        const byte shiftGridZSign = 5;
+        const byte shiftGridZ = 0;
+
         Vector3Int gridInt = gridPivot.ToInt();
-        
+
         int gridFlag = 0;
 
         if (gridInt.x < 0)
@@ -130,7 +184,7 @@ public class NavTileMesh : MonoBehaviour
 
         return (ushort)gridFlag;
     }
-    private uint GetTileKeyMask(Vector3 gridPivot, Vector3 tilePivot, bool isSmall)
+    private int GetTileKeyMask(Vector3 gridPivot, Vector3 tilePivot, bool isSmall)
     {
         gridPivot = new Vector3(gridPivot.x * 32, gridPivot.y * 4, gridPivot.z * 32);
 
@@ -140,28 +194,31 @@ public class NavTileMesh : MonoBehaviour
             diff *= 2f;
         }
         Vector3Int diffInt = diff.ToInt();
-        
+
         // scale ,x[sign,small_buffer,6], y[sign,small_buffer,4], z[sign,small_buffer,6]
+        // layer 정보도 필요하네
+        // const 변수들을 어디서 저장하는게 좋으려나?
+        const byte shiftTileLayer = 23;
         const byte shiftIsHalfScale = 22;
         const byte shiftTileX = 14;
         const byte shiftTileY = 8;
         const byte shiftTileZ = 0;
 
         int mask = 0;
+        mask |= layer << shiftTileLayer;
         mask |= isSmall ? 1 << shiftIsHalfScale : 0;
         mask |= (diffInt.x) << shiftTileX;
         mask |= (diffInt.y) << shiftTileY;
         mask |= (diffInt.z) << shiftTileZ;
 
-        return (uint)mask;
+        return mask;
     }
 
-    
-    // Height
-    private ulong GetNaviMaskRotated (int rot, bool isSmall)
+    // [NavMesh] Height
+    private ulong GetNaviMaskRotated(int rot, bool isSmall)
     {
         ulong newMask = 0;
-        
+
         var matrix = GetHeightMatrixRotated(rot);
         matrix = RotateMatrix(matrix, rot);
 
@@ -171,19 +228,19 @@ public class NavTileMesh : MonoBehaviour
         {
             switch (i)
             {
-                case  0: mask = (ulong)matrix[0,4]; break;
-                case  1: mask = (ulong)matrix[2,4]; break;
-                case  2: mask = (ulong)matrix[4,4]; break;
-                case  3: mask = (ulong)matrix[1,3]; break;
-                case  4: mask = (ulong)matrix[3,3]; break;
-                case  5: mask = (ulong)matrix[0,2]; break;
-                case  6: mask = (ulong)matrix[2,2]; break;
-                case  7: mask = (ulong)matrix[4,2]; break;
-                case  8: mask = (ulong)matrix[1,1]; break;
-                case  9: mask = (ulong)matrix[3,1]; break;
-                case 10: mask = (ulong)matrix[0,0]; break;
-                case 11: mask = (ulong)matrix[2,0]; break;
-                case 12: mask = (ulong)matrix[4,0]; break;
+                case 0: mask = (ulong)matrix[0, 4]; break;
+                case 1: mask = (ulong)matrix[2, 4]; break;
+                case 2: mask = (ulong)matrix[4, 4]; break;
+                case 3: mask = (ulong)matrix[1, 3]; break;
+                case 4: mask = (ulong)matrix[3, 3]; break;
+                case 5: mask = (ulong)matrix[0, 2]; break;
+                case 6: mask = (ulong)matrix[2, 2]; break;
+                case 7: mask = (ulong)matrix[4, 2]; break;
+                case 8: mask = (ulong)matrix[1, 1]; break;
+                case 9: mask = (ulong)matrix[3, 1]; break;
+                case 10: mask = (ulong)matrix[0, 0]; break;
+                case 11: mask = (ulong)matrix[2, 0]; break;
+                case 12: mask = (ulong)matrix[4, 0]; break;
                 default: break;
             }
 
@@ -207,21 +264,21 @@ public class NavTileMesh : MonoBehaviour
 
             switch (i)
             {
-                case  0: matrix[0,4] = h; break;
-                case  1: matrix[2,4] = h; break;
-                case  2: matrix[4,4] = h; break;
-                case  3: matrix[1,3] = h; break;
-                case  4: matrix[3,3] = h; break;
-                case  5: matrix[0,2] = h; break;
-                case  6: matrix[2,2] = h; break;
-                case  7: matrix[4,2] = h; break;
-                case  8: matrix[1,1] = h; break;
-                case  9: matrix[3,1] = h; break;
-                case 10: matrix[0,0] = h; break;
-                case 11: matrix[2,0] = h; break;
-                case 12: matrix[4,0] = h; break;
+                case 0: matrix[0, 4] = h; break;
+                case 1: matrix[2, 4] = h; break;
+                case 2: matrix[4, 4] = h; break;
+                case 3: matrix[1, 3] = h; break;
+                case 4: matrix[3, 3] = h; break;
+                case 5: matrix[0, 2] = h; break;
+                case 6: matrix[2, 2] = h; break;
+                case 7: matrix[4, 2] = h; break;
+                case 8: matrix[1, 1] = h; break;
+                case 9: matrix[3, 1] = h; break;
+                case 10: matrix[0, 0] = h; break;
+                case 11: matrix[2, 0] = h; break;
+                case 12: matrix[4, 0] = h; break;
             }
-            
+
             flag >>= 4;
         }
 
@@ -233,10 +290,10 @@ public class NavTileMesh : MonoBehaviour
         {
             return matrix;
         }
-        
+
         var n = matrix.GetLength(0); // 행렬 크기
         var rotated = new int[n, n];
-        
+
         for (var i = 0; i < n; i++)
         {
             for (var j = 0; j < n; j++)
@@ -262,10 +319,82 @@ public class NavTileMesh : MonoBehaviour
     }
 
 
-    // Info
+    // [NavMesh] Info
     private uint GetInfoMask()
     {
         // not yet developed;
         return 0;
     }
+
+    // [Render] Texture
+    private void OnValidate()
+    {
+        ApplyTexture();
+    }
+    private void ApplyTexture()
+    {
+        meshFilter = transform.GetComponent<MeshFilter>();
+        meshRenderer = transform.GetComponent<MeshRenderer>();
+
+        Texture texture = meshRenderer.sharedMaterial.mainTexture;
+        int textureWidth = texture.width;
+        int textureHeight = texture.height;
+
+        // UV 좌표 계산
+        float uMin = columnIndex * (SPRITE_WIDTH / (float)textureWidth);
+        float uMax = (columnIndex + 1) * (SPRITE_WIDTH / (float)textureWidth);
+        float vMin = 1.0f - (rowIndex + 1) * (SPRITE_HEIGHT / (float)textureHeight);
+        float vMax = 1.0f - rowIndex * (SPRITE_HEIGHT / (float)textureHeight);
+
+        Mesh mesh = meshFilter.sharedMesh;
+
+        var uvs = mesh.uv;
+        var vertices = mesh.vertices;
+
+        for (int i = 0; i < uvs.Length; i++)
+        {
+            float u = Mathf.Lerp(uMin, uMax, vertices[i].x); // X축 기준
+            float v = Mathf.Lerp(vMin, vMax, vertices[i].y); // Y축 기준
+
+            u = Mathf.Clamp01(u);
+            v = Mathf.Clamp01(v);
+
+            uvs[i] = new Vector2(u, v);
+        }
+        mesh.uv = uvs;
+    }
+
+    //[Render] 
+    // ...
+
+    #region not_used
+    //public async Task BakeMesh(ConcurrentDictionary<uint, ConcurrentDictionary<ulong, MapNavData>> map)
+    //{
+    //    await Task.Yield();
+
+    //    int rot = (transform.rotation.eulerAngles.y).ToInt();
+    //    rot = (rot + 360) % 360;
+    //    if (0 != rot % 90)
+    //    {
+    //        Debug.LogError($"Wrong Rotate: {rot}");
+    //        return;
+    //    }
+
+    //    // calculate (rotated) pivot
+    //    bool isSmall = (naviMask >> (4 * 13)) != 0;
+    //    GetPivotRotated(rot, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
+
+    //    // get key mask
+
+    //    // grid로 그룹 한 번 나누고
+    //    ushort gridKeyMask = GetGridKeyMask(gridPivot);
+    //    map.TryAdd(gridKeyMask, new ConcurrentDictionary<ulong, MapNavData>());
+
+    //    // grid 안에 tileKeyMask로 분류
+    //    uint tileKeyMask = GetTileKeyMask(gridPivot, tilePivot, isSmall);
+    //    naviMask = GetNaviMaskRotated(rot, isSmall); // ?? of 64 bits used
+    //    infoMask = GetInfoMask();
+    //    map[gridKeyMask].TryAdd(tileKeyMask, new MapNavData(naviMask, infoMask));
+    //}
+    #endregion
 }

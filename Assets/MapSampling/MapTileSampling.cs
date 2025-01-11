@@ -1,45 +1,53 @@
 #if UNITY_EDITOR
-using UnityEngine;
-using System.Threading.Tasks;
-using DataStruct;
-using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Settings;
-
 namespace MapSampling
 {
+    using System.Threading.Tasks;
+    using UnityEngine;
+    using UnityEditor;
     using Script.Util;
-    
+    using Script.Data;
+
     /// <summary> reference link: https://www.youtube.com/watch?v=K-zw3QFaTqg
     /// </summary>
     public class MapTileSampling : MonoBehaviour
     {
-        private ConcurrentDictionary<uint, ConcurrentDictionary<ulong, MapNavData>> dataDic; // <gridKey, <tileKey, data>>
+        [SerializeField] private Transform instanceTransform;
 
-        private readonly string _assetGroupName = "MapMesh";
-        private readonly string _assetLabelName = "MapNavMesh";
+        // map grid 클래스를 새로 만들어야 하네
+        private ConcurrentDictionary<int, MapGridData> map;
+
+        private readonly string assetGroupName = "MapMesh";
+        private readonly string assetLabelName = "MapNavMesh";
         
         public async void Save()
         {
             // set data
-            var tiles = FindObjectsOfType<NavTileMesh>();
-            var initTasks = new Task[tiles.Length];
+            NavTileMesh[] tiles = instanceTransform.GetComponents<NavTileMesh>();
+            if (0 < tiles.Length)
+            {
+                map = new ConcurrentDictionary<int, MapGridData>();
+            }
+            else
+            {
+                Debug.LogWarning("NavTileMesh.Length = 0;");
+                return;
+            }
 
+            Task[] initTasks = new Task[tiles.Length];
             for (var i = 0; i < tiles.Length; i++)
             {
                 var t = i;
-                initTasks[t] = tiles[t].BakeMesh(dataDic);
+                initTasks[t] = tiles[t].BakeMesh(map);
             }
             await Task.WhenAll(initTasks);
 
             // save data
-            foreach (var grid in dataDic)
+            foreach (var grid in map)
             {
-                //x_DataTable.WriteBinaryMappingData<MapNavData>(grid.Value, $"MapNav_{grid.Key}");
-                DataMgr.WriteBinaryMappingData<ConcurrentDictionary<ulong, MapNavData>>(grid.Value, $"NavData_{grid.Key}");
+                DataMgr.WriteBinaryMappingData<MapGridData>(grid.Value, $"NavData_{grid.Key}");
             }
 
-            // combine mesh : 이것도 비동기로 할 수 있겠는데?
+            // combine mesh : 이것도 비동기로 할 수 있겠는데? + render data bake로 필요해졌음
             {
                 // foreach (var key in _meshDic.Keys)
                 // {
