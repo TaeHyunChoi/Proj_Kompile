@@ -2,18 +2,19 @@ using System.Collections;
 
 namespace Script.Util
 {
+    using MessagePack;
     using System;
     using System.Collections.Generic;
 
-    [Serializable]
-    public class ConcurrentDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
+    [MessagePackObject]
+    public class ConcurrentDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>> 
     {
         private readonly Dictionary<TKey, TValue> _dictionary;
         private readonly ReaderWriterLock _lock = new ReaderWriterLock();
 
         public ConcurrentDictionary()
-        { 
-            // ???
+        {
+            _dictionary = new Dictionary<TKey, TValue>();
         }
         public ConcurrentDictionary(Dictionary<TKey, TValue> dictionary)
         {

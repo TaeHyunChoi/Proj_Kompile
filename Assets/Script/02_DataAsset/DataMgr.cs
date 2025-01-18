@@ -5,7 +5,6 @@ using MessagePack;
 using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using Script.Util;
-using Script.Data;
 
 public static partial class DataMgr
 {
@@ -22,7 +21,7 @@ public static partial class DataMgr
         }
 
         // 데이터를 MessagePack 형식으로 직렬화하고 파일에 저장
-        byte[] serializedData = MessagePackSerializer.Serialize(data, MessagePackConfig.Options);
+        byte[] serializedData = MessagePackSerializer.Serialize(data, MessagePackConfig<T>.Options);
         File.WriteAllBytes(filePath, serializedData);
     }
     public static T ReadBinaryMappingData<T>(string fileName)
@@ -63,22 +62,25 @@ public static partial class DataMgr
 
 }
 
-public static class MessagePackConfig
+public static class MessagePackConfig<T>
 {
+
     public static readonly MessagePackSerializerOptions Options;
 
     static MessagePackConfig()
     {
         Options = MessagePackSerializerOptions.Standard
-            .WithResolver(CompositeResolver.Create(
-                new IMessagePackFormatter[]
-                {
-                    new ConcurrentDictionaryFormatter<ulong, MapNavData>() // 커스텀 포맷터 등록
-                },
-                new IFormatterResolver[]
-                {
-                    StandardResolver.Instance // 기본 Resolver
-                }
-            ));
+                    .WithResolver(CompositeResolver
+                    .Create
+                    (
+                        new IMessagePackFormatter[]
+                        {
+                            new ConcurrentDictionaryFormatter<int, T>() // 커스텀 포맷터 등록
+                        },
+                        new IFormatterResolver[]
+                        {
+                            StandardResolver.Instance // 기본 Resolver
+                        }
+                    ));
     }
 }

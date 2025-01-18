@@ -1,15 +1,18 @@
 namespace Script.Data
 {
-    using UnityEngine;
+    using MessagePack;
     using Script.Util;
-    using System;
 
-    [Serializable]
+    [MessagePackObject]
     public class MapGridData
     {
-        // 인덱스는 Dicionary의 Key값으로 저장
-        [SerializeField] private ConcurrentDictionary<int, MapNavData> navMeshData;
+        [Key(0)]
+        public ConcurrentDictionary<int, MapNavData> navMeshData;
 
+        public MapGridData()
+        {
+            navMeshData = new ConcurrentDictionary<int, MapNavData>();
+        }
 
         public bool TryAddNavMeshData(int key, MapNavData navData)
         {

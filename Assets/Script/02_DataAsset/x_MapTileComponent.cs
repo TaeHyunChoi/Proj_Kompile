@@ -47,41 +47,41 @@ public class x_MapTileComponent : MonoBehaviour
 #endif
         //*/
 }
-public class TransMapTile : IRoutineUpdater
-{
-    private readonly float fadeSpeed = 5f;
+//public class TransMapTile : IRoutineUpdater
+//{
+//    private readonly float fadeSpeed = 5f;
 
-    private GameObject gameObject;
-    private Material   material;
-    private Color      color;
+//    private GameObject gameObject;
+//    private Material   material;
+//    private Color      color;
 
-    public TransMapTile(x_MapTileComponent tile)
-    {
-        gameObject = tile.gameObject;
-        material = tile.GetComponent<MeshRenderer>().material;
-        color = material.color;
-        material.color = new Color(color.r, color.g, color.b, 0f);
-        gameObject.SetActive(true);
-    }
+//    public TransMapTile(x_MapTileComponent tile)
+//    {
+//        gameObject = tile.gameObject;
+//        material = tile.GetComponent<MeshRenderer>().material;
+//        color = material.color;
+//        material.color = new Color(color.r, color.g, color.b, 0f);
+//        gameObject.SetActive(true);
+//    }
 
-    public int MoveNext(int index)
-    {
-        switch (index)
-        {
-            case 0:
-                float alpha = material.color.a;
-                if (1f > alpha)
-                {
-                    alpha += Time.fixedDeltaTime * fadeSpeed;
-                    material.color = new Color(color.r, color.g, color.b, alpha);
-                    return index;
-                }
-                material.color = new Color(color.r, color.g, color.b, 1f);
-                break;
-            default:
-                return -1;
-        }
+//    public int MoveNext(int index)
+//    {
+//        switch (index)
+//        {
+//            case 0:
+//                float alpha = material.color.a;
+//                if (1f > alpha)
+//                {
+//                    alpha += Time.fixedDeltaTime * fadeSpeed;
+//                    material.color = new Color(color.r, color.g, color.b, alpha);
+//                    return index;
+//                }
+//                material.color = new Color(color.r, color.g, color.b, 1f);
+//                break;
+//            default:
+//                return -1;
+//        }
 
-        return index + 1;
-    }
-}
+//        return index + 1;
+//    }
+//}

@@ -5,8 +5,6 @@ using Script.Util;
 using Script.Data;
 using Script.Index;
 
-// Render 도 들어가서 이거.. 클래스 이름도 한 번 바꿔야겠네...
-
 [Serializable]   // 에셋으로 저장하기 위함
 [ExecuteAlways]  // 에디터에서 텍스쳐 곧장 적용하기 위함
 public class NavTileMesh : MonoBehaviour

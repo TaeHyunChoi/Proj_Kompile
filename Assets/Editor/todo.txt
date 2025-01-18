@@ -2,3 +2,4 @@
 [ ] NavTileMesh 클래스 이름 변경 (Render 정보가 들어감으로써 NavMesh만 담는게 아니다.)
 [ ] texture의 column, row 길이의 상수값 또는 계산 함수를 추가하여 사용
 [ ] texture type을 탐색할 수 있도록 설정 (https://chatgpt.com/share/6782400d-f130-8008-852f-54f1f075b5f0)
+[ ] 소스트리 > 한글 깨지는 현상 수정

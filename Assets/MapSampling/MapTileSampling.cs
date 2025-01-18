@@ -16,27 +16,26 @@ namespace MapSampling
         // map grid 클래스를 새로 만들어야 하네
         private ConcurrentDictionary<int, MapGridData> map;
 
-        private readonly string assetGroupName = "MapMesh";
-        private readonly string assetLabelName = "MapNavMesh";
+        //private readonly string assetGroupName = "MapMesh";
+        //private readonly string assetLabelName = "MapNavMesh";
         
         public async void Save()
         {
             // set data
-            NavTileMesh[] tiles = instanceTransform.GetComponents<NavTileMesh>();
-            if (0 < tiles.Length)
-            {
-                map = new ConcurrentDictionary<int, MapGridData>();
-            }
-            else
+            NavTileMesh[] tiles = instanceTransform.GetComponentsInChildren<NavTileMesh>();
+            if (0 == tiles.Length)
             {
                 Debug.LogWarning("NavTileMesh.Length = 0;");
                 return;
             }
 
+            map = new ConcurrentDictionary<int, MapGridData>();
+
             Task[] initTasks = new Task[tiles.Length];
-            for (var i = 0; i < tiles.Length; i++)
+            int i, t;
+            for (i = 0; i < tiles.Length; i++)
             {
-                var t = i;
+                t = i;
                 initTasks[t] = tiles[t].BakeMesh(map);
             }
             await Task.WhenAll(initTasks);
@@ -66,9 +65,9 @@ namespace MapSampling
             }
             
             // dispose refs
-            for (var i = 0; i < tiles.Length; i++)
+            for (i = 0; i < tiles.Length; i++)
             {
-                var t = i;
+                t = i;
                 initTasks[t].Dispose();
             }
 
