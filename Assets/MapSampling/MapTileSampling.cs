@@ -43,7 +43,7 @@ namespace MapSampling
             // save data
             foreach (var grid in map)
             {
-                DataMgr.WriteBinaryMappingData<MapGridData>(grid.Value, $"NavData_{grid.Key}");
+                DataMgr.WriteBinaryMappingData<MapGridData>(grid.Value, $"MapGrid_{grid.Key}");
             }
 
             // combine mesh : 이것도 비동기로 할 수 있겠는데? + render data bake로 필요해졌음
@@ -74,6 +74,11 @@ namespace MapSampling
             AssetDatabase.Refresh();
             Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
         }
+
+        //public void Load()
+        //{
+        //    MapGridData data = DataMgr.ReadBinaryMappingData<MapGridData>("MapGrid_0");
+        //}
         
         //private void SaveMesh(Mesh mesh, string assetName, bool makeNewInstance, bool optimizeMesh)
         //{

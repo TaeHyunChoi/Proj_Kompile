@@ -24,6 +24,10 @@ namespace  MapSampling
             {
                 _sampler?.Save();
             }
+            //if (GUILayout.Button("Load"))
+            //{
+            //    _sampler?.Load();
+            //}
         }
     }  
 }
