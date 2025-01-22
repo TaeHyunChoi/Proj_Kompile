@@ -1,5 +1,4 @@
 ﻿using System;
-using static Index.IDxTile;
 
 public enum EScene
 {
@@ -92,36 +91,36 @@ public enum EUIGroup
     //hud
 }
 
-[Flags]
-public enum ETileTriggerType : ushort
-{
-    None = 0,
-    Scale = 1 << SHIFT_TRIGGER_SCALE,
-    Layer = 1 << SHIFT_TRIGGER_LAYER,
-    Event = 1 << SHIFT_TRIGGER_INTERACT
-}
-public enum ETileSizeType : byte
-{
-    Default,
-    Half,
-    Quater,
-    Inverse,
-    Default_Inverse,
-    Half_inverse,
-    Quater_inverse
-}
+//[Flags]
+//public enum ETileTriggerType : ushort
+//{
+//    None = 0,
+//    Scale = 1 << SHIFT_TRIGGER_SCALE,
+//    Layer = 1 << SHIFT_TRIGGER_LAYER,
+//    Event = 1 << SHIFT_TRIGGER_INTERACT
+//}
+//public enum ETileSizeType : byte
+//{
+//    Default,
+//    Half,
+//    Quater,
+//    Inverse,
+//    Default_Inverse,
+//    Half_inverse,
+//    Quater_inverse
+//}
 
-[Flags]
-public enum ETileTriggerFlag : byte
-{
-    None = 0,
-    //Scale,
-    Layer,
-    Interact,
-    EventScene
-}
+//[Flags]
+//public enum ETileTriggerFlag : byte
+//{
+//    None = 0,
+//    //Scale,
+//    Layer,
+//    Interact,
+//    EventScene
+//}
 
-public static class UtilEnum
-{
-    public static int ToInt(this EUIType type) => (int)type;
-}
+//public static class UtilEnum
+//{
+//    public static int ToInt(this EUIType type) => (int)type;
+//}

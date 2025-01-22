@@ -31,17 +31,19 @@ public class IERoutine : IERoutineHandler
     {
         base.mhIndex = mRoutineArray[mArrayIndex].MoveNext(base.mhIndex);
 
-        if (-1 == base.mhIndex)
-        {
-            bool isNext = ++mArrayIndex < mLength;
-            if (true == isNext)
-            {
-                base.mhIndex = 0;
-            }
-
-            return isNext;
+        if (-1 != base.mhIndex)
+        { 
+            return true;
         }
 
-        return true;
+        return ++mArrayIndex < mLength;
+
+        // mIndex를 초기화할 필요가 없을 것 같은데요...?
+        //bool isNext = ++mArrayIndex < mLength;
+        //if (true == isNext)
+        //{
+        //    base.mhIndex = 0;
+        //}
+        //return isNext;
     }
 }

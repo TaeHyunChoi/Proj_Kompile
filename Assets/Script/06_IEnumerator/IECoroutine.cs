@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using static Index.IDxInput;
 using UnityEngine.Assertions;
+using Script.Index;
 
 namespace IECoroutine
 {
@@ -104,66 +104,66 @@ namespace IECoroutine
 
         private Transform mParentTransform;
         private IERoutine mPlayOpeningRoutine;
-        private Main_ mMain { get => Main_.Instance; }
+        private x_Main_ mMain { get => x_Main_.Instance; }
 
         public int MoveNext(int index)
         {
-            switch (index)
-            {
-                /* load prefabs */
-                case 0:
-                    Transform transformCameraCanvas = mMain.UI_GetCanvasCamera().transform;
-                    Transform transformOverlayCanvas = mMain.UI_GetCanvasOverlay().transform;
+            //switch (index)
+            //{
+            //    /* load prefabs */
+            //    case 0:
+            //        Transform transformCameraCanvas = mMain.UI_GetCanvasCamera().transform;
+            //        Transform transformOverlayCanvas = mMain.UI_GetCanvasOverlay().transform;
 
-                    mTaskGetOpening = mMain.Asset_InstantiateAysnc(EAsset.OpeningGame, transformCameraCanvas);
-                    mTaskGetUITitle = mMain.Asset_InstantiateAysnc(EAsset.UITitle, transformOverlayCanvas);
-                    break;
-                case 1:
-                    if (false == mTaskGetOpening.IsCompletedSuccessfully
-                        || false == mTaskGetUITitle.IsCompletedSuccessfully)
-                    {
-                        return index;
-                    }
+            //        mTaskGetOpening = mMain.Asset_InstantiateAysnc(EAsset.OpeningGame, transformCameraCanvas);
+            //        mTaskGetUITitle = mMain.Asset_InstantiateAysnc(EAsset.UITitle, transformOverlayCanvas);
+            //        break;
+            //    case 1:
+            //        if (false == mTaskGetOpening.IsCompletedSuccessfully
+            //            || false == mTaskGetUITitle.IsCompletedSuccessfully)
+            //        {
+            //            return index;
+            //        }
 
-                    mParentTransform = mTaskGetOpening.Result.transform;
-                    for (int i = 0; i < mParentTransform.childCount; ++i)
-                    {
-                        mParentTransform.GetChild(i).gameObject.SetActive(false);
-                    }
+            //        mParentTransform = mTaskGetOpening.Result.transform;
+            //        for (int i = 0; i < mParentTransform.childCount; ++i)
+            //        {
+            //            mParentTransform.GetChild(i).gameObject.SetActive(false);
+            //        }
 
-                    mTaskGetUITitle.Result.SetActive(false);
-                    mCurtainCanvas.gameObject.SetActive(false);
-                    break;
-                case 2:
-                    IEOpeningLogo  logo  = new IEOpeningLogo(mParentTransform.GetChild(0));
-                    IEOpeningDemo  demo  = new IEOpeningDemo(mParentTransform.GetChild(1));
-                    IEOpeningTitle title = new IEOpeningTitle(mParentTransform.GetChild(2));
+            //        mTaskGetUITitle.Result.SetActive(false);
+            //        mCurtainCanvas.gameObject.SetActive(false);
+            //        break;
+            //    case 2:
+            //        IEOpeningLogo  logo  = new IEOpeningLogo(mParentTransform.GetChild(0));
+            //        IEOpeningDemo  demo  = new IEOpeningDemo(mParentTransform.GetChild(1));
+            //        IEOpeningTitle title = new IEOpeningTitle(mParentTransform.GetChild(2));
 
-                    mPlayOpeningRoutine = new IERoutine(logo, demo, title);
-                    mMain.AddCoroutine(mPlayOpeningRoutine);
-                    break;
-                case 3:
-                    if (false == mPlayOpeningRoutine.IsDone)
-                    {
-                        return index;
-                    }
+            //        mPlayOpeningRoutine = new IERoutine(logo, demo, title);
+            //        mMain.AddCoroutine(mPlayOpeningRoutine);
+            //        break;
+            //    case 3:
+            //        if (false == mPlayOpeningRoutine.IsDone)
+            //        {
+            //            return index;
+            //        }
 
-                    IEUITItle uititle = new IEUITItle(mTaskGetUITitle.Result);
-                    mMain.AddCoroutine(new IERoutine(uititle));
-                    break;
-                default:
-                    mTaskGetOpening.Dispose();
-                    mTaskGetUITitle.Dispose();
+            //        IEUITItle uititle = new IEUITItle(mTaskGetUITitle.Result);
+            //        mMain.AddCoroutine(new IERoutine(uititle));
+            //        break;
+            //    default:
+            //        mTaskGetOpening.Dispose();
+            //        mTaskGetUITitle.Dispose();
 
-                    mCurtainCanvas      = null;
-                    mTaskGetOpening     = null;
-                    mTaskGetUITitle     = null;
-                    mParentTransform    = null;
-                    mPlayOpeningRoutine = null;
+            //        mCurtainCanvas      = null;
+            //        mTaskGetOpening     = null;
+            //        mTaskGetUITitle     = null;
+            //        mParentTransform    = null;
+            //        mPlayOpeningRoutine = null;
 
-                    GC.Collect(0, GCCollectionMode.Optimized);
-                    return -1;
-            }
+            //        GC.Collect(0, GCCollectionMode.Optimized);
+            //        return -1;
+            //}
 
             return index + 1;
         }
@@ -178,7 +178,7 @@ namespace IECoroutine
     {
         public IEClearMapSceneObjects()
         {
-            Main_.Instance.MapScene_Clear();
+            x_Main_.Instance.MapScene_Clear();
         }
         public int MoveNext(int index)
         {
@@ -197,14 +197,14 @@ namespace IECoroutine
         public int MoveNext(int index)
         {
             /* input */
-            if (0 == mState
-                && true == Main_.Input_Get().Contains(EInput.ENTER | EInput.ACTION))
-            {
-                mAlpha = 1f;
-                mLogoImage.color = new Color(1f, 1f, 1f, mAlpha);
+            //if (0 == mState
+            //    && true == x_Main_.Input_Get().Contains(EInputFlag.ENTER | EInputFlag.ACTION))
+            //{
+            //    mAlpha = 1f;
+            //    mLogoImage.color = new Color(1f, 1f, 1f, mAlpha);
 
-                index = mState = 2;
-            }
+            //    index = mState = 2;
+            //}
 
             /* move next */
             switch (index)
@@ -343,167 +343,169 @@ namespace IECoroutine
     }
 
     /* ui */
+    [Obsolete]
     public class IEUITItle : IRoutineUpdater
     {
-        private readonly float ALPHA_MAX = 0.6f;
-        private readonly float ALPHA_MIN = 0.3f;
-        private readonly float OFFSET_TIME = 0.2f;
+        //private readonly float ALPHA_MAX = 0.6f;
+        //private readonly float ALPHA_MIN = 0.3f;
+        //private readonly float OFFSET_TIME = 0.2f;
 
-        private readonly Image[] mSelectionItems;
-        private readonly int mItemCount;
+        //private readonly Image[] mSelectionItems;
+        //private readonly int mItemCount;
 
-        private float mDeltaTime;
-        private float mOffsetTime;
-        private int mSelect;
+        //private float mDeltaTime;
+        //private float mOffsetTime;
+        //private int mSelect;
 
-        private Main_ mMain => Main_.Instance;
+        //private x_Main_ mMain => x_Main_.Instance;
 
-        public IEUITItle(GameObject obj)
-        {
-            obj.SetActive(true);
-            Transform transform = obj.transform;
+        //public IEUITItle(GameObject obj)
+        //{
+        //    obj.SetActive(true);
+        //    Transform transform = obj.transform;
 
-            //mMain.UI_AddNew(EUIType.Title, obj);
-            mMain.UI_Open(EUIType.Title);
+        //    //mMain.UI_AddNew(EUIType.Title, obj);
+        //    //mMain.UI_Open(EUIType.Title);
 
-            Image[] images = transform.GetChild(0).GetComponentsInChildren<Image>(true);
-            mSelectionItems = new Image[images.Length - 1];
-            mItemCount = images.Length - 1;
-            for (int i = 1; i < images.Length; ++i)
-            {
-                mSelectionItems[i - 1] = images[i];
-            }
+        //    Image[] images = transform.GetChild(0).GetComponentsInChildren<Image>(true);
+        //    mSelectionItems = new Image[images.Length - 1];
+        //    mItemCount = images.Length - 1;
+        //    for (int i = 1; i < images.Length; ++i)
+        //    {
+        //        mSelectionItems[i - 1] = images[i];
+        //    }
 
-            mSelect = 0;
-            mOffsetTime = OFFSET_TIME;
-        }
+        //    mSelect = 0;
+        //    mOffsetTime = OFFSET_TIME;
+        //}
         public int MoveNext(int index)
         {
-            index = Input(Main_.Input_Get(), index);
+            //index = Input(x_Main_.Input_Get(), index);
 
-            switch (index)
-            {
-                case 0:
-                    if (mSelectionItems[mSelect].color.a <= ALPHA_MIN)
-                    {
-                        mDeltaTime = Time.deltaTime;
-                    }
-                    else if (mSelectionItems[mSelect].color.a >= ALPHA_MAX)
-                    {
-                        mDeltaTime = -Time.deltaTime;
-                    }
-
-                    mSelectionItems[mSelect].color += new Color(0, 0, 0, mDeltaTime * 0.75f);
-                    break;
-                default:
-                    return -1;
-            }
-
-            return index;
-        }
-        public int Input(EInput input, int index)
-        {
-            if (true == input.Contains(EInput.ENTER | EInput.ACTION))
-            {
-                SetItemColor(mSelect, ALPHA_MAX);
-
-                switch (mSelect)
-                {
-                    case 0:
-                        Debug.Log("New game For Test (map code: 900)");
-                        mMain.MapScene_EnterField(900);
-                        break;
-                    case 1:
-                        Debug.Log("Saved Data List");
-                        break;
-                    case 2:
-                        Debug.Log("Option window");
-                        break;
-                    case 3:
-#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
-                        UnityEditor.EditorApplication.isPlaying = false;
-#else
-                        Application.Quit();
-#endif
-                        break;
-                    default:
-                        Assert.IsFalse(false, $"Wrong Input Index: IEUITItle.Input({mSelect})");
-                        break;
-                }
-
-                return -1;
-            }
-            if (true == input.Contains(EInput.CANCEL))
-            {
-                Debug.Log("Cancel");
-                mOffsetTime = 0;
-            }
-
-            mOffsetTime -= Time.deltaTime;
-            if (0 > mOffsetTime) 
-            { 
-                mOffsetTime = 0; 
-            }
-
-            // block successive input
-            if (true == input.Contains(EInput.UP_HOLD | EInput.DOWN_HOLD))
-            {
-                if (0 < mOffsetTime) 
-                { 
-                    return index; 
-                }
-            }
-
-            bool isUp   = input.Contains(EInput.UP | EInput.UP_HOLD);
-            bool isDown = input.Contains(EInput.DOWN | EInput.DOWN_HOLD);
-
-            if (true == isUp || true == isDown)
-            {
-                // prev
-                SetItemColor(mSelect, 0f);
-
-                // loop index (0 ~ 3)
-                mSelect = isUp ? mSelect - 1 : mSelect + 1;
-                mSelect = (mSelect + mItemCount) % mItemCount;
-
-                // next
-                SetItemColor(mSelect, ALPHA_MIN);
-
-                // reset-offset
-                mOffsetTime = OFFSET_TIME;
-            }
-
-            //if (true == input.Contains(EInput.UP | EInput.UP_HOLD))
+            //switch (index)
             //{
-            //    SetItemColor(mSelect, 0f); //prev
-            //    mSelect = (mSelect - 1 + mItemCount) % mItemCount;
-            //    SetItemColor(mSelect, ALPHA_MIN); //next
+            //    case 0:
+            //        if (mSelectionItems[mSelect].color.a <= ALPHA_MIN)
+            //        {
+            //            mDeltaTime = Time.deltaTime;
+            //        }
+            //        else if (mSelectionItems[mSelect].color.a >= ALPHA_MAX)
+            //        {
+            //            mDeltaTime = -Time.deltaTime;
+            //        }
 
-            //    mOffsetTime = OFFSET_TIME;
-            //}
-            //if (true == input.Contains(EInput.DOWN | EInput.DOWN_HOLD))
-            //{
-            //    SetItemColor(mSelect, 0f);
-            //    mSelect = (mSelect + 1 + mItemCount) % mItemCount;
-            //    SetItemColor(mSelect, ALPHA_MIN);
-
-            //    mOffsetTime = OFFSET_TIME;
+            //        mSelectionItems[mSelect].color += new Color(0, 0, 0, mDeltaTime * 0.75f);
+            //        break;
+            //    default:
+            //        return -1;
             //}
 
             return index;
         }
-        private void SetItemColor(int index, float alpha)
-        {
-            Color target = mSelectionItems[index].color;
-            mSelectionItems[index].color = new Color(target.r, target.g, target.b, alpha);
-        }
+//        public int Input(IDxInput.EInputFlag input, int index)
+//        {
+//            if (true == input.Contains(EInputFlag.ENTER | EInputFlag.ACTION))
+//            {
+//                SetItemColor(mSelect, ALPHA_MAX);
+
+//                switch (mSelect)
+//                {
+//                    case 0:
+//                        Debug.Log("New game For Test (map code: 900)");
+//                        mMain.MapScene_EnterField(900);
+//                        break;
+//                    case 1:
+//                        Debug.Log("Saved Data List");
+//                        break;
+//                    case 2:
+//                        Debug.Log("Option window");
+//                        break;
+//                    case 3:
+//#if UNITY_EDITOR || UNITY_EDITOR_64 || UNITY_EDITOR_WIN
+//                        UnityEditor.EditorApplication.isPlaying = false;
+//#else
+//                        Application.Quit();
+//#endif
+//                        break;
+//                    default:
+//                        Assert.IsFalse(false, $"Wrong Input Index: IEUITItle.Input({mSelect})");
+//                        break;
+//                }
+
+//                return -1;
+//            }
+//            if (true == input.Contains(EInputFlag.CANCEL))
+//            {
+//                Debug.Log("Cancel");
+//                mOffsetTime = 0;
+//            }
+
+//            mOffsetTime -= Time.deltaTime;
+//            if (0 > mOffsetTime) 
+//            { 
+//                mOffsetTime = 0; 
+//            }
+
+//            // block successive input
+//            if (true == input.Contains(EInputFlag.UP_HOLD | EInputFlag.DOWN_HOLD))
+//            {
+//                if (0 < mOffsetTime) 
+//                { 
+//                    return index; 
+//                }
+//            }
+
+//            bool isUp   = input.Contains(EInputFlag.UP | EInputFlag.UP_HOLD);
+//            bool isDown = input.Contains(EInputFlag.DOWN | EInputFlag.DOWN_HOLD);
+
+//            if (true == isUp || true == isDown)
+//            {
+//                // prev
+//                SetItemColor(mSelect, 0f);
+
+//                // loop index (0 ~ 3)
+//                mSelect = isUp ? mSelect - 1 : mSelect + 1;
+//                mSelect = (mSelect + mItemCount) % mItemCount;
+
+//                // next
+//                SetItemColor(mSelect, ALPHA_MIN);
+
+//                // reset-offset
+//                mOffsetTime = OFFSET_TIME;
+//            }
+
+//            //if (true == input.Contains(EInput.UP | EInput.UP_HOLD))
+//            //{
+//            //    SetItemColor(mSelect, 0f); //prev
+//            //    mSelect = (mSelect - 1 + mItemCount) % mItemCount;
+//            //    SetItemColor(mSelect, ALPHA_MIN); //next
+
+//            //    mOffsetTime = OFFSET_TIME;
+//            //}
+//            //if (true == input.Contains(EInput.DOWN | EInput.DOWN_HOLD))
+//            //{
+//            //    SetItemColor(mSelect, 0f);
+//            //    mSelect = (mSelect + 1 + mItemCount) % mItemCount;
+//            //    SetItemColor(mSelect, ALPHA_MIN);
+
+//            //    mOffsetTime = OFFSET_TIME;
+//            //}
+
+//            return index;
+//        }
+        //private void SetItemColor(int index, float alpha)
+        //{
+        //    Color target = mSelectionItems[index].color;
+        //    mSelectionItems[index].color = new Color(target.r, target.g, target.b, alpha);
+        //}
     }
+    [Obsolete]
     public class IEClearUI : IRoutineUpdater
     {
-        public IEClearUI(EUIGroup exceptGroupType)
-        {
-            Main_.Instance.UI_Clear(exceptGroupType);
-        }
+        //public IEClearUI(EUIGroup exceptGroupType)
+        //{
+        //    x_Main_.Instance.UI_Clear(exceptGroupType);
+        //}
         public int MoveNext(int index)
         {
             return -1;
@@ -511,11 +513,12 @@ namespace IECoroutine
     }
 
     /* asset */
+    [Obsolete]
     public class IEClearAllAsset : IRoutineUpdater
     {
         public int MoveNext(int index)
         {
-            Main_.Instance.Asset_ClearAll();
+            x_Main_.Instance.Asset_ClearAll();
             return -1;
         }
     }

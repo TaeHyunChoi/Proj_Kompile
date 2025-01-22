@@ -7,7 +7,7 @@ public class MapSceneManager_
     private CanvasGroup mLoadingCurtain;
     private List<int> mInstanceIDCache;
 
-    private Main_ mMain { get => Main_.Instance; }
+    private x_Main_ mMain { get => x_Main_.Instance; }
 
     public MapSceneManager_(Transform transform)
     {
@@ -34,13 +34,13 @@ public class MapSceneManager_
         }
 
         var curtainOn     = new IELoadingCurtainOn(mLoadingCurtain);
-        var clearUI       = new IEClearUI(exceptGroupType: EUIGroup.Field);
+        //var clearUI       = new IEClearUI(exceptGroupType: EUIGroup.Field);
         var clearMapScene = new IEClearMapSceneObjects();
         var loadScene     = new IELoadScene(mapCode);
         var curtainOff    = new IELoadingCurtainOff(mLoadingCurtain);
 
         IERoutine enterFieldRoutine = new IERoutine(curtainOn,
-                                                    clearUI,
+                                                    //clearUI,
                                                     clearMapScene,
                                                     loadScene,
                                                     // set field unit (playable, npc, ...)

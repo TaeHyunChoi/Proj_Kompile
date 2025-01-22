@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using static Index.IDxTile;
 
 [Obsolete]
 public class x_MapTileComponent : MonoBehaviour
