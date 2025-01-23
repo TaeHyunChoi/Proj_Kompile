@@ -58,7 +58,7 @@ namespace Script.Index
             if (Input.GetButton("RIGHT"))       { inputFlag |= EInputFlag.RIGHT_HOLD; }
             if (Input.GetButton("ACTION"))      { inputFlag |= EInputFlag.ACTION_HOLD; }
 
-            return 0 != inputFlag;
+            return EInputFlag.NONE != inputFlag;
         }
 
         public static bool Contains(this EInputFlag input, EInputFlag compares)
@@ -66,6 +66,13 @@ namespace Script.Index
             return 0 != (input & compares);
         }
     }
+
+    public enum ContentTaskState
+    {
+        RUNNING,
+        SUCCESS,
+        FAILURE
+    };
 
     //public static class IDxTile
     //{
