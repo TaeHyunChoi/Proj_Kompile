@@ -1,8 +1,8 @@
-namespace GameManager
+namespace Script.GameManager
 {
     using UnityEngine;
     using Script.Index;
-    using Script.ContentTask;
+    using Script.Content;
     using System.Linq;
     using System.Collections.Generic;
 
@@ -10,7 +10,12 @@ namespace GameManager
     {
         private static IngameManager instance;
 
-        private static List<ContentTask> tasks;
+        private static List<ContentTaskContainer> updates;
+        private static List<ContentTaskContainer> fixedUpdates;
+
+        private static OpeningManager openingMgr;
+
+        private TaskType currentTaskType;
         private IDxInput.EInputFlag inputFlag;
 
         private void Awake()
@@ -24,38 +29,100 @@ namespace GameManager
             instance = this;
             DontDestroyOnLoad(gameObject);
 
-            tasks = new List<ContentTask>();
+            updates      = new List<ContentTaskContainer>();
+            fixedUpdates = new List<ContentTaskContainer>();
+
+            openingMgr = new OpeningManager();
         }
 
-        private void Start()
+        private static TaskType GetTaskGroup(TaskType taskType)
         {
-            // 최초 task 호출
+            int temp = (int)taskType % 1000;
+            return (TaskType)((int)taskType - temp);
         }
-
-        private void Update()
+        public static void AddTask(TaskType taskType, TaskUpdateType taskUpdateType)
         {
-            if (false == IDxInput.TryGetInput(out inputFlag))
+            ContentTaskContainer task;
+            bool isTaskAdded;
+
+            TaskType taskGroupType = GetTaskGroup(taskType);
+            switch (taskGroupType)
             {
+                case TaskType.OPENGING:
+                    isTaskAdded = openingMgr.TryAddTask(taskType, out task);
+                    break;
+                default:
+                    Error.DebugAssert(ErrorCode.CANNOT_FIND_TASK_GROUP, taskGroupType.ToString());
+                    return;
+            }
+
+            if (false == isTaskAdded)
+            {
+                // error log 는 TryAddTask에서 찍음
                 return;
+            }
+
+            switch (taskUpdateType)
+            {
+                case TaskUpdateType.UPDATE:         
+                    updates.Add(task);      
+                    break;
+                case TaskUpdateType.FIXED_UPDATE:
+                    fixedUpdates.Add(task); 
+                    break;
+                default:
+                    Error.DebugAssert(ErrorCode.CANNOT_FIND_TASK_UPDATE_TYPE, taskUpdateType.ToString());
+                    break;
             }
         }
 
-        // 지난번처럼 update, fixedUpdate 분류하여 task, fixedTask 분류하는게 좋을 수도?
-        private void FixedUpdate()
+
+        // MonoBehaviour
+        private void Start()
         {
-            for (int i = 0; i < tasks.Count(); ++i)
+            AddTask(TaskType.OP_PLAY_OPENING, TaskUpdateType.UPDATE);
+        }
+        private void Update()
+        {
+            // update: input
+            inputFlag = IDxInput.TryGetInput();
+
+            // update: contents
+            for (int i = 0; i < updates.Count(); ++i)
             {
-                ContentTaskState state = tasks[i].Run(inputFlag);
+                ContentTaskState state = updates[i].Run();
 
                 switch (state)
                 {
                     case ContentTaskState.SUCCESS:
-                        // 지난번에 썼던 것처럼 RoutineMgr 만들어서 빈칸 채워넣기 하는게 좋겠구나?
-                        // 배열 정렬도 이참에 추가..? >> 배열 인덱스까지 직접 조정하면 어때?
                         break;
                     case ContentTaskState.FAILURE:
-                        // log 등 오류 발생 시 처리 필요
                         UnityEngine.Assertions.Assert.IsTrue(state == ContentTaskState.FAILURE);
+                        break;
+                    default:
+                        // Running
+                        break;
+                }
+            }
+        }
+        private void FixedUpdate()
+        {
+            // inputFlag는 Update()에서 받았음
+
+            for (int i = 0; i < fixedUpdates.Count(); ++i)
+            {
+                ContentTaskState state = fixedUpdates[i].Run();
+
+                switch (state)
+                {
+                    case ContentTaskState.SUCCESS:
+                        // ...
+                        break;
+                    case ContentTaskState.FAILURE:
+                        UnityEngine.Assertions.Assert.IsTrue(state == ContentTaskState.FAILURE);
+                        break;
+                    default:
+                        // Running
                         break;
                 }
             }

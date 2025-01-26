@@ -1,27 +1,41 @@
 
-namespace Script.ContentTask
+namespace Script.Content
 {
     using Script.Interface;
     using Script.Index;
 
-    public class ContentTask
+    public abstract class ContentTaskBase
     {
-        private readonly IContentTaskUpdater[] tasks;
+        protected int index;
+
+        public ContentTaskBase()
+        {
+            index = 0;
+        }
+
+        public abstract ContentTaskState MoveNext();
+    }
+
+    public class ContentTaskContainer
+    {
+        private readonly ContentTaskBase[] tasks;
         private readonly int length;
 
         private int index;
+        private TaskType type;
         private ContentTaskState state;
 
-        public ContentTask(params IContentTaskUpdater[] taskArray)
+        public ContentTaskContainer(TaskType taskType, ContentTaskBase[] taskArray)
         {
             tasks   = taskArray;
             length  = taskArray.Length;
+            type    = taskType;
             state   = ContentTaskState.RUNNING;
         }
 
-        public ContentTaskState Run(IDxInput.EInputFlag inputFlag)
+        public ContentTaskState Run()
         {
-            state = tasks[index].MoveNext(inputFlag);
+            state = tasks[index].MoveNext();
 
             // 모든 작업 완료했는지 확인 > 안 끝났으면 다음으로 넘겨서 RUNNING
             if (ContentTaskState.SUCCESS == state

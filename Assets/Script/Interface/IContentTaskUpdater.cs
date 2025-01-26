@@ -4,6 +4,6 @@ namespace Script.Interface
 
     public interface IContentTaskUpdater
     {
-        public ContentTaskState MoveNext(IDxInput.EInputFlag inputFlag);
+        public ContentTaskState MoveNext();
     }
 }

@@ -35,10 +35,9 @@ namespace Script.Index
             ALL = 0xFF
         }
 
-        // 얘도 new input system으로 맞춰서 고치던가 그래야 함;
-        public static bool TryGetInput(out EInputFlag inputFlag)
+        public static EInputFlag TryGetInput()
         {
-            inputFlag = EInputFlag.NONE;
+            EInputFlag inputFlag = EInputFlag.NONE;
 
             //Button Down
             if (Input.GetButtonDown("DOWN"))    { inputFlag |= EInputFlag.DOWN; }
@@ -58,7 +57,7 @@ namespace Script.Index
             if (Input.GetButton("RIGHT"))       { inputFlag |= EInputFlag.RIGHT_HOLD; }
             if (Input.GetButton("ACTION"))      { inputFlag |= EInputFlag.ACTION_HOLD; }
 
-            return EInputFlag.NONE != inputFlag;
+            return inputFlag;
         }
 
         public static bool Contains(this EInputFlag input, EInputFlag compares)
@@ -66,13 +65,6 @@ namespace Script.Index
             return 0 != (input & compares);
         }
     }
-
-    public enum ContentTaskState
-    {
-        RUNNING,
-        SUCCESS,
-        FAILURE
-    };
 
     //public static class IDxTile
     //{
