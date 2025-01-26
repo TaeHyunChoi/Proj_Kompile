@@ -7,7 +7,7 @@ public class MapSceneManager_
     private CanvasGroup mLoadingCurtain;
     private List<int> mInstanceIDCache;
 
-    private x_Main_ mMain { get => x_Main_.Instance; }
+    //private x_Main_ mMain { get => x_Main_.Instance; }
 
     public MapSceneManager_(Transform transform)
     {
@@ -22,7 +22,7 @@ public class MapSceneManager_
         IRoutineUpdater enterScene = new IEOpeningScene(mLoadingCurtain);
 
         IERoutine routine = new IERoutine(loadScene, enterScene);
-        mMain.AddCoroutine(routine);
+        //mMain.AddCoroutine(routine);
     }
     public void EnterFieldScene(int fieldSceneCode)
     {
@@ -48,7 +48,7 @@ public class MapSceneManager_
                                                     // set field ui       
                                                     curtainOff);
 
-        mMain.AddCoroutine(enterFieldRoutine);
+        //mMain.AddCoroutine(enterFieldRoutine);
     }
 
     public void AddNewObject(int instanceID) => mInstanceIDCache.Add(instanceID);
@@ -56,7 +56,7 @@ public class MapSceneManager_
     {
         for (int i = 0; i < mInstanceIDCache.Count; ++i)
         {
-            AssetMgr.ReleaseGameObject(mInstanceIDCache[i]);
+            //AssetManager.ReleaseGameObject(mInstanceIDCache[i]);
         }
 
         mInstanceIDCache.Clear();

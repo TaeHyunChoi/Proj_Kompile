@@ -37,9 +37,9 @@ public partial class x_Main_ // Main_Request
 
     //    return obj;
     //}
-    public void Asset_ClearAll() => AssetMgr.ClearAll();
+    //public void Asset_ClearAll() => AssetManager.ClearAll();
 
     /* Scene */
-    public void MapScene_EnterField(int code) => mMapSceneMgr.EnterFieldScene(code);
-    public void MapScene_Clear() => mMapSceneMgr.ClearObjects();
+    //public void MapScene_EnterField(int code) => mMapSceneMgr.EnterFieldScene(code);
+    //public void MapScene_Clear() => mMapSceneMgr.ClearObjects();
 }

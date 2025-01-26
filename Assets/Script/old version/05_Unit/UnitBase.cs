@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using static EAnimeCodeToString;
 
 public abstract class UnitBase /* : MonoBehaviour */
@@ -36,13 +36,13 @@ public abstract class UnitBase /* : MonoBehaviour */
 
         mAnimator.Play(anime, 0);
     }
-    public bool Release()
-    {
-        //TODO: 오브젝트 풀링을 해야 할까?
-        GameObject.Destroy(transform.gameObject);
+    //public bool Release()
+    //{
+    //    //TODO: 오브젝트 풀링을 해야 할까?
+    //    GameObject.Destroy(transform.gameObject);
 
-        string address = AssetMgr.GetAssetAddress(EAssetType.AnimCtrl, mIndexUnit);
-        return AssetMgr.ReleaseAsset(address);
-    }
+    //    string address = AssetManager.GetAssetAddress(EAssetType.AnimCtrl, mIndexUnit);
+    //    return AssetManager.ReleaseAsset(address);
+    //}
 }
 

@@ -6,12 +6,7 @@ namespace Script.Content
 
     public abstract class ContentTaskBase
     {
-        protected int index;
-
-        public ContentTaskBase()
-        {
-            index = 0;
-        }
+        // ë³€ìˆ˜ë¥¼ ë“¤ê³  ìˆì„ í•„ìš”ê°€ ì—†ìŒ : Interfaceë¡œ ë¹¼ëŠ”ê²Œ ë§ìœ¼ë ¤ë‚˜
 
         public abstract ContentTaskState MoveNext();
     }
@@ -21,15 +16,16 @@ namespace Script.Content
         private readonly ContentTaskBase[] tasks;
         private readonly int length;
 
-        private int index;
-        private TaskType type;
+        public readonly TaskType Type;
+
         private ContentTaskState state;
+        private int index;
 
         public ContentTaskContainer(TaskType taskType, ContentTaskBase[] taskArray)
         {
             tasks   = taskArray;
             length  = taskArray.Length;
-            type    = taskType;
+            Type    = taskType;
             state   = ContentTaskState.RUNNING;
         }
 
@@ -37,14 +33,14 @@ namespace Script.Content
         {
             state = tasks[index].MoveNext();
 
-            // ¸ğµç ÀÛ¾÷ ¿Ï·áÇß´ÂÁö È®ÀÎ > ¾È ³¡³µÀ¸¸é ´ÙÀ½À¸·Î ³Ñ°Ü¼­ RUNNING
+            // ëª¨ë“  ì‘ì—… ì™„ë£Œí–ˆëŠ”ì§€ í™•ì¸ > ì•ˆ ëë‚¬ìœ¼ë©´ ë‹¤ìŒìœ¼ë¡œ ë„˜ê²¨ì„œ RUNNING
             if (ContentTaskState.SUCCESS == state
                 && ++index < length)
             {
                 state = ContentTaskState.RUNNING;
             }
 
-            // ¹İÈ¯ ¹Ş´Â ÂÊ(IngameManager)¿¡¼­ »óÈ² ÆÇ´Ü
+            // ë°˜í™˜ ë°›ëŠ” ìª½(IngameManager)ì—ì„œ ìƒí™© íŒë‹¨
             return state;
         }
     }

@@ -104,7 +104,7 @@ namespace IECoroutine
 
         private Transform mParentTransform;
         private IERoutine mPlayOpeningRoutine;
-        private x_Main_ mMain { get => x_Main_.Instance; }
+        //private x_Main_ mMain { get => x_Main_.Instance; }
 
         public int MoveNext(int index)
         {
@@ -178,7 +178,7 @@ namespace IECoroutine
     {
         public IEClearMapSceneObjects()
         {
-            x_Main_.Instance.MapScene_Clear();
+            //x_Main_.Instance.MapScene_Clear();
         }
         public int MoveNext(int index)
         {
@@ -512,14 +512,5 @@ namespace IECoroutine
         }
     }
 
-    /* asset */
-    [Obsolete]
-    public class IEClearAllAsset : IRoutineUpdater
-    {
-        public int MoveNext(int index)
-        {
-            x_Main_.Instance.Asset_ClearAll();
-            return -1;
-        }
-    }
+ 
 }

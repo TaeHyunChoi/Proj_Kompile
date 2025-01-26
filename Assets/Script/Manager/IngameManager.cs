@@ -1,23 +1,75 @@
-namespace Script.GameManager
+namespace Script.Manager
 {
+    using System.Collections.Generic;
     using UnityEngine;
     using Script.Index;
     using Script.Content;
-    using System.Linq;
-    using System.Collections.Generic;
+    using Script.OnlyDev;
 
     public class IngameManager : MonoBehaviour
     {
-        private static IngameManager instance;
+        // manager
+        private static IngameManager  instance;
+        private static OpeningManager openingMgr;
 
+        // content task
         private static List<ContentTaskContainer> updates;
         private static List<ContentTaskContainer> fixedUpdates;
 
-        private static OpeningManager openingMgr;
-
-        private TaskType currentTaskType;
+        // input
         private IDxInput.EInputFlag inputFlag;
 
+        // Content Task
+        private static TaskType GetTaskGroup(TaskType taskType)
+        {
+            int temp = (int)taskType % 1000;
+            return (TaskType)((int)taskType - temp);
+        }
+        public static void AddTask(TaskType taskType, TaskUpdateType taskUpdateType)
+        {
+            ContentTaskContainer task;
+            bool isTaskAdded;
+
+            // content type
+            TaskType taskGroupType = GetTaskGroup(taskType);
+            switch (taskGroupType)
+            {
+                case TaskType.OPENGING:
+                    isTaskAdded = openingMgr.TryAddTask(taskType, out task);
+                    break;
+
+                default:
+#if UNITY_EDITOR || TEST_BUILD
+                    OnlyDev.DevError.DebugAssert(ErrorCode.CANNOT_FIND_TASK_GROUP, taskGroupType.ToString());
+#endif
+                    return;
+            }
+
+            if (false == isTaskAdded)
+            {
+                // error log Îäî TryAddTaskÏóêÏÑú Ï∞çÏùå
+                return;
+            }
+
+            // update type : Ïó¨Í∏∞ÏÑú NULL ÏûêÎ¶¨ Ï∞æÏïÑÏÑú ÌíÄÎßÅÏùÑ ÌïòÎäî Í≤å Ï¢ãÏùÑÍπå?
+            switch (taskUpdateType)
+            {
+                case TaskUpdateType.UPDATE:
+                    updates.Add(task);      
+                    break;
+                case TaskUpdateType.FIXED_UPDATE:
+                    fixedUpdates.Add(task); 
+                    break;
+                default:
+#if UNITY_EDITOR || TEST_BUILD
+                    OnlyDev.DevError.DebugAssert(ErrorCode.CANNOT_FIND_TASK_UPDATE_TYPE, taskUpdateType.ToString());
+#endif
+                    break;
+            }
+        }
+
+
+        // MonoBehaviour
         private void Awake()
         {
             // like singleton
@@ -32,55 +84,12 @@ namespace Script.GameManager
             updates      = new List<ContentTaskContainer>();
             fixedUpdates = new List<ContentTaskContainer>();
 
-            openingMgr = new OpeningManager();
+            openingMgr   = new OpeningManager();
         }
-
-        private static TaskType GetTaskGroup(TaskType taskType)
-        {
-            int temp = (int)taskType % 1000;
-            return (TaskType)((int)taskType - temp);
-        }
-        public static void AddTask(TaskType taskType, TaskUpdateType taskUpdateType)
-        {
-            ContentTaskContainer task;
-            bool isTaskAdded;
-
-            TaskType taskGroupType = GetTaskGroup(taskType);
-            switch (taskGroupType)
-            {
-                case TaskType.OPENGING:
-                    isTaskAdded = openingMgr.TryAddTask(taskType, out task);
-                    break;
-                default:
-                    Error.DebugAssert(ErrorCode.CANNOT_FIND_TASK_GROUP, taskGroupType.ToString());
-                    return;
-            }
-
-            if (false == isTaskAdded)
-            {
-                // error log ¥¬ TryAddTaskø°º≠ ¬Ô¿Ω
-                return;
-            }
-
-            switch (taskUpdateType)
-            {
-                case TaskUpdateType.UPDATE:         
-                    updates.Add(task);      
-                    break;
-                case TaskUpdateType.FIXED_UPDATE:
-                    fixedUpdates.Add(task); 
-                    break;
-                default:
-                    Error.DebugAssert(ErrorCode.CANNOT_FIND_TASK_UPDATE_TYPE, taskUpdateType.ToString());
-                    break;
-            }
-        }
-
-
-        // MonoBehaviour
         private void Start()
         {
             AddTask(TaskType.OP_PLAY_OPENING, TaskUpdateType.UPDATE);
+            AssetManager.Initialize(transform);
         }
         private void Update()
         {
@@ -88,16 +97,19 @@ namespace Script.GameManager
             inputFlag = IDxInput.TryGetInput();
 
             // update: contents
-            for (int i = 0; i < updates.Count(); ++i)
+            for (int i = 0; i < updates.Count; ++i)
             {
                 ContentTaskState state = updates[i].Run();
 
                 switch (state)
                 {
                     case ContentTaskState.SUCCESS:
+                        updates[i] = null;
                         break;
                     case ContentTaskState.FAILURE:
-                        UnityEngine.Assertions.Assert.IsTrue(state == ContentTaskState.FAILURE);
+#if UNITY_EDITOR || TEST_BUILD
+                        DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
+#endif
                         break;
                     default:
                         // Running
@@ -107,16 +119,16 @@ namespace Script.GameManager
         }
         private void FixedUpdate()
         {
-            // inputFlag¥¬ Update()ø°º≠ πﬁæ“¿Ω
+            // inputFlagÎäî Update()ÏóêÏÑú Î∞õÏïòÏùå
 
-            for (int i = 0; i < fixedUpdates.Count(); ++i)
+            for (int i = 0; i < fixedUpdates.Count; ++i)
             {
                 ContentTaskState state = fixedUpdates[i].Run();
 
                 switch (state)
                 {
                     case ContentTaskState.SUCCESS:
-                        // ...
+                        fixedUpdates[i] = null;
                         break;
                     case ContentTaskState.FAILURE:
                         UnityEngine.Assertions.Assert.IsTrue(state == ContentTaskState.FAILURE);

@@ -1,4 +1,4 @@
-namespace Script.GameManager
+namespace Script.Manager
 {
     using Script.Index;
     using Script.Content;
@@ -15,17 +15,16 @@ namespace Script.GameManager
                 case TaskType.OP_PLAY_OPENING:
                     tasks = new ContentTaskBase[] 
                     {
-                      // LOAD_TABLE¸¦ ºñµ¿±â·Î µ¹¸®°í ÀÖ´Â°Ô ÁÁÁö ¾Ê´Ï?
-                      // »óÅÂ°ª Ã¼Å©¸¦ OpeningManager¿¡¼­ µé°í ÀÖÀ¸¸é...?
-                      // °³º° ÀÛ¾÷°ªÀ» OpeningManager¿¡¼­ ¾î¶»°Ô °ü¸®?
                        new OP_PlayLogo(),
                        new OP_PlayDemo(),
-                       new OP_PlayTitle(), //¿©±â¼­ .AddTask(UI_TITLE)À» ³¯¸®´Â°ÅÀÓ
+                       new OP_PlayTitle(), //ì—¬ê¸°ì„œ .AddTask(UI_TITLE)ì„ ë‚ ë¦¬ëŠ”ê±°ì„
                      };
                     break;
 
                 default:
-                    Error.DebugAssert(ErrorCode.CANNOT_FIND_TASK, type.ToString());
+#if UNITY_EDITOR || TEST_BUILD
+                    OnlyDev.DevError.DebugAssert(ErrorCode.CANNOT_FIND_TASK, type.ToString());
+#endif
                     return false;
             }
 
