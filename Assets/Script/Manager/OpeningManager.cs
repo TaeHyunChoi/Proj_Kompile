@@ -15,9 +15,8 @@ namespace Script.Manager
                 case TaskType.OP_PLAY_OPENING:
                     tasks = new ContentTaskBase[] 
                     {
-                       new OP_PlayLogo(),
-                       new OP_PlayDemo(),
-                       new OP_PlayTitle(), //여기서 .AddTask(UI_TITLE)을 날리는거임
+                       new OP_PlayTitleAnime(),
+                       // new UI_TitleMenu
                      };
                     break;
 

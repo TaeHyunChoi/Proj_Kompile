@@ -6,9 +6,12 @@ namespace Script.Content
 
     public abstract class ContentTaskBase
     {
-        // 변수를 들고 있을 필요가 없음 : Interface로 빼는게 맞으려나
-
+        protected int inputMask;
         public abstract ContentTaskState MoveNext();
+        public void SetInputValue(int input)
+        {
+            inputMask = input;
+        }
     }
 
     public class ContentTaskContainer

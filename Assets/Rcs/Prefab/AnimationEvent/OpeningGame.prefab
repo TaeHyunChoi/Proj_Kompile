@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7214384205099782693}
   - component: {fileID: 6200700428963279495}
   m_Layer: 0
-  m_Name: Flash
+  m_Name: TitleFlash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -31,7 +31,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4710874437001163091}
-  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -88,7 +87,7 @@ GameObject:
   - component: {fileID: 2050253575180116278}
   - component: {fileID: 5282181692115573857}
   m_Layer: 0
-  m_Name: Logo_upper
+  m_Name: TitleLogoUpper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -107,7 +106,6 @@ RectTransform:
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 4710874437001163091}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -164,7 +162,7 @@ GameObject:
   - component: {fileID: 1815443953294676142}
   - component: {fileID: 5848826986726110417}
   m_Layer: 0
-  m_Name: Logo_lower
+  m_Name: TitleLogoLower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -183,7 +181,6 @@ RectTransform:
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 4710874437001163091}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -243,7 +240,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8924798017297984347
 RectTransform:
   m_ObjectHideFlags: 0
@@ -257,7 +254,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4693710664529636516}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -274,6 +270,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4693710664529636516}
   - component: {fileID: 1612086536380089911}
+  - component: {fileID: 3112892084775630782}
   m_Layer: 0
   m_Name: OpeningGame
   m_TagString: Untagged
@@ -297,7 +294,6 @@ RectTransform:
   - {fileID: 8924798017297984347}
   - {fileID: 4710874437001163091}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -312,6 +308,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6705231171355242884}
   m_CullTransparentMesh: 1
+--- !u!114 &3112892084775630782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6705231171355242884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e308b9201c86b27459c3086a74512c5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  images:
+  - {fileID: 4010713379389058121}
+  - {fileID: 5282181692115573857}
+  - {fileID: 5848826986726110417}
+  - {fileID: 6200700428963279495}
 --- !u!1 &7257438181799763161
 GameObject:
   m_ObjectHideFlags: 0
@@ -345,7 +358,6 @@ RectTransform:
   - {fileID: 3862312772704386629}
   - {fileID: 5954281201939400343}
   m_Father: {fileID: 4693710664529636516}
-  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -372,7 +384,7 @@ GameObject:
   - component: {fileID: 3093190503904049415}
   - component: {fileID: 4010713379389058121}
   m_Layer: 0
-  m_Name: Logo
+  m_Name: CompanyLogo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -391,7 +403,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4693710664529636516}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}

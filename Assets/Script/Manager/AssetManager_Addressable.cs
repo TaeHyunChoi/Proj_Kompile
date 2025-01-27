@@ -12,116 +12,96 @@ namespace Script.Manager
     /// </summary>
     public static partial class AssetManager // Addressable assets
     {
-        private static readonly Dictionary<int, AsyncOperationHandle>    objectHandlers = new Dictionary<int,    AsyncOperationHandle>();
-        private static readonly Dictionary<string, AsyncOperationHandle> assetHandlers  = new Dictionary<string, AsyncOperationHandle>();
+        private static readonly Dictionary<int, AsyncOperationHandle> assetHandlers  = new Dictionary<int, AsyncOperationHandle>();
 
-        // Init/Load Asset
-        public static async Task<GameObject> InstantiateGameObjectAsync(string address, Transform parent, bool isOn)
+        // Instaniate, Load GameObject Assets
+        public static async Task<GameObject> GetGameObjectAssetAsync(EAssetName asset, Transform parent, bool isOn)
         {
-            AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
+            if (true == assetHandlers.TryGetValue((int)asset, out AsyncOperationHandle handler))
+            {
+                GameObject obj = (GameObject)handler.Result;
+                obj.SetActive(isOn);
+
+                return obj;
+            }
+
+            return await InstantiateGameObjectAsync(asset, parent, isOn);
+        }
+        private static async Task<GameObject> InstantiateGameObjectAsync(EAssetName asset, Transform parent, bool isOn)
+        {
+            AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(asset.ToString(), parent);
             GameObject go = await handle.Task;
             go.SetActive(isOn);
 
-            objectHandlers.Add(go.GetInstanceID(), handle);
+            assetHandlers.Add(go.GetInstanceID(), handle);
             return go;
         }
-        private static Task<T> LoadAssetAsync<T>(string address)
+
+        // Load Non-GameObject Assets
+        public static async Task<T> GetAssetAsync<T>(EAssetName assetName)
         {
-            AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
-            assetHandlers.Add(address, handle);
-            return handle.Task;
-        }
-
-        // Spawn Unit
-        public static async Task<T> SpawnUnit<T>(int index, Transform parent) where T : UnitBase, new()
-        {
-            string code = GetAssetAddress(EAssetType.Prefab, (int)EPrefabType.UnitBase);
-            GameObject obj = await InstantiateGameObjectAsync(code, parent, true);
-
-            T unit = new();
-            unit.Awake(index, obj.transform);
-
-            string address = GetAssetAddress(EAssetType.AnimCtrl, index);
-            UnityEngine.Assertions.Assert.IsNotNull(address, "Can`t Find Asset Address: " + address);
-            Task<RuntimeAnimatorController> taskController = LoadAssetAsync<RuntimeAnimatorController>(address);
-            await taskController;
-
-            UnityEngine.Assertions.Assert.IsNotNull(taskController.Result, "Can`t Find Asset Data: " + address);
-            unit.SetAnimeController(taskController.Result);
-
-            taskController.Dispose();
-            return unit;
-        }
-
-        public static string GetAddress(EAsset code)
-        {
-            return code switch
+            if (true == assetHandlers.TryGetValue((int)assetName, out AsyncOperationHandle handler))
             {
-                /* unit */
-                EAsset.UnitBase => "UnitBase",
-                EAsset.AnimCtrl_Ataho => "AnimCtrl_Ataho",
-                EAsset.AnimCtrl_Linxhang => "AnimCtrl_Linxhang",
-                EAsset.AnimeCtrl_Smashu => "AnimeCtrl_Smashu",
+                return (T)handler.Result;
+            }
 
-                /* ui */
-                EAsset.UITitle => "UITitle",
-
-                /* content */
-                EAsset.OpeningGame => "OpeningGame",
-
-                /* default */
-                _ => null,
-            };
+            return await LoadAssetAsync<T>(assetName);
         }
-        public static string GetAssetAddress(EAssetType type, int code)
+        private static async Task<T> LoadAssetAsync<T>(EAssetName asset)
         {
-            int index = (byte)type * 10000 + code;
-
-            // Visual Studio 2019의 추천에 따라봄 (switch 구문을 식으로 표시)
-            return index switch
-            {
-                // Unit
-                01_0000 => "AnimCtrl_Ataho",
-                01_0001 => "AnimCtrl_Linxhang",
-                01_0002 => "AnimeCtrl_Smashu",
-
-                // Content
-                02_0001 => "UnitBase",
-                02_0002 => "OpeningGame",
-
-                // UI
-                03_0000 => "UITitle",
-
-                // Default
-                _ => null,
-            };
+            AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(asset.ToString());
+            assetHandlers.Add((int)asset, handle);
+            return await handle.Task;
         }
+
+
+        // Spawn Unit => 얘는 Field, Battle 쪽으로 넘겨서 처리하는게 좋을 듯
+        //public static async Task<T> SpawnUnit<T>(int index, Transform parent) where T : UnitBase, new()
+        //{
+        //    string code = GetAssetAddress(EAssetType.Prefab, (int)EPrefabType.UnitBase);
+        //    GameObject obj = await InstantiateGameObjectAsync(code, parent, true);
+
+        //    T unit = new();
+        //    unit.Awake(index, obj.transform);
+
+        //    string address = GetAssetAddress(EAssetType.AnimCtrl, index);
+        //    UnityEngine.Assertions.Assert.IsNotNull(address, "Can`t Find Asset Address: " + address);
+        //    Task<RuntimeAnimatorController> taskController = LoadAssetAsync<RuntimeAnimatorController>(address);
+        //    await taskController;
+
+        //    UnityEngine.Assertions.Assert.IsNotNull(taskController.Result, "Can`t Find Asset Data: " + address);
+        //    unit.SetAnimeController(taskController.Result);
+
+        //    taskController.Dispose();
+        //    return unit;
+        //}
+
 
         // Release Asset
-        public static void ClearAll()
-        {
-            foreach (AsyncOperationHandle handler in objectHandlers.Values)
-            {
-                GameObject.Destroy(handler.Result as GameObject);
-                Addressables.Release(handler);
-            }
-            objectHandlers.Clear();
+        //public static void ClearAll()
+        //{
+        //    foreach (AsyncOperationHandle handler in objectHandlers.Values)
+        //    {
+        //        GameObject.Destroy(handler.Result as GameObject);
+        //        Addressables.Release(handler);
+        //    }
+        //    objectHandlers.Clear();
 
-            foreach (string code in assetHandlers.Keys)
-            {
-                Addressables.Release(assetHandlers[code]);
-            }
-            assetHandlers.Clear();
-        }
-        public static bool ReleaseGameObject(int instanceID)
-        {
-            Addressables.Release(objectHandlers[instanceID]);
-            return objectHandlers.Remove(instanceID);
-        }
-        public static bool ReleaseAsset(string code)
-        {
-            Addressables.Release(assetHandlers[code]);
-            return assetHandlers.Remove(code);
-        }
+        //    foreach (string code in assetHandlers.Keys)
+        //    {
+        //        Addressables.Release(assetHandlers[code]);
+        //    }
+        //    assetHandlers.Clear();
+        //}
+        //public static bool ReleaseGameObject(int instanceID)
+        //{
+        //    Addressables.Release(objectHandlers[instanceID]);
+        //    return objectHandlers.Remove(instanceID);
+        //}
+        //public static bool ReleaseAsset(string code)
+        //{
+        //    Addressables.Release(assetHandlers[code]);
+        //    return assetHandlers.Remove(code);
+        //}
     }
 }

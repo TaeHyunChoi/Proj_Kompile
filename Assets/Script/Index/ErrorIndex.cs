@@ -7,7 +7,6 @@ namespace Script.Index
         CANNOT_FIND_TASK,
         CANNOT_FIND_TASK_GROUP,
         CANNOT_FIND_TASK_UPDATE_TYPE,
-        CANNOT_INIT_TASK_STATE,
 
         FAIL_TASK,
     }

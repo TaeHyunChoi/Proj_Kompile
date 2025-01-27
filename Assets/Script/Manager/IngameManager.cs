@@ -99,6 +99,12 @@ namespace Script.Manager
             // update: contents
             for (int i = 0; i < updates.Count; ++i)
             {
+                // 임시 처리
+                if (null == updates[i])
+                {
+                    continue;
+                }
+
                 ContentTaskState state = updates[i].Run();
 
                 switch (state)

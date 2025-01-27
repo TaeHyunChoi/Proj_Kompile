@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 public enum EScene
 {
@@ -20,7 +20,7 @@ public enum EStat
     LUK,
     CNT
 }
-public enum EAsset
+public enum EAssetName
 { 
     NONE = 0,
 
@@ -32,19 +32,19 @@ public enum EAsset
     OpeningGame,
     UITitle,
 }
-public enum EAssetType
-{ 
-    None        = 0,
-    AnimCtrl    = 10000,
-    Prefab      = 20000,
-    UI          = 30000,
-}
-public enum EPrefabType
-{ 
-    None        =  0,
-    UnitBase    =  1,
-    OpeningGame =  2,
-}
+//public enum EAssetType
+//{ 
+//    None        = 0,
+//    AnimCtrl    = 10000,
+//    Prefab      = 20000,
+//    UI          = 30000,
+//}
+//public enum EPrefabType
+//{ 
+//    None        =  0,
+//    UnitBase    =  1,
+//    OpeningGame =  2,
+//}
 
 //해당 자료형 값에 .ToString()하겠다는 뜻으로 접미사 ToString을 붙임
 public enum EAnimeCodeToString
