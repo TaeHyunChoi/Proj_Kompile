@@ -2,21 +2,22 @@ namespace Script.Manager
 {
     using Script.Index;
     using Script.Content;
+    using Script.Interface;
 
     public class OpeningManager
     {
         public bool TryAddTask(TaskType type, out ContentTaskContainer contentTask)
         {
-            ContentTaskBase[] tasks;
+            IContentTaskUpdater[] tasks;
             contentTask = null;
 
             switch (type)
             {
                 case TaskType.OP_PLAY_OPENING:
-                    tasks = new ContentTaskBase[] 
+                    tasks = new IContentTaskUpdater[]
                     {
                        new OP_PlayTitleAnime(),
-                       // new UI_TitleMenu
+                       new UI_TitleMenu()
                      };
                     break;
 

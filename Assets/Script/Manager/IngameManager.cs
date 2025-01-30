@@ -4,7 +4,6 @@ namespace Script.Manager
     using UnityEngine;
     using Script.Index;
     using Script.Content;
-    using Script.OnlyDev;
 
     public class IngameManager : MonoBehaviour
     {
@@ -39,9 +38,7 @@ namespace Script.Manager
                     break;
 
                 default:
-#if UNITY_EDITOR || TEST_BUILD
                     OnlyDev.DevError.DebugAssert(ErrorCode.CANNOT_FIND_TASK_GROUP, taskGroupType.ToString());
-#endif
                     return;
             }
 
@@ -51,7 +48,6 @@ namespace Script.Manager
                 return;
             }
 
-            // update type : 여기서 NULL 자리 찾아서 풀링을 하는 게 좋을까?
             switch (taskUpdateType)
             {
                 case TaskUpdateType.UPDATE:
@@ -61,9 +57,7 @@ namespace Script.Manager
                     fixedUpdates.Add(task); 
                     break;
                 default:
-#if UNITY_EDITOR || TEST_BUILD
                     OnlyDev.DevError.DebugAssert(ErrorCode.CANNOT_FIND_TASK_UPDATE_TYPE, taskUpdateType.ToString());
-#endif
                     break;
             }
         }
@@ -99,7 +93,7 @@ namespace Script.Manager
             // update: contents
             for (int i = 0; i < updates.Count; ++i)
             {
-                // 임시 처리
+                // 임시 처리 - 풀링 고려 중.
                 if (null == updates[i])
                 {
                     continue;
@@ -113,7 +107,7 @@ namespace Script.Manager
                         updates[i] = null;
                         break;
                     case ContentTaskState.FAILURE:
-#if UNITY_EDITOR || TEST_BUILD
+#if TEST_BUILD
                         DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
 #endif
                         break;

@@ -39,7 +39,7 @@ public partial class OP_TitleObject // PLAY_COMPANY_LOGO
     private float alpha;
     private float waitTime;
 
-    public ContentTaskState MoveNext_PlayCompanyLogo(int inputMask)
+    public ContentTaskState MoveNext_PlayCompanyLogo()
     {
         float deltaTime = Time.deltaTime;
 
@@ -117,7 +117,7 @@ public partial class OP_TitleObject // PLAY_TITLE_LOGO
     private PlayTitleLogoState titleLogoState;
     private float passedTime;
 
-    public ContentTaskState MoveNext_PlayTitleLogo(int inputMask)
+    public ContentTaskState MoveNext_PlayTitleLogo()
     {
         float deltaTime = Time.deltaTime;
 
@@ -178,7 +178,7 @@ public partial class OP_TitleObject // PLAY_TITLE_LOGO
                 break;
 
             case PlayTitleLogoState.WAIT:
-                if (waitTime < 0.1f)
+                if (waitTime < 0.25f)
                 {
                     waitTime += deltaTime;
                     break;

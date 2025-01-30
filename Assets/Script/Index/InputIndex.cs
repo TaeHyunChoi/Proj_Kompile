@@ -60,6 +60,10 @@ namespace Script.Index
             return inputFlag;
         }
 
+        // 여기를 new input system으로 바꾼다면..
+        // 입력 이벤트가 발생하면 어떻게 값을 넘겨야 하는가?
+        // ...
+
         public static bool Contains(this EInputFlag input, EInputFlag compares)
         {
             return 0 != (input & compares);

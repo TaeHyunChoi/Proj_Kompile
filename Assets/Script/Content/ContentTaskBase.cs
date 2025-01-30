@@ -1,22 +1,11 @@
-
 namespace Script.Content
 {
-    using Script.Interface;
     using Script.Index;
-
-    public abstract class ContentTaskBase
-    {
-        protected int inputMask;
-        public abstract ContentTaskState MoveNext();
-        public void SetInputValue(int input)
-        {
-            inputMask = input;
-        }
-    }
+    using Script.Interface;
 
     public class ContentTaskContainer
     {
-        private readonly ContentTaskBase[] tasks;
+        private readonly IContentTaskUpdater[] tasks;
         private readonly int length;
 
         public readonly TaskType Type;
@@ -24,7 +13,7 @@ namespace Script.Content
         private ContentTaskState state;
         private int index;
 
-        public ContentTaskContainer(TaskType taskType, ContentTaskBase[] taskArray)
+        public ContentTaskContainer(TaskType taskType, IContentTaskUpdater[] taskArray)
         {
             tasks   = taskArray;
             length  = taskArray.Length;

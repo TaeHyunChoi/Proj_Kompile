@@ -5,8 +5,9 @@ namespace Script.Content
     using UnityEngine;
     using Script.Index;
     using Script.Manager;
+    using Script.Interface;
 
-    public class OP_PlayTitleAnime : ContentTaskBase
+    public class OP_PlayTitleAnime : IContentTaskUpdater
     {
         private enum State
         { 
@@ -30,7 +31,7 @@ namespace Script.Content
         {
             state = State.NONE;
         }
-        public override ContentTaskState MoveNext()
+        public ContentTaskState MoveNext()
         {
             switch (state)
             {
@@ -53,14 +54,14 @@ namespace Script.Content
                     break;
 
                 case State.PLAY_COMPANY_LOGO:
-                    if (ContentTaskState.SUCCESS == title.MoveNext_PlayCompanyLogo(inputMask))
+                    if (ContentTaskState.SUCCESS == title.MoveNext_PlayCompanyLogo())
                     {
                         ++state;
                     }
                     break;
 
                 case State.PLAY_TITLE_LOGO:
-                    if (ContentTaskState.SUCCESS == title.MoveNext_PlayTitleLogo(inputMask))
+                    if (ContentTaskState.SUCCESS == title.MoveNext_PlayTitleLogo())
                     {
                         ++state;
                     }
