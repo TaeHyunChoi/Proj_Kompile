@@ -1,4 +1,3 @@
-#if UNITY_EDITOR || TEST_BUILD
 namespace Script.OnlyDev
 {
     using UnityEngine;
@@ -19,4 +18,3 @@ namespace Script.OnlyDev
         }
     }
 }
-#endif
