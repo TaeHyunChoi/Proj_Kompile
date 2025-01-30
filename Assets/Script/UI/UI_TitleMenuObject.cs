@@ -1,56 +1,67 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using static Script.Index.IDxInput;
 
 public class UI_TitleMenuObject : MonoBehaviour
 {
-    [SerializeField] private RectTransform[] rects;
+    [SerializeField] private Transform menuParent;
     [SerializeField] private Image selectSlotImage;
 
     private readonly float minAlpha   = 0.3f;
     private readonly float maxAlpha   = 0.7f;
     private readonly float alphaDelta = 0.5f;
 
+    private Vector2[] anchoredPositions;
     private float alpha;
     private float sign;
 
-    public bool TryGetInput(EInputFlag inputMask)
+    private readonly float waitTime = 0.25f;
+    private float lastInputTime;
+    private int   index;
+
+    public bool OnMove(EInputFlag inputFlag)
     {
-        if (true == inputMask.Contains(EInputFlag.UP))
+        if (Time.time < lastInputTime + waitTime)
         {
-
-            return true;
+            return false;
         }
-        if (true == inputMask.Contains(EInputFlag.UP_HOLD))
-        {
-            // 시간 체크
-            return true;
-        }
+        lastInputTime = Time.time;
 
-        if (true == inputMask.Contains(EInputFlag.DOWN))
+        if (true == inputFlag.Contains(EInputFlag.UP | EInputFlag.UP_HOLD))
         {
-
-            return true;
+            index = ((index - 1) + 4) % 4;
+            selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
         }
-        if (true == inputMask.Contains(EInputFlag.DOWN_HOLD))
+        if (true == inputFlag.Contains(EInputFlag.DOWN | EInputFlag.DOWN_HOLD))
         {
-            // 시간 체크
-            return true;
+            index = ((index + 1) + 4) % 4;
+            selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
         }
 
-        if (true == inputMask.Contains(EInputFlag.ACTION))
-        {
+        return true;
+    }
 
-            return true;
-        }
+    public bool OnEnter(EInputFlag inputFlag)
+    {
 
-        return false;
+        return true;
     }
 
     private void Awake()
     {
+        anchoredPositions = new Vector2[menuParent.childCount];
+        for (int i = 0; i < anchoredPositions.Length; ++i)
+        {
+            anchoredPositions[i] = menuParent.GetChild(i).GetComponent<RectTransform>().anchoredPosition;
+        }
+        menuParent = null;
+
         alpha = minAlpha;
-        sign = 1f;
+        sign  = 1f;
+
+        index = 0;
+        lastInputTime = -waitTime; // 즉각 입력하려고
     }
     private void Update()
     {

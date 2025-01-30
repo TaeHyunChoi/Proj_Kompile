@@ -1,4 +1,3 @@
-
 namespace Script.Index
 {
     using System;
@@ -35,34 +34,30 @@ namespace Script.Index
             ALL = 0xFF
         }
 
-        public static EInputFlag TryGetInput()
-        {
-            EInputFlag inputFlag = EInputFlag.NONE;
+        //public static EInputFlag TryGetInput()
+        //{
+        //    EInputFlag inputFlag = EInputFlag.NONE;
 
-            //Button Down
-            if (Input.GetButtonDown("DOWN"))    { inputFlag |= EInputFlag.DOWN; }
-            if (Input.GetButtonDown("UP"))      { inputFlag |= EInputFlag.UP; }
-            if (Input.GetButtonDown("LEFT"))    { inputFlag |= EInputFlag.LEFT; }
-            if (Input.GetButtonDown("RIGHT"))   { inputFlag |= EInputFlag.RIGHT; }
+        //    //Button Down
+        //    if (Input.GetButtonDown("DOWN"))    { inputFlag |= EInputFlag.DOWN; }
+        //    if (Input.GetButtonDown("UP"))      { inputFlag |= EInputFlag.UP; }
+        //    if (Input.GetButtonDown("LEFT"))    { inputFlag |= EInputFlag.LEFT; }
+        //    if (Input.GetButtonDown("RIGHT"))   { inputFlag |= EInputFlag.RIGHT; }
 
-            if (Input.GetButtonDown("ENTER"))   { inputFlag |= EInputFlag.ENTER; }
-            if (Input.GetButtonDown("CANCEL"))  { inputFlag |= EInputFlag.CANCEL; }
-            if (Input.GetButtonDown("ESCAPE"))  { inputFlag |= EInputFlag.ESCAPE; }
-            if (Input.GetButtonDown("ACTION"))  { inputFlag |= EInputFlag.ACTION; }
+        //    if (Input.GetButtonDown("ENTER"))   { inputFlag |= EInputFlag.ENTER; }
+        //    if (Input.GetButtonDown("CANCEL"))  { inputFlag |= EInputFlag.CANCEL; }
+        //    if (Input.GetButtonDown("ESCAPE"))  { inputFlag |= EInputFlag.ESCAPE; }
+        //    if (Input.GetButtonDown("ACTION"))  { inputFlag |= EInputFlag.ACTION; }
 
-            //Button Hold
-            if (Input.GetButton("DOWN"))        { inputFlag |= EInputFlag.DOWN_HOLD; }
-            if (Input.GetButton("UP"))          { inputFlag |= EInputFlag.UP_HOLD; }
-            if (Input.GetButton("LEFT"))        { inputFlag |= EInputFlag.LEFT_HOLD; }
-            if (Input.GetButton("RIGHT"))       { inputFlag |= EInputFlag.RIGHT_HOLD; }
-            if (Input.GetButton("ACTION"))      { inputFlag |= EInputFlag.ACTION_HOLD; }
+        //    //Button Hold
+        //    if (Input.GetButton("DOWN"))        { inputFlag |= EInputFlag.DOWN_HOLD; }
+        //    if (Input.GetButton("UP"))          { inputFlag |= EInputFlag.UP_HOLD; }
+        //    if (Input.GetButton("LEFT"))        { inputFlag |= EInputFlag.LEFT_HOLD; }
+        //    if (Input.GetButton("RIGHT"))       { inputFlag |= EInputFlag.RIGHT_HOLD; }
+        //    if (Input.GetButton("ACTION"))      { inputFlag |= EInputFlag.ACTION_HOLD; }
 
-            return inputFlag;
-        }
-
-        // 여기를 new input system으로 바꾼다면..
-        // 입력 이벤트가 발생하면 어떻게 값을 넘겨야 하는가?
-        // ...
+        //    return inputFlag;
+        //}
 
         public static bool Contains(this EInputFlag input, EInputFlag compares)
         {

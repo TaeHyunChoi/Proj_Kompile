@@ -1,10 +1,12 @@
-using Script.Index;
-using Script.Interface;
-using Script.Manager;
 using System.Threading.Tasks;
 using UnityEngine;
+using Script.Index;
+using static Script.Index.IDxInput;
+using Script.Interface;
+using Script.Manager;
 
-public class UI_TitleMenu : IContentTaskUpdater
+
+public class UI_TitleMenu : ITaskUpdater, ITaskInput
 {
     private enum State
     {
@@ -12,20 +14,21 @@ public class UI_TitleMenu : IContentTaskUpdater
 
         INSTANTIATE_UI_PREFAB,
         WAIT_INSTANTIATE_UI_PREFAB,
-        PLAY_UPDATE,
+        UPDATE,
         END
     }
 
     private Task<GameObject> loadAssetTask;
     private UI_TitleMenuObject titleMenu;
     private State state;
+    private EInputFlag inputFlag;
 
     public UI_TitleMenu()
     {
         state = State.NONE;
     }
 
-    public ContentTaskState MoveNext()
+    public IETaskState MoveNext()
     {
         switch (state)
         {
@@ -33,8 +36,7 @@ public class UI_TitleMenu : IContentTaskUpdater
                 ++state;
                 goto case State.INSTANTIATE_UI_PREFAB;
 
-            // 여기 부분을 한 데 묶어서 처리할 수도 있겠음.
-            // (코루틴 안의 코루틴 느낌으로..)
+            // 여기 부분을 한 데 묶어서 처리할 수도 있겠음. (코루틴 안의 코루틴 느낌으로..)
             case State.INSTANTIATE_UI_PREFAB:
                 Transform parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
                 loadAssetTask = AssetManager.GetGameObjectAssetAsync(EAssetName.UITitle, parent, true);
@@ -44,23 +46,48 @@ public class UI_TitleMenu : IContentTaskUpdater
                 if (loadAssetTask.IsCompletedSuccessfully)
                 {
                     titleMenu = (loadAssetTask.Result).GetComponent<UI_TitleMenuObject>();
+                    IngameManager.SetInputTarget(this);
                     ++state;
                 }
                 break;
 
-            case State.PLAY_UPDATE:
-                // input을 받아서 여차저차 해야겠습니다?..
+            case State.UPDATE:
+
+                bool onMove = inputFlag.Contains(EInputFlag.UP | EInputFlag.UP_HOLD | EInputFlag.DOWN | EInputFlag.DOWN_HOLD);
+                if (true == onMove
+                    && false == titleMenu.OnMove(inputFlag))
+                {
+                    // error
+                }
+
+                // action
+                bool onAction = inputFlag.Contains(EInputFlag.ENTER | EInputFlag.ACTION);
+                if (true == onAction
+                    && false == titleMenu.OnEnter(inputFlag))
+                {
+                    // error
+                }
+
+
                 break;
             default:
-                return ContentTaskState.SUCCESS;
+                return IETaskState.SUCCESS;
         }
 
-        return ContentTaskState.RUNNING;
+        return IETaskState.RUNNING;
+    }
+
+    public void InputValue(EInputFlag inputFlag)
+    {
+        // MoveNext().UPDATE 에서 제어하므로 여기선 입력값만 바꿈.
+        this.inputFlag = inputFlag;
     }
 
     ~UI_TitleMenu()
     {
         loadAssetTask.Dispose();
         loadAssetTask = null;
+
+        titleMenu = null;
     }
 }

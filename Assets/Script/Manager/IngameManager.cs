@@ -4,19 +4,18 @@ namespace Script.Manager
     using UnityEngine;
     using Script.Index;
     using Script.Content;
+    using Script.Interface;
 
     public class IngameManager : MonoBehaviour
     {
-        // manager
         private static IngameManager  instance;
         private static OpeningManager openingMgr;
+        private static InputManager inputMgr;
 
-        // content task
         private static List<ContentTaskContainer> updates;
         private static List<ContentTaskContainer> fixedUpdates;
 
-        // input
-        private IDxInput.EInputFlag inputFlag;
+        private static ITaskInput inputTarget;
 
         // Content Task
         private static TaskType GetTaskGroup(TaskType taskType)
@@ -62,6 +61,21 @@ namespace Script.Manager
             }
         }
 
+        // Input
+        public static void SetInputTarget(ITaskInput target)
+        {
+            inputTarget = target;
+        }
+        public static void SetInputValue(IDxInput.EInputFlag inputFlag)
+        {
+            //상시 옵션 값을 걸어도 될 것 같고..
+            //if(true == option.InputValue(inputFlag))
+            //  { return; }
+
+            // 그 다음에 input target에게 전달?
+            inputTarget.InputValue(inputFlag);
+        }
+
 
         // MonoBehaviour
         private void Awake()
@@ -79,17 +93,15 @@ namespace Script.Manager
             fixedUpdates = new List<ContentTaskContainer>();
 
             openingMgr   = new OpeningManager();
+            inputMgr     = new InputManager();
         }
         private void Start()
         {
             AddTask(TaskType.OP_PLAY_OPENING, TaskUpdateType.UPDATE);
-            AssetManager.Initialize(transform);
+            AssetManager.Initialize(transform); // 이것도 Task 형식으로?
         }
         private void Update()
         {
-            // update: input
-            inputFlag = IDxInput.TryGetInput();
-
             // update: contents
             for (int i = 0; i < updates.Count; ++i)
             {
@@ -99,14 +111,14 @@ namespace Script.Manager
                     continue;
                 }
 
-                ContentTaskState state = updates[i].Run();
+                IETaskState state = updates[i].Run();
 
                 switch (state)
                 {
-                    case ContentTaskState.SUCCESS:
+                    case IETaskState.SUCCESS:
                         updates[i] = null;
                         break;
-                    case ContentTaskState.FAILURE:
+                    case IETaskState.FAILURE:
 #if TEST_BUILD
                         DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
 #endif
@@ -123,21 +135,29 @@ namespace Script.Manager
 
             for (int i = 0; i < fixedUpdates.Count; ++i)
             {
-                ContentTaskState state = fixedUpdates[i].Run();
+                IETaskState state = fixedUpdates[i].Run();
 
                 switch (state)
                 {
-                    case ContentTaskState.SUCCESS:
+                    case IETaskState.SUCCESS:
                         fixedUpdates[i] = null;
                         break;
-                    case ContentTaskState.FAILURE:
-                        UnityEngine.Assertions.Assert.IsTrue(state == ContentTaskState.FAILURE);
+                    case IETaskState.FAILURE:
+                        UnityEngine.Assertions.Assert.IsTrue(state == IETaskState.FAILURE);
                         break;
                     default:
                         // Running
                         break;
                 }
             }
+        }
+        private void OnEnable()
+        {
+            inputMgr.OnEnable();
+        }
+        private void OnDisable()
+        {
+            inputMgr.OnDisable();
         }
     }
 }

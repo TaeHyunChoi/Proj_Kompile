@@ -8,13 +8,13 @@ namespace Script.Manager
     {
         public bool TryAddTask(TaskType type, out ContentTaskContainer contentTask)
         {
-            IContentTaskUpdater[] tasks;
+            ITaskUpdater[] tasks;
             contentTask = null;
 
             switch (type)
             {
                 case TaskType.OP_PLAY_OPENING:
-                    tasks = new IContentTaskUpdater[]
+                    tasks = new ITaskUpdater[]
                     {
                        new OP_PlayTitleAnime(),
                        new UI_TitleMenu()

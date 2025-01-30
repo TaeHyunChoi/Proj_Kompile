@@ -1,7 +1,7 @@
 
 namespace Script.Index
 {
-    public enum ContentTaskState
+    public enum IETaskState
     {
         RUNNING,
         SUCCESS,

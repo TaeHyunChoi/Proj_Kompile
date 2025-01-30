@@ -39,7 +39,7 @@ public partial class OP_TitleObject // PLAY_COMPANY_LOGO
     private float alpha;
     private float waitTime;
 
-    public ContentTaskState MoveNext_PlayCompanyLogo()
+    public IETaskState MoveNext_PlayCompanyLogo()
     {
         float deltaTime = Time.deltaTime;
 
@@ -53,10 +53,6 @@ public partial class OP_TitleObject // PLAY_COMPANY_LOGO
                 goto case PlayCompanyLogoState.FADE_IN;
 
             case PlayCompanyLogoState.FADE_IN:
-
-                //TODO: 조건 추가? 플레이 데이터를 모두 로드하면 (AssetMgr.Handler로 관리?)
-                //입력을 받을 때, goto case FADE_OUT;
-
                 alpha += deltaTime * alphaDelta;
                 images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
 
@@ -88,10 +84,18 @@ public partial class OP_TitleObject // PLAY_COMPANY_LOGO
 
             default:
                 transform.GetChild(0).gameObject.SetActive(false);
-                return ContentTaskState.SUCCESS;
+                return IETaskState.SUCCESS;
         }
 
-        return ContentTaskState.RUNNING;
+        return IETaskState.RUNNING;
+    }
+    public void EndPlayCompnayLogo()
+    {
+        alpha = 1f;
+        images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
+
+        waitTime *= 1.5f;
+        companyLogoState = PlayCompanyLogoState.WAIT;
     }
 }
 
@@ -117,7 +121,7 @@ public partial class OP_TitleObject // PLAY_TITLE_LOGO
     private PlayTitleLogoState titleLogoState;
     private float passedTime;
 
-    public ContentTaskState MoveNext_PlayTitleLogo()
+    public IETaskState MoveNext_PlayTitleLogo()
     {
         float deltaTime = Time.deltaTime;
 
@@ -199,9 +203,9 @@ public partial class OP_TitleObject // PLAY_TITLE_LOGO
                 break;
 
             default:
-                return ContentTaskState.SUCCESS;
+                return IETaskState.SUCCESS;
         }
 
-        return ContentTaskState.RUNNING;
+        return IETaskState.RUNNING;
     }
 }
