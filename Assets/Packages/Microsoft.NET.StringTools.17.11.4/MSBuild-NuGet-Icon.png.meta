@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      MSBuild-NuGet-Icon_0: 3662945593356769684
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
