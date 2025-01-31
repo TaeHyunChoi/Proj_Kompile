@@ -11,15 +11,13 @@ namespace Script.Index
     public enum TaskType
     {
         UI = 0000,
-        UI_TITLE_NEW,
         UI_TITLE_LOAD,
         UI_TITLE_OPTION,
         UI_TITLE_QUIT,
 
         OPENGING = 1000,
         OP_PLAY_OPENING,
-        OP_OPEN_TITLE,
-        OP_ENTER_GAME,
+        OP_START_GAME,
 
         FILED = 2000,
         // FD_

@@ -54,7 +54,6 @@ namespace Script.Manager
             return await handle.Task;
         }
 
-
         // Spawn Unit => 얘는 Field, Battle 쪽으로 넘겨서 처리하는게 좋을 듯
         //public static async Task<T> SpawnUnit<T>(int index, Transform parent) where T : UnitBase, new()
         //{

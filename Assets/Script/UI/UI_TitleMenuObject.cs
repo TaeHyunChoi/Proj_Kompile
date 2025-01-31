@@ -1,6 +1,8 @@
+using Script.Manager;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using Script.Index;
 using static Script.Index.IDxInput;
 
 public class UI_TitleMenuObject : MonoBehaviour
@@ -16,11 +18,11 @@ public class UI_TitleMenuObject : MonoBehaviour
     private float alpha;
     private float sign;
 
-    private readonly float waitTime = 0.25f;
+    private readonly float waitTime = 0.125f;
     private float lastInputTime;
     private int   index;
 
-    public bool OnMove(EInputFlag inputFlag)
+    public bool OnSelect_Move(EInputFlag inputUpDown)
     {
         if (Time.time < lastInputTime + waitTime)
         {
@@ -28,22 +30,34 @@ public class UI_TitleMenuObject : MonoBehaviour
         }
         lastInputTime = Time.time;
 
-        if (true == inputFlag.Contains(EInputFlag.UP | EInputFlag.UP_HOLD))
+        if (true == inputUpDown.Contains(EInputFlag.UP | EInputFlag.UP_HOLD))
         {
             index = ((index - 1) + 4) % 4;
-            selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
         }
-        if (true == inputFlag.Contains(EInputFlag.DOWN | EInputFlag.DOWN_HOLD))
+        if (true == inputUpDown.Contains(EInputFlag.DOWN | EInputFlag.DOWN_HOLD))
         {
             index = ((index + 1) + 4) % 4;
-            selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
         }
 
+        selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
         return true;
     }
-
-    public bool OnEnter(EInputFlag inputFlag)
+    public bool OnSelect_Enter()
     {
+        switch (index)
+        {
+            case 0: // new game
+                IngameManager.AddTask(TaskType.OP_START_GAME, TaskUpdateType.UPDATE);
+                break;
+            case 1:  // load game
+                break;
+            case 2:  // option
+                break;
+            case 3:  // exit
+                break;
+            default: // error
+                return false;
+        }
 
         return true;
     }

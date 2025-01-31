@@ -21,6 +21,16 @@ namespace Script.Manager
                      };
                     break;
 
+                case TaskType.OP_START_GAME:
+                    tasks = new ITaskUpdater[]
+                    {
+                        // UI_LoadingCurtain(isOn: true);
+                        // OP_CloseTitle
+                        // FD_Initialize
+                        // UI_LoadingCurtain(isOn: false);
+                    };
+                    break;
+
                 default:
 #if UNITY_EDITOR || TEST_BUILD
                     OnlyDev.DevError.DebugAssert(ErrorCode.CANNOT_FIND_TASK, type.ToString());

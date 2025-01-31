@@ -55,19 +55,18 @@ public class UI_TitleMenu : ITaskUpdater, ITaskInput
 
                 bool onMove = inputFlag.Contains(EInputFlag.UP | EInputFlag.UP_HOLD | EInputFlag.DOWN | EInputFlag.DOWN_HOLD);
                 if (true == onMove
-                    && false == titleMenu.OnMove(inputFlag))
+                    && false == titleMenu.OnSelect_Move(inputFlag))
                 {
-                    // error
+                    Script.OnlyDev.DevError.DebugAssert(ErrorCode.FAIL_INPUT_TITLE_SELECT_MOVE, System.Convert.ToString((int)inputFlag, 2));
                 }
 
                 // action
-                bool onAction = inputFlag.Contains(EInputFlag.ENTER | EInputFlag.ACTION);
-                if (true == onAction
-                    && false == titleMenu.OnEnter(inputFlag))
+                bool onEnter = inputFlag.Contains(EInputFlag.ENTER | EInputFlag.ACTION);
+                if (true == onEnter
+                    && false == titleMenu.OnSelect_Enter())
                 {
-                    // error
+                    Script.OnlyDev.DevError.DebugAssert(ErrorCode.FAIL_INPUT_TITLE_SELECT_ENTER, System.Convert.ToString((int)inputFlag, 2));
                 }
-
 
                 break;
             default:
