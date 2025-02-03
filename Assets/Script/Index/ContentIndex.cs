@@ -1,7 +1,7 @@
 
 namespace Script.Index
 {
-    public enum IETaskState
+    public enum ETaskState
     {
         RUNNING,
         SUCCESS,
@@ -11,9 +11,7 @@ namespace Script.Index
     public enum TaskType
     {
         UI = 0000,
-        UI_TITLE_LOAD,
-        UI_TITLE_OPTION,
-        UI_TITLE_QUIT,
+        UI_TITLE_MENU_FADE,
 
         OPENGING = 1000,
         OP_PLAY_OPENING,
@@ -31,9 +29,10 @@ namespace Script.Index
     }
 
     public enum TaskUpdateType
-    { 
-        NONE         = 0,
-        UPDATE       = 1,
-        FIXED_UPDATE = 2
+    {
+        NONE = 0,
+        UPDATE,
+        FIXED_UPDATE,
+        LATE_UPDATE
     }
 }

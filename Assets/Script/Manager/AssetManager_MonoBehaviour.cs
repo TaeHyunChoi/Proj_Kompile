@@ -10,7 +10,7 @@ namespace Script.Manager
     public static partial class AssetManager // MonoBehaviour
     {
         private static Transform[]  canvasParents;
-        private static CanvasGroup  loadingCurtain;
+        private static UI_LoadingCurtainObject loadingCurtain;
         private static Transform    unitParent;
 
         public static Transform GetCanvas(CanvasType type)
@@ -22,6 +22,10 @@ namespace Script.Manager
                 default: return null;
             }
         }
+        public static UI_LoadingCurtainObject GetLoadingCurtain()
+        {
+            return loadingCurtain;
+        }
 
         public static void Initialize(Transform mainTransform)
         {
@@ -29,7 +33,7 @@ namespace Script.Manager
             Transform uiParent = mainTransform.GetChild(1);
             canvasParents[0] = uiParent.GetChild(0);
             canvasParents[1] = uiParent.GetChild(1);
-            loadingCurtain = uiParent.GetChild(2).GetComponentInChildren<CanvasGroup>();
+            loadingCurtain = uiParent.GetChild(2).GetChild(0).GetComponentInChildren<UI_LoadingCurtainObject>();
 
             unitParent = mainTransform.GetChild(2);
         }

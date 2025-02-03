@@ -8,7 +8,7 @@ namespace Script.Content
     using Script.Manager;
     using Script.Interface;
 
-    public class OP_PlayTitleAnime : ITaskUpdater, ITaskInput
+    public class OP_PlayTitleAnime : ITaskUpdater
     {
         private enum State
         { 
@@ -21,18 +21,17 @@ namespace Script.Content
             END
         }
 
-        //private readonly float alphaDelta = 0.75f;
-
         private Task<GameObject> loadAssetTask;
         private OP_TitleObject title;
 
         private State state;
+        private EInputFlag inputFlag => InputManager.GetInputFlag();
 
         public OP_PlayTitleAnime()
         {
             state = State.NONE;
         }
-        public IETaskState MoveNext()
+        public ETaskState MoveNext()
         {
             switch (state)
             {
@@ -50,41 +49,34 @@ namespace Script.Content
                     if (loadAssetTask.IsCompletedSuccessfully)
                     {
                         title = (loadAssetTask.Result).GetComponent<OP_TitleObject>();
-                        IngameManager.SetInputTarget(this);
                         ++state;
                     }
                     break;
 
                 case State.PLAY_COMPANY_LOGO:
-                    if (IETaskState.SUCCESS == title.MoveNext_PlayCompanyLogo())
+                    if (ETaskState.SUCCESS == title.MoveNext_PlayCompanyLogo())
                     {
                         ++state;
+                    }
+                    if (true == inputFlag.Contains(EInputFlag.ENTER | EInputFlag.ACTION))
+                    {
+                        //TODO: 데이터 테이블 로드 중이라면 확인 후 입력 막기
+                        title.EndPlayCompnayLogo();
                     }
                     break;
 
                 case State.PLAY_TITLE_LOGO:
-                    if (IETaskState.SUCCESS == title.MoveNext_PlayTitleLogo())
+                    if (ETaskState.SUCCESS == title.MoveNext_PlayTitleLogo())
                     {
                         ++state;
                     }
                     break;
 
                 default:
-                    return IETaskState.SUCCESS;
+                    return ETaskState.SUCCESS;
             }
 
-            return IETaskState.RUNNING;
-        }
-
-        public void InputValue(EInputFlag inputFlag)
-        {
-            bool onAction = inputFlag.Contains(EInputFlag.ENTER | EInputFlag.ACTION);
-            if (state == State.PLAY_COMPANY_LOGO
-                && true == onAction)
-            {
-                //TODO: 데이터 테이블 로드 중이라면 확인 후 입력 막기
-                title.EndPlayCompnayLogo();
-            }
+            return ETaskState.RUNNING;
         }
 
         ~OP_PlayTitleAnime()

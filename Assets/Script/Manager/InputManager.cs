@@ -4,35 +4,47 @@ namespace Script.Manager
     using UnityEngine.InputSystem;
     using static Script.Index.IDxInput;
 
+    /// <summary> 입력했니 or not 만 판단하여 flag로 저장 및 IngameManager에게 전달
+    /// </summary>
     public class InputManager
     {
         private readonly InputAction moveInput;
         private readonly InputAction enterInput;
         private readonly InputAction actionInput;
 
+        private static EInputFlag inputFlag;
+
         public InputManager()
         {
             moveInput = new InputAction("Move", InputActionType.Value);
             moveInput.AddCompositeBinding("2DVector")
-                      .With("Up", "<Keyboard>/upArrow")
-                      .With("Down", "<Keyboard>/downArrow")
-                      .With("Left", "<Keyboard>/leftArrow")
+                      .With("Up",    "<Keyboard>/upArrow")
+                      .With("Down",  "<Keyboard>/downArrow")
+                      .With("Left",  "<Keyboard>/leftArrow")
                       .With("Right", "<Keyboard>/rightArrow");
             //moveAction.AddBinding("<Gamepad>/leftStick");
-
             moveInput.started   += OnMove;
             moveInput.performed += OnMove;
-            moveInput.canceled  += OnStop;
+            moveInput.canceled  += OnMove;
 
             enterInput = new InputAction("Enter", InputActionType.Button);
             enterInput.AddBinding("<Keyboard>/z");
-            enterInput.started   += OnEnterStarted;
-            enterInput.performed += OnEnterPerformed;
+            enterInput.started  += (context) => { inputFlag |=  EInputFlag.ENTER; };
+            enterInput.canceled += (context) => { inputFlag &= ~EInputFlag.ENTER; };
 
-            actionInput = new InputAction("Enter", InputActionType.Button);
+            actionInput = new InputAction("Action", InputActionType.Button);
             actionInput.AddBinding("<Keyboard>/space");
-            actionInput.started   += OnActionStarted;
-            actionInput.performed += OnActionPerformed;
+            actionInput.started   += (context) => { inputFlag |=  EInputFlag.ACTION; };
+            actionInput.canceled  += (context) => { inputFlag &= ~EInputFlag.ACTION; };
+        }
+
+        public static EInputFlag GetInputFlag()
+        {
+            return inputFlag;
+        }
+        public static void Clear()
+        {
+            inputFlag = EInputFlag.NONE;
         }
 
         private void OnMove(InputAction.CallbackContext context)
@@ -41,48 +53,13 @@ namespace Script.Manager
             float x = direction.x;
             float y = direction.y;
 
-            EInputFlag inputFlag = EInputFlag.NONE;
-            if (x > 0) { inputFlag |= EInputFlag.RIGHT; }
-            if (x < 0) { inputFlag |= EInputFlag.LEFT;  }
-            if (y > 0) { inputFlag |= EInputFlag.UP;    }
-            if (y < 0) { inputFlag |= EInputFlag.DOWN;  }
+            EInputFlag moveFlag = EInputFlag.NONE;
+            if (x > 0) { moveFlag |= EInputFlag.RIGHT; }
+            if (x < 0) { moveFlag |= EInputFlag.LEFT;  }
+            if (y > 0) { moveFlag |= EInputFlag.UP;    }
+            if (y < 0) { moveFlag |= EInputFlag.DOWN;  }
 
-            IngameManager.SetInputValue(inputFlag);
-        }
-        private void OnStop(InputAction.CallbackContext context)
-        {
-            Vector2 direction = context.ReadValue<Vector2>();
-            float x = direction.x;
-            float y = direction.y;
-
-            EInputFlag inputFlag = EInputFlag.ALL;
-            if (x == 0) 
-            {
-                inputFlag &= ~(EInputFlag.LEFT | EInputFlag.LEFT_HOLD | EInputFlag.RIGHT | EInputFlag.RIGHT_HOLD);
-            }
-            if (y == 0)
-            {
-                inputFlag &= ~(EInputFlag.UP | EInputFlag.UP_HOLD | EInputFlag.DOWN | EInputFlag.DOWN_HOLD);
-            }
-            IngameManager.SetInputValue(inputFlag);
-        }
-
-        private void OnEnterStarted(InputAction.CallbackContext _)
-        {
-            IngameManager.SetInputValue(EInputFlag.ENTER);
-        }
-        private void OnEnterPerformed(InputAction.CallbackContext _)
-        {
-            IngameManager.SetInputValue(EInputFlag.ENTER_HOLD);
-        }
-
-        private void OnActionStarted(InputAction.CallbackContext _)
-        {
-            IngameManager.SetInputValue(EInputFlag.ACTION);
-        }
-        private void OnActionPerformed(InputAction.CallbackContext _)
-        {
-            IngameManager.SetInputValue(EInputFlag.ACTION_HOLD);
+            inputFlag = (inputFlag & EInputFlag.ACT_ALL) | moveFlag;
         }
 
         public void OnEnable()

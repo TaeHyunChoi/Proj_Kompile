@@ -6,7 +6,7 @@ using Script.Interface;
 using Script.Manager;
 
 
-public class UI_TitleMenu : ITaskUpdater, ITaskInput
+public class UI_TitleMenu : ITaskUpdater
 {
     private enum State
     {
@@ -15,20 +15,21 @@ public class UI_TitleMenu : ITaskUpdater, ITaskInput
         INSTANTIATE_UI_PREFAB,
         WAIT_INSTANTIATE_UI_PREFAB,
         UPDATE,
+        WAIT,
         END
     }
 
     private Task<GameObject> loadAssetTask;
     private UI_TitleMenuObject titleMenu;
     private State state;
-    private EInputFlag inputFlag;
+    private EInputFlag InputFlag => InputManager.GetInputFlag();
 
     public UI_TitleMenu()
     {
         state = State.NONE;
     }
 
-    public IETaskState MoveNext()
+    public ETaskState MoveNext()
     {
         switch (state)
         {
@@ -46,40 +47,46 @@ public class UI_TitleMenu : ITaskUpdater, ITaskInput
                 if (loadAssetTask.IsCompletedSuccessfully)
                 {
                     titleMenu = (loadAssetTask.Result).GetComponent<UI_TitleMenuObject>();
-                    IngameManager.SetInputTarget(this);
                     ++state;
                 }
                 break;
 
             case State.UPDATE:
 
-                bool onMove = inputFlag.Contains(EInputFlag.UP | EInputFlag.UP_HOLD | EInputFlag.DOWN | EInputFlag.DOWN_HOLD);
-                if (true == onMove
-                    && false == titleMenu.OnSelect_Move(inputFlag))
+                // move
+                if (true == InputFlag.Contains(EInputFlag.UP | EInputFlag.DOWN))
                 {
-                    Script.OnlyDev.DevError.DebugAssert(ErrorCode.FAIL_INPUT_TITLE_SELECT_MOVE, System.Convert.ToString((int)inputFlag, 2));
+                    titleMenu.OnSelect_Move(InputFlag);
                 }
 
                 // action
-                bool onEnter = inputFlag.Contains(EInputFlag.ENTER | EInputFlag.ACTION);
-                if (true == onEnter
-                    && false == titleMenu.OnSelect_Enter())
+                if (true == InputFlag.Contains(EInputFlag.ENTER | EInputFlag.ACTION))
                 {
-                    Script.OnlyDev.DevError.DebugAssert(ErrorCode.FAIL_INPUT_TITLE_SELECT_ENTER, System.Convert.ToString((int)inputFlag, 2));
+                    if (0 == titleMenu.OnSelect_Enter())
+                    {
+                        state = State.END;
+                        goto case default;
+                    }
+                    else
+                    {
+                        state = State.WAIT;
+                    }
                 }
 
+                // object update
+
                 break;
+
+            case State.WAIT:
+                // 다른 조작이 들어오기 전까지 대기
+                break;
+
             default:
-                return IETaskState.SUCCESS;
+                InputManager.Clear();
+                return ETaskState.SUCCESS;
         }
 
-        return IETaskState.RUNNING;
-    }
-
-    public void InputValue(EInputFlag inputFlag)
-    {
-        // MoveNext().UPDATE 에서 제어하므로 여기선 입력값만 바꿈.
-        this.inputFlag = inputFlag;
+        return ETaskState.RUNNING;
     }
 
     ~UI_TitleMenu()

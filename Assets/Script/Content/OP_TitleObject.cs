@@ -39,7 +39,7 @@ public partial class OP_TitleObject // PLAY_COMPANY_LOGO
     private float alpha;
     private float waitTime;
 
-    public IETaskState MoveNext_PlayCompanyLogo()
+    public ETaskState MoveNext_PlayCompanyLogo()
     {
         float deltaTime = Time.deltaTime;
 
@@ -84,13 +84,18 @@ public partial class OP_TitleObject // PLAY_COMPANY_LOGO
 
             default:
                 transform.GetChild(0).gameObject.SetActive(false);
-                return IETaskState.SUCCESS;
+                return ETaskState.SUCCESS;
         }
 
-        return IETaskState.RUNNING;
+        return ETaskState.RUNNING;
     }
     public void EndPlayCompnayLogo()
     {
+        if (PlayCompanyLogoState.WAIT <= companyLogoState)
+        {
+            return;
+        }
+
         alpha = 1f;
         images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
 
@@ -121,7 +126,7 @@ public partial class OP_TitleObject // PLAY_TITLE_LOGO
     private PlayTitleLogoState titleLogoState;
     private float passedTime;
 
-    public IETaskState MoveNext_PlayTitleLogo()
+    public ETaskState MoveNext_PlayTitleLogo()
     {
         float deltaTime = Time.deltaTime;
 
@@ -203,9 +208,9 @@ public partial class OP_TitleObject // PLAY_TITLE_LOGO
                 break;
 
             default:
-                return IETaskState.SUCCESS;
+                return ETaskState.SUCCESS;
         }
 
-        return IETaskState.RUNNING;
+        return ETaskState.RUNNING;
     }
 }

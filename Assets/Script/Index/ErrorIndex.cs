@@ -9,9 +9,5 @@ namespace Script.Index
         CANNOT_FIND_TASK_UPDATE_TYPE,
 
         FAIL_TASK,
-
-        FAIL_INPUT_TITLE_SELECT_MOVE,
-        FAIL_INPUT_TITLE_SELECT_ENTER,
-
     }
 }

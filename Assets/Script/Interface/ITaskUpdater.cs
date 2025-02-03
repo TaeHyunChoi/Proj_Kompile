@@ -4,10 +4,6 @@ namespace Script.Interface
 
     public interface ITaskUpdater
     {
-        public IETaskState MoveNext();
-    }
-    public interface ITaskInput
-    {
-        public void InputValue(IDxInput.EInputFlag inputFlag);
+        public ETaskState MoveNext();
     }
 }

@@ -4,8 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using Script.Index;
 using static Script.Index.IDxInput;
+using Script.Interface;
 
-public class UI_TitleMenuObject : MonoBehaviour
+public class UI_TitleMenuObject : MonoBehaviour, ITaskUpdater
 {
     [SerializeField] private Transform menuParent;
     [SerializeField] private Image selectSlotImage;
@@ -22,27 +23,26 @@ public class UI_TitleMenuObject : MonoBehaviour
     private float lastInputTime;
     private int   index;
 
-    public bool OnSelect_Move(EInputFlag inputUpDown)
+    public void OnSelect_Move(EInputFlag inputUpDown)
     {
         if (Time.time < lastInputTime + waitTime)
         {
-            return false;
+            return;
         }
         lastInputTime = Time.time;
 
-        if (true == inputUpDown.Contains(EInputFlag.UP | EInputFlag.UP_HOLD))
+        if (true == inputUpDown.Contains(EInputFlag.UP))
         {
             index = ((index - 1) + 4) % 4;
         }
-        if (true == inputUpDown.Contains(EInputFlag.DOWN | EInputFlag.DOWN_HOLD))
+        if (true == inputUpDown.Contains(EInputFlag.DOWN))
         {
             index = ((index + 1) + 4) % 4;
         }
 
         selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
-        return true;
     }
-    public bool OnSelect_Enter()
+    public int OnSelect_Enter()
     {
         switch (index)
         {
@@ -56,10 +56,11 @@ public class UI_TitleMenuObject : MonoBehaviour
             case 3:  // exit
                 break;
             default: // error
-                return false;
+                break;
         }
 
-        return true;
+
+        return index;
     }
 
     private void Awake()
@@ -77,6 +78,9 @@ public class UI_TitleMenuObject : MonoBehaviour
         index = 0;
         lastInputTime = -waitTime; // 즉각 입력하려고
     }
+
+    // 얘네도 그냥 ITask로 처리하는게 차라리 좋았으려나?
+    // 규칙에서 벗어난 느낌쓰~!!
     private void Update()
     {
         alpha += sign * Time.deltaTime * alphaDelta;
@@ -95,5 +99,12 @@ public class UI_TitleMenuObject : MonoBehaviour
     private void LateUpdate()
     {
         selectSlotImage.color = new Color(0.2232704f, 0.5052339f, 1f, alpha);
+    }
+
+    // 여러 개 붙이는 경우도 생기는구나? 아이고 흐음..
+    // 그러면 TryAddTask를 2개 붙여야 하나? 그러면.. 아.. 음.. 흠...
+    public ETaskState MoveNext()
+    {
+        return ETaskState.RUNNING;
     }
 }

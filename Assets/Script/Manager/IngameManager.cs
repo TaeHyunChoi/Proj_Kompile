@@ -4,18 +4,17 @@ namespace Script.Manager
     using UnityEngine;
     using Script.Index;
     using Script.Content;
-    using Script.Interface;
 
     public class IngameManager : MonoBehaviour
     {
         private static IngameManager  instance;
+
         private static OpeningManager openingMgr;
-        private static InputManager inputMgr;
+        private static InputManager   inputMgr;
 
         private static List<ContentTaskContainer> updates;
         private static List<ContentTaskContainer> fixedUpdates;
-
-        private static ITaskInput inputTarget;
+        private static List<ContentTaskContainer> lateUpdates;
 
         // Content Task
         private static TaskType GetTaskGroup(TaskType taskType)
@@ -25,7 +24,7 @@ namespace Script.Manager
         }
         public static void AddTask(TaskType taskType, TaskUpdateType taskUpdateType)
         {
-            ContentTaskContainer task;
+            ContentTaskContainer task = null;
             bool isTaskAdded;
 
             // content type
@@ -36,12 +35,17 @@ namespace Script.Manager
                     isTaskAdded = openingMgr.TryAddTask(taskType, out task);
                     break;
 
+                case TaskType.UI:
+                    isTaskAdded = false; // uiMgr 만들어서 .TryAddTask(taskType, out task)를 해야 하네?
+                    //isTaskAdded = uimgr.TryAddTask(taskType, out task);
+                    break;
+
                 default:
                     OnlyDev.DevError.DebugAssert(ErrorCode.CANNOT_FIND_TASK_GROUP, taskGroupType.ToString());
                     return;
             }
 
-            if (false == isTaskAdded)
+            if (false == isTaskAdded || null == task)
             {
                 // error log 는 TryAddTask에서 찍음
                 return;
@@ -52,30 +56,20 @@ namespace Script.Manager
                 case TaskUpdateType.UPDATE:
                     updates.Add(task);      
                     break;
+
                 case TaskUpdateType.FIXED_UPDATE:
                     fixedUpdates.Add(task); 
                     break;
+
+                case TaskUpdateType.LATE_UPDATE:
+                    lateUpdates.Add(task);
+                    break;
+
                 default:
                     OnlyDev.DevError.DebugAssert(ErrorCode.CANNOT_FIND_TASK_UPDATE_TYPE, taskUpdateType.ToString());
                     break;
             }
         }
-
-        // Input
-        public static void SetInputTarget(ITaskInput target)
-        {
-            inputTarget = target;
-        }
-        public static void SetInputValue(IDxInput.EInputFlag inputFlag)
-        {
-            //상시 옵션 값을 걸어도 될 것 같고..
-            //if(true == option.InputValue(inputFlag))
-            //  { return; }
-
-            // 그 다음에 input target에게 전달?
-            inputTarget.InputValue(inputFlag);
-        }
-
 
         // MonoBehaviour
         private void Awake()
@@ -100,6 +94,7 @@ namespace Script.Manager
             AddTask(TaskType.OP_PLAY_OPENING, TaskUpdateType.UPDATE);
             AssetManager.Initialize(transform); // 이것도 Task 형식으로?
         }
+
         private void Update()
         {
             // update: contents
@@ -111,14 +106,14 @@ namespace Script.Manager
                     continue;
                 }
 
-                IETaskState state = updates[i].Run();
+                ETaskState state = updates[i].Run();
 
                 switch (state)
                 {
-                    case IETaskState.SUCCESS:
+                    case ETaskState.SUCCESS:
                         updates[i] = null;
                         break;
-                    case IETaskState.FAILURE:
+                    case ETaskState.FAILURE:
 #if TEST_BUILD
                         DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
 #endif
@@ -131,19 +126,23 @@ namespace Script.Manager
         }
         private void FixedUpdate()
         {
-            // inputFlag는 Update()에서 받았음
-
             for (int i = 0; i < fixedUpdates.Count; ++i)
             {
-                IETaskState state = fixedUpdates[i].Run();
+                // 임시 처리
+                if (null == fixedUpdates[i])
+                {
+                    continue;
+                }
+
+                ETaskState state = fixedUpdates[i].Run();
 
                 switch (state)
                 {
-                    case IETaskState.SUCCESS:
+                    case ETaskState.SUCCESS:
                         fixedUpdates[i] = null;
                         break;
-                    case IETaskState.FAILURE:
-                        UnityEngine.Assertions.Assert.IsTrue(state == IETaskState.FAILURE);
+                    case ETaskState.FAILURE:
+                        UnityEngine.Assertions.Assert.IsTrue(state == ETaskState.FAILURE);
                         break;
                     default:
                         // Running
@@ -151,6 +150,33 @@ namespace Script.Manager
                 }
             }
         }
+        private void LateUpdate()
+        {
+            for (int i = 0; i < lateUpdates.Count; ++i)
+            {
+                // 임시 처리
+                if (null == lateUpdates[i])
+                {
+                    continue;
+                }
+
+                ETaskState state = lateUpdates[i].Run();
+
+                switch (state)
+                {
+                    case ETaskState.SUCCESS:
+                        lateUpdates[i] = null;
+                        break;
+                    case ETaskState.FAILURE:
+                        UnityEngine.Assertions.Assert.IsTrue(state == ETaskState.FAILURE);
+                        break;
+                    default:
+                        // Running
+                        break;
+                }
+            }
+        }
+
         private void OnEnable()
         {
             inputMgr.OnEnable();

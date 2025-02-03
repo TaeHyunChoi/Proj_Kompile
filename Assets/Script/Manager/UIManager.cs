@@ -4,7 +4,7 @@ namespace Script.Manager
     using Script.Content;
     using Script.Interface;
 
-    public class OpeningManager
+    public class UIManager
     {
         public bool TryAddTask(TaskType type, out ContentTaskContainer contentTask)
         {
@@ -13,22 +13,13 @@ namespace Script.Manager
 
             switch (type)
             {
-                case TaskType.OP_PLAY_OPENING:
+                case TaskType.UI_TITLE_MENU_FADE:
                     tasks = new ITaskUpdater[]
                     {
-                       new OP_PlayTitleAnime(),
-                       new UI_TitleMenu()
+                        // UI_TITLE_ 거기서 받아서 여차저차인건가?
+                        // 오브젝트를 어떻게 제어할 것인가? 이걸 ITask에 넣는게 좋을까? 고민 필요
+                        // 아이고 설계 어렵네~
                      };
-                    break;
-
-                case TaskType.OP_START_GAME:
-                    tasks = new ITaskUpdater[]
-                    {
-                        new UI_LoadingCurtain(true),
-                        // OP_CloseTitle
-                        // FD_Initialize
-                        new UI_LoadingCurtain(false),
-                    };
                     break;
 
                 default:
