@@ -20,18 +20,7 @@ public enum EStat
     LUK,
     CNT
 }
-public enum EAssetName
-{ 
-    NONE = 0,
 
-    UnitBase,
-    AnimCtrl_Ataho,
-    AnimCtrl_Linxhang,
-    AnimeCtrl_Smashu,
-
-    OpeningGame,
-    UITitle,
-}
 //public enum EAssetType
 //{ 
 //    None        = 0,

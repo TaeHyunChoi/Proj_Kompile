@@ -5,6 +5,7 @@ namespace Script.Manager
     using UnityEngine;
     using UnityEngine.AddressableAssets;
     using UnityEngine.ResourceManagement.AsyncOperations;
+    using Script.Index;
 
     /// <summary> 
     /// 이전 코드를 살린 내용이 많아서 리팩토링 필요 
