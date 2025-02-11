@@ -4,16 +4,17 @@ namespace Script.Manager
     using Script.Content;
     using Script.Interface;
 
-    public class OpeningManager
+    [System.Obsolete]
+    public class x_OpeningManager
     {
-        public bool TryAddTask(TaskType type, out ContentTaskContainer contentTask)
+        public bool TryAddTask(UpdaterIndex type, out ContentTaskContainer contentTask)
         {
             ITaskUpdater[] tasks;
             contentTask = null;
 
             switch (type)
             {
-                case TaskType.OP_PLAY_OPENING:
+                case UpdaterIndex.OP_PLAY_OPENING:
                     tasks = new ITaskUpdater[]
                     {
                        new OP_PlayTitleAnime(),
@@ -21,7 +22,7 @@ namespace Script.Manager
                      };
                     break;
 
-                case TaskType.OP_START_GAME:
+                case UpdaterIndex.OP_START_GAME:
                     tasks = new ITaskUpdater[]
                     {
                         new UI_LoadingCurtain(true),

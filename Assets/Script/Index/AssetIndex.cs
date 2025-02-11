@@ -1,5 +1,7 @@
 namespace Script.Index
 {
+    using System;
+
     public enum CanvasType
     { 
         NONE = 0,
@@ -17,5 +19,13 @@ namespace Script.Index
 
         OpeningGame,
         UITitle,
+    }
+
+    public static class Index
+    {
+        public static int ToInt(this EAssetName assetName)
+        {
+            return (int)assetName;
+        }
     }
 }

@@ -18,15 +18,19 @@ namespace Script.Manager
         // Instaniate, Load GameObject Assets
         public static async Task<GameObject> GetGameObjectAssetAsync(EAssetName asset, Transform parent, bool isOn)
         {
+            GameObject targetObj;
             if (true == assetHandlers.TryGetValue((int)asset, out AsyncOperationHandle handler))
             {
-                GameObject obj = (GameObject)handler.Result;
-                obj.SetActive(isOn);
-
-                return obj;
+                targetObj = (GameObject)handler.Result;
+                targetObj.SetActive(isOn);
+            }
+            else
+            {
+                targetObj = await InstantiateGameObjectAsync(asset, parent, isOn);
             }
 
-            return await InstantiateGameObjectAsync(asset, parent, isOn);
+            MessageManager.Publish(new Message_t(MessageType.GET_ASSET, (int)asset, targetObj));
+            return targetObj;
         }
         private static async Task<GameObject> InstantiateGameObjectAsync(EAssetName asset, Transform parent, bool isOn)
         {

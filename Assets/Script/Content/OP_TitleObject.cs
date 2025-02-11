@@ -39,7 +39,7 @@ public partial class OP_TitleObject // PLAY_COMPANY_LOGO
     private float alpha;
     private float waitTime;
 
-    public ETaskState MoveNext_PlayCompanyLogo()
+    public UpdaterState MoveNext_PlayCompanyLogo()
     {
         float deltaTime = Time.deltaTime;
 
@@ -84,10 +84,10 @@ public partial class OP_TitleObject // PLAY_COMPANY_LOGO
 
             default:
                 transform.GetChild(0).gameObject.SetActive(false);
-                return ETaskState.SUCCESS;
+                return UpdaterState.SUCCESS;
         }
 
-        return ETaskState.RUNNING;
+        return UpdaterState.RUNNING;
     }
     public void EndPlayCompnayLogo()
     {
@@ -126,7 +126,7 @@ public partial class OP_TitleObject // PLAY_TITLE_LOGO
     private PlayTitleLogoState titleLogoState;
     private float passedTime;
 
-    public ETaskState MoveNext_PlayTitleLogo()
+    public UpdaterState MoveNext_PlayTitleLogo()
     {
         float deltaTime = Time.deltaTime;
 
@@ -208,9 +208,9 @@ public partial class OP_TitleObject // PLAY_TITLE_LOGO
                 break;
 
             default:
-                return ETaskState.SUCCESS;
+                return UpdaterState.SUCCESS;
         }
 
-        return ETaskState.RUNNING;
+        return UpdaterState.RUNNING;
     }
 }

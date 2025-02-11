@@ -31,7 +31,7 @@ namespace Script.Content
         {
             state = State.NONE;
         }
-        public ETaskState MoveNext()
+        public UpdaterState MoveNext()
         {
             switch (state)
             {
@@ -54,7 +54,7 @@ namespace Script.Content
                     break;
 
                 case State.PLAY_COMPANY_LOGO:
-                    if (ETaskState.SUCCESS == title.MoveNext_PlayCompanyLogo())
+                    if (UpdaterState.SUCCESS == title.MoveNext_PlayCompanyLogo())
                     {
                         ++state;
                     }
@@ -66,17 +66,17 @@ namespace Script.Content
                     break;
 
                 case State.PLAY_TITLE_LOGO:
-                    if (ETaskState.SUCCESS == title.MoveNext_PlayTitleLogo())
+                    if (UpdaterState.SUCCESS == title.MoveNext_PlayTitleLogo())
                     {
                         ++state;
                     }
                     break;
 
                 default:
-                    return ETaskState.SUCCESS;
+                    return UpdaterState.SUCCESS;
             }
 
-            return ETaskState.RUNNING;
+            return UpdaterState.RUNNING;
         }
 
         ~OP_PlayTitleAnime()

@@ -47,7 +47,7 @@ public class UI_TitleMenuObject : MonoBehaviour, ITaskUpdater
         switch (index)
         {
             case 0: // new game
-                IngameManager.AddTask(TaskType.OP_START_GAME, TaskUpdateType.UPDATE);
+                //IngameManager.AddTask(TaskType.OP_START_GAME, TaskUpdateType.UPDATE);
                 break;
             case 1:  // load game
                 break;
@@ -103,8 +103,8 @@ public class UI_TitleMenuObject : MonoBehaviour, ITaskUpdater
 
     // 여러 개 붙이는 경우도 생기는구나? 아이고 흐음..
     // 그러면 TryAddTask를 2개 붙여야 하나? 그러면.. 아.. 음.. 흠...
-    public ETaskState MoveNext()
+    public UpdaterState MoveNext()
     {
-        return ETaskState.RUNNING;
+        return UpdaterState.RUNNING;
     }
 }

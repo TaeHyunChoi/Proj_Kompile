@@ -8,28 +8,28 @@ namespace Script.Content
         private readonly ITaskUpdater[] tasks;
         private readonly int length;
 
-        public readonly TaskType Type;
+        public readonly UpdaterIndex Type;
 
-        private ETaskState state;
+        private UpdaterState state;
         private int index;
 
-        public ContentTaskContainer(TaskType taskType, ITaskUpdater[] taskArray)
+        public ContentTaskContainer(UpdaterIndex taskType, ITaskUpdater[] taskArray)
         {
             tasks   = taskArray;
             length  = taskArray.Length;
             Type    = taskType;
-            state   = ETaskState.RUNNING;
+            state   = UpdaterState.RUNNING;
         }
 
-        public ETaskState Run()
+        public UpdaterState Run()
         {
             state = tasks[index].MoveNext();
 
             // 모든 작업 완료했는지 확인 > 안 끝났으면 다음으로 넘겨서 RUNNING
-            if (ETaskState.SUCCESS == state
+            if (UpdaterState.SUCCESS == state
                 && ++index < length)
             {
-                state = ETaskState.RUNNING;
+                state = UpdaterState.RUNNING;
             }
 
             // 반환 받는 쪽(IngameManager)에서 상황 판단

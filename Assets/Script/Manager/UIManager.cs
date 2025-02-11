@@ -6,14 +6,14 @@ namespace Script.Manager
 
     public class UIManager
     {
-        public bool TryAddTask(TaskType type, out ContentTaskContainer contentTask)
+        public bool TryAddTask(UpdaterIndex type, out ContentTaskContainer contentTask)
         {
             ITaskUpdater[] tasks;
             contentTask = null;
 
             switch (type)
             {
-                case TaskType.UI_TITLE_MENU_FADE:
+                case UpdaterIndex.UI_TITLE_MENU_FADE:
                     tasks = new ITaskUpdater[]
                     {
                         // UI_TITLE_ 거기서 받아서 여차저차인건가?

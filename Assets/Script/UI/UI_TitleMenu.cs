@@ -29,7 +29,7 @@ public class UI_TitleMenu : ITaskUpdater
         state = State.NONE;
     }
 
-    public ETaskState MoveNext()
+    public UpdaterState MoveNext()
     {
         switch (state)
         {
@@ -83,10 +83,10 @@ public class UI_TitleMenu : ITaskUpdater
 
             default:
                 InputManager.Clear();
-                return ETaskState.SUCCESS;
+                return UpdaterState.SUCCESS;
         }
 
-        return ETaskState.RUNNING;
+        return UpdaterState.RUNNING;
     }
 
     ~UI_TitleMenu()

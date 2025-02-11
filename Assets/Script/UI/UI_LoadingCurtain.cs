@@ -32,7 +32,7 @@ public class UI_LoadingCurtain : ITaskUpdater
         }
     }
 
-    public ETaskState MoveNext()
+    public UpdaterState MoveNext()
     {
         switch(state)
         {
@@ -48,12 +48,12 @@ public class UI_LoadingCurtain : ITaskUpdater
                 alpha = System.Math.Clamp(alpha, 0, 1);
                 if (alpha <= 0 || alpha >= 1)
                 {
-                    return ETaskState.SUCCESS;
+                    return UpdaterState.SUCCESS;
                 }
                 break;
 
         }
 
-        return ETaskState.RUNNING;
+        return UpdaterState.RUNNING;
     }
 }

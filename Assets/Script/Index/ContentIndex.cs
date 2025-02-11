@@ -1,14 +1,13 @@
 
 namespace Script.Index
 {
-    public enum ETaskState
+    public enum UpdaterState
     {
         RUNNING,
         SUCCESS,
         FAILURE
     };
-
-    public enum TaskType
+    public enum UpdaterIndex
     {
         UI = 0000,
         UI_TITLE_MENU_FADE,
@@ -27,12 +26,27 @@ namespace Script.Index
         // EV_
 
     }
-
-    public enum TaskUpdateType
+    public enum UpdaterType
     {
         NONE = 0,
         UPDATE,
         FIXED_UPDATE,
         LATE_UPDATE
+    }
+
+
+    public enum IngameLogicIndex
+    {
+        NONE = 0,
+
+        OPENING,
+    }
+    public enum IngameState
+    {
+        NONE = 0,
+
+        RUNNING,
+        SUCCESS,
+        FAILURE
     }
 }

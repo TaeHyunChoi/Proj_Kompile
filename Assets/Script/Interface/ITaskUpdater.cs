@@ -4,6 +4,6 @@ namespace Script.Interface
 
     public interface ITaskUpdater
     {
-        public ETaskState MoveNext();
+        public UpdaterState MoveNext();
     }
 }
