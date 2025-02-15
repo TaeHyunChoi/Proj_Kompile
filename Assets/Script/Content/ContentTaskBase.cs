@@ -5,7 +5,7 @@ namespace Script.Content
 
     public class ContentTaskContainer
     {
-        private readonly ITaskUpdater[] tasks;
+        private readonly IIngameUpdater[] tasks;
         private readonly int length;
 
         public readonly UpdaterIndex Type;
@@ -13,7 +13,7 @@ namespace Script.Content
         private UpdaterState state;
         private int index;
 
-        public ContentTaskContainer(UpdaterIndex taskType, ITaskUpdater[] taskArray)
+        public ContentTaskContainer(UpdaterIndex taskType, IIngameUpdater[] taskArray)
         {
             tasks   = taskArray;
             length  = taskArray.Length;
@@ -23,7 +23,7 @@ namespace Script.Content
 
         public UpdaterState Run()
         {
-            state = tasks[index].MoveNext();
+            state = tasks[index].UpdateState();
 
             // 모든 작업 완료했는지 확인 > 안 끝났으면 다음으로 넘겨서 RUNNING
             if (UpdaterState.SUCCESS == state

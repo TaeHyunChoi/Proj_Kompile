@@ -1,11 +1,12 @@
 namespace Script.Manager
 {
+    using System.Collections.Generic;
+    using Script.Index;
+    using Script.Interface;
     using UnityEngine;
     using UnityEngine.InputSystem;
     using static Script.Index.IDxInput;
 
-    /// <summary> 입력했니 or not 만 판단하여 flag로 저장 및 IngameManager에게 전달
-    /// </summary>
     public class InputManager
     {
         private readonly InputAction moveInput;
@@ -14,8 +15,13 @@ namespace Script.Manager
 
         private static EInputFlag inputFlag;
 
+        private static List<(AssetIndex index, IIngameInput input)> inputs;
+
         public InputManager()
         {
+            inputs = new List<(AssetIndex, IIngameInput)>();
+            inputFlag = EInputFlag.NONE;
+
             moveInput = new InputAction("Move", InputActionType.Value);
             moveInput.AddCompositeBinding("2DVector")
                       .With("Up",    "<Keyboard>/upArrow")
@@ -29,13 +35,52 @@ namespace Script.Manager
 
             enterInput = new InputAction("Enter", InputActionType.Button);
             enterInput.AddBinding("<Keyboard>/z");
-            enterInput.started  += (context) => { inputFlag |=  EInputFlag.ENTER; };
-            enterInput.canceled += (context) => { inputFlag &= ~EInputFlag.ENTER; };
+            enterInput.started  += (context) => 
+            { 
+                inputFlag |=  EInputFlag.ENTER;
+                Update();
+            };
+            enterInput.canceled += (context) => 
+            { 
+                inputFlag &= ~EInputFlag.ENTER;
+                Update();
+            };
 
             actionInput = new InputAction("Action", InputActionType.Button);
             actionInput.AddBinding("<Keyboard>/space");
-            actionInput.started   += (context) => { inputFlag |=  EInputFlag.ACTION; };
-            actionInput.canceled  += (context) => { inputFlag &= ~EInputFlag.ACTION; };
+            actionInput.started   += (context) => 
+            { 
+                inputFlag |=  EInputFlag.ACTION;
+                Update();
+            };
+            actionInput.canceled  += (context) => 
+            { 
+                inputFlag &= ~EInputFlag.ACTION;
+                Update();
+            };
+        }
+
+        public void Add(AssetIndex targetAssetIndex, IIngameInput targetInput)
+        {
+            inputs.Add(new (targetAssetIndex, targetInput));
+        }
+        public void Update()
+        {
+            // 가장 최근에 추가된 것부터 먼저 입력 처리
+            for (int i = inputs.Count - 1; i >= 0; --i)
+            {
+                inputs[i].input.Input(inputFlag);
+            }
+        }
+        public void Remove(AssetIndex assetIndex)
+        {
+            for (int i = inputs.Count - 1; i >= 0; --i)
+            {
+                if (inputs[i].index == assetIndex)
+                {
+                    inputs.RemoveAt(i);
+                }
+            }
         }
 
         public static EInputFlag GetInputFlag()
@@ -60,6 +105,7 @@ namespace Script.Manager
             if (y < 0) { moveFlag |= EInputFlag.DOWN;  }
 
             inputFlag = (inputFlag & EInputFlag.ACT_ALL) | moveFlag;
+            Update();
         }
 
         public void OnEnable()

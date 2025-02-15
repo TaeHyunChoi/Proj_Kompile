@@ -3,7 +3,6 @@ namespace Script.Content
     using System.Threading.Tasks;
     using Script.Manager;
     using Script.Index;
-    using static Index.Index;
     using UnityEngine;
 
     public partial class Ingame_Opening
@@ -13,12 +12,12 @@ namespace Script.Content
             NONE = 0,
             
             INSTANTIATE_PRF_OPENING,
-            PLAY_OPENING, // Opeing 오브젝트 조작  - 종료 대기
+            PLAY_OPENING,
 
             INSTANTIATE_UI_TITLE_MENU,
-            SELECT_MENU,  // UITitle 오브젝트 조작 - 종료 대기
+            SELECT_MENU,
 
-            END           // 타이틀 화면 뿌수기
+            END
         }
     }
     
@@ -32,67 +31,79 @@ namespace Script.Content
         {
             state = State.NONE;
             ingameLogicType = IngameLogicIndex.OPENING;
+
             MessageManager.AddReceiver(this);
-            IngameManager.AddIngame(this);
+
+            MoveNext();
         }
 
         public void Receive(Message_t msg)
         {
-            int assetIndex = msg.GetIndex();
+            State nextState = State.NONE;
 
-            switch (msg.GetMessageType())
+            MessageType messageType = msg.Type;
+            AssetIndex  assetIndex  = msg.AssetIndex;
+
+            if (MessageType.GET_ASSET == messageType)
             {
-                case MessageType.GET_ASSET:
-                    if (EAssetName.OpeningGame.ToInt() == assetIndex)
-                    {
-                        state = State.PLAY_OPENING;
-                        Run();
-                    }
-                    if (EAssetName.UITitle.ToInt() == assetIndex)
-                    { 
-                        // 상태값 전환(2)
-                    }
-                    break;
-                case MessageType.END_OBJECT_PROCESS:
-                    if (EAssetName.OpeningGame.ToInt() == assetIndex)
-                    {
-                        state = State.INSTANTIATE_UI_TITLE_MENU;
-                        Run();
-                    }
-                    break;
-                default:
-                    return;
+                if (AssetIndex.OP_TitleObject == assetIndex)
+                {
+                    nextState = State.PLAY_OPENING;
+                    loadTask.Dispose();
+                }
+                else if (AssetIndex.UI_TitleMenuObject == assetIndex)
+                {
+                    nextState = State.SELECT_MENU;
+                    loadTask.Dispose();
+                }
+            }
+            else if (MessageType.END_OBJECT_PROCESS == messageType)
+            {
+                if (AssetIndex.OP_TitleObject == assetIndex)
+                {
+                    nextState = State.INSTANTIATE_UI_TITLE_MENU;
+                }
+                else if (AssetIndex.UI_TitleMenuObject == assetIndex)
+                {
+                    nextState = State.END;
+                }
+            }
+
+            if (State.NONE != nextState)
+            {
+                state = nextState;
+                MoveNext();
             }
         }
 
-        public override IngameState Run()
+        public override IngameState MoveNext()
         {
             switch (state)
             {
                 case State.NONE:
-                    ++state;
+                    state = State.INSTANTIATE_PRF_OPENING;
                     goto case State.INSTANTIATE_PRF_OPENING;
 
                 case State.INSTANTIATE_PRF_OPENING:
                     Transform parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
-                    loadTask = AssetManager.GetGameObjectAssetAsync(EAssetName.OpeningGame, parent, true);
+                    loadTask = AssetManager.GetGameObjectAssetAsync(AssetIndex.OP_TitleObject, parent, true);
+                    //  Receive() => next state;
                     break;
                 case State.PLAY_OPENING:
-                    OP_PlayTitleAnime opening = loadTask.Result.GetComponent<OP_PlayTitleAnime>();
-                    opening.MoveNext();
-                    // next: opening에서 MoveNext() 호출하면
-                    // 초기화 시점에서 IngameUpdater에 등록해야 함
-                    // IngameUpdaterBase.cs 와 ITaskUpdater의 개념이 헷갈리는데요?
-                    // 이참에 둘을 아예 분리해야 한다.
-                    loadTask.Dispose();
+                    //  Receive() => next state;
                     break;
 
                 case State.INSTANTIATE_UI_TITLE_MENU:
+                    parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
+                    loadTask = AssetManager.GetGameObjectAssetAsync(AssetIndex.UI_TitleMenuObject, parent, true);
+                    //  Receive() => next state;
                     break;
                 case State.SELECT_MENU:
+                    //  Receive() => next state;
                     break;
 
                 case State.END:
+                    MessageManager.Dispose(this);
                     return IngameState.SUCCESS;
 
                 default:

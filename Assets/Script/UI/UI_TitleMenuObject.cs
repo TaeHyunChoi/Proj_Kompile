@@ -6,7 +6,7 @@ using Script.Index;
 using static Script.Index.IDxInput;
 using Script.Interface;
 
-public class UI_TitleMenuObject : MonoBehaviour, ITaskUpdater
+public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater
 {
     [SerializeField] private Transform menuParent;
     [SerializeField] private Image selectSlotImage;
@@ -103,7 +103,7 @@ public class UI_TitleMenuObject : MonoBehaviour, ITaskUpdater
 
     // 여러 개 붙이는 경우도 생기는구나? 아이고 흐음..
     // 그러면 TryAddTask를 2개 붙여야 하나? 그러면.. 아.. 음.. 흠...
-    public UpdaterState MoveNext()
+    public UpdaterState UpdateState()
     {
         return UpdaterState.RUNNING;
     }

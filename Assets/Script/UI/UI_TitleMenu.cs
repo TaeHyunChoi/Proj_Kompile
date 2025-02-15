@@ -6,7 +6,7 @@ using Script.Interface;
 using Script.Manager;
 
 
-public class UI_TitleMenu : ITaskUpdater
+public class UI_TitleMenu : IIngameUpdater
 {
     private enum State
     {
@@ -29,7 +29,7 @@ public class UI_TitleMenu : ITaskUpdater
         state = State.NONE;
     }
 
-    public UpdaterState MoveNext()
+    public UpdaterState UpdateState()
     {
         switch (state)
         {
@@ -40,7 +40,7 @@ public class UI_TitleMenu : ITaskUpdater
             // 여기 부분을 한 데 묶어서 처리할 수도 있겠음. (코루틴 안의 코루틴 느낌으로..)
             case State.INSTANTIATE_UI_PREFAB:
                 Transform parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
-                loadAssetTask = AssetManager.GetGameObjectAssetAsync(EAssetName.UITitle, parent, true);
+                loadAssetTask = AssetManager.GetGameObjectAssetAsync(AssetIndex.UI_TitleMenuObject, parent, true);
                 ++state;
                 break;
             case State.WAIT_INSTANTIATE_UI_PREFAB:

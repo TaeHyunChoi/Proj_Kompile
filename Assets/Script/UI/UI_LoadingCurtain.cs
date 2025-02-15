@@ -3,7 +3,7 @@ using Script.Interface;
 using Script.Manager;
 using UnityEngine;
 
-public class UI_LoadingCurtain : ITaskUpdater
+public class UI_LoadingCurtain : IIngameUpdater
 {
     private enum State
     { 
@@ -32,7 +32,7 @@ public class UI_LoadingCurtain : ITaskUpdater
         }
     }
 
-    public UpdaterState MoveNext()
+    public UpdaterState UpdateState()
     {
         switch(state)
         {

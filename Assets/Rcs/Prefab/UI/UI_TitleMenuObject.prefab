@@ -419,7 +419,7 @@ GameObject:
   - component: {fileID: 2169312965016919095}
   - component: {fileID: 3947556513568567731}
   m_Layer: 0
-  m_Name: UITitle
+  m_Name: UI_TitleMenuObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

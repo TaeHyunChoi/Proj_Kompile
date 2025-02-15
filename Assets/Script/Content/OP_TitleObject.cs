@@ -1,8 +1,10 @@
 using Script.Index;
+using Script.Interface;
+using Script.Manager;
 using UnityEngine;
 using UnityEngine.UI;
 
-public partial class OP_TitleObject : MonoBehaviour // 공통
+public partial class OP_TitleObject
 {
     private enum ImageType
     { 
@@ -12,131 +14,115 @@ public partial class OP_TitleObject : MonoBehaviour // 공통
         TITLE_LOGO_LOWER,
         TITLE_FLASH
     }
+    private enum State
+    {
+        NONE = 0,
+
+        // 회사 로고
+        LOGO_INIT,
+        LOGO_FADE_IN,
+        LOGO_WAIT,
+        LOGO_FADE_OUT,
+
+        // 데모 플레이
+        // DEMO_INIT ...
+
+        // 게임 타이틀
+        TITLE_INIT,
+        TITLE_MOVE_LOGO,
+        TITLE_FLASH_ON,
+        TITLE_WAIT,
+        TITLE_FLASH_OFF,
+
+        END
+    }
+
+}
+
+public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInput
+{
     [SerializeField] private Image[] images;
 
-    private void Awake()
-    {
-        companyLogoState = PlayCompanyLogoState.INIT;
-        titleLogoState   = PlayTitleLogoState.INIT;
+    private State state;
 
-        transform.GetChild(0).gameObject.SetActive(false);
-        transform.GetChild(2).gameObject.SetActive(false);
-    }
-}
+    // play company logo
+    private readonly float logoAlphaDelta = 0.625f;
+    private float logoAlpha;
+    private float logoWaitTime;
 
-public partial class OP_TitleObject // PLAY_COMPANY_LOGO
-{
-    private enum PlayCompanyLogoState
-    {
-        INIT = 0,
-        FADE_IN,
-        WAIT,
-        FADE_OUT,
-    }
-    private PlayCompanyLogoState companyLogoState;
-
-    private readonly float alphaDelta = 0.625f;
-    private float alpha;
-    private float waitTime;
-
-    public UpdaterState MoveNext_PlayCompanyLogo()
-    {
-        float deltaTime = Time.deltaTime;
-
-        switch (companyLogoState)
-        {
-            case PlayCompanyLogoState.INIT:
-                transform.GetChild(0).gameObject.SetActive(true);
-                alpha = 0;
-                waitTime = 1f;
-                ++companyLogoState;
-                goto case PlayCompanyLogoState.FADE_IN;
-
-            case PlayCompanyLogoState.FADE_IN:
-                alpha += deltaTime * alphaDelta;
-                images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
-
-                if (1 <= alpha)
-                {
-                    ++companyLogoState;
-                    alpha = 1f;
-                }
-                break;
-
-            case PlayCompanyLogoState.WAIT:
-                if (0 < waitTime)
-                {
-                    waitTime -= deltaTime;
-                }
-
-                ++companyLogoState;
-                break;
-
-            case PlayCompanyLogoState.FADE_OUT:
-                alpha -= deltaTime * (alphaDelta * 3);
-                images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
-
-                if (0 >= alpha)
-                {
-                    ++companyLogoState;
-                }
-                break;
-
-            default:
-                transform.GetChild(0).gameObject.SetActive(false);
-                return UpdaterState.SUCCESS;
-        }
-
-        return UpdaterState.RUNNING;
-    }
-    public void EndPlayCompnayLogo()
-    {
-        if (PlayCompanyLogoState.WAIT <= companyLogoState)
-        {
-            return;
-        }
-
-        alpha = 1f;
-        images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
-
-        waitTime *= 1.5f;
-        companyLogoState = PlayCompanyLogoState.WAIT;
-    }
-}
-
-public partial class OP_TitleObject // PLAY_TITLE_LOGO
-{
-    private enum PlayTitleLogoState
-    {
-        INIT = 0,
-        MOVE_LOGO,
-        FLASH_ON,
-        WAIT,
-        FLASH_OFF
-    }
-    
+    // play title
     private readonly float movingSpeed = 4000f;
-    private readonly float movingTime  = 0.75f;
-    private readonly float flashDelta  = 3f;
+    private readonly float movingTime = 0.75f;
+    private readonly float flashDelta = 3f;
 
     private RectTransform[] rects;
     private Vector2[] titleInitPositions;
     private float movingDist;
-
-    private PlayTitleLogoState titleLogoState;
     private float passedTime;
 
-    public UpdaterState MoveNext_PlayTitleLogo()
+    private void Awake()
+    {
+        state = State.NONE;
+
+        transform.GetChild(0).gameObject.SetActive(false);
+        transform.GetChild(2).gameObject.SetActive(false);
+
+        IngameManager.AddInput(AssetIndex.OP_TitleObject, this);
+        IngameManager.AddUpdater(this);
+    }
+
+    public UpdaterState UpdateState()
     {
         float deltaTime = Time.deltaTime;
 
-        switch (titleLogoState)
+        switch (state)
         {
-            case PlayTitleLogoState.INIT:
+            case State.NONE:
+                state = State.LOGO_INIT;
+                goto case State.LOGO_INIT;
+
+            case State.LOGO_INIT:
+                transform.GetChild(0).gameObject.SetActive(true);
+                logoAlpha = 0;
+                logoWaitTime = 1f;
+                state = State.LOGO_FADE_IN;
+                break;
+
+            case State.LOGO_FADE_IN:
+                logoAlpha += deltaTime * logoAlphaDelta;
+                images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, logoAlpha);
+
+                if (1 <= logoAlpha)
+                {
+                    state = State.LOGO_WAIT;
+                    logoAlpha = 1f;
+                }
+                break;
+
+            case State.LOGO_WAIT:
+                if (0 < logoWaitTime)
+                {
+                    logoWaitTime -= deltaTime;
+                }
+                state = State.LOGO_FADE_OUT;
+                break;
+
+            case State.LOGO_FADE_OUT:
+                logoAlpha -= deltaTime * (logoAlphaDelta * 3);
+                images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, logoAlpha);
+
+                if (0 >= logoAlpha)
+                {
+                    transform.GetChild(0).gameObject.SetActive(false);
+                    state = State.TITLE_INIT;
+                }
+                break;
+
+            case State.TITLE_INIT:
                 transform.GetChild(2).gameObject.SetActive(true);
                 passedTime = 0f;
-                alpha = 0;
-                waitTime = 0f;
+                logoAlpha = 0;
+                logoWaitTime = 0f;
 
                 // get RectTransform
                 rects = new RectTransform[2];
@@ -160,10 +146,10 @@ public partial class OP_TitleObject // PLAY_TITLE_LOGO
                 images[(int)ImageType.TITLE_LOGO_LOWER].color = new Color(1f, 1f, 1f, 1f);
                 images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, 0f);
 
-                ++titleLogoState;
+                state = State.TITLE_MOVE_LOGO;
                 break;
 
-            case PlayTitleLogoState.MOVE_LOGO:
+            case State.TITLE_MOVE_LOGO:
                 passedTime += deltaTime;
                 float ratio = System.Math.Clamp(passedTime / movingTime, 0f, 1f);
                 rects[0].anchoredPosition = titleInitPositions[0] - new Vector2(0, movingDist * ratio);
@@ -171,46 +157,66 @@ public partial class OP_TitleObject // PLAY_TITLE_LOGO
 
                 if (ratio >= 1)
                 {
-                    ++titleLogoState;
+                    state = State.TITLE_FLASH_ON;
                 }
                 break;
 
-            case PlayTitleLogoState.FLASH_ON:
-                alpha += deltaTime * flashDelta;
-                images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, alpha);
+            case State.TITLE_FLASH_ON:
+                logoAlpha += deltaTime * flashDelta;
+                images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, logoAlpha);
 
-                if (alpha >= 1f)
+                if (logoAlpha >= 1f)
                 {
-                    alpha = 1f;
-                    ++titleLogoState;
+                    logoAlpha = 1f;
+                    state = State.TITLE_WAIT;
                 }
                 break;
 
-            case PlayTitleLogoState.WAIT:
-                if (waitTime < 0.25f)
+            case State.TITLE_WAIT:
+                if (logoWaitTime < 0.25f)
                 {
-                    waitTime += deltaTime;
+                    logoWaitTime += deltaTime;
                     break;
                 }
 
-                ++titleLogoState;
+                state = State.TITLE_FLASH_OFF;
                 break;
 
-            case PlayTitleLogoState.FLASH_OFF:
-                alpha -= deltaTime * flashDelta * 1.125f;
-                images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, alpha);
+            case State.TITLE_FLASH_OFF:
+                logoAlpha -= deltaTime * flashDelta * 1.125f;
+                images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, logoAlpha);
 
-                if (alpha < 0)
+                if (logoAlpha < 0)
                 {
-                    alpha = 0;
-                    ++titleLogoState;
+                    logoAlpha = 0;
+                    state = State.END;
                 }
                 break;
 
             default:
+                IngameManager.RemoveInput(AssetIndex.OP_TitleObject);
+                MessageManager.Publish(new Message_t(MessageType.END_OBJECT_PROCESS, AssetIndex.OP_TitleObject));
                 return UpdaterState.SUCCESS;
         }
 
         return UpdaterState.RUNNING;
+    }
+
+    public void Input(IDxInput.EInputFlag inputFlag)
+    {
+        if (false == inputFlag.Contains(IDxInput.EInputFlag.ACTION | IDxInput.EInputFlag.ENTER))
+        {
+            return;
+        }
+        if (State.LOGO_WAIT <= state)
+        {
+            return;
+        }
+
+        logoAlpha = 1f;
+        images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, logoAlpha);
+
+        logoWaitTime *= 1.5f;
+        state = State.LOGO_WAIT;
     }
 }

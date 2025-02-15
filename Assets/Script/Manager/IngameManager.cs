@@ -4,23 +4,82 @@ namespace Script.Manager
     using UnityEngine;
     using Script.Index;
     using Script.Content;
+    using Script.Interface;
+    using System;
 
     public class IngameManager : MonoBehaviour
     {
         private static IngameManager  instance;
-        private static List<IngameLogicBase> ingameLogics;
-        private static InputManager   inputMgr;
 
-        // Ingame Logic
+        // field : input
+        private static InputManager inputMgr;
+
+        // field : ingame
+        private static List<IngameLogicBase>      ingameLogics;
+        private static List<IIngameUpdater>       update;
+        private static List<IIngameFixedUpdater>  fixedUpdate;
+        private static List<IIngameLateUpdater>   lateUpdate;
+        private readonly int clearSuccessIngameCount = 5;
+
+        // func : input
+        public static void AddInput(AssetIndex assetType, IIngameInput targetInput)
+        {
+            inputMgr.Add(assetType, targetInput);
+        }
+        public static void RemoveInput(AssetIndex assetType)
+        {
+            inputMgr.Remove(assetType);
+        }
+
+        // func : ingame
         public static void AddIngame(IngameLogicBase targetIngame)
         {
             ingameLogics.Add(targetIngame);
         }
+        public static void AddUpdater(IIngameUpdater targetUpdater)
+        {
+            for (int i = 0; i < update.Count; ++i)
+            {
+                if (null == update[i])
+                {
+                    update[i] = targetUpdater;
+                    return;
+                }
+            }
 
-        // MonoBehaviour
+            update.Add(targetUpdater);
+        }
+        public static void AddFixedUpdater(IIngameFixedUpdater targetFixedUpdater)
+        {
+            for (int i = 0; i < fixedUpdate.Count; ++i)
+            {
+                if (null == fixedUpdate[i])
+                {
+                    fixedUpdate[i] = targetFixedUpdater;
+                    return;
+                }
+            }
+
+            fixedUpdate.Add(targetFixedUpdater);
+        }
+        public static void AddLateUpdater(IIngameLateUpdater targetLateUpdater)
+        {
+            for (int i = 0; i < lateUpdate.Count; ++i)
+            {
+                if (null == lateUpdate[i])
+                {
+                    lateUpdate[i] = targetLateUpdater;
+                    return;
+                }
+            }
+
+            lateUpdate.Add(targetLateUpdater);
+        }
+
+
         private void Awake()
         {
-            // like singleton
+            // init: instance (like singleton)
             if (instance != null)
             {
                 Destroy(gameObject);
@@ -29,39 +88,131 @@ namespace Script.Manager
             instance = this;
             DontDestroyOnLoad(gameObject);
 
+            // init: manager
+            AssetManager.Initialize(this.transform);
+            inputMgr = new InputManager();
             ingameLogics = new List<IngameLogicBase>();
-            inputMgr     = new InputManager();
+
+            // init: update
+            update      = new List<IIngameUpdater>();
+            fixedUpdate = new List<IIngameFixedUpdater>();
+            lateUpdate  = new List<IIngameLateUpdater>();
+        }
+
+        private void Start()
+        {
+            AddIngame(new Ingame_Opening());
         }
 
         private void Update()
         {
+            int nullCount = 0;
+
             // update: contents
-//            for (int i = 0; i < updates.Count; ++i)
-//            {
-//                // 임시 처리 - 풀링 고려 중.
-//                if (null == updates[i])
-//                {
-//                    continue;
-//                }
+            for (int i = 0; i < update.Count; ++i)
+            {
+                if (null == update[i])
+                {
+                    ++nullCount;
+                    continue;
+                }
 
-//                ETaskState state = updates[i].Run();
+                UpdaterState state = update[i].UpdateState();
 
-//                switch (state)
-//                {
-//                    case ETaskState.SUCCESS:
-//                        updates[i] = null;
-//                        break;
-//                    case ETaskState.FAILURE:
-//#if TEST_BUILD
-//                        DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
-//#endif
-//                        break;
-//                    default:
-//                        // Running
-//                        break;
-//                }
-//            }
+                switch (state)
+                {
+                    case UpdaterState.SUCCESS:
+                        update[i] = null;
+
+                        // 되려나..?
+                        if (++nullCount > clearSuccessIngameCount)
+                        {
+                            List<IIngameUpdater> newUpdater = new List<IIngameUpdater>();
+                            for (int u = 0; u < update.Count; ++u)
+                            {
+                                if (null != update[u])
+                                {
+                                    newUpdater.Add(update[u]);
+                                }
+                            }
+                            update = newUpdater;
+                            GC.Collect();
+                        }
+                        break;
+                    case UpdaterState.FAILURE:
+#if TEST_BUILD
+                        DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
+#endif
+                        break;
+                    default:
+                        // Running
+                        break;
+                }
+            }
         }
+        private void FixedUpdate()
+        {
+            for (int i = 0; i < fixedUpdate.Count; ++i)
+            {
+                if (null == fixedUpdate[i])
+                {
+                    continue;
+                }
+
+                UpdaterState state = fixedUpdate[i].FixedUpdateState();
+                switch (state)
+                {
+                    case UpdaterState.SUCCESS:
+                        // .Publish(END_UPDATE)
+                        fixedUpdate[i] = null;
+                        break;
+                    case UpdaterState.FAILURE:
+#if TEST_BUILD
+                        DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
+#endif
+                        break;
+                    default:
+                        // Running
+                        break;
+                }
+            }
+        }
+        private void LateUpdate()
+        {
+            int emptyCount = 0;
+
+            for (int i = 0; i < lateUpdate.Count; ++i)
+            {
+                if (null == lateUpdate[i])
+                {
+                    ++emptyCount;
+                    continue;
+                }
+
+                UpdaterState state = lateUpdate[i].LateUpdateState();
+                switch (state)
+                {
+                    case UpdaterState.SUCCESS:
+                        lateUpdate[i] = null;
+                        ++emptyCount;
+                        break;
+                    case UpdaterState.FAILURE:
+#if TEST_BUILD
+                        DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
+#endif
+                        break;
+                    default:
+                        // Running
+                        break;
+                }
+            }
+
+            if (emptyCount > clearSuccessIngameCount)
+            {
+                //재정렬?
+            }
+        }
+
 
         private void OnEnable()
         {

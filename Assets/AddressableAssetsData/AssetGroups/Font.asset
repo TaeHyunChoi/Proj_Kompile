@@ -13,22 +13,20 @@ MonoBehaviour:
   m_Name: Font
   m_EditorClassIdentifier: 
   m_GroupName: Font
-  m_Data:
-    m_SerializedData: []
   m_GUID: dc480f9a50872e5499496bd3dbbd97cf
   m_SerializeEntries:
   - m_GUID: 16c4fc8b318ca9342a5fd9cc2275a9e2
     m_Address: NanumBarunGothic-YetHangul SDF
     m_ReadOnly: 0
     m_SerializedLabels:
-    - External
-    - .external
+    - external
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4eaf7c80d69976242a3db1ed7da693af
     m_Address: NanumBarunGothic-YetHangul
     m_ReadOnly: 0
     m_SerializedLabels:
-    - External
-    - .external
+    - external
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

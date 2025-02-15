@@ -1,5 +1,6 @@
 namespace Script.Manager
 {
+    using Script.Index;
     using System.Collections.Generic;
     using UnityEngine;
 
@@ -38,27 +39,18 @@ namespace Script.Manager
     public readonly struct Message_t
     {
         private readonly MessageType type;
-        private readonly int index;
-        private readonly Object value;
+        private readonly AssetIndex  assetIndex;
+        private readonly int         valueInt;
 
-        public Message_t(MessageType targetType, int targetIndex, Object targetValue)
-        {
-            type  = targetType;
-            index = targetIndex;
-            value = targetValue;
-        }
+        public MessageType Type => type;
+        public AssetIndex AssetIndex => assetIndex;
+        public int ValueInt => valueInt;
 
-        public readonly MessageType GetMessageType()
+        public Message_t(MessageType targetType, AssetIndex targetAsset, int targetValueInt = default)
         {
-            return type;
-        }
-        public readonly int GetIndex()
-        {
-            return index;
-        }
-        public readonly T GetValue<T>() where T : class 
-        {
-            return value as T;
+            type       = targetType;
+            assetIndex = targetAsset;
+            valueInt   = targetValueInt;
         }
     }
     public enum MessageType

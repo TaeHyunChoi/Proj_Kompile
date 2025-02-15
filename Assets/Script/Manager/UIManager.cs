@@ -8,13 +8,13 @@ namespace Script.Manager
     {
         public bool TryAddTask(UpdaterIndex type, out ContentTaskContainer contentTask)
         {
-            ITaskUpdater[] tasks;
+            IIngameUpdater[] tasks;
             contentTask = null;
 
             switch (type)
             {
                 case UpdaterIndex.UI_TITLE_MENU_FADE:
-                    tasks = new ITaskUpdater[]
+                    tasks = new IIngameUpdater[]
                     {
                         // UI_TITLE_ 거기서 받아서 여차저차인건가?
                         // 오브젝트를 어떻게 제어할 것인가? 이걸 ITask에 넣는게 좋을까? 고민 필요

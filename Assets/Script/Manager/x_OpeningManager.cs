@@ -9,21 +9,21 @@ namespace Script.Manager
     {
         public bool TryAddTask(UpdaterIndex type, out ContentTaskContainer contentTask)
         {
-            ITaskUpdater[] tasks;
+            IIngameUpdater[] tasks;
             contentTask = null;
 
             switch (type)
             {
                 case UpdaterIndex.OP_PLAY_OPENING:
-                    tasks = new ITaskUpdater[]
+                    tasks = new IIngameUpdater[]
                     {
-                       new OP_PlayTitleAnime(),
+                       //new x_OP_PlayTitleAnime(),
                        new UI_TitleMenu()
                      };
                     break;
 
                 case UpdaterIndex.OP_START_GAME:
-                    tasks = new ITaskUpdater[]
+                    tasks = new IIngameUpdater[]
                     {
                         new UI_LoadingCurtain(true),
                         // OP_CloseTitle

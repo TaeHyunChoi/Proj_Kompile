@@ -7,6 +7,8 @@ namespace Script.Index
         SUCCESS,
         FAILURE
     };
+
+    // 얘도 애매하네...?
     public enum UpdaterIndex
     {
         UI = 0000,
@@ -26,14 +28,6 @@ namespace Script.Index
         // EV_
 
     }
-    public enum UpdaterType
-    {
-        NONE = 0,
-        UPDATE,
-        FIXED_UPDATE,
-        LATE_UPDATE
-    }
-
 
     public enum IngameLogicIndex
     {

@@ -6,6 +6,6 @@ namespace Script.Content
     {
         protected IngameLogicIndex ingameLogicType;
         public IngameLogicIndex IngameLogicType => ingameLogicType;
-        public abstract IngameState Run();
+        public abstract IngameState MoveNext();
     }
 }
