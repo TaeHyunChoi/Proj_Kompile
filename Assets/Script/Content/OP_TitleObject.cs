@@ -47,8 +47,8 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
 
     // play company logo
     private readonly float logoAlphaDelta = 0.625f;
-    private float logoAlpha;
-    private float logoWaitTime;
+    private float alpha;
+    private float waitTime;
 
     // play title
     private readonly float movingSpeed = 4000f;
@@ -67,6 +67,11 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
         transform.GetChild(0).gameObject.SetActive(false);
         transform.GetChild(2).gameObject.SetActive(false);
 
+        images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, 0f);
+        images[(int)ImageType.TITLE_LOGO_LOWER].color = new Color(1f, 1f, 1f, 0f);
+        images[(int)ImageType.TITLE_LOGO_UPPER].color = new Color(1f, 1f, 1f, 0f);
+        images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, 0f);
+
         IngameManager.AddInput(AssetIndex.OP_TitleObject, this);
         IngameManager.AddUpdater(this);
     }
@@ -79,39 +84,40 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
         {
             case State.NONE:
                 state = State.LOGO_INIT;
+
                 goto case State.LOGO_INIT;
 
             case State.LOGO_INIT:
                 transform.GetChild(0).gameObject.SetActive(true);
-                logoAlpha = 0;
-                logoWaitTime = 1f;
+                alpha = 0f;
+                waitTime = 0f;
                 state = State.LOGO_FADE_IN;
                 break;
 
             case State.LOGO_FADE_IN:
-                logoAlpha += deltaTime * logoAlphaDelta;
-                images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, logoAlpha);
+                alpha += deltaTime * logoAlphaDelta;
+                images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
 
-                if (1 <= logoAlpha)
+                if (1 <= alpha)
                 {
                     state = State.LOGO_WAIT;
-                    logoAlpha = 1f;
+                    alpha = 1f;
                 }
                 break;
 
             case State.LOGO_WAIT:
-                if (0 < logoWaitTime)
+                if (waitTime < 1f)
                 {
-                    logoWaitTime -= deltaTime;
+                    waitTime += deltaTime;
                 }
                 state = State.LOGO_FADE_OUT;
                 break;
 
             case State.LOGO_FADE_OUT:
-                logoAlpha -= deltaTime * (logoAlphaDelta * 3);
-                images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, logoAlpha);
+                alpha -= deltaTime * (logoAlphaDelta * 3);
+                images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
 
-                if (0 >= logoAlpha)
+                if (0 >= alpha)
                 {
                     transform.GetChild(0).gameObject.SetActive(false);
                     state = State.TITLE_INIT;
@@ -121,8 +127,8 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
             case State.TITLE_INIT:
                 transform.GetChild(2).gameObject.SetActive(true);
                 passedTime = 0f;
-                logoAlpha = 0;
-                logoWaitTime = 0f;
+                alpha = 0;
+                waitTime = 0f;
 
                 // get RectTransform
                 rects = new RectTransform[2];
@@ -162,20 +168,20 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
                 break;
 
             case State.TITLE_FLASH_ON:
-                logoAlpha += deltaTime * flashDelta;
-                images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, logoAlpha);
+                alpha += deltaTime * flashDelta;
+                images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, alpha);
 
-                if (logoAlpha >= 1f)
+                if (alpha >= 1f)
                 {
-                    logoAlpha = 1f;
+                    alpha = 1f;
                     state = State.TITLE_WAIT;
                 }
                 break;
 
             case State.TITLE_WAIT:
-                if (logoWaitTime < 0.25f)
+                if (waitTime < 0.25f)
                 {
-                    logoWaitTime += deltaTime;
+                    waitTime += deltaTime;
                     break;
                 }
 
@@ -183,12 +189,12 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
                 break;
 
             case State.TITLE_FLASH_OFF:
-                logoAlpha -= deltaTime * flashDelta * 1.125f;
-                images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, logoAlpha);
+                alpha -= deltaTime * flashDelta * 1.125f;
+                images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, alpha);
 
-                if (logoAlpha < 0)
+                if (alpha < 0)
                 {
-                    logoAlpha = 0;
+                    alpha = 0;
                     state = State.END;
                 }
                 break;
@@ -213,10 +219,10 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
             return;
         }
 
-        logoAlpha = 1f;
-        images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, logoAlpha);
+        alpha = 1f;
+        images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
 
-        logoWaitTime *= 1.5f;
+        waitTime *= 1.5f;
         state = State.LOGO_WAIT;
     }
 }
