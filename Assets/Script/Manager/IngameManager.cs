@@ -31,6 +31,7 @@ namespace Script.Manager
             inputMgr.Remove(assetType);
         }
 
+
         // func : ingame
         public static void AddIngame(IngameLogicBase targetIngame)
         {
@@ -106,9 +107,14 @@ namespace Script.Manager
 
         private void Update()
         {
-            int nullCount = 0;
+            // 예외 : 입력은 최우선으로 업데이트
+            if (true == inputMgr.IsPerformed())
+            {
+                inputMgr.Update();
+            }
 
             // update: contents
+            int nullCount = 0;
             for (int i = 0; i < update.Count; ++i)
             {
                 if (null == update[i])

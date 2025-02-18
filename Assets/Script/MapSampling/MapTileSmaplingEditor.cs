@@ -1,10 +1,9 @@
-using System;
-using UnityEditor;
-using UnityEngine;
-using MapSampling;
-
+#if UNITY_EDITOR
 namespace  MapSampling
 {
+    using UnityEditor;
+    using UnityEngine;
+
     [CustomEditor(typeof(MapTileSampling))]
     public class MyScriptEditor : Editor
     {
@@ -31,3 +30,4 @@ namespace  MapSampling
         }
     }  
 }
+#endif

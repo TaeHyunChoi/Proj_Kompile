@@ -21,8 +21,28 @@ namespace Script.Util
             _dictionary = dictionary;
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        
+        IEnumerator IEnumerable.GetEnumerator()
+        { 
+            return GetEnumerator();
+        }
+
+        public Dictionary<TKey, TValue>.KeyCollection Keys
+        {
+            get
+            {
+                return _dictionary.Keys;
+            }
+        }
+
+        public Dictionary<TKey, TValue>.ValueCollection Values
+        {
+            get
+            {
+                return _dictionary.Values;
+            }
+        }
+
+
         public TValue this[TKey key]
         {
             get

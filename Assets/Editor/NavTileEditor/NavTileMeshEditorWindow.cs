@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Script.Data;
 
 // 자료구조: VirtualVertex
 public partial class NavTileMeshEditorWindow
@@ -182,7 +183,7 @@ public partial class NavTileMeshEditorWindow : EditorWindow
             renderer.sharedMaterial = material;
 
             // 타일 정보를 유니티의 NavMesh를 Bake하는 것처럼 데이터 저장할 때 호출하는 함수
-            var navTileMesh = testPrefab.AddComponent<NavTileMesh>();
+            var navTileMesh = testPrefab.AddComponent<EditNavTileData>();
             navTileMesh.InitNaviMask(inputHeights, isSmall);
 
             PrefabUtility.SaveAsPrefabAsset(testPrefab, path, out isSuccess);

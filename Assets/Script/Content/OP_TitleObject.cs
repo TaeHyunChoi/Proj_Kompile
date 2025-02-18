@@ -67,10 +67,11 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
         transform.GetChild(0).gameObject.SetActive(false);
         transform.GetChild(2).gameObject.SetActive(false);
 
-        images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, 0f);
-        images[(int)ImageType.TITLE_LOGO_LOWER].color = new Color(1f, 1f, 1f, 0f);
-        images[(int)ImageType.TITLE_LOGO_UPPER].color = new Color(1f, 1f, 1f, 0f);
-        images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, 0f);
+        Color initColor = new Color(1f, 1f, 1f, 0f);
+        images[(int)ImageType.COMPANY_LOGO].color       = initColor;
+        images[(int)ImageType.TITLE_LOGO_LOWER].color   = initColor;
+        images[(int)ImageType.TITLE_LOGO_UPPER].color   = initColor;
+        images[(int)ImageType.TITLE_FLASH].color        = initColor;
 
         IngameManager.AddInput(AssetIndex.OP_TitleObject, this);
         IngameManager.AddUpdater(this);
@@ -208,9 +209,9 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
         return UpdaterState.RUNNING;
     }
 
-    public void Input(IDxInput.EInputFlag inputFlag)
+    public void Input(IDxInput.InputFlag inputFlag)
     {
-        if (false == inputFlag.Contains(IDxInput.EInputFlag.ACTION | IDxInput.EInputFlag.ENTER))
+        if (false == inputFlag.Contains(IDxInput.InputFlag.ACTION | IDxInput.InputFlag.ENTER))
         {
             return;
         }

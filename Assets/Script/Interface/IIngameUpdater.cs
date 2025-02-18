@@ -17,6 +17,6 @@ namespace Script.Interface
 
     public interface IIngameInput
     {
-        public void Input(IDxInput.EInputFlag inputFlag);
+        public void Input(IDxInput.InputFlag inputFlag);
     }
 }

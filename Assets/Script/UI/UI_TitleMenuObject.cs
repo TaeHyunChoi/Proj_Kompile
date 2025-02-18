@@ -6,62 +6,32 @@ using Script.Index;
 using static Script.Index.IDxInput;
 using Script.Interface;
 
-public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater
+public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
 {
+    private enum State
+    { 
+        NONE,
+        UPDATE,
+        WAIT,
+        CLOSE
+    }
+
     [SerializeField] private Transform menuParent;
     [SerializeField] private Image selectSlotImage;
 
     private readonly float minAlpha   = 0.3f;
     private readonly float maxAlpha   = 0.7f;
     private readonly float alphaDelta = 0.5f;
+    private readonly float waitTime   = 0.125f;
 
     private Vector2[] anchoredPositions;
     private float alpha;
     private float sign;
 
-    private readonly float waitTime = 0.125f;
     private float lastInputTime;
     private int   index;
 
-    public void OnSelect_Move(EInputFlag inputUpDown)
-    {
-        if (Time.time < lastInputTime + waitTime)
-        {
-            return;
-        }
-        lastInputTime = Time.time;
-
-        if (true == inputUpDown.Contains(EInputFlag.UP))
-        {
-            index = ((index - 1) + 4) % 4;
-        }
-        if (true == inputUpDown.Contains(EInputFlag.DOWN))
-        {
-            index = ((index + 1) + 4) % 4;
-        }
-
-        selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
-    }
-    public int OnSelect_Enter()
-    {
-        switch (index)
-        {
-            case 0: // new game
-                //IngameManager.AddTask(TaskType.OP_START_GAME, TaskUpdateType.UPDATE);
-                break;
-            case 1:  // load game
-                break;
-            case 2:  // option
-                break;
-            case 3:  // exit
-                break;
-            default: // error
-                break;
-        }
-
-
-        return index;
-    }
+    private State state;
 
     private void Awake()
     {
@@ -70,41 +40,92 @@ public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater
         {
             anchoredPositions[i] = menuParent.GetChild(i).GetComponent<RectTransform>().anchoredPosition;
         }
-        menuParent = null;
+        menuParent = null; // 사용을 마침
 
         alpha = minAlpha;
         sign  = 1f;
 
         index = 0;
-        lastInputTime = -waitTime; // 즉각 입력하려고
+        lastInputTime = 0;
+
+        state = State.NONE;
+
+        IngameManager.AddUpdater(this);
+        IngameManager.AddInput(AssetIndex.UI_TitleMenuObject, this);
     }
 
-    // 얘네도 그냥 ITask로 처리하는게 차라리 좋았으려나?
-    // 규칙에서 벗어난 느낌쓰~!!
-    private void Update()
-    {
-        alpha += sign * Time.deltaTime * alphaDelta;
-
-        if (alpha >= maxAlpha)
-        {
-            alpha = maxAlpha;
-            sign  = -1f;
-        }
-        else if (alpha <= minAlpha)
-        {
-            alpha = minAlpha;
-            sign  = 1f;
-        }
-    }
-    private void LateUpdate()
-    {
-        selectSlotImage.color = new Color(0.2232704f, 0.5052339f, 1f, alpha);
-    }
-
-    // 여러 개 붙이는 경우도 생기는구나? 아이고 흐음..
-    // 그러면 TryAddTask를 2개 붙여야 하나? 그러면.. 아.. 음.. 흠...
     public UpdaterState UpdateState()
     {
+        switch (state)
+        {
+            case State.NONE:
+                state = State.UPDATE;
+                break;
+            case State.UPDATE:
+                alpha += sign * Time.deltaTime * alphaDelta;
+
+                if (alpha >= maxAlpha)
+                {
+                    alpha = maxAlpha;
+                    sign = -1f;
+                }
+                else if (alpha <= minAlpha)
+                {
+                    alpha = minAlpha;
+                    sign = 1f;
+                }
+
+                selectSlotImage.color = new Color(0.2232704f, 0.5052339f, 1f, alpha);
+                break;
+            case State.WAIT:
+                //작동 일시중지
+                break;
+            case State.CLOSE:
+                IngameManager.RemoveInput(AssetIndex.UI_TitleMenuObject);
+                MessageManager.Publish(new Message_t(MessageType.END_OBJECT_PROCESS, AssetIndex.UI_TitleMenuObject));
+                return UpdaterState.SUCCESS;
+        }
         return UpdaterState.RUNNING;
+    }
+
+    public void Input(InputFlag inputFlag)
+    {
+        if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
+        {
+            switch (index)
+            {
+                case 0: // new game
+                        //IngameManager.AddTask(TaskType.OP_START_GAME, TaskUpdateType.UPDATE);
+                    break;
+                case 1:  // load game
+                    break;
+                case 2:  // option
+                    break;
+                case 3:  // exit
+                    break;
+                default: // error
+                    // state 유지
+                    return;
+            }
+
+            return;
+        }
+
+        if (Time.time < lastInputTime + waitTime)
+        {
+            return;
+        }
+        lastInputTime = Time.time;
+
+        if (true == inputFlag.Contains(InputFlag.UP))
+        {
+            index = ((index - 1) + 4) % 4;
+            selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
+        }
+        if (true == inputFlag.Contains(InputFlag.DOWN))
+        {
+            index = ((index + 1) + 4) % 4;
+            selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
+        }
     }
 }
