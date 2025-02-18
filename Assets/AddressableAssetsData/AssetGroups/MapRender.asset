@@ -14,7 +14,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: MapRender
   m_GUID: d20cb78037ea68b4c9806d32461477c7
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 1c7fd5ae56703b4409cad6d0ef141fe3
+    m_Address: MapRender_0_0
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - MapRender_0
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a69bfd6e6c954c43a5c725654e01704
+    m_Address: MapRender_0_2
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - MapRender_0
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dca966abfbaebf3499b5208c1981674b
+    m_Address: MapRender_0_1
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - MapRender_0
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

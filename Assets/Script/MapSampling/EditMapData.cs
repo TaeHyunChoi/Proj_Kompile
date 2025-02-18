@@ -8,7 +8,7 @@ namespace Script.Data
 
     [Serializable]   // 에셋으로 저장하기 위함
     [ExecuteAlways]  // 에디터에서 텍스쳐 곧장 적용하기 위함
-    public class EditMapNavData : MonoBehaviour
+    public class EditMapData : MonoBehaviour
     {
         private const int SPRITE_WIDTH = 256;
         private const int SPRITE_HEIGHT = 256;

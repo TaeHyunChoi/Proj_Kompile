@@ -8,10 +8,11 @@ namespace MapSampling
     using Script.Util;
     using Script.Data;
     using UnityEditor.AddressableAssets;
-    using UnityEditor.AddressableAssets.Settings;
     using System.Collections;
 
-    /// <summary> reference link: https://www.youtube.com/watch?v=K-zw3QFaTqg
+    /// <summary> 
+    /// reference link: https://www.youtube.com/watch?v=K-zw3QFaTqg
+    /// 어드레서블 에셋 라벨 로드 : https://chatgpt.com/share/67b4abb9-aea8-8008-8849-01ed2e70af15
     /// </summary>
     public class MapTileSampling : MonoBehaviour
     {
@@ -24,7 +25,7 @@ namespace MapSampling
         public async void Save()
         {
             // set data
-            EditMapNavData[] tiles = instanceTransform.GetComponentsInChildren<EditMapNavData>();
+            EditMapData[] tiles = instanceTransform.GetComponentsInChildren<EditMapData>();
             if (0 == tiles.Length)
             {
                 Debug.LogWarning("NavTileMesh.Length = 0;");
@@ -44,7 +45,7 @@ namespace MapSampling
             Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
         }
 
-        public async Task SaveMapNavDataAsync(EditMapNavData[] tiles)
+        public async Task SaveMapNavDataAsync(EditMapData[] tiles)
         {
             map = new ConcurrentDictionary<int, RawMapGridData>();
             int length = tiles.Length;
@@ -71,29 +72,31 @@ namespace MapSampling
             }
         }
 
-        private IEnumerator IESaveRender(EditMapNavData[] tiles)
+        private IEnumerator IESaveRender(EditMapData[] tiles)
         {
-            ConcurrentDictionary<int, List<MeshFilter>> temp = new ConcurrentDictionary<int, List<MeshFilter>>();
+            ConcurrentDictionary<long, List<MeshFilter>> temp = new ConcurrentDictionary<long, List<MeshFilter>>();
             foreach (var tile in tiles)
             {
                 MeshFilter meshFilter = tile.MeshFilter;
 
-                int layer = tile.Layer;
-                if (false == temp.ContainsKey(layer))
+                long key = tile.GridKey << 32 | tile.Layer;
+                if (false == temp.ContainsKey(key))
                 {
-                    temp.TryAdd(layer, new List<MeshFilter>());
+                    temp.TryAdd(key, new List<MeshFilter>());
                 }
 
-                if (false == temp[layer].Contains(meshFilter))
+                if (false == temp[key].Contains(meshFilter))
                 {
-                    temp[layer].Add(meshFilter);
+                    temp[key].Add(meshFilter);
                 }
-                yield return null;
+                //yield return null;
             }
-
-            foreach (var layer in temp.Keys)
+            foreach (var key in temp.Keys)
             {
-                var list = temp[layer];
+                int gridKey = (int)(key >> 32);
+                int layer   = (int)(key & 0xFFFF);
+
+                var list = temp[key];
                 var count = list.Count;
                 var combine = new CombineInstance[count];
                 for (int m = 0; m < count; ++m)
@@ -103,13 +106,19 @@ namespace MapSampling
                 }
                 Mesh combinedMesh = new Mesh();
                 combinedMesh.CombineMeshes(combine);
-                SaveMesh(combinedMesh, $"test_layer_{layer}", true, true);
+                SaveMesh(combinedMesh, gridKey, layer, true, true);
                 yield return null;
             }
+
+            EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
         }
-        private void SaveMesh(Mesh mesh, string assetName, bool makeNewInstance, bool optimizeMesh)
+        private void SaveMesh(Mesh mesh, int gridKey, int layer, bool makeNewInstance, bool optimizeMesh)
         {
-            var path = "Assets/Rcs/MapRender/" + assetName + ".asset";
+
+            string labelName = $"MapRender_{gridKey}";
+            string assetName = $"MapRender_{gridKey}_{layer}";
+
+            var path = "Assets/Rcs/MapRender/" + $"MapRender_{gridKey}_{layer}" + ".asset";
 
             // 이미 같은 이름의 에셋이 있는지 확인합니다.
             if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path))
@@ -134,10 +143,10 @@ namespace MapSampling
                 // Addressable 에셋 생성
                 var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);
                 entry.SetAddress(assetName);
-                entry.labels.Add(assetLabelName);
+                entry.labels.Add(labelName);
 
-                EditorUtility.SetDirty(settings);
-                settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
+                //EditorUtility.SetDirty(settings);
+                //settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
             }
             else
             {

@@ -183,7 +183,7 @@ public partial class NavTileMeshEditorWindow : EditorWindow
             renderer.sharedMaterial = material;
 
             // 타일 정보를 유니티의 NavMesh를 Bake하는 것처럼 데이터 저장할 때 호출하는 함수
-            var navTileMesh = testPrefab.AddComponent<EditMapNavData>();
+            var navTileMesh = testPrefab.AddComponent<EditMapData>();
             navTileMesh.InitNaviMask(inputHeights, isSmall);
 
             PrefabUtility.SaveAsPrefabAsset(testPrefab, path, out isSuccess);
