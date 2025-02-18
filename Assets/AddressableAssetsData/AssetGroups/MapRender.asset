@@ -10,29 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: MapMesh
+  m_Name: MapRender
   m_EditorClassIdentifier: 
-  m_GroupName: MapMesh
+  m_GroupName: MapRender
   m_GUID: d20cb78037ea68b4c9806d32461477c7
-  m_SerializeEntries:
-  - m_GUID: 2b87289936e7d18498da28dcdf6a8ae9
-    m_Address: test_layer_0
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - test_layer_0
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 52025bc4abc0db649b03dc50b57041d5
-    m_Address: test_layer_1
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - test_layer_1
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: df7bc8a8380b8c6488162ea8f2c97fca
-    m_Address: test_layer_2
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - test_layer_2
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

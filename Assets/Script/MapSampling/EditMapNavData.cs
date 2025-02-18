@@ -8,7 +8,7 @@ namespace Script.Data
 
     [Serializable]   // 에셋으로 저장하기 위함
     [ExecuteAlways]  // 에디터에서 텍스쳐 곧장 적용하기 위함
-    public class EditNavTileData : MonoBehaviour
+    public class EditMapNavData : MonoBehaviour
     {
         private const int SPRITE_WIDTH = 256;
         private const int SPRITE_HEIGHT = 256;
@@ -27,6 +27,9 @@ namespace Script.Data
         public MeshFilter MeshFilter => meshFilter;
         public MeshRenderer MeshRenderer => meshRenderer;
         public int Layer => layer;
+
+        private int gridKey;
+        public int GridKey => gridKey;
 
         // Bake(Set) NavMesh Info
         public void InitNaviMask(int[] heights, bool isSmall)
@@ -53,7 +56,7 @@ namespace Script.Data
                 naviMask |= 1ul << i;
             }
         }
-        public async Task BakeMesh(ConcurrentDictionary<int, MapGridData> map)
+        public async Task BakeMesh(ConcurrentDictionary<int, RawMapGridData> map)
         {
             await Task.Yield();
 
@@ -70,18 +73,18 @@ namespace Script.Data
 
             // get: pivot key
             GetPivotRotated(rotInt, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
-            int gridKey = GetGridKeyMask(gridPivot);
+            gridKey = GetGridKeyMask(gridPivot);
             int tileKey = GetTileKeyMask(gridPivot, tilePivot, isSmall);
 
 
             // set: map
-            map.TryAdd(gridKey, new MapGridData());
+            map.TryAdd(gridKey, new RawMapGridData());
 
 
             // set: map[grid].NavMesh
             naviMask = GetNaviMaskRotated(rotInt, isSmall); // ?? of 64 bits used
             infoMask = GetInfoMask();
-            map[gridKey].TryAddNavMeshData(tileKey, new MapNavData(naviMask, infoMask));
+            map[gridKey].TryAddNavMeshData(tileKey, new RawMapNavData(naviMask, infoMask));
 
 
             // set: map[grid].Render

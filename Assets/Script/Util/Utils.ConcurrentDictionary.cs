@@ -33,7 +33,6 @@ namespace Script.Util
                 return _dictionary.Keys;
             }
         }
-
         public Dictionary<TKey, TValue>.ValueCollection Values
         {
             get
@@ -42,6 +41,55 @@ namespace Script.Util
             }
         }
 
+        public bool TryGetValue(TKey key, out TValue value)
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _dictionary.TryGetValue(key, out value);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+        public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                if (_dictionary.TryGetValue(key, out var value))
+                    return value;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+
+            _lock.EnterWriteLock();
+            try
+            {
+                // 다시 확인 (다른 스레드가 추가했을 수 있음)
+                if (_dictionary.TryGetValue(key, out var value))
+                {
+                    return value;
+                }
+
+                value = valueFactory(key);
+                _dictionary[key] = value;
+
+                return value;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+        public bool ContainsKey(TKey key)
+        {
+            return _dictionary.ContainsKey(key);
+        }
 
         public TValue this[TKey key]
         {
@@ -70,92 +118,6 @@ namespace Script.Util
                 }
             }
         }
-        
-        public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
-        {
-            _lock.EnterReadLock();
-            try
-            {
-                if (_dictionary.TryGetValue(key, out var value))
-                    return value;
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
-
-            _lock.EnterWriteLock();
-            try
-            {
-                // 다시 확인 (다른 스레드가 추가했을 수 있음)
-                if (_dictionary.TryGetValue(key, out var value))
-                {
-                    return value;
-                }
-                
-                value = valueFactory(key);
-                _dictionary[key] = value;
-
-                return value;
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
-            }
-        }
-
-        public bool TryAdd(TKey key, TValue value)
-        {
-            _lock.EnterWriteLock();
-            try
-            {
-                return _dictionary.TryAdd(key, value);
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
-            }
-        }
-
-        public bool TryRemove(TKey key, out TValue value)
-        {
-            _lock.EnterWriteLock();
-            try
-            {
-                return _dictionary.Remove(key, out value);
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
-            }
-        }
-
-        public bool TryGetValue(TKey key, out TValue value)
-        {
-            _lock.EnterReadLock();
-            try
-            {
-                return _dictionary.TryGetValue(key, out value);
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
-        }
-
-        public void Clear()
-        {
-            _lock.EnterWriteLock();
-            try
-            {
-                _dictionary.Clear();
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
-            }
-        }
-
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
             _lock.EnterReadLock();
@@ -172,5 +134,48 @@ namespace Script.Util
                 _lock.ExitReadLock();
             }
         }
+
+        public bool TryAdd(TKey key, TValue value)
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                return _dictionary.TryAdd(key, value);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+        public bool TryRemove(TKey key, out TValue value)
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                return _dictionary.Remove(key, out value);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+
+
+
+        public void Clear()
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                _dictionary.Clear();
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+
     }
 }

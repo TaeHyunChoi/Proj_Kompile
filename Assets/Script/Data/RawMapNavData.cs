@@ -4,7 +4,7 @@ using MessagePack;
 namespace Script.Data
 {
     [MessagePackObject]
-    public struct MapNavData
+    public struct RawMapNavData
     {
         [Key(0)]
         public ulong naviMask;
@@ -12,7 +12,7 @@ namespace Script.Data
         [Key(1)]
         public uint infoMask;
 
-        public MapNavData(ulong nav, uint info)
+        public RawMapNavData(ulong nav, uint info)
         {
             naviMask = nav;
             infoMask = info;

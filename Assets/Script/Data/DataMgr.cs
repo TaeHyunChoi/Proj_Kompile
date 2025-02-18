@@ -13,7 +13,7 @@ namespace Script.Data
         public static void WriteBinaryMappingData<T>(T data, string fileName)
         {
             // 저장할 파일 경로 생성
-            string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapNavData", fileName + ".dat");
+            string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapNavRawData", fileName + ".dat");
 
             // 디렉토리가 없으면 생성
             string directoryPath = Path.GetDirectoryName(filePath);

@@ -9,49 +9,71 @@ namespace MapSampling
     using Script.Data;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
+    using System.Collections;
 
     /// <summary> reference link: https://www.youtube.com/watch?v=K-zw3QFaTqg
     /// </summary>
     public class MapTileSampling : MonoBehaviour
     {
-        [SerializeField] private Transform instanceTransform;
-
-        // map grid 클래스를 새로 만들어야 하네
-        private ConcurrentDictionary<int, MapGridData> map;
-
-        private readonly string assetGroupName = "MapMesh";
+        private readonly string assetGroupName = "MapRender";
         private readonly string assetLabelName = "MapNavMesh";
+
+        [SerializeField] private Transform instanceTransform;
+        private ConcurrentDictionary<int, RawMapGridData> map;
 
         public async void Save()
         {
             // set data
-            EditNavTileData[] tiles = instanceTransform.GetComponentsInChildren<EditNavTileData>();
+            EditMapNavData[] tiles = instanceTransform.GetComponentsInChildren<EditMapNavData>();
             if (0 == tiles.Length)
             {
                 Debug.LogWarning("NavTileMesh.Length = 0;");
                 return;
             }
 
-            map = new ConcurrentDictionary<int, MapGridData>();
+            // async : nav data
+            Task taskSaveNavData = SaveMapNavDataAsync(tiles);
 
-            Task[] initTasks = new Task[tiles.Length];
+            // sync : render data (unity api 사용하므로 async 불가)
+            StartCoroutine(IESaveRender(tiles));
+
+            await Task.WhenAll(taskSaveNavData);
+            taskSaveNavData.Dispose();
+
+            AssetDatabase.Refresh();
+            Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
+        }
+
+        public async Task SaveMapNavDataAsync(EditMapNavData[] tiles)
+        {
+            map = new ConcurrentDictionary<int, RawMapGridData>();
+            int length = tiles.Length;
             int i, t;
-            for (i = 0; i < tiles.Length; i++)
+
+            // bake + dispose
+            Task[] initTasks = new Task[length];
+            for (i = 0; i < length; i++)
             {
                 t = i;
                 initTasks[t] = tiles[t].BakeMesh(map);
             }
             await Task.WhenAll(initTasks);
+            for (i = 0; i < length; i++)
+            {
+                t = i;
+                initTasks[t].Dispose();
+            }
 
             // save data
             foreach (var grid in map)
             {
-                DataMgr.WriteBinaryMappingData<MapGridData>(grid.Value, $"MapGrid_{grid.Key}");
+                DataMgr.WriteBinaryMappingData<RawMapGridData>(grid.Value, $"MapGrid_{grid.Key}");
             }
+        }
 
-            // combine mesh : 이것도 비동기로 할 수 있겠는데? + render data bake로 필요해졌음
-
-            Dictionary<int, List<MeshFilter>> temp = new Dictionary<int, List<MeshFilter>>();
+        private IEnumerator IESaveRender(EditMapNavData[] tiles)
+        {
+            ConcurrentDictionary<int, List<MeshFilter>> temp = new ConcurrentDictionary<int, List<MeshFilter>>();
             foreach (var tile in tiles)
             {
                 MeshFilter meshFilter = tile.MeshFilter;
@@ -59,63 +81,38 @@ namespace MapSampling
                 int layer = tile.Layer;
                 if (false == temp.ContainsKey(layer))
                 {
-                    temp.Add(layer, new List<MeshFilter>());
+                    temp.TryAdd(layer, new List<MeshFilter>());
                 }
 
                 if (false == temp[layer].Contains(meshFilter))
                 {
                     temp[layer].Add(meshFilter);
                 }
-                //var meshFilters = map[key];
-                //var combine = new CombineInstance[meshFilters.Count];
-                //for (var i = 0; i < meshFilters.Count; i++)
-                //{
-                //    combine[i].mesh = meshFilters[i].sharedMesh;
-                //    combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
-                //}
-
-                //var mesh = new Mesh();
-                //mesh.CombineMeshes(combine);
-                //SaveMesh(mesh, $"NavMesh_{key}", false, true);
+                yield return null;
             }
 
-            foreach (var key in temp.Keys)
+            foreach (var layer in temp.Keys)
             {
-                var list = temp[key];
+                var list = temp[layer];
                 var count = list.Count;
                 var combine = new CombineInstance[count];
                 for (int m = 0; m < count; ++m)
                 {
-                    combine[m].mesh      = list[m].sharedMesh;
+                    combine[m].mesh = list[m].sharedMesh;
                     combine[m].transform = list[m].transform.localToWorldMatrix;
                 }
                 Mesh combinedMesh = new Mesh();
                 combinedMesh.CombineMeshes(combine);
-                SaveMesh(combinedMesh, $"test_layer_{key}", true, true);
+                SaveMesh(combinedMesh, $"test_layer_{layer}", true, true);
+                yield return null;
             }
-
-            // dispose refs
-            for (i = 0; i < tiles.Length; i++)
-            {
-                t = i;
-                initTasks[t].Dispose();
-            }
-
-            AssetDatabase.Refresh();
-            Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
         }
-
-        //public void Load()
-        //{
-        //    MapGridData data = DataMgr.ReadBinaryMappingData<MapGridData>("MapGrid_0");
-        //}
-
         private void SaveMesh(Mesh mesh, string assetName, bool makeNewInstance, bool optimizeMesh)
         {
-            var path = "Assets/Rcs/MapNav/" + assetName + ".asset";
+            var path = "Assets/Rcs/MapRender/" + assetName + ".asset";
 
             // 이미 같은 이름의 에셋이 있는지 확인합니다.
-            if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
+            if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path))
             {
                 AssetDatabase.DeleteAsset(path);
             }
@@ -150,6 +147,11 @@ namespace MapSampling
 
             AssetDatabase.SaveAssets();
         }
+
+        //public void Load()
+        //{
+        //    MapGridData data = DataMgr.ReadBinaryMappingData<MapGridData>("MapGrid_0");
+        //}
     }
 }
 #endif
