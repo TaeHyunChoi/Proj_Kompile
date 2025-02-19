@@ -14,8 +14,8 @@ namespace Script.Data
         private const int SPRITE_HEIGHT = 256;
 
         [Header("Render")]
+        [SerializeField] private bool isOnlyRender;
         [SerializeField] private int layer;
-
         [SerializeField] private TextureIndex textureType;
 
         private MeshFilter meshFilter;
@@ -58,6 +58,10 @@ namespace Script.Data
         }
         public async Task BakeMesh(ConcurrentDictionary<int, RawMapGridData> map)
         {
+            if (true == isOnlyRender)
+            {
+                return;
+            }
             await Task.Yield();
 
             // get: (rotated) pivot
@@ -91,39 +95,6 @@ namespace Script.Data
             // ...
 
         }
-
-//    private void Start()
-//    {
-
-//        Texture texture = meshRenderer.sharedMaterial.mainTexture;
-//        int textureWidth = texture.width;
-//        int textureHeight = texture.height;
-
-//        // UV 좌표 계산
-//        float uMin = columnIndex * (spriteWidth / (float)textureWidth);
-//        float uMax = (columnIndex + 1) * (spriteWidth / (float)textureWidth);
-//        float vMin = 1.0f - (rowIndex + 1) * (spriteHeight / (float)textureHeight);
-//        float vMax = 1.0f - rowIndex * (spriteHeight / (float)textureHeight);
-
-//        Mesh mesh = meshFilter.sharedMesh;
-
-//        var uvs = mesh.uv;
-//        var vertices = mesh.vertices;
-
-//        for (int i = 0; i < uvs.Length; i++)
-//        {
-//            float u = Mathf.Lerp(uMin, uMax, vertices[i].x); // X축 기준
-//            float v = Mathf.Lerp(vMin, vMax, vertices[i].y); // Y축 기준
-
-//            u = Mathf.Clamp01(u);
-//            v = Mathf.Clamp01(v);
-
-//            uvs[i] = new Vector2(u, v);
-//        }
-//        mesh.uv = uvs;
-//}
-
-        // [NavMesh] Key(pivot)
         private void GetPivotRotated(int rot, bool isSmall, out Vector3 gridPivot, out Vector3 tilePivot)
         {
             // tile pivot
