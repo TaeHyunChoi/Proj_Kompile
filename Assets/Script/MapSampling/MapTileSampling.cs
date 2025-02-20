@@ -9,6 +9,8 @@ namespace MapSampling
     using Script.Data;
     using UnityEditor.AddressableAssets;
     using System.Collections;
+    using static UnityEditor.Experimental.GraphView.GraphView;
+    using UnityEngine.Rendering;
 
     /// <summary> 
     /// reference link: https://www.youtube.com/watch?v=K-zw3QFaTqg
@@ -157,10 +159,37 @@ namespace MapSampling
             AssetDatabase.SaveAssets();
         }
 
-        //public void Load()
-        //{
-        //    MapGridData data = DataMgr.ReadBinaryMappingData<MapGridData>("MapGrid_0");
-        //}
+        public void Load()
+        {
+            RawMapGridData data = DataMgr.ReadBinaryMappingData<RawMapGridData>("MapGrid_0");
+
+            // scale ,x[sign,small_buffer,6], y[sign,small_buffer,4], z[sign,small_buffer,6]
+            const byte shiftTileLayer = 23;
+            const byte shiftIsHalfScale = 22;
+            const byte shiftTileX = 14;
+            const byte shiftTileY = 8;
+            const byte shiftTileZ = 0;
+
+            //int mask = 0;
+            //mask |= layer << shiftTileLayer;
+            //mask |= isSmall ? 1 << shiftIsHalfScale : 0;
+            //mask |= (diffInt.x) << shiftTileX;
+            //mask |= (diffInt.y) << shiftTileY;
+            //mask |= (diffInt.z) << shiftTileZ;
+
+            foreach (var key in data.rawMapNavData.Keys)
+            {
+                var layer   = (key >> shiftTileLayer) & 1;
+                var scale   = (key >> shiftIsHalfScale) & 1;
+
+                var x = (key >> shiftTileX) & 0xFF;
+                var y = (key >> shiftTileY) & 0x0F;
+                var z = (key >> shiftTileZ) & 0xFF;
+
+                Debug.Log($"[layer:{layer}][scale:{scale}][{x},{y},{z}]  [navi:{data.rawMapNavData[key].naviMask}], [info:{data.rawMapNavData[key].infoMask}]");
+
+            }
+        }
     }
 }
 #endif

@@ -29,7 +29,7 @@ namespace Script.Data
         public static T ReadBinaryMappingData<T>(string fileName)
         {
             // 파일 경로 생성
-            string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapNavData", fileName + ".dat");
+            string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapNavRawData", fileName + ".dat");
 
             if (!File.Exists(filePath))
             {

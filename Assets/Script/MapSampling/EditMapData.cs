@@ -312,38 +312,67 @@ namespace Script.Data
             meshFilter = transform.GetComponent<MeshFilter>();
             meshRenderer = transform.GetComponent<MeshRenderer>();
 
+            // 공유된 Material 유지
             Texture texture = meshRenderer.sharedMaterial.mainTexture;
             int textureWidth = texture.width;
             int textureHeight = texture.height;
 
-            // UV 좌표 계산
-
-            // texture 몇 개씩 들어가는지 구하는 프로퍼티나 상수가 필요할 듯? 정리하면 되겠다.
             int columnIndex = (int)textureType % 8;
             int rowIndex = (int)textureType / 8;
 
             float uMin = columnIndex * (SPRITE_WIDTH / (float)textureWidth);
-            float uMax = (columnIndex + 1) * (SPRITE_WIDTH / (float)textureWidth);
             float vMin = 1.0f - (rowIndex + 1) * (SPRITE_HEIGHT / (float)textureHeight);
-            float vMax = 1.0f - rowIndex * (SPRITE_HEIGHT / (float)textureHeight);
 
-            Mesh mesh = meshFilter.sharedMesh;
+            Vector2 uvOffset = new Vector2(uMin, vMin); // UV 시작 좌표
+            Vector2 uvScale = new Vector2(SPRITE_WIDTH / (float)textureWidth, SPRITE_HEIGHT / (float)textureHeight); // 크기
 
-            var uvs = mesh.uv;
-            var vertices = mesh.vertices;
+            // ✅ MaterialPropertyBlock을 사용해 개별 속성 적용
+            MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+            meshRenderer.GetPropertyBlock(propertyBlock);
 
-            for (int i = 0; i < uvs.Length; i++)
-            {
-                float u = Mathf.Lerp(uMin, uMax, vertices[i].x); // X축 기준
-                float v = Mathf.Lerp(vMin, vMax, vertices[i].y); // Y축 기준
+            //propertyBlock.SetColor("_Color", GetColorByEnum(textureType)); // 개별 색상 적용
+            propertyBlock.SetVector("_UVOffset", uvOffset); // UV Offset 적용
+            propertyBlock.SetVector("_UVScale", uvScale);   // UV Scale 적용
 
-                u = Mathf.Clamp01(u);
-                v = Mathf.Clamp01(v);
-
-                uvs[i] = new Vector2(u, v);
-            }
-            mesh.uv = uvs;
+            meshRenderer.SetPropertyBlock(propertyBlock);
         }
+        //private void ApplyTexture()
+        //{
+        //    meshFilter = transform.GetComponent<MeshFilter>();
+        //    meshRenderer = transform.GetComponent<MeshRenderer>();
+
+        //    Texture texture = meshRenderer.sharedMaterial.mainTexture;
+        //    int textureWidth = texture.width;
+        //    int textureHeight = texture.height;
+
+        //    // UV 좌표 계산
+
+        //    // texture 몇 개씩 들어가는지 구하는 프로퍼티나 상수가 필요할 듯? 정리하면 되겠다.
+        //    int columnIndex = (int)textureType % 8;
+        //    int rowIndex = (int)textureType / 8;
+
+        //    float uMin = columnIndex * (SPRITE_WIDTH / (float)textureWidth);
+        //    float uMax = (columnIndex + 1) * (SPRITE_WIDTH / (float)textureWidth);
+        //    float vMin = 1.0f - (rowIndex + 1) * (SPRITE_HEIGHT / (float)textureHeight);
+        //    float vMax = 1.0f - rowIndex * (SPRITE_HEIGHT / (float)textureHeight);
+
+        //    Mesh mesh = meshFilter.sharedMesh;
+
+        //    var uvs = mesh.uv;
+        //    var vertices = mesh.vertices;
+
+        //    for (int i = 0; i < uvs.Length; i++)
+        //    {
+        //        float u = Mathf.Lerp(uMin, uMax, vertices[i].x); // X축 기준
+        //        float v = Mathf.Lerp(vMin, vMax, vertices[i].y); // Y축 기준
+
+        //        u = Mathf.Clamp01(u);
+        //        v = Mathf.Clamp01(v);
+
+        //        uvs[i] = new Vector2(u, v);
+        //    }
+        //    mesh.uv = uvs;
+        //}
 
         //[Render] 
         // ...
