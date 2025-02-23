@@ -77,6 +77,50 @@ namespace MapSampling
             }
         }
 
+
+        // 여기서 uv까지 설정해야 한단 말인데~
+        private IEnumerator IESaveRender(EditMapData[] tiles)
+        {
+            ConcurrentDictionary<long, List<MeshFilter>> temp = new ConcurrentDictionary<long, List<MeshFilter>>();
+
+            // (grid | layer) 별로 나눴는데
+            foreach (var tile in tiles)
+            {
+                MeshFilter meshFilter = tile.MeshFilter;
+
+                long key = tile.GridKey << 32 | tile.Layer;
+                if (false == temp.ContainsKey(key))
+                {
+                    temp.TryAdd(key, new List<MeshFilter>());
+                }
+
+                if (false == temp[key].Contains(meshFilter))
+                {
+                    temp[key].Add(meshFilter);
+                }
+                //yield return null;
+            }
+            foreach (var key in temp.Keys)
+            {
+                int gridKey = (int)(key >> 32);
+                int layer   = (int)(key & 0xFFFF);
+
+                var list = temp[key];
+                var count = list.Count;
+                var combine = new CombineInstance[count];
+                for (int m = 0; m < count; ++m)
+                {
+                    combine[m].mesh = list[m].sharedMesh;
+                    combine[m].transform = list[m].transform.localToWorldMatrix;
+                }
+                Mesh combinedMesh = new Mesh();
+                combinedMesh.CombineMeshes(combine);
+                SaveMesh(combinedMesh, gridKey, layer, true, true);
+                yield return null;
+            }
+
+            EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
+        }
         private IEnumerator IESaveMesh(EditMapData[] tiles)
         {
             Dictionary<long, List<CombineInstance>> combined = new Dictionary<long, List<CombineInstance>>();
@@ -97,11 +141,7 @@ namespace MapSampling
 
                 CombineInstance combInstance = new CombineInstance();
                 combInstance.mesh = Object.Instantiate(tile.MeshFilter.sharedMesh); // 새로운 인스턴스를 생성하여 UV 설정
-
-                // localPosition, localRotation, localScale을 사용하여 변환 행렬 생성
-                Matrix4x4 localMatrix = Matrix4x4.TRS(tile.transform.localPosition, tile.transform.localRotation, tile.transform.localScale);
-                combInstance.transform = localMatrix;
-
+                combInstance.transform = tile.transform.localToWorldMatrix;
                 Vector2[] uvs = GetUVs(combInstance, tile.TextureIndex); // 개별적으로 UV 설정
                 combInstance.mesh.uv = uvs;
 
@@ -120,23 +160,6 @@ namespace MapSampling
 
                 // 병합된 메쉬의 UV 배열을 수동으로 설정합니다.
                 combinedMesh.uv = combinedUVs[key].ToArray();
-
-                // 병합된 메쉬의 가장 작은 x, y, z 좌표를 0, 0, 0으로 설정합니다.
-                Vector3[] vertices = combinedMesh.vertices;
-                Vector3 min = vertices[0];
-                for (int i = 1; i < vertices.Length; i++)
-                {
-                    if (vertices[i].x < min.x) min.x = vertices[i].x;
-                    if (vertices[i].y < min.y) min.y = vertices[i].y;
-                    if (vertices[i].z < min.z) min.z = vertices[i].z;
-                }
-
-                for (int i = 0; i < vertices.Length; i++)
-                {
-                    vertices[i] -= min;
-                }
-                combinedMesh.vertices = vertices;
-                combinedMesh.RecalculateBounds();
 
                 SaveMesh(combinedMesh, gridKey, layer, true, false);
                 yield return null;

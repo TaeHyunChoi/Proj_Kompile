@@ -21,12 +21,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - MapRender_0
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 9e55184983d8acc43ae95b49b0f5655b
-    m_Address: MapRender_0_1
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - MapRender_0
-    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:
