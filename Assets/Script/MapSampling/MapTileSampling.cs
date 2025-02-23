@@ -198,8 +198,6 @@ namespace MapSampling
                 // 변환 공식: sprite 영역의 시작 UV + (로컬 좌표 * sprite 영역의 UV 크기)
                 uvs[i] = new Vector2(uvX + normalizedX * uvWidth,
                                      uvY + normalizedY * uvHeight);
-
-                Debug.Log($"[{i}][UV:{textureIndex}] {uvs[i].x:F3},{uvs[i].y:F3}");
             }
 
             return uvs;
@@ -224,12 +222,6 @@ namespace MapSampling
             if (optimizeMesh)
             {
                 MeshUtility.Optimize(meshToSave);
-            }
-
-            Vector2[] uvs = meshToSave.uv;
-            for (int i = 0; i < meshToSave.uv.Length; ++i)
-            {
-                Debug.Log($"[{i}][UV:Combined] ({uvs[i].x:F3},{uvs[i].y:F3})");
             }
 
             AssetDatabase.CreateAsset(meshToSave, path);
