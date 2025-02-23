@@ -30,6 +30,7 @@ namespace Script.Data
 
         private int gridKey;
         public int GridKey => gridKey;
+        public int TextureIndex => (int)textureType;
 
         // Bake(Set) NavMesh Info
         public void InitNaviMask(int[] heights, bool isSmall)

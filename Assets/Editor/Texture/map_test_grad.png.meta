@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 563845306aed737498af55a6eb315170
+guid: 73ba75284c6f32f47bb51c6a2fda648b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1329229996207222791
-    second: MergedTexture_0
+      213: 8401420422166663179
+    second: map_test_grad_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,23 +126,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: MergedTexture_0
+      name: map_test_grad_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 1792
-        width: 1024
-        height: 256
+        y: 0
+        width: 2048
+        height: 2048
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9ff464b6c50ad8de0800000000000000
-      internalID: -1329229996207222791
+      spriteID: b00d4ff7c57d79470800000000000000
+      internalID: 8401420422166663179
       vertices: []
       indices: 
       edges: []
@@ -151,7 +151,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: c9bad7d51fa0a384696797f6d680db0a
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -160,8 +160,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      MergedTexture_0: -1329229996207222791
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

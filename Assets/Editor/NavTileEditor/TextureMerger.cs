@@ -9,20 +9,20 @@ public class TextureMerger : MonoBehaviour
     [MenuItem("Tools/Merge Sprites into Texture2D")]
     public static void MergeSprites()
     {
-        // ½ºÇÁ¶óÀÌÆ® Æú´õ °æ·Î
+        // ìŠ¤í”„ë¼ì´íŠ¸ í´ë” ê²½ë¡œ
         string inputPath = "Assets/Editor/Texture";
         string outputPath = "Assets/Editor/Texture/MergedTexture.png";
 
-        // Å¸°Ù ÅØ½ºÃ³ Å©±â ¹× °¢ ½ºÇÁ¶óÀÌÆ® Å©±â
+        // íƒ€ê²Ÿ í…ìŠ¤ì²˜ í¬ê¸° ë° ê° ìŠ¤í”„ë¼ì´íŠ¸ í¬ê¸°
         int targetTextureWidth = 2048;
         int targetTextureHeight = 2048;
         int spriteWidth = 256;
         int spriteHeight = 256;
 
-        // ÅØ½ºÃ³ »ı¼º
+        // í…ìŠ¤ì²˜ ìƒì„±
         Texture2D texture2D = new Texture2D(targetTextureWidth, targetTextureHeight, TextureFormat.RGBA32, false);
 
-        // ÅØ½ºÃ³¸¦ Åõ¸íÀ¸·Î ÃÊ±âÈ­
+        // í…ìŠ¤ì²˜ë¥¼ íˆ¬ëª…ìœ¼ë¡œ ì´ˆê¸°í™”
         Color[] clearPixels = new Color[targetTextureWidth * targetTextureHeight];
         for (int i = 0; i < clearPixels.Length; i++)
         {
@@ -31,7 +31,7 @@ public class TextureMerger : MonoBehaviour
         texture2D.SetPixels(clearPixels);
         texture2D.Apply();
 
-        // Æú´õ¿¡¼­ ¸ğµç ½ºÇÁ¶óÀÌÆ® ·Îµå
+        // í´ë”ì—ì„œ ëª¨ë“  ìŠ¤í”„ë¼ì´íŠ¸ ë¡œë“œ
         string[] files = Directory.GetFiles(inputPath, "*.png");
 
         int columns = targetTextureWidth / spriteWidth;
@@ -43,11 +43,11 @@ public class TextureMerger : MonoBehaviour
             return;
         }
 
-        // ½ºÇÁ¶óÀÌÆ®¸¦ ¼øÂ÷ÀûÀ¸·Î ÅØ½ºÃ³¿¡ ¹èÄ¡
+        // ìŠ¤í”„ë¼ì´íŠ¸ë¥¼ ìˆœì°¨ì ìœ¼ë¡œ í…ìŠ¤ì²˜ì— ë°°ì¹˜
         string fileName;
         for (int i = 0; i < files.Length; i++)
         {
-            // ÆÄÀÏ °æ·Î¿¡¼­ ÅØ½ºÃ³ ÀĞ±â
+            // íŒŒì¼ ê²½ë¡œì—ì„œ í…ìŠ¤ì²˜ ì½ê¸°
             string filePath = files[i];
             Texture2D spriteTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
 
@@ -57,19 +57,19 @@ public class TextureMerger : MonoBehaviour
                 continue;
             }
 
-            // ¼ø¼­ Á¶Á¤ (enum¿¡ ¸ÂÃá´Ù)
+            // ìˆœì„œ ì¡°ì • (enumì— ë§ì¶˜ë‹¤)
             fileName = Path.GetFileName(files[i]).Replace(".png", "");
             int index = (int)Enum.Parse(typeof(TextureIndex), fileName);
 
             int xIndex = index % columns;
             int yIndex = index / columns;
 
-            // ½ºÇÁ¶óÀÌÆ® µ¥ÀÌÅÍ¸¦ ÀĞ¾î¿Í Å¸°Ù ÅØ½ºÃ³¿¡ »ğÀÔ
+            // ìŠ¤í”„ë¼ì´íŠ¸ ë°ì´í„°ë¥¼ ì½ì–´ì™€ íƒ€ê²Ÿ í…ìŠ¤ì²˜ì— ì‚½ì…
             Color[] pixels = spriteTexture.GetPixels();
             texture2D.SetPixels(xIndex * spriteWidth, targetTextureHeight - ((yIndex + 1) * spriteHeight), spriteWidth, spriteHeight, pixels);
         }
 
-        // ÅØ½ºÃ³ ÀúÀå
+        // í…ìŠ¤ì²˜ ì €ì¥
         texture2D.Apply();
         byte[] pngData = texture2D.EncodeToPNG();
         if (pngData != null)
@@ -78,7 +78,7 @@ public class TextureMerger : MonoBehaviour
             Debug.Log($"Merged texture saved to {outputPath}");
         }
 
-        // AssetDatabase °»½Å
+        // AssetDatabase ê°±ì‹ 
         AssetDatabase.Refresh();
     }
 }
