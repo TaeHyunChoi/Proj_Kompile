@@ -3,7 +3,6 @@ namespace Script.Manager
     using System.Collections.Generic;
     using Script.Index;
     using Script.Interface;
-    using Unity.VisualScripting.YamlDotNet.Core.Tokens;
     using UnityEngine;
     using UnityEngine.InputSystem;
     using static Script.Index.IDxInput;
