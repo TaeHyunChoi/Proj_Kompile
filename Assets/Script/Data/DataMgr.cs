@@ -2,20 +2,32 @@ namespace Script.Data
 {
     using System.IO;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+
     using UnityEngine;
+    using UnityEngine.AddressableAssets;
+    using UnityEngine.ResourceManagement.AsyncOperations;
+
+    using UnityEditor;
+    using UnityEditor.AddressableAssets;
+    using UnityEditor.AddressableAssets.Settings;
+
     using MessagePack;
     using MessagePack.Formatters;
     using MessagePack.Resolvers;
+
     using Script.Util;
+
 
     public static partial class DataMgr
     {
+        private const string MAP_NAVI_DATA_PATH = "Rcs\\Bin\\MapNavRawData";
+
         public static void WriteBinaryMappingData<T>(T data, string fileName)
         {
             // 저장할 파일 경로 생성
-            string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapNavRawData", fileName + ".dat");
+            string filePath = Path.Combine(Application.dataPath, MAP_NAVI_DATA_PATH, fileName + ".dat");
 
-            // 디렉토리가 없으면 생성
             string directoryPath = Path.GetDirectoryName(filePath);
             if (!Directory.Exists(directoryPath))
             {
@@ -25,22 +37,45 @@ namespace Script.Data
             // 데이터를 MessagePack 형식으로 직렬화하고 파일에 저장
             byte[] serializedData = MessagePackSerializer.Serialize(data, MessagePackConfig<T>.Options);
             File.WriteAllBytes(filePath, serializedData);
-        }
-        public static T ReadBinaryMappingData<T>(string fileName)
-        {
-            // 파일 경로 생성
-            string filePath = Path.Combine(Application.dataPath, "Resources", "bin", "MapNavRawData", fileName + ".dat");
 
-            if (!File.Exists(filePath))
+#if UNITY_EDITOR
+            // 어드레서블 에셋으로 저장
+            string assetPath = "Assets/" + MAP_NAVI_DATA_PATH + "/" + fileName + ".dat";
+            AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+
+            AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
+            AddressableAssetGroup group = settings.FindGroup("MapNavi");
+            if (group == null)
             {
-                throw new FileNotFoundException($"파일이 존재하지 않습니다: {filePath}");
+                group = settings.CreateGroup("MapNavi", false, false, false, null);
+            }
+
+            AddressableAssetEntry entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(assetPath), group);
+            entry.SetLabel(fileName, true);
+            settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
+            AssetDatabase.SaveAssets();
+#endif
+        }
+        public static async Task<T> ReadBinaryMappingDataAsync<T>(string label)
+        {
+            // 어드레서블 에셋 로드
+            AsyncOperationHandle<IList<TextAsset>> handle = Addressables.LoadAssetsAsync<TextAsset>(label, null);
+            await handle.Task;
+
+            if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result.Count == 0)
+            {
+                throw new FileNotFoundException($"라벨에 해당하는 파일이 존재하지 않습니다: {label}");
             }
 
             // 파일에서 바이트 배열 읽기 및 역직렬화
-            byte[] serializedData = File.ReadAllBytes(filePath);
+            byte[] serializedData = handle.Result[0].bytes;
             T data = MessagePackSerializer.Deserialize<T>(serializedData);
+
+            // 이거 publish 해버리지 뭐?...
+
             return data;
         }
+
     }
 
     public static partial class DataMgr

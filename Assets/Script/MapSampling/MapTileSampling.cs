@@ -1,17 +1,15 @@
 #if UNITY_EDITOR
 namespace MapSampling
 {
+    using System.Collections;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using UnityEngine;
     using UnityEditor;
+    using UnityEditor.AddressableAssets;
+    using UnityEditor.AddressableAssets.Settings;
     using Script.Util;
     using Script.Data;
-    using UnityEditor.AddressableAssets;
-    using System.Collections;
-    using System.Linq;
-    using Script.Index;
-    using static UnityEditor.Experimental.GraphView.GraphView;
 
 
     /// <summary> 
@@ -21,7 +19,6 @@ namespace MapSampling
     public class MapTileSampling : MonoBehaviour
     {
         private readonly string assetGroupName = "MapRender";
-        private readonly string assetLabelName = "MapNavMesh";
 
         [SerializeField] private Transform instanceTransform;
         private ConcurrentDictionary<int, RawMapGridData> map;
@@ -49,7 +46,6 @@ namespace MapSampling
             AssetDatabase.Refresh();
             Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
         }
-
         public async Task SaveMapNavDataAsync(EditMapData[] tiles)
         {
             map = new ConcurrentDictionary<int, RawMapGridData>();
@@ -73,53 +69,8 @@ namespace MapSampling
             // save data
             foreach (var grid in map)
             {
-                DataMgr.WriteBinaryMappingData<RawMapGridData>(grid.Value, $"MapGrid_{grid.Key}");
+                DataMgr.WriteBinaryMappingData<RawMapGridData>(grid.Value, $"MapNavi_{grid.Key}");
             }
-        }
-
-
-        // 여기서 uv까지 설정해야 한단 말인데~
-        private IEnumerator IESaveRender(EditMapData[] tiles)
-        {
-            ConcurrentDictionary<long, List<MeshFilter>> temp = new ConcurrentDictionary<long, List<MeshFilter>>();
-
-            // (grid | layer) 별로 나눴는데
-            foreach (var tile in tiles)
-            {
-                MeshFilter meshFilter = tile.MeshFilter;
-
-                long key = tile.GridKey << 32 | tile.Layer;
-                if (false == temp.ContainsKey(key))
-                {
-                    temp.TryAdd(key, new List<MeshFilter>());
-                }
-
-                if (false == temp[key].Contains(meshFilter))
-                {
-                    temp[key].Add(meshFilter);
-                }
-                //yield return null;
-            }
-            foreach (var key in temp.Keys)
-            {
-                int gridKey = (int)(key >> 32);
-                int layer   = (int)(key & 0xFFFF);
-
-                var list = temp[key];
-                var count = list.Count;
-                var combine = new CombineInstance[count];
-                for (int m = 0; m < count; ++m)
-                {
-                    combine[m].mesh = list[m].sharedMesh;
-                    combine[m].transform = list[m].transform.localToWorldMatrix;
-                }
-                Mesh combinedMesh = new Mesh();
-                combinedMesh.CombineMeshes(combine);
-                SaveMesh(combinedMesh, gridKey, layer, true, true);
-                yield return null;
-            }
-
-            EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
         }
         private IEnumerator IESaveMesh(EditMapData[] tiles)
         {
@@ -167,6 +118,50 @@ namespace MapSampling
 
             EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
         }
+        private void SaveMesh(Mesh mesh, int gridKey, int layer, bool makeNewInstance, bool optimizeMesh)
+        {
+
+            string labelName = $"MapRender_{gridKey}";
+            string assetName = $"MapRender_{gridKey}_{layer}";
+
+            var path = "Assets/Rcs/MapRender/" + $"MapRender_{gridKey}_{layer}" + ".asset";
+
+            // 이미 같은 이름의 에셋이 있는지 확인합니다.
+            if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path))
+            {
+                AssetDatabase.DeleteAsset(path);
+            }
+
+            var meshToSave = (makeNewInstance) ? Object.Instantiate(mesh) as Mesh : mesh;
+            if (optimizeMesh)
+            {
+                MeshUtility.Optimize(meshToSave);
+            }
+
+            AssetDatabase.CreateAsset(meshToSave, path);
+
+            // Addressable Assets에 등록
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            var group = settings.FindGroup(assetGroupName);
+            if (null != group)
+            {
+                // Addressable 에셋 생성
+                var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);
+                entry.SetAddress(assetName);
+                entry.labels.Add(labelName);
+
+                EditorUtility.SetDirty(settings);
+                settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
+            }
+            else
+            {
+                Debug.LogError("Addressable Asset Group not found.");
+                return;
+            }
+
+            AssetDatabase.SaveAssets();
+        }
+
         private Vector2[] GetUVs(CombineInstance target, int textureIndex)
         {
             // for test? 이거 맞겠지?
@@ -204,68 +199,20 @@ namespace MapSampling
         }
 
 
-        private void SaveMesh(Mesh mesh, int gridKey, int layer, bool makeNewInstance, bool optimizeMesh)
+
+
+        public async void Load()
         {
-
-            string labelName = $"MapRender_{gridKey}";
-            string assetName = $"MapRender_{gridKey}_{layer}";
-
-            var path = "Assets/Rcs/MapRender/" + $"MapRender_{gridKey}_{layer}" + ".asset";
-
-            // 이미 같은 이름의 에셋이 있는지 확인합니다.
-            if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path))
-            {
-                AssetDatabase.DeleteAsset(path);
-            }
-
-            var meshToSave = (makeNewInstance) ? Object.Instantiate(mesh) as Mesh : mesh;
-            if (optimizeMesh)
-            {
-                MeshUtility.Optimize(meshToSave);
-            }
-
-            AssetDatabase.CreateAsset(meshToSave, path);
-
-            // Addressable Assets에 등록
-            var settings = AddressableAssetSettingsDefaultObject.Settings;
-            var group = settings.FindGroup(assetGroupName);
-
-            if (group is not null)
-            {
-                // Addressable 에셋 생성
-                var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);
-                entry.SetAddress(assetName);
-                entry.labels.Add(labelName);
-
-                //EditorUtility.SetDirty(settings);
-                //settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
-            }
-            else
-            {
-                Debug.LogError("Addressable Asset Group not found.");
-                return;
-            }
-
-            AssetDatabase.SaveAssets();
-        }
-
-        public void Load()
-        {
-            RawMapGridData data = DataMgr.ReadBinaryMappingData<RawMapGridData>("MapGrid_0");
+            // 테스트용으로 걸었던 것인디...
+            Debug.Log("Need Dev: DataMgr.ReadBinaryMappingDataAsync");
+            RawMapGridData data = await DataMgr.ReadBinaryMappingDataAsync<RawMapGridData>("MapGrid_0");
 
             // scale ,x[sign,small_buffer,6], y[sign,small_buffer,4], z[sign,small_buffer,6]
-            const byte shiftTileLayer = 23;
+            const byte shiftTileLayer   = 23;
             const byte shiftIsHalfScale = 22;
-            const byte shiftTileX = 14;
-            const byte shiftTileY = 8;
-            const byte shiftTileZ = 0;
-
-            //int mask = 0;
-            //mask |= layer << shiftTileLayer;
-            //mask |= isSmall ? 1 << shiftIsHalfScale : 0;
-            //mask |= (diffInt.x) << shiftTileX;
-            //mask |= (diffInt.y) << shiftTileY;
-            //mask |= (diffInt.z) << shiftTileZ;
+            const byte shiftTileX       = 14;
+            const byte shiftTileY       = 8;
+            const byte shiftTileZ       = 0;
 
             foreach (var key in data.rawMapNavData.Keys)
             {
