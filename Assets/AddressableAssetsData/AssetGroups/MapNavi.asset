@@ -15,9 +15,9 @@ MonoBehaviour:
   m_GroupName: MapNavi
   m_GUID: 745b2625ea6a44146bbf6c3fc2cf7ad7
   m_SerializeEntries:
-  - m_GUID: 535a08371aab64b42bd016ddbee557eb
-    m_Address: Assets/Rcs/Bin/MapNavRawData/MapNavi_0.dat
-    m_ReadOnly: 0
+  - m_GUID: 2a05f870765c1954bb37f05a514d16b0
+    m_Address: MapNavi_0
+    m_ReadOnly: 1
     m_SerializedLabels:
     - MapNavi_0
     FlaggedDuringContentUpdateRestriction: 0

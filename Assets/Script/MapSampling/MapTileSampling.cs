@@ -23,6 +23,8 @@ namespace MapSampling
         [SerializeField] private Transform instanceTransform;
         private ConcurrentDictionary<int, MapGridData> map;
 
+        private bool nowLoading = false;
+
         public async void Save()
         {
             // set data
@@ -200,12 +202,6 @@ namespace MapSampling
 
         public async void Load()
         {
-            // 테스트용으로 걸었던 것인디...
-            var getMapGridDataTask = DataManager.ReadBinaryMappingDataAsync(0);
-            await getMapGridDataTask;
-
-            MapGridData data = getMapGridDataTask.GetAwaiter().GetResult();
-
             // scale ,x[sign,small_buffer,6], y[sign,small_buffer,4], z[sign,small_buffer,6]
             const byte shiftTileLayer   = 23;
             const byte shiftIsHalfScale = 22;
@@ -213,6 +209,22 @@ namespace MapSampling
             const byte shiftTileY       = 8;
             const byte shiftTileZ       = 0;
 
+            if (true == nowLoading)
+            {
+                Debug.Log($"Plz Wait");
+                return;
+            }
+
+            Debug.Log($"Load Map");
+
+            var time = Time.time;
+            nowLoading = true;
+
+            var getMapGridDataTask = DataManager.ReadBinaryMappingDataAsync(0);
+            await getMapGridDataTask;
+            Debug.Log($"END LOAD ({Time.time - time:F2} sec)");
+
+            MapGridData data = getMapGridDataTask.GetAwaiter().GetResult();
             foreach (var key in data.rawMapNavData.Keys)
             {
                 var layer   = (key >> shiftTileLayer) & 1;
@@ -225,6 +237,9 @@ namespace MapSampling
                 Debug.Log($"[layer:{layer}][scale:{scale}][{x},{y},{z}]  [navi:{data.rawMapNavData[key].naviMask}], [info:{data.rawMapNavData[key].infoMask}]");
 
             }
+
+            nowLoading = false;
+            getMapGridDataTask.Dispose();
         }
     }
 }

@@ -6,6 +6,7 @@ using Script.Index;
 using static Script.Index.IDxInput;
 using Script.Interface;
 using Script.Content;
+using Script.Data;
 
 public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
 {
@@ -104,9 +105,9 @@ public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
             {
                 case MenuType.NEW_GAME: // new game
                     new Ingame_EnterField(0);
-                        // IngameManager.AddTask(TaskType.OP_START_GAME, TaskUpdateType.UPDATE);
-                        // eneter field 만들고
-                        // ENTER_FIELD 호출되면 '데이터 해제' 쪽을 정리해야 함. ㄱㄷㄱㄷ..
+                    // IngameManager.AddTask(TaskType.OP_START_GAME, TaskUpdateType.UPDATE);
+                    // eneter field 만들고
+                    // ENTER_FIELD 호출되면 '데이터 해제' 쪽을 정리해야 함. ㄱㄷㄱㄷ..
                     break;
                 case MenuType.LOAD_GAME:
                     break;

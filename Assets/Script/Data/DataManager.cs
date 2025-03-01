@@ -28,7 +28,7 @@ namespace Script.Data
         public static void WriteBinaryMappingData(MapGridData data, string fileName)
         {
             // 저장할 파일 경로 생성
-            string filePath = Path.Combine(Application.dataPath, MAP_NAVI_DATA_PATH, fileName + ".dat");
+            string filePath = Path.Combine(Application.dataPath, MAP_NAVI_DATA_PATH, fileName + ".bytes");
 
             string directoryPath = Path.GetDirectoryName(filePath);
             if (!Directory.Exists(directoryPath))
@@ -42,7 +42,7 @@ namespace Script.Data
 
 #if UNITY_EDITOR
             // 어드레서블 에셋으로 저장
-            string assetPath = "Assets/" + MAP_NAVI_DATA_PATH + "/" + fileName + ".dat";
+            string assetPath = "Assets/" + MAP_NAVI_DATA_PATH + "/" + fileName + ".bytes";
             AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
 
             AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
@@ -52,7 +52,8 @@ namespace Script.Data
                 group = settings.CreateGroup("MapNavi", false, false, false, null);
             }
 
-            AddressableAssetEntry entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(assetPath), group);
+            AddressableAssetEntry entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(assetPath), group, readOnly: true);
+            entry.SetAddress(fileName);
             entry.SetLabel(fileName, true);
             settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
             AssetDatabase.SaveAssets();
@@ -80,7 +81,7 @@ namespace Script.Data
             AssetManager.AddHandler(instanceID, handler);
 
             // 자료 구했다는 값을 전달하고
-            MessageManager.Publish(Manager.MessageType.GET_ASSET, new OnGetAsset_MapGridData(Index.AssetCode.DB_MAP_GRID, data));
+            //MessageManager.Publish(Manager.MessageType.GET_ASSET, new OnGetAsset_MapGridData(Index.AssetCode.DB_MAP_GRID, data));
 
             //데이터의 instanceID를 넘겨야 탐색이 가능한가?
 
