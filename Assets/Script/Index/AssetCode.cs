@@ -10,11 +10,11 @@ namespace Script.Index
     /// <summary>
     /// enum.ToString() 사용하여 어드레서블 에셋 탐색 => 실제 에셋과 파일명을 동일하게 맞출 것
     /// </summary>
-    public enum AssetIndex
+    public enum AssetCode
     {
         NONE = 0,
 
-        DB_MAP_NAVI,
+        DB_MAP_GRID,
 
         OP_TitleObject,
 
@@ -28,7 +28,7 @@ namespace Script.Index
 
     public static class Index
     {
-        public static int ToInt(this AssetIndex assetName)
+        public static int ToInt(this AssetCode assetName)
         {
             return (int)assetName;
         }

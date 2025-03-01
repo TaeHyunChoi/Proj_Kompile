@@ -5,16 +5,16 @@ namespace Script.Manager
 
     public class FieldMapManager
     {
-        private ConcurrentDictionary<int, RawMapGridData> rawMapGridData;
+        private ConcurrentDictionary<int, MapGridData> mapGridData;
 
         public FieldMapManager()
         {
-            rawMapGridData = new ConcurrentDictionary<int, RawMapGridData>();
+            mapGridData = new ConcurrentDictionary<int, MapGridData>();
         }
 
-        public bool TryAddRawMapGridData(int gridKey, RawMapGridData targetData)
+        public bool TryAddMapGridData(int gridKey, MapGridData targetData)
         {
-            return rawMapGridData.TryAdd(gridKey, targetData);
+            return mapGridData.TryAdd(gridKey, targetData);
         }
     }
 }

@@ -30,38 +30,34 @@ namespace Script.Content
             gridKey = targetGridKey;
 
             IngameManager.AddIngame(this);
+            MoveNext();
         }
 
-        public void Receive(Message_t msg)
+        public void Receive<T>(MessageType type, T data) where T : struct
         {
-            switch (msg.Type)
+            if (type == MessageType.GET_ASSET
+                && data is OnGetAsset_MapGridData getRawMapGridData)
             {
-                case MessageType.GET_ASSET:
-                    if (AssetIndex.DB_MAP_NAVI == msg.AssetIndex)
-                    {
-                        int instanceID = msg.ValueInt;
-                        RawMapGridData rawData = AssetManager.GetCachedData<RawMapGridData>(instanceID);
-                        IngameManager.TryAddMapRawGridData(rawData.gridKey, rawData);
+                AssetCode code = getRawMapGridData.AssetCode;
+                MapGridData grid = getRawMapGridData.Data;
 
+                loadMapTask.Dispose();
+                loadMapTask = null;
 
-                    }
-                    break;
+                state = State.CLOSE;
             }
         }
-
 
         public override IngameState MoveNext()
         {
             switch (state)
             {
                 case State.LOAD_MAP_DATA:
-                    loadMapTask = DataManager.ReadBinaryMappingDataAsync<RawMapGridData>(gridKey);
+                    //loadMapTask = DataManager.ReadBinaryRawMapGridDataAsync(gridKey);
                     break;
 
 
                 case State.CLOSE:
-                    loadMapTask.Dispose();
-                    loadMapTask = null;
 
                     // '탐험하기' 태스크를 생성한다? 이건 field manager에서 하는 게 좋을 듯?
                     return IngameState.SUCCESS;

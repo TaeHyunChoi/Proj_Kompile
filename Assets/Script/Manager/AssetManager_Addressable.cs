@@ -16,23 +16,23 @@ namespace Script.Manager
         private static readonly Dictionary<int, AsyncOperationHandle> assetHandlers  = new Dictionary<int, AsyncOperationHandle>();
 
         // Instaniate, Load GameObject Assets
-        public static async Task<GameObject> GetGameObjectAssetAsync(AssetIndex assetIndex, Transform parent, bool isOn)
+        public static async Task<GameObject> GetGameObjectAssetAsync(AssetCode assetCode, Transform parent, bool isOn)
         {
             GameObject targetObj;
-            if (true == assetHandlers.TryGetValue((int)assetIndex, out AsyncOperationHandle handler))
+            if (true == assetHandlers.TryGetValue((int)assetCode, out AsyncOperationHandle handler))
             {
                 targetObj = (GameObject)handler.Result;
                 targetObj.SetActive(isOn);
             }
             else
             {
-                targetObj = await InstantiateGameObjectAsync(assetIndex, parent, isOn);
+                targetObj = await InstantiateGameObjectAsync(assetCode, parent, isOn);
             }
 
-            MessageManager.Publish(new Message_t(MessageType.GET_ASSET, assetIndex));
+            MessageManager.Publish(MessageType.GET_ASSET, new OnGetAsset_GameObject(assetCode, targetObj));
             return targetObj;
         }
-        private static async Task<GameObject> InstantiateGameObjectAsync(AssetIndex asset, Transform parent, bool isOn)
+        private static async Task<GameObject> InstantiateGameObjectAsync(AssetCode asset, Transform parent, bool isOn)
         {
             AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(asset.ToString(), parent);
             GameObject go = await handle.Task;
@@ -43,7 +43,7 @@ namespace Script.Manager
         }
 
         // Load Non-GameObject Assets
-        public static async Task<T> GetAssetAsync<T>(AssetIndex assetName)
+        public static async Task<T> GetAssetAsync<T>(AssetCode assetName)
         {
             if (true == assetHandlers.TryGetValue((int)assetName, out AsyncOperationHandle handler))
             {
@@ -52,7 +52,7 @@ namespace Script.Manager
 
             return await LoadAssetAsync<T>(assetName);
         }
-        private static async Task<T> LoadAssetAsync<T>(AssetIndex asset)
+        private static async Task<T> LoadAssetAsync<T>(AssetCode asset)
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(asset.ToString());
             assetHandlers.Add((int)asset, handle);

@@ -8,9 +8,11 @@ namespace Script.Data
     using UnityEngine.AddressableAssets;
     using UnityEngine.ResourceManagement.AsyncOperations;
 
+#if UNITY_EDITOR
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
+#endif
 
     using MessagePack;
     using MessagePack.Formatters;
@@ -23,7 +25,7 @@ namespace Script.Data
     {
         private const string MAP_NAVI_DATA_PATH = "Rcs\\Bin\\MapNavRawData";
 
-        public static void WriteBinaryMappingData<T>(T data, string fileName)
+        public static void WriteBinaryMappingData(MapGridData data, string fileName)
         {
             // 저장할 파일 경로 생성
             string filePath = Path.Combine(Application.dataPath, MAP_NAVI_DATA_PATH, fileName + ".dat");
@@ -35,7 +37,7 @@ namespace Script.Data
             }
 
             // 데이터를 MessagePack 형식으로 직렬화하고 파일에 저장
-            byte[] serializedData = MessagePackSerializer.Serialize(data, MessagePackConfig<T>.Options);
+            byte[] serializedData = MessagePackSerializer.Serialize(data, MessagePackConfig<MapGridData>.Options);
             File.WriteAllBytes(filePath, serializedData);
 
 #if UNITY_EDITOR
@@ -56,7 +58,7 @@ namespace Script.Data
             AssetDatabase.SaveAssets();
 #endif
         }
-        public static async Task<T> ReadBinaryMappingDataAsync<T>(int targetGridKey)
+        public static async Task<MapGridData> ReadBinaryMappingDataAsync(int targetGridKey)
         {
             string label = $"MapNavi_{targetGridKey}";
 
@@ -72,13 +74,13 @@ namespace Script.Data
             // 파일에서 바이트 배열 읽기 및 역직렬화
             int instanceID = handler.Result[0].GetInstanceID();
             byte[] serializedData = handler.Result[0].bytes;
-            T data = MessagePackSerializer.Deserialize<T>(serializedData);
+            MapGridData data = MessagePackSerializer.Deserialize<MapGridData>(serializedData);
 
             // 에셋 매니저에서 들고 있고..
             AssetManager.AddHandler(instanceID, handler);
 
             // 자료 구했다는 값을 전달하고
-            MessageManager.Publish(new Message_t(Manager.MessageType.GET_ASSET, Index.AssetIndex.DB_MAP_NAVI, instanceID));
+            MessageManager.Publish(Manager.MessageType.GET_ASSET, new OnGetAsset_MapGridData(Index.AssetCode.DB_MAP_GRID, data));
 
             //데이터의 instanceID를 넘겨야 탐색이 가능한가?
 

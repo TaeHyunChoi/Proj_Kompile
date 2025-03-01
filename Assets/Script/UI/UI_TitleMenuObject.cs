@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using Script.Index;
 using static Script.Index.IDxInput;
 using Script.Interface;
+using Script.Content;
 
 public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
 {
@@ -14,6 +15,13 @@ public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
         UPDATE,
         WAIT,
         CLOSE
+    }
+    private enum MenuType
+    { 
+        NEW_GAME = 0,
+        LOAD_GAME,
+        OPTION,
+        EXIT
     }
 
     [SerializeField] private Transform menuParent;
@@ -51,7 +59,7 @@ public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
         state = State.NONE;
 
         IngameManager.AddUpdater(this);
-        IngameManager.AddInput(AssetIndex.UI_TitleMenuObject, this);
+        IngameManager.AddInput(AssetCode.UI_TitleMenuObject, this);
     }
 
     public UpdaterState UpdateState()
@@ -81,8 +89,8 @@ public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
                 //작동 일시중지
                 break;
             case State.CLOSE:
-                IngameManager.RemoveInput(AssetIndex.UI_TitleMenuObject);
-                MessageManager.Publish(new Message_t(MessageType.END_OBJECT_PROCESS, AssetIndex.UI_TitleMenuObject));
+                IngameManager.RemoveInput(AssetCode.UI_TitleMenuObject);
+                MessageManager.Publish(MessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.UI_TitleMenuObject));
                 return UpdaterState.SUCCESS;
         }
         return UpdaterState.RUNNING;
@@ -92,16 +100,19 @@ public class UI_TitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
     {
         if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
         {
-            switch (index)
+            switch ((MenuType)index)
             {
-                case 0: // new game
-                        //IngameManager.AddTask(TaskType.OP_START_GAME, TaskUpdateType.UPDATE);
+                case MenuType.NEW_GAME: // new game
+                    new Ingame_EnterField(0);
+                        // IngameManager.AddTask(TaskType.OP_START_GAME, TaskUpdateType.UPDATE);
+                        // eneter field 만들고
+                        // ENTER_FIELD 호출되면 '데이터 해제' 쪽을 정리해야 함. ㄱㄷㄱㄷ..
                     break;
-                case 1:  // load game
+                case MenuType.LOAD_GAME:
                     break;
-                case 2:  // option
+                case MenuType.OPTION:
                     break;
-                case 3:  // exit
+                case MenuType.EXIT:
                     break;
                 default: // error
                     // state 유지

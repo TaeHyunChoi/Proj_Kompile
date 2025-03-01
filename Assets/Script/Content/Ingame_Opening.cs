@@ -37,33 +37,37 @@ namespace Script.Content
             MoveNext();
         }
 
-        public void Receive(Message_t msg)
+        public void Receive<T>(MessageType type, T data) where T : struct
         {
             State nextState = State.NONE;
 
-            MessageType messageType = msg.Type;
-            AssetIndex  assetIndex  = msg.AssetIndex;
-
-            if (MessageType.GET_ASSET == messageType)
+            if (MessageType.GET_ASSET == type
+                && data is OnGetAsset_GameObject onGetAsset)
             {
-                if (AssetIndex.OP_TitleObject == assetIndex)
+                AssetCode code = onGetAsset.AssetCode;
+
+                if (AssetCode.OP_TitleObject == code)
                 {
                     nextState = State.PLAY_OPENING;
                     loadTask.Dispose();
                 }
-                else if (AssetIndex.UI_TitleMenuObject == assetIndex)
+                else if (AssetCode.UI_TitleMenuObject == code)
                 {
                     nextState = State.SELECT_MENU;
                     loadTask.Dispose();
                 }
             }
-            else if (MessageType.END_OBJECT_PROCESS == messageType)
+
+            else if (MessageType.END_OBJECT_PROCESS == type
+                && data is OnEndProcess onEndProcess)
             {
-                if (AssetIndex.OP_TitleObject == assetIndex)
+                AssetCode assetIndex = onEndProcess.AssetCode;
+
+                if (AssetCode.OP_TitleObject == assetIndex)
                 {
                     nextState = State.INSTANTIATE_UI_TITLE_MENU;
                 }
-                else if (AssetIndex.UI_TitleMenuObject == assetIndex)
+                else if (AssetCode.UI_TitleMenuObject == assetIndex)
                 {
                     nextState = State.END;
                 }
@@ -86,7 +90,7 @@ namespace Script.Content
 
                 case State.INSTANTIATE_PRF_OPENING:
                     Transform parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
-                    loadTask = AssetManager.GetGameObjectAssetAsync(AssetIndex.OP_TitleObject, parent, true);
+                    loadTask = AssetManager.GetGameObjectAssetAsync(AssetCode.OP_TitleObject, parent, true);
                     //  Receive() => next state;
                     break;
                 case State.PLAY_OPENING:
@@ -95,7 +99,7 @@ namespace Script.Content
 
                 case State.INSTANTIATE_UI_TITLE_MENU:
                     parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
-                    loadTask = AssetManager.GetGameObjectAssetAsync(AssetIndex.UI_TitleMenuObject, parent, true);
+                    loadTask = AssetManager.GetGameObjectAssetAsync(AssetCode.UI_TitleMenuObject, parent, true);
                     //  Receive() => next state;
                     break;
                 case State.SELECT_MENU:

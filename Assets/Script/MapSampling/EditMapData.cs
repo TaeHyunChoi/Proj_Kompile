@@ -57,7 +57,7 @@ namespace Script.Data
                 naviMask |= 1ul << i;
             }
         }
-        public async Task BakeMesh(ConcurrentDictionary<int, RawMapGridData> map)
+        public async Task BakeMesh(ConcurrentDictionary<int, MapGridData> map)
         {
             if (true == isOnlyRender)
             {
@@ -83,7 +83,7 @@ namespace Script.Data
 
 
             // set: map
-            map.TryAdd(gridKey, new RawMapGridData(gridKey));
+            map.TryAdd(gridKey, new MapGridData(gridKey));
 
 
             // set: map[grid].NavMesh

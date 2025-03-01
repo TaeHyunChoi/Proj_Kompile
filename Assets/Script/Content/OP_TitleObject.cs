@@ -73,7 +73,7 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
         images[(int)ImageType.TITLE_LOGO_UPPER].color   = initColor;
         images[(int)ImageType.TITLE_FLASH].color        = initColor;
 
-        IngameManager.AddInput(AssetIndex.OP_TitleObject, this);
+        IngameManager.AddInput(AssetCode.OP_TitleObject, this);
         IngameManager.AddUpdater(this);
     }
 
@@ -201,8 +201,10 @@ public partial class OP_TitleObject : MonoBehaviour, IIngameUpdater, IIngameInpu
                 break;
 
             default:
-                IngameManager.RemoveInput(AssetIndex.OP_TitleObject);
-                MessageManager.Publish(new Message_t(MessageType.END_OBJECT_PROCESS, AssetIndex.OP_TitleObject));
+                IngameManager.RemoveInput(AssetCode.OP_TitleObject);
+                //MessageManager.Publish(new Message_t(MessageType.END_OBJECT_PROCESS, AssetIndex.OP_TitleObject));
+                MessageManager.Publish(MessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.OP_TitleObject));
+
                 return UpdaterState.SUCCESS;
         }
 

@@ -20,11 +20,11 @@ namespace Script.Manager
                 receivers.Add(targetReceiver);
             }
         }
-        public static void Publish(Message_t msg)
+        public static void Publish<T>(MessageType type, T data) where T : struct
         {
             for (int i = 0; i < receivers.Count; ++i)
             {
-                receivers[i].Receive(msg);
+                receivers[i].Receive(type, data);
             }
         }
         public static void Dispose(IMessageReceiver receiver)
@@ -35,31 +35,48 @@ namespace Script.Manager
 
     public interface IMessageReceiver
     {
-        public void Receive(Message_t msg);
+        public void Receive<T>(MessageType type, T data) where T : struct;
     }
-    public readonly struct Message_t
-    {
-        private readonly MessageType type;
-        private readonly AssetIndex  assetIndex;
-        private readonly int         valueInt;
 
-        public MessageType Type => type;
-        public AssetIndex AssetIndex => assetIndex;
-        public int ValueInt => valueInt;
-
-        public Message_t(MessageType targetType, AssetIndex targetAsset, int targetValueInt = default)
-        {
-            type       = targetType;
-            assetIndex = targetAsset;
-            valueInt   = targetValueInt;
-        }
-    }
+    // 얘도 다른 스크립트 파일로 넘기고
     public enum MessageType
     { 
         NONE,
 
         GET_ASSET, 
         END_OBJECT_PROCESS,
+    }
+
+
+    // 얘도 분류해야겠네..
+    public readonly struct OnEndProcess
+    {
+        public readonly AssetCode AssetCode;
+
+        public OnEndProcess(AssetCode index)
+        {
+            AssetCode = index;
+        }
+    }
+    public readonly struct OnGetAsset_GameObject
+    {
+        public readonly AssetCode AssetCode;
+        public readonly GameObject GameObject;
+        public OnGetAsset_GameObject(AssetCode index, GameObject targetObj)
+        {
+            AssetCode = index;
+            GameObject = targetObj;
+        }
+    }
+    public readonly struct OnGetAsset_MapGridData
+    {
+        public readonly AssetCode AssetCode;
+        public readonly MapGridData Data;
+        public OnGetAsset_MapGridData(AssetCode index, MapGridData data)
+        {
+            AssetCode = index;
+            Data = data;
+        }
     }
 }
 

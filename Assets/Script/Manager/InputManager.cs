@@ -13,13 +13,13 @@ namespace Script.Manager
         private readonly InputAction enterInput;
         private readonly InputAction actionInput;
 
-        private static List<(AssetIndex index, IIngameInput input)> inputs;
+        private static List<(AssetCode index, IIngameInput input)> inputs;
         private static InputFlag inputFlag;
 
 
         public InputManager()
         {
-            inputs    = new List<(AssetIndex, IIngameInput)>();
+            inputs    = new List<(AssetCode, IIngameInput)>();
             inputFlag = InputFlag.NONE;
 
             moveInput = new InputAction("Move", InputActionType.Value, interactions: "Hold(duration=0.1)");
@@ -85,7 +85,7 @@ namespace Script.Manager
         }
 
 
-        public void Add(AssetIndex targetAssetIndex, IIngameInput targetInput)
+        public void Add(AssetCode targetAssetIndex, IIngameInput targetInput)
         {
             inputs.Add(new (targetAssetIndex, targetInput));
         }
@@ -97,7 +97,7 @@ namespace Script.Manager
                 inputs[i].input.Input(inputFlag);
             }
         }
-        public void Remove(AssetIndex assetIndex)
+        public void Remove(AssetCode assetIndex)
         {
             for (int i = inputs.Count - 1; i >= 0; --i)
             {

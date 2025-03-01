@@ -20,11 +20,11 @@ namespace Script.Manager
         private static List<IIngameLateUpdater>   lateUpdate;
         private readonly int clearSuccessIngameCount = 5;
 
-        public static void AddInput(AssetIndex assetType, IIngameInput targetInput)
+        public static void AddInput(AssetCode assetType, IIngameInput targetInput)
         {
             inputMgr.Add(assetType, targetInput);
         }
-        public static void RemoveInput(AssetIndex assetType)
+        public static void RemoveInput(AssetCode assetType)
         {
             inputMgr.Remove(assetType);
         }
@@ -74,9 +74,9 @@ namespace Script.Manager
             lateUpdate.Add(targetLateUpdater);
         }
 
-        public static bool TryAddMapRawGridData(int gridKey, RawMapGridData rawMapGridData)
+        public static bool TryAddMapRawGridData(int gridKey, MapGridData rawMapGridData)
         {
-            return fieldMapMgr.TryAddRawMapGridData(gridKey, rawMapGridData);
+            return fieldMapMgr.TryAddMapGridData(gridKey, rawMapGridData);
         }
 
 
