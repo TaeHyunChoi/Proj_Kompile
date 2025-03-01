@@ -7,10 +7,17 @@ namespace Script.Data
     public class RawMapGridData
     {
         [Key(0)]
+        public int gridKey;
+
+        [Key(1)]
         public ConcurrentDictionary<int, RawMapNavData> rawMapNavData;
 
-        public RawMapGridData()
+        // trigger 정보는 RawMapNaviData.infoMask로 빠질라나 => 이거 개념이 뭐임?
+        // MapGridData에서 무엇을 들고 있어야 할까?
+
+        public RawMapGridData(int targetGridKey)
         {
+            gridKey = targetGridKey;
             rawMapNavData = new ConcurrentDictionary<int, RawMapNavData>();
         }
 

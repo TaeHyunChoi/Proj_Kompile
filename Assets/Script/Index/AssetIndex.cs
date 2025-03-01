@@ -14,6 +14,8 @@ namespace Script.Index
     {
         NONE = 0,
 
+        DB_MAP_NAVI,
+
         OP_TitleObject,
 
         UI_TitleMenuObject,

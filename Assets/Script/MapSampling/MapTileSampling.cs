@@ -69,7 +69,7 @@ namespace MapSampling
             // save data
             foreach (var grid in map)
             {
-                DataMgr.WriteBinaryMappingData<RawMapGridData>(grid.Value, $"MapNavi_{grid.Key}");
+                DataManager.WriteBinaryMappingData<RawMapGridData>(grid.Value, $"MapNavi_{grid.Key}");
             }
         }
         private IEnumerator IESaveMesh(EditMapData[] tiles)
@@ -204,8 +204,7 @@ namespace MapSampling
         public async void Load()
         {
             // 테스트용으로 걸었던 것인디...
-            Debug.Log("Need Dev: DataMgr.ReadBinaryMappingDataAsync");
-            RawMapGridData data = await DataMgr.ReadBinaryMappingDataAsync<RawMapGridData>("MapGrid_0");
+            RawMapGridData data = await DataManager.ReadBinaryMappingDataAsync<RawMapGridData>(0);
 
             // scale ,x[sign,small_buffer,6], y[sign,small_buffer,4], z[sign,small_buffer,6]
             const byte shiftTileLayer   = 23;

@@ -6,22 +6,20 @@ namespace Script.Manager
     using Script.Content;
     using Script.Interface;
     using System;
+    using Script.Data;
 
     public class IngameManager : MonoBehaviour
     {
-        private static IngameManager  instance;
+        private static IngameManager    instance;
+        private static InputManager     inputMgr;
+        private static FieldMapManager  fieldMapMgr;
 
-        // field : input
-        private static InputManager inputMgr;
-
-        // field : ingame
         private static List<IngameLogicBase>      ingameLogics;
         private static List<IIngameUpdater>       update;
         private static List<IIngameFixedUpdater>  fixedUpdate;
         private static List<IIngameLateUpdater>   lateUpdate;
         private readonly int clearSuccessIngameCount = 5;
 
-        // func : input
         public static void AddInput(AssetIndex assetType, IIngameInput targetInput)
         {
             inputMgr.Add(assetType, targetInput);
@@ -32,7 +30,6 @@ namespace Script.Manager
         }
 
 
-        // func : ingame
         public static void AddIngame(IngameLogicBase targetIngame)
         {
             ingameLogics.Add(targetIngame);
@@ -77,10 +74,14 @@ namespace Script.Manager
             lateUpdate.Add(targetLateUpdater);
         }
 
+        public static bool TryAddMapRawGridData(int gridKey, RawMapGridData rawMapGridData)
+        {
+            return fieldMapMgr.TryAddRawMapGridData(gridKey, rawMapGridData);
+        }
+
 
         private void Awake()
         {
-            // init: instance (like singleton)
             if (instance != null)
             {
                 Destroy(gameObject);
@@ -89,9 +90,11 @@ namespace Script.Manager
             instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // init: manager
             AssetManager.Initialize(this.transform);
-            inputMgr = new InputManager();
+            
+            inputMgr    = new InputManager();
+            fieldMapMgr = new FieldMapManager();
+            
             ingameLogics = new List<IngameLogicBase>();
 
             // init: update

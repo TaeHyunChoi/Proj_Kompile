@@ -17,9 +17,9 @@ namespace Script.Data
     using MessagePack.Resolvers;
 
     using Script.Util;
+    using Script.Manager;
 
-
-    public static partial class DataMgr
+    public static partial class DataManager
     {
         private const string MAP_NAVI_DATA_PATH = "Rcs\\Bin\\MapNavRawData";
 
@@ -56,29 +56,38 @@ namespace Script.Data
             AssetDatabase.SaveAssets();
 #endif
         }
-        public static async Task<T> ReadBinaryMappingDataAsync<T>(string label)
+        public static async Task<T> ReadBinaryMappingDataAsync<T>(int targetGridKey)
         {
-            // 어드레서블 에셋 로드
-            AsyncOperationHandle<IList<TextAsset>> handle = Addressables.LoadAssetsAsync<TextAsset>(label, null);
-            await handle.Task;
+            string label = $"MapNavi_{targetGridKey}";
 
-            if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result.Count == 0)
+            // 어드레서블 에셋 로드
+            AsyncOperationHandle<IList<TextAsset>> handler = Addressables.LoadAssetsAsync<TextAsset>(label, null);
+            await handler.Task;
+
+            if (handler.Status != AsyncOperationStatus.Succeeded || handler.Result.Count == 0)
             {
                 throw new FileNotFoundException($"라벨에 해당하는 파일이 존재하지 않습니다: {label}");
             }
 
             // 파일에서 바이트 배열 읽기 및 역직렬화
-            byte[] serializedData = handle.Result[0].bytes;
+            int instanceID = handler.Result[0].GetInstanceID();
+            byte[] serializedData = handler.Result[0].bytes;
             T data = MessagePackSerializer.Deserialize<T>(serializedData);
 
-            // 이거 publish 해버리지 뭐?...
+            // 에셋 매니저에서 들고 있고..
+            AssetManager.AddHandler(instanceID, handler);
+
+            // 자료 구했다는 값을 전달하고
+            MessageManager.Publish(new Message_t(Manager.MessageType.GET_ASSET, Index.AssetIndex.DB_MAP_NAVI, instanceID));
+
+            //데이터의 instanceID를 넘겨야 탐색이 가능한가?
+
 
             return data;
         }
-
     }
 
-    public static partial class DataMgr
+    public static partial class DataManager
     {
         public class ConcurrentDictionaryFormatter<TKey, TValue> : IMessagePackFormatter<ConcurrentDictionary<TKey, TValue>>
         {

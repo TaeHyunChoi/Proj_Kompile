@@ -59,6 +59,15 @@ namespace Script.Manager
             return await handle.Task;
         }
 
+        public static bool AddHandler(int key, AsyncOperationHandle handler)
+        {
+            return assetHandlers.TryAdd(key, handler);
+        }
+        public static T GetCachedData<T>(int instanceID) where T:class
+        {
+            return assetHandlers[instanceID].Result as T;
+        }
+
         // Spawn Unit => 얘는 Field, Battle 쪽으로 넘겨서 처리하는게 좋을 듯
         //public static async Task<T> SpawnUnit<T>(int index, Transform parent) where T : UnitBase, new()
         //{

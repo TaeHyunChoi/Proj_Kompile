@@ -83,7 +83,7 @@ namespace Script.Data
 
 
             // set: map
-            map.TryAdd(gridKey, new RawMapGridData());
+            map.TryAdd(gridKey, new RawMapGridData(gridKey));
 
 
             // set: map[grid].NavMesh

@@ -1,5 +1,6 @@
 namespace Script.Manager
 {
+    using Script.Data;
     using Script.Index;
     using System.Collections.Generic;
     using UnityEngine;
