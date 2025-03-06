@@ -136,10 +136,6 @@ namespace Script.Data
             int y = gridInt.y;
             int z = gridInt.z;
 
-            int px = x;
-            int py = y;
-            int pz = z;
-
             if (x < 0)
             {
                 gridFlag |= 1 << SHIFT_GRID_X_SIGN;
