@@ -5,6 +5,7 @@ namespace Script.Data
     using System.Threading.Tasks;
     using Script.Util;
     using Script.Index;
+    using static Script.Index.Index;
 
     [Serializable]   // 에셋으로 저장하기 위함
     [ExecuteAlways]  // 에디터에서 텍스쳐 곧장 적용하기 위함
@@ -63,7 +64,6 @@ namespace Script.Data
             {
                 return;
             }
-            await Task.Yield();
 
             // get: (rotated) pivot
             bool isSmall = (naviMask >> (4 * 13)) != 0;
@@ -74,7 +74,7 @@ namespace Script.Data
                 Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
                 return;
             }
-
+            await Task.Yield();
 
             // get: pivot key
             GetPivotRotated(rotInt, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
@@ -111,53 +111,55 @@ namespace Script.Data
             tilePivot = transform.position + rotated;
 
             // grid pivot
-            var gx = Mathf.FloorToInt(tilePivot.x / 32);
-            var gy = Mathf.FloorToInt(tilePivot.y / 4);
-            var gz = Mathf.FloorToInt(tilePivot.z / 32);
+            var gx = Mathf.FloorToInt(tilePivot.x / GRID_X_LENGTH);
+            var gy = Mathf.FloorToInt(tilePivot.y / GRID_Y_LENGTH);
+            var gz = Mathf.FloorToInt(tilePivot.z / GRID_Z_LENGTH);
             gridPivot = new Vector3(gx, gy, gz);
         }
         private int GetGridKeyMask(Vector3 gridPivot)
         {
-            const byte shiftGridXSign = 15;
-            const byte shiftGridX = 10;
-            const byte shiftGridYSign = 9;
-            const byte shiftGridY = 6;
-            const byte shiftGridZSign = 5;
-            const byte shiftGridZ = 0;
+            // 비트 쉬프트: 2진법 기준으로 오른쪽(작은 수)부터 z,y,x 이므로 상대적으로 z를 먼저 지정
+            const int SHIFT_GRID_Z      = 0;
+            const int SHIFT_GRID_Z_SIGN = FIELD_HALF_LENGTH;
+
+            const int SHIFT_GRID_Y      = SHIFT_GRID_Z_SIGN + 1;
+            const int SHIFT_GRID_Y_SIGN = SHIFT_GRID_Y + FIELD_HALF_LENGTH;
+
+            const int SHIFT_GRID_X      = SHIFT_GRID_Y_SIGN + 1;
+            const int SHIFT_GRID_X_SIGN = SHIFT_GRID_X + FIELD_HALF_LENGTH;
+
 
             Vector3Int gridInt = gridPivot.ToInt();
-
             int gridFlag = 0;
 
-            if (gridInt.x < 0)
-            {
-                gridFlag |= 1 << shiftGridXSign;
-                gridFlag |= (-gridInt.x) << shiftGridX;
-            }
-            else
-            {
-                gridFlag |= gridInt.x << shiftGridX;
-            }
+            int x = gridInt.x;
+            int y = gridInt.y;
+            int z = gridInt.z;
 
-            if (gridInt.y < 0)
-            {
-                gridFlag |= 1 << shiftGridYSign;
-                gridFlag |= (-gridInt.y) << shiftGridY;
-            }
-            else
-            {
-                gridFlag |= gridInt.y << shiftGridY;
-            }
+            int px = x;
+            int py = y;
+            int pz = z;
 
-            if (gridInt.z < 0)
+            if (x < 0)
             {
-                gridFlag |= 1 << shiftGridZSign;
-                gridFlag |= (-gridInt.z) << shiftGridZ;
+                gridFlag |= 1 << SHIFT_GRID_X_SIGN;
+                x *= -1;
             }
-            else
+            gridFlag |= x << SHIFT_GRID_X;
+
+            if (y < 0)
             {
-                gridFlag |= gridInt.z << shiftGridZ;
+                gridFlag |= 1 << SHIFT_GRID_Y_SIGN;
+                y *= -1;
             }
+            gridFlag |= y << SHIFT_GRID_Y;
+
+            if (z < 0)
+            {
+                gridFlag |= 1 << SHIFT_GRID_Z_SIGN;
+                z *= -1;
+            }
+            gridFlag |= z << SHIFT_GRID_Z;
 
             return (ushort)gridFlag;
         }

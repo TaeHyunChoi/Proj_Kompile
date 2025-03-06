@@ -25,12 +25,4 @@ namespace Script.Index
         AnimCtrl_Linxhang,
         AnimeCtrl_Smashu,
     }
-
-    public static class Index
-    {
-        public static int ToInt(this AssetCode assetName)
-        {
-            return (int)assetName;
-        }
-    }
 }
