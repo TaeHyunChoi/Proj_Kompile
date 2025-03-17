@@ -11,13 +11,9 @@ namespace MapSampling
     using Script.Util;
     using Script.Data;
 
-
-    /// <summary> 
-    /// reference link: https://www.youtube.com/watch?v=K-zw3QFaTqg
-    /// 어드레서블 에셋 라벨 로드 : https://chatgpt.com/share/67b4abb9-aea8-8008-8849-01ed2e70af15
-    /// </summary>
     public class MapTileSampling : MonoBehaviour
     {
+        private const int VERTEX_LIMIT = 65535;
         private readonly string assetGroupName = "MapRender";
 
         [SerializeField] private Transform instanceTransform;
@@ -39,7 +35,6 @@ namespace MapSampling
             Task taskSaveNavData = SaveMapNavDataAsync(tiles);
 
             // sync : render data (unity api 사용하므로 async 불가)
-            //StartCoroutine(IESaveRender(tiles));
             StartCoroutine(IESaveMesh(tiles));
 
             await Task.WhenAll(taskSaveNavData);
@@ -74,10 +69,17 @@ namespace MapSampling
                 DataManager.WriteBinaryMappingData(grid.Value, $"MapNavi_{grid.Key}");
             }
         }
+        private struct TempData
+        {
+            public List<CombineInstance> combineInstances;
+            public List<Vector2> combinedUVs;
+            public int vertexCount;
+            public int index;
+        }
+
         private IEnumerator IESaveMesh(EditMapData[] tiles)
         {
-            Dictionary<long, List<CombineInstance>> combined = new Dictionary<long, List<CombineInstance>>();
-            Dictionary<long, List<Vector2>> combinedUVs = new Dictionary<long, List<Vector2>>();
+            Dictionary<long, TempData> tempDataDict = new Dictionary<long, TempData>();
 
             EditMapData tile;
             for (int i = 0; i < tiles.Length; ++i)
@@ -85,46 +87,75 @@ namespace MapSampling
                 tile = tiles[i];
                 long key = tile.GridKey << 32 | tile.Layer;
 
-                // 없으면 새로 넣고
-                if (false == combined.ContainsKey(key))
+                if (!tempDataDict.ContainsKey(key))
                 {
-                    combined.Add(key, new List<CombineInstance>());
-                    combinedUVs.Add(key, new List<Vector2>());
+                    tempDataDict[key] = new TempData
+                    {
+                        combineInstances = new List<CombineInstance>(),
+                        combinedUVs = new List<Vector2>(),
+                        vertexCount = 0,
+                        index = 0
+                    };
                 }
 
-                CombineInstance combInstance = new CombineInstance();
-                combInstance.mesh = Object.Instantiate(tile.MeshFilter.sharedMesh); // 새로운 인스턴스를 생성하여 UV 설정
-                combInstance.transform = tile.transform.localToWorldMatrix;
-                Vector2[] uvs = GetUVs(combInstance, tile.TextureIndex); // 개별적으로 UV 설정
-                combInstance.mesh.uv = uvs;
+                TempData tempData = tempDataDict[key];
 
-                combined[key].Add(combInstance);
-                combinedUVs[key].AddRange(uvs);
+                int currentVertexCount = tempData.vertexCount;
+                int tileVertexCount = tile.MeshFilter.sharedMesh.vertexCount;
+
+                if (currentVertexCount + tileVertexCount > VERTEX_LIMIT)
+                {
+                    Mesh combinedMesh = new Mesh();
+                    combinedMesh.CombineMeshes(tempData.combineInstances.ToArray(), true, true);
+                    combinedMesh.uv = tempData.combinedUVs.ToArray();
+
+                    SaveMesh(combinedMesh, tile.GridKey, tile.Layer, tempData.index, true, false);
+                    yield return null;
+
+                    tempData.combineInstances.Clear();
+                    tempData.combinedUVs.Clear();
+                    tempData.vertexCount = 0;
+                    tempData.index++;
+                }
+
+                CombineInstance combInstance = new CombineInstance()
+                {
+                    mesh = tile.MeshFilter.sharedMesh,
+                    transform = tile.transform.localToWorldMatrix
+                };
+
+                Vector2[] uvs = GetUVs(combInstance, tile.TextureIndex);
+                tempData.combineInstances.Add(combInstance);
+                tempData.combinedUVs.AddRange(uvs);
+                tempData.vertexCount += tileVertexCount;
+
+                tempDataDict[key] = tempData;
             }
 
-            foreach (var inst in combined)
+            foreach (var kvp in tempDataDict)
             {
-                long key = inst.Key;
-                int gridKey = (int)(key >> 32);
-                int layer = (int)(key & 0xFFFF_FFFF);
+                TempData tempData = kvp.Value;
+                if (tempData.combineInstances.Count > 0)
+                {
+                    Mesh combinedMesh = new Mesh();
+                    combinedMesh.CombineMeshes(tempData.combineInstances.ToArray(), true, true);
+                    combinedMesh.uv = tempData.combinedUVs.ToArray();
 
-                Mesh combinedMesh = new Mesh();
-                combinedMesh.CombineMeshes(inst.Value.ToArray(), true, true, false); // UV를 유지하도록 CombineMeshes 호출
-
-                // 병합된 메쉬의 UV 배열을 수동으로 설정합니다.
-                combinedMesh.uv = combinedUVs[key].ToArray();
-
-                SaveMesh(combinedMesh, gridKey, layer, true, false);
-                yield return null;
+                    SaveMesh(combinedMesh, (int)(kvp.Key >> 32), (int)(kvp.Key & 0xFFFF_FFFF), tempData.index, true, false);
+                    yield return null;
+                }
             }
 
             EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
         }
-        private void SaveMesh(Mesh mesh, int gridKey, int layer, bool makeNewInstance, bool optimizeMesh)
+
+
+
+        private void SaveMesh(Mesh mesh, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
         {
 
             string labelName = $"MapRender_{gridKey}";
-            string assetName = $"MapRender_{gridKey}_{layer}";
+            string assetName = $"MapRender_{gridKey}_{layer}_{index}";
 
             var path = "Assets/Rcs/MapRender/" + $"MapRender_{gridKey}_{layer}" + ".asset";
 

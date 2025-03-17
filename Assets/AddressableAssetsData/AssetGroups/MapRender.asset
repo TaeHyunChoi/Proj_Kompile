@@ -16,7 +16,7 @@ MonoBehaviour:
   m_GUID: d20cb78037ea68b4c9806d32461477c7
   m_SerializeEntries:
   - m_GUID: 1c7fd5ae56703b4409cad6d0ef141fe3
-    m_Address: MapRender_0_0
+    m_Address: MapRender_0_0_0
     m_ReadOnly: 0
     m_SerializedLabels:
     - MapRender_0
