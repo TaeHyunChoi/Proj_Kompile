@@ -154,10 +154,11 @@ namespace MapSampling
         private void SaveMesh(Mesh mesh, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
         {
 
-            string labelName = $"MapRender_{gridKey}";
-            string assetName = $"MapRender_{gridKey}_{layer}_{index}";
+            string labelName = $"MapRender_G{gridKey}";
+            string assetName = $"MapRender_G{gridKey}_L{layer}_{index}";
 
-            var path = "Assets/Rcs/MapRender/" + $"MapRender_{gridKey}_{layer}" + ".asset";
+            var path = "Assets/Rcs/MapRender/" + assetName + ".asset";
+            //var path = "Assets/Rcs/MapRender/" + $"MapRender_{gridKey}_{layer}" + ".asset";
 
             // 이미 같은 이름의 에셋이 있는지 확인합니다.
             if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path))
