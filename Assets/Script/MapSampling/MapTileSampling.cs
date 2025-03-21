@@ -154,7 +154,8 @@ namespace MapSampling
         private void SaveMesh(Mesh mesh, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
         {
 
-            string labelName = $"MapRender_G{gridKey}";
+            string gridLabel = $"MapRender_G{gridKey}";
+            string layerLabel = $"MapRender_L{layer}";
             string assetName = $"MapRender_G{gridKey}_L{layer}_{index}";
 
             var path = "Assets/Rcs/MapRender/" + assetName + ".asset";
@@ -182,7 +183,8 @@ namespace MapSampling
                 // Addressable 에셋 생성
                 var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);
                 entry.SetAddress(assetName);
-                entry.labels.Add(labelName);
+                entry.labels.Add(gridLabel);
+                entry.labels.Add(layerLabel);
 
                 EditorUtility.SetDirty(settings);
                 settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);

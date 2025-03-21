@@ -4,7 +4,7 @@ namespace Script.Util
     using System.Collections.Generic;
     using System.Threading;
 
-    public class SortedList<TKey, TValue> where TKey : IComparable<TKey>
+    public class x_SortedList<TKey, TValue> where TKey : IComparable<TKey>
     {
         private readonly List<TKey>           keys = new List<TKey>();
         private readonly List<TValue>         values = new List<TValue>();
