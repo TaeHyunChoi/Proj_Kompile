@@ -14,7 +14,7 @@ namespace Script.Manager
         private static InputManager     inputMgr;
         private static FieldMapManager  fieldMapMgr;
 
-        private static List<IngameLogicBase>      ingameLogics;
+        private static List<IngameHandlerBase>      ingameLogics;
         private static List<IIngameUpdater>       update;
         private static List<IIngameFixedUpdater>  fixedUpdate;
         private static List<IIngameLateUpdater>   lateUpdate;
@@ -30,7 +30,7 @@ namespace Script.Manager
         }
 
 
-        public static void AddIngame(IngameLogicBase targetIngame)
+        public static void AddIngame(IngameHandlerBase targetIngame)
         {
             ingameLogics.Add(targetIngame);
         }
@@ -95,7 +95,7 @@ namespace Script.Manager
             inputMgr    = new InputManager();
             fieldMapMgr = new FieldMapManager();
             
-            ingameLogics = new List<IngameLogicBase>();
+            ingameLogics = new List<IngameHandlerBase>();
 
             // init: update
             update      = new List<IIngameUpdater>();
@@ -105,7 +105,7 @@ namespace Script.Manager
 
         private void Start()
         {
-            AddIngame(new Ingame_Opening());
+            AddIngame(new OpeningHandler());
         }
 
         private void Update()

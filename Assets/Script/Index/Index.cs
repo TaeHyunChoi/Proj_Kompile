@@ -8,7 +8,6 @@ namespace Script.Index
         public const byte GRID_Y_LENGTH     = 8;
         public const byte GRID_Z_LENGTH     = 16;
 
-
         public static int ToInt(this AssetCode assetName)
         {
             return (int)assetName;
