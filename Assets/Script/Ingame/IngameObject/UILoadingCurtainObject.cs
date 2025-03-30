@@ -41,7 +41,7 @@ public class UILoadingCurtainObject : MonoBehaviour, IIngameUpdater
             sign = -1f;
         }
     }
-    public UpdaterState UpdateState()
+    public IngameUpdateState UpdateState()
     {
         switch (state)
         {
@@ -58,12 +58,12 @@ public class UILoadingCurtainObject : MonoBehaviour, IIngameUpdater
                 alpha = System.Math.Clamp(alpha, 0, 1);
                 if (alpha <= 0 || alpha >= 1)
                 {
-                    return UpdaterState.SUCCESS;
+                    return IngameUpdateState.SUCCESS;
                 }
                 break;
 
         }
 
-        return UpdaterState.RUNNING;
+        return IngameUpdateState.RUNNING;
     }
 }

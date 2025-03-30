@@ -1,14 +1,13 @@
 
 namespace Script.Index
 {
-    public enum UpdaterState
+    public enum IngameUpdateState
     {
         RUNNING,
         SUCCESS,
         FAILURE
     };
-
-    public enum IngameLogicIndex
+    public enum IngameHandlerType
     {
         NONE = 0,
 
@@ -16,7 +15,7 @@ namespace Script.Index
         ENTER_FIELD,
 
     }
-    public enum IngameState
+    public enum IngameHandlerState
     {
         NONE = 0,
 

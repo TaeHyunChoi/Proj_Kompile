@@ -1,25 +1,23 @@
 namespace Script.Manager
 {
-    using System.Collections.Generic;
     using Script.Index;
     using Script.Interface;
     using UnityEngine;
     using UnityEngine.InputSystem;
     using static Script.Index.IDxInput;
 
-    public class InputManager
+    public class InputManager : IIngameUpdater
     {
         private readonly InputAction moveInput;
         private readonly InputAction enterInput;
         private readonly InputAction actionInput;
 
-        private static List<(AssetCode index, IIngameInput input)> inputs;
+        private static bool pause;
         private static InputFlag inputFlag;
-
 
         public InputManager()
         {
-            inputs    = new List<(AssetCode, IIngameInput)>();
+            pause = false;
             inputFlag = InputFlag.NONE;
 
             moveInput = new InputAction("Move", InputActionType.Value, interactions: "Hold(duration=0.1)");
@@ -33,19 +31,19 @@ namespace Script.Manager
             // OnMove() : local function
             moveInput.started   += OnMove;
             moveInput.performed += OnMove;
-            moveInput.canceled += OnMove;
+            moveInput.canceled  += OnMove;
 
             enterInput = new InputAction("Enter", InputActionType.Button);
             enterInput.AddBinding("<Keyboard>/z");
             enterInput.started  += (context) => 
             { 
                 inputFlag |=  InputFlag.ENTER;
-                Update();
+                PublishInput();
             };
             enterInput.canceled += (context) => 
             { 
                 inputFlag &= ~InputFlag.ENTER;
-                Update();
+                PublishInput();
             };
 
             actionInput = new InputAction("Action", InputActionType.Button);
@@ -53,18 +51,20 @@ namespace Script.Manager
             actionInput.started   += (context) => 
             { 
                 inputFlag |=  InputFlag.ACTION;
-                Update();
+                PublishInput();
             };
-            actionInput.started += (context) =>
+            actionInput.performed += (context) =>
             {
                 inputFlag |= InputFlag.ACTION;
-                Update();
+                PublishInput();
             };
             actionInput.canceled  += (context) => 
             { 
                 inputFlag &= ~InputFlag.ACTION;
-                Update();
+                PublishInput();
             };
+
+            IngameManager.AddInputUpdater(this);
 
             void OnMove(InputAction.CallbackContext context)
             {
@@ -80,38 +80,25 @@ namespace Script.Manager
 
                 inputFlag = (inputFlag & InputFlag.ACT_ALL) | moveFlag;
 
-                Update();
+                PublishInput();
             }
         }
 
 
-        public void Add(AssetCode targetAssetIndex, IIngameInput targetInput)
+
+        public void SetPause(bool on)
         {
-            inputs.Add(new (targetAssetIndex, targetInput));
+            pause = on;
         }
-        public void Update()
+
+        public void PublishInput()
         {
-            // 가장 최근에 추가된 것부터 먼저 입력 처리
-            for (int i = inputs.Count - 1; i >= 0; --i)
+            if (true == pause)
             {
-                inputs[i].input.Input(inputFlag);
+                return;
             }
-        }
-        public void Remove(AssetCode assetIndex)
-        {
-            for (int i = inputs.Count - 1; i >= 0; --i)
-            {
-                if (inputs[i].index == assetIndex)
-                {
-                    inputs.RemoveAt(i);
-                }
-            }
-        }
 
-
-        public bool IsPerformed()
-        {
-            return moveInput.IsPressed() | actionInput.IsPressed();
+            MessageManager.PublishInput(new OnInputControl(inputFlag));
         }
 
         public void OnEnable()
@@ -130,6 +117,25 @@ namespace Script.Manager
 
             actionInput.Disable();
             actionInput.Dispose();
+        }
+
+        public IngameUpdateState UpdateState()
+        {
+            try
+            {
+                if (false == pause
+                    && InputFlag.NONE != inputFlag)
+                {
+                    PublishInput();
+                }
+
+                return IngameUpdateState.RUNNING;
+            }
+            catch
+            {
+                return IngameUpdateState.FAILURE;
+            }
+
         }
     }
 }

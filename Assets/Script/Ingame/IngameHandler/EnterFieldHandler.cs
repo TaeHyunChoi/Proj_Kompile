@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Script.Content
 {
-    public class EnterFieldHandler : IngameHandlerBase, IMessageReceiver
+    public class EnterFieldHandler : _IngameHandlerBase, IMessageReceiver
     {
         private enum State
         { 
@@ -24,16 +24,16 @@ namespace Script.Content
 
         public EnterFieldHandler(int targetGridKey)
         {
-            ingameLogicType = IngameLogicIndex.ENTER_FIELD;
+            handlerType = IngameHandlerType.ENTER_FIELD;
 
             state = State.LOAD_MAP_DATA;
             gridKey = targetGridKey;
 
-            IngameManager.AddIngame(this);
+            IngameManager.AddIngameHandler(this);
             MoveNext();
         }
 
-        public void Receive<T>(MessageType type, T data) where T : struct
+        public bool Receive<T>(MessageType type, T data) where T : struct
         {
             if (type == MessageType.GET_ASSET
                 && data is OnGetAsset_MapGridData getRawMapGridData)
@@ -45,10 +45,14 @@ namespace Script.Content
                 loadMapTask = null;
 
                 state = State.CLOSE;
+
+                return true;
             }
+
+            return false;
         }
 
-        public override IngameState MoveNext()
+        public override IngameHandlerState MoveNext()
         {
             switch (state)
             {
@@ -60,12 +64,17 @@ namespace Script.Content
                 case State.CLOSE:
 
                     // '탐험하기' 태스크를 생성한다? 이건 field manager에서 하는 게 좋을 듯?
-                    return IngameState.SUCCESS;
+                    return IngameHandlerState.SUCCESS;
 
                 default:
-                    return IngameState.FAILURE;
+                    return IngameHandlerState.FAILURE;
             }
-            return IngameState.RUNNING;
+            return IngameHandlerState.RUNNING;
+        }
+
+        public override void Dispose()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

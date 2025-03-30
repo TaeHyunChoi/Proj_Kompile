@@ -11,44 +11,80 @@ namespace Script.Manager
     /// </summary>
     public static class MessageManager
     {
-        private static readonly List<IMessageReceiver> receivers = new List<IMessageReceiver>();
+        private static readonly List<IMessageReceiver> ingameReceivers = new List<IMessageReceiver>();
+        private static readonly List<IMessageReceiver> inputReceivers  = new List<IMessageReceiver>();
 
-        public static void AddReceiver(IMessageReceiver targetReceiver)
+        public static void AddReceiver(IMessageReceiver receiver, bool hasInput = false)
         {
-            if (false == receivers.Contains(targetReceiver))
+            if (false == ingameReceivers.Contains(receiver))
             {
-                receivers.Add(targetReceiver);
+                ingameReceivers.Add(receiver);
+            }
+
+            if (true == hasInput
+                && false == inputReceivers.Contains(receiver))
+            {
+                inputReceivers.Add(receiver);
             }
         }
+
         public static void Publish<T>(MessageType type, T data) where T : struct
         {
-            for (int i = 0; i < receivers.Count; ++i)
+            for (int i = ingameReceivers.Count - 1; i >= 0; --i)
             {
-                receivers[i].Receive(type, data);
+                ingameReceivers[i].Receive(type, data);
             }
         }
+        public static void PublishInput(OnInputControl onInput)
+        {
+            for (int i = inputReceivers.Count - 1; i >= 0; --i)
+            {
+                if (true == inputReceivers[i].Receive(MessageType.INPUT_CONTROL, onInput))
+                {
+                    return;
+                }
+            }
+        }
+
         public static void Dispose(IMessageReceiver receiver)
         {
-            receivers.Remove(receiver);
+            ingameReceivers.Remove(receiver);
+            inputReceivers.Remove(receiver);
         }
     }
+
+
+
 
     public interface IMessageReceiver
     {
-        public void Receive<T>(MessageType type, T data) where T : struct;
+        public bool Receive<T>(MessageType type, T data) where T : struct;
     }
 
-    // 얘도 다른 스크립트 파일로 넘기고
+
+
+
+
+    // 얘도 다른 스크립트 파일로 넘기고 - 파일을 어찌 넘겨야 좋으려나?
     public enum MessageType
     { 
         NONE,
 
+        INPUT_CONTROL,
+
         GET_ASSET, 
         END_OBJECT_PROCESS,
+        SELECT_ITEM,
     }
+    public readonly struct OnInputControl
+    {
+        public readonly IDxInput.InputFlag inputFlag;
 
-
-    // 얘도 분류해야겠네..
+        public OnInputControl(IDxInput.InputFlag inputFlagValue)
+        {
+            inputFlag = inputFlagValue;
+        }
+    }
     public readonly struct OnEndProcess
     {
         public readonly AssetCode AssetCode;
@@ -62,6 +98,7 @@ namespace Script.Manager
     {
         public readonly AssetCode AssetCode;
         public readonly GameObject GameObject;
+        public int InstanceID => GameObject.GetInstanceID();
         public OnGetAsset_GameObject(AssetCode index, GameObject targetObj)
         {
             AssetCode = index;
@@ -76,6 +113,14 @@ namespace Script.Manager
         {
             AssetCode = index;
             Data = data;
+        }
+    }
+    public readonly struct OnSelectItem
+    {
+        public readonly int ValueInt;
+        public OnSelectItem(int value)
+        {
+            ValueInt = value;
         }
     }
 }

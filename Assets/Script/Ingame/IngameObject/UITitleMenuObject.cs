@@ -5,9 +5,9 @@ using UnityEngine.UI;
 using Script.Index;
 using static Script.Index.IDxInput;
 using Script.Interface;
-using Script.Content;
 
-public class UITitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
+
+public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
 {
     private enum State
     { 
@@ -16,7 +16,7 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
         WAIT,
         CLOSE
     }
-    private enum MenuType
+    public enum MenuType
     { 
         NEW_GAME = 0,
         LOAD_GAME,
@@ -58,11 +58,10 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
 
         state = State.NONE;
 
-        IngameManager.AddUpdater(this);
-        IngameManager.AddInput(AssetCode.UI_TitleMenuObject, this);
+        IngameManager.AddUpdater(UpdaterType.UPDATE, this);
     }
 
-    public UpdaterState UpdateState()
+    public IngameUpdateState UpdateState()
     {
         switch (state)
         {
@@ -89,42 +88,23 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
                 //작동 일시중지
                 break;
             case State.CLOSE:
-                IngameManager.RemoveInput(AssetCode.UI_TitleMenuObject);
                 MessageManager.Publish(MessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.UI_TitleMenuObject));
-                return UpdaterState.SUCCESS;
+                return IngameUpdateState.SUCCESS;
         }
-        return UpdaterState.RUNNING;
+        return IngameUpdateState.RUNNING;
     }
 
-    public void Input(InputFlag inputFlag)
+    public bool Input(InputFlag inputFlag)
     {
         if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
         {
-            switch ((MenuType)index)
-            {
-                case MenuType.NEW_GAME: // new game
-                    new EnterFieldHandler(0);
-                    // IngameManager.AddTask(TaskType.OP_START_GAME, TaskUpdateType.UPDATE);
-                    // eneter field 만들고
-                    // ENTER_FIELD 호출되면 '데이터 해제' 쪽을 정리해야 함. ㄱㄷㄱㄷ..
-                    break;
-                case MenuType.LOAD_GAME:
-                    break;
-                case MenuType.OPTION:
-                    break;
-                case MenuType.EXIT:
-                    break;
-                default: // error
-                    // state 유지
-                    return;
-            }
-
-            return;
+            MessageManager.Publish(MessageType.SELECT_ITEM, new OnSelectItem(index));
+            return true;
         }
 
         if (Time.time < lastInputTime + waitTime)
         {
-            return;
+            return false;
         }
         lastInputTime = Time.time;
 
@@ -138,5 +118,7 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater, IIngameInput
             index = ((index + 1) + 4) % 4;
             selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
         }
+
+        return true;
     }
 }

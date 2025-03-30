@@ -4,7 +4,7 @@ using Script.Manager;
 using UnityEngine;
 using UnityEngine.UI;
 
-public partial class TitleObject : MonoBehaviour, IIngameUpdater, IIngameInput
+public partial class TitleObject : MonoBehaviour, IIngameUpdater
 {
     private enum ImageType
     {
@@ -69,11 +69,10 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater, IIngameInput
         images[(int)ImageType.TITLE_LOGO_UPPER].color   = initColor;
         images[(int)ImageType.TITLE_FLASH].color        = initColor;
 
-        IngameManager.AddInput(AssetCode.OP_TitleObject, this);
-        IngameManager.AddUpdater(this);
+        IngameManager.AddUpdater(UpdaterType.UPDATE, this);
     }
 
-    public UpdaterState UpdateState()
+    public IngameUpdateState UpdateState()
     {
         float deltaTime = Time.deltaTime;
 
@@ -197,25 +196,23 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater, IIngameInput
                 break;
 
             default:
-                IngameManager.RemoveInput(AssetCode.OP_TitleObject);
-                //MessageManager.Publish(new Message_t(MessageType.END_OBJECT_PROCESS, AssetIndex.OP_TitleObject));
                 MessageManager.Publish(MessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.OP_TitleObject));
 
-                return UpdaterState.SUCCESS;
+                return IngameUpdateState.SUCCESS;
         }
 
-        return UpdaterState.RUNNING;
+        return IngameUpdateState.RUNNING;
     }
 
-    public void Input(IDxInput.InputFlag inputFlag)
+    public bool Input(IDxInput.InputFlag inputFlag)
     {
         if (false == inputFlag.Contains(IDxInput.InputFlag.ACTION | IDxInput.InputFlag.ENTER))
         {
-            return;
+            return false;
         }
         if (State.LOGO_WAIT <= state)
         {
-            return;
+            return false;
         }
 
         alpha = 1f;
@@ -223,5 +220,7 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater, IIngameInput
 
         waitTime *= 1.5f;
         state = State.LOGO_WAIT;
+
+        return true;
     }
 }

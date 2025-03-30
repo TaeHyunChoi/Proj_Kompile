@@ -4,9 +4,9 @@ namespace Script.Content
     using Script.Manager;
     using Script.Index;
     using UnityEngine;
+    using static UITitleMenuObject.MenuType;
 
-
-    public partial class OpeningHandler : IngameHandlerBase, IMessageReceiver
+    public partial class OpeningHandler : _IngameHandlerBase, IMessageReceiver
     {
         private enum State
         {
@@ -22,64 +22,136 @@ namespace Script.Content
         }
 
         private State state;
-        private Task<GameObject> loadTask;
-
+        private Task<GameObject>    loadTask;
+        private TitleObject         titleObject;
+        private UITitleMenuObject   uiTitleMenu;
 
         public OpeningHandler()
         {
-            state = State.NONE;
-            ingameLogicType = IngameLogicIndex.OPENING;
+            handlerType = IngameHandlerType.OPENING;
 
-            MessageManager.AddReceiver(this);
+            state       = State.NONE;
+            MessageManager.AddReceiver(this, hasInput: true);
 
             MoveNext();
         }
 
-        public void Receive<T>(MessageType type, T data) where T : struct
+        public bool Receive<T>(MessageType type, T data) where T : struct
         {
             State nextState = State.NONE;
 
-            if (MessageType.GET_ASSET == type
-                && data is OnGetAsset_GameObject onGetAsset)
+            switch (type)
             {
-                AssetCode code = onGetAsset.AssetCode;
+                case MessageType.GET_ASSET:
+                     if(data is OnGetAsset_GameObject onGetAsset)
+                    {
+                        switch (onGetAsset.AssetCode)
+                        {
+                            case AssetCode.OP_TitleObject:
+                                if (false == AssetManager.TryGetGameObjectAsset(onGetAsset.InstanceID, out titleObject))
+                                {
+                                    // error
+                                    goto default;
+                                }
+                                nextState = State.PLAY_OPENING;
+                                break;
+                            case AssetCode.UI_TitleMenuObject:
+                                if (true == AssetManager.TryGetGameObjectAsset(onGetAsset.InstanceID, out uiTitleMenu))
+                                {
+                                    // error
+                                    goto default;
+                                }
+                                nextState = State.SELECT_MENU;
+                                break;
+                            default:
+                                // error
+                                return false;
+                        }
 
-                if (AssetCode.OP_TitleObject == code)
-                {
-                    nextState = State.PLAY_OPENING;
-                    loadTask.Dispose();
-                }
-                else if (AssetCode.UI_TitleMenuObject == code)
-                {
-                    nextState = State.SELECT_MENU;
-                    loadTask.Dispose();
-                }
+                        loadTask.Dispose();
+                    }
+                    break;
+                case MessageType.END_OBJECT_PROCESS:
+                    if(data is OnEndProcess onEndProcess)
+                    {
+                        switch (onEndProcess.AssetCode)
+                        {
+                            case AssetCode.OP_TitleObject:      nextState = State.INSTANTIATE_UI_TITLE_MENU; break;
+                            case AssetCode.UI_TitleMenuObject:  nextState = State.END;  break;
+                            default:
+                                // error
+                                return false;
+                        }
+                    }
+                    break;
+                case MessageType.SELECT_ITEM:
+                    if (data is OnSelectItem onSelectItem)
+                    {
+                        var menuType = (UITitleMenuObject.MenuType)onSelectItem.ValueInt;
+                        SelectMenu(menuType);
+                    }
+                    break;
+                case MessageType.INPUT_CONTROL:
+                    if (data is OnInputControl onInputCtrl)
+                    {
+                        return InvokeInput(state, onInputCtrl.inputFlag);
+                    }
+                    return false;
+                default:
+                    Debug.Assert(true, $"OpeningHandler: Wrong Receive {type}");
+                    return false;
             }
 
-            else if (MessageType.END_OBJECT_PROCESS == type
-                && data is OnEndProcess onEndProcess)
+            if (State.NONE == nextState)
             {
-                AssetCode assetIndex = onEndProcess.AssetCode;
-
-                if (AssetCode.OP_TitleObject == assetIndex)
-                {
-                    nextState = State.INSTANTIATE_UI_TITLE_MENU;
-                }
-                else if (AssetCode.UI_TitleMenuObject == assetIndex)
-                {
-                    nextState = State.END;
-                }
+                return false;
             }
 
-            if (State.NONE != nextState)
+            state = nextState;
+            MoveNext();
+            return true;
+        }
+        private void SelectMenu(UITitleMenuObject.MenuType type)
+        {
+            switch (type)
             {
-                state = nextState;
-                MoveNext();
+                case NEW_GAME:
+                    // IngameManager.NewGame(); 을 호출하면 아다리가 맞긴 함;
+                    // 다른 핸들러까지 제어를 해야 하므로 IngameManager에게 결재 올린다.
+                    break;
+                case LOAD_GAME:
+                    break;
+                case OPTION:
+                    break;
+                case EXIT:
+                    break;
+                default:
+                    // error? state 유지
+                    return;
             }
         }
-
-        public override IngameState MoveNext()
+        private bool InvokeInput(State nowState, IDxInput.InputFlag inputFlag)
         {
+            switch (nowState)
+            {
+                case State.INSTANTIATE_PRF_OPENING:
+                case State.PLAY_OPENING: 
+                    return titleObject.Input(inputFlag);
+
+                case State.INSTANTIATE_UI_TITLE_MENU:
+                case State.SELECT_MENU:  
+                    return uiTitleMenu.Input(inputFlag);
+
+                default:
+                    break;
+            }
+
+            return false;
+        }
+
+        public override IngameHandlerState MoveNext()
+        {
+            Debug.Log($"[MoveNext] {state}");
             switch (state)
             {
                 case State.NONE:
@@ -88,7 +160,7 @@ namespace Script.Content
 
                 case State.INSTANTIATE_PRF_OPENING:
                     Transform parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
-                    loadTask = AssetManager.GetGameObjectAssetAsync(AssetCode.OP_TitleObject, parent, true);
+                    loadTask = AssetManager.InstantiateGameObjectAssetAsync(AssetCode.OP_TitleObject, parent, true);
                     //  Receive() => next state;
                     break;
                 case State.PLAY_OPENING:
@@ -97,7 +169,7 @@ namespace Script.Content
 
                 case State.INSTANTIATE_UI_TITLE_MENU:
                     parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
-                    loadTask = AssetManager.GetGameObjectAssetAsync(AssetCode.UI_TitleMenuObject, parent, true);
+                    loadTask = AssetManager.InstantiateGameObjectAssetAsync(AssetCode.UI_TitleMenuObject, parent, true);
                     //  Receive() => next state;
                     break;
                 case State.SELECT_MENU:
@@ -105,14 +177,24 @@ namespace Script.Content
                     break;
 
                 case State.END:
-                    MessageManager.Dispose(this);
-                    return IngameState.SUCCESS;
+                    return IngameHandlerState.SUCCESS;
 
                 default:
-                    return IngameState.FAILURE;
+                    return IngameHandlerState.FAILURE;
             }
 
-            return IngameState.RUNNING;
+            return IngameHandlerState.RUNNING;
+        }
+
+        public override void Dispose()
+        {
+            AssetManager.Dispose(titleObject.GetInstanceID());
+            titleObject = null;
+
+            AssetManager.Dispose(uiTitleMenu.GetInstanceID());
+            uiTitleMenu = null;
+
+            MessageManager.Dispose(this);
         }
     }
 }

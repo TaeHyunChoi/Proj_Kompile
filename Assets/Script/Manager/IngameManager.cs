@@ -5,75 +5,51 @@ namespace Script.Manager
     using Script.Index;
     using Script.Content;
     using Script.Interface;
-    using System;
     using Script.Data;
 
     public class IngameManager : MonoBehaviour
     {
+        private const int RESET_UPDATER_LIST_COUNT = 10;
+
         private static IngameManager    instance;
         private static InputManager     inputMgr;
         private static FieldMapManager  fieldMapMgr;
 
-        private static List<IngameHandlerBase>      ingameLogics;
-        private static List<IIngameUpdater>       update;
-        private static List<IIngameFixedUpdater>  fixedUpdate;
-        private static List<IIngameLateUpdater>   lateUpdate;
-        private readonly int clearSuccessIngameCount = 5;
+        // ingame handler끼리 서로 데이터를 주고 받을 수도 있으므로 ingame manager에서 들고 있자.
+        private static Dictionary<IngameHandlerType, _IngameHandlerBase> ingameHandler;
 
-        public static void AddInput(AssetCode assetType, IIngameInput targetInput)
-        {
-            inputMgr.Add(assetType, targetInput);
-        }
-        public static void RemoveInput(AssetCode assetType)
-        {
-            inputMgr.Remove(assetType);
-        }
+        private static IIngameUpdater           inputUpdater;
+        private static List<IIngameUpdater>[]   updaterList;
+        private static List<IIngameUpdater> Updater      { get => updaterList[0]; set => updaterList[0] = value; }
+        private static List<IIngameUpdater> FixedUpdater { get => updaterList[1]; set => updaterList[1] = value; }
+        private static List<IIngameUpdater> LateUpdater  { get => updaterList[2]; set => updaterList[2] = value; }
 
-
-        public static void AddIngame(IngameHandlerBase targetIngame)
+        public static void AddIngameHandler(_IngameHandlerBase targetIngame)
         {
-            ingameLogics.Add(targetIngame);
+            ingameHandler.Add(targetIngame.HandlerType, targetIngame);
         }
-        public static void AddUpdater(IIngameUpdater targetUpdater)
+        public static void AddInputUpdater(IIngameUpdater addUpdater)
         {
-            for (int i = 0; i < update.Count; ++i)
+            inputUpdater = addUpdater;
+        }
+        public static void AddUpdater(UpdaterType type, IIngameUpdater addUpdater)
+        {
+            int index = (int)type;
+
+            for (int i = 0; i < updaterList[index].Count; ++i)
             {
-                if (null == update[i])
+                if (null == updaterList[index][i])
                 {
-                    update[i] = targetUpdater;
+                    updaterList[index][i] = addUpdater;
                     return;
                 }
             }
 
-            update.Add(targetUpdater);
-        }
-        public static void AddFixedUpdater(IIngameFixedUpdater targetFixedUpdater)
-        {
-            for (int i = 0; i < fixedUpdate.Count; ++i)
-            {
-                if (null == fixedUpdate[i])
-                {
-                    fixedUpdate[i] = targetFixedUpdater;
-                    return;
-                }
-            }
-
-            fixedUpdate.Add(targetFixedUpdater);
-        }
-        public static void AddLateUpdater(IIngameLateUpdater targetLateUpdater)
-        {
-            for (int i = 0; i < lateUpdate.Count; ++i)
-            {
-                if (null == lateUpdate[i])
-                {
-                    lateUpdate[i] = targetLateUpdater;
-                    return;
-                }
-            }
-
-            lateUpdate.Add(targetLateUpdater);
+            updaterList[index].Add(addUpdater);
         }
 
+
+        // 얘는 FieldExploreHandler로 빠질 수도?
         public static bool TryAddMapRawGridData(int gridKey, MapGridData rawMapGridData)
         {
             return fieldMapMgr.TryAddMapGridData(gridKey, rawMapGridData);
@@ -90,122 +66,46 @@ namespace Script.Manager
             instance = this;
             DontDestroyOnLoad(gameObject);
 
+            updaterList = new List<IIngameUpdater>[3] { new List<IIngameUpdater>(), new List<IIngameUpdater>(), new List<IIngameUpdater>() };
+
             AssetManager.Initialize(this.transform);
-            
-            inputMgr    = new InputManager();
-            fieldMapMgr = new FieldMapManager();
-            
-            ingameLogics = new List<IngameHandlerBase>();
 
-            // init: update
-            update      = new List<IIngameUpdater>();
-            fixedUpdate = new List<IIngameFixedUpdater>();
-            lateUpdate  = new List<IIngameLateUpdater>();
+            inputMgr      = new InputManager();
+            fieldMapMgr   = new FieldMapManager();
+            ingameHandler = new Dictionary<IngameHandlerType, _IngameHandlerBase>();
         }
-
         private void Start()
         {
-            AddIngame(new OpeningHandler());
+            AddIngameHandler(new OpeningHandler());
         }
+
 
         private void Update()
         {
-            // 예외 : 입력은 최우선으로 업데이트
-            if (true == inputMgr.IsPerformed())
+            // update: input
+            if (IngameUpdateState.FAILURE == inputUpdater.UpdateState())
             {
-                inputMgr.Update();
+                //Error
+                return;
             }
 
             // update: contents
             int nullCount = 0;
-            for (int i = 0; i < update.Count; ++i)
+            for (int i = 0; i < Updater.Count; ++i)
             {
-                if (null == update[i])
+                if (null == Updater[i])
                 {
                     ++nullCount;
                     continue;
                 }
 
-                UpdaterState state = update[i].UpdateState();
-
-                switch (state)
+                switch (Updater[i].UpdateState())
                 {
-                    case UpdaterState.SUCCESS:
-                        update[i] = null;
-
-                        // 되려나..?
-                        if (++nullCount > clearSuccessIngameCount)
-                        {
-                            List<IIngameUpdater> newUpdater = new List<IIngameUpdater>();
-                            for (int u = 0; u < update.Count; ++u)
-                            {
-                                if (null != update[u])
-                                {
-                                    newUpdater.Add(update[u]);
-                                }
-                            }
-                            update = newUpdater;
-                            GC.Collect();
-                        }
+                    case IngameUpdateState.SUCCESS:
+                        ++nullCount;
+                        Updater[i] = null;
                         break;
-                    case UpdaterState.FAILURE:
-#if TEST_BUILD
-                        DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
-#endif
-                        break;
-                    default:
-                        // Running
-                        break;
-                }
-            }
-        }
-        private void FixedUpdate()
-        {
-            for (int i = 0; i < fixedUpdate.Count; ++i)
-            {
-                if (null == fixedUpdate[i])
-                {
-                    continue;
-                }
-
-                UpdaterState state = fixedUpdate[i].FixedUpdateState();
-                switch (state)
-                {
-                    case UpdaterState.SUCCESS:
-                        // .Publish(END_UPDATE)
-                        fixedUpdate[i] = null;
-                        break;
-                    case UpdaterState.FAILURE:
-#if TEST_BUILD
-                        DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
-#endif
-                        break;
-                    default:
-                        // Running
-                        break;
-                }
-            }
-        }
-        private void LateUpdate()
-        {
-            int emptyCount = 0;
-
-            for (int i = 0; i < lateUpdate.Count; ++i)
-            {
-                if (null == lateUpdate[i])
-                {
-                    ++emptyCount;
-                    continue;
-                }
-
-                UpdaterState state = lateUpdate[i].LateUpdateState();
-                switch (state)
-                {
-                    case UpdaterState.SUCCESS:
-                        lateUpdate[i] = null;
-                        ++emptyCount;
-                        break;
-                    case UpdaterState.FAILURE:
+                    case IngameUpdateState.FAILURE:
 #if TEST_BUILD
                         DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
 #endif
@@ -216,11 +116,23 @@ namespace Script.Manager
                 }
             }
 
-            if (emptyCount > clearSuccessIngameCount)
+            // 쪼오금 애매하지만 일단 남기기로.
+            if (nullCount > RESET_UPDATER_LIST_COUNT)
             {
-                //재정렬?
+                List<IIngameUpdater> newUpdater = new List<IIngameUpdater>();
+                for (int u = 0; u < Updater.Count; ++u)
+                {
+                    if (null != Updater[u])
+                    {
+                        newUpdater.Add(Updater[u]);
+                    }
+                }
+
+                Updater = newUpdater;
             }
         }
+        //private void FixedUpdate() { }
+        //private void LateUpdate()  { }
 
 
         private void OnEnable()
@@ -233,4 +145,3 @@ namespace Script.Manager
         }
     }
 }
-

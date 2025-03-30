@@ -4,19 +4,6 @@ namespace Script.Interface
 
     public interface IIngameUpdater
     {
-        public UpdaterState UpdateState();
-    }
-    public interface IIngameFixedUpdater
-    {
-        public UpdaterState FixedUpdateState();
-    }
-    public interface IIngameLateUpdater
-    {
-        public UpdaterState LateUpdateState();
-    }
-
-    public interface IIngameInput
-    {
-        public void Input(IDxInput.InputFlag inputFlag);
+        public IngameUpdateState UpdateState();
     }
 }

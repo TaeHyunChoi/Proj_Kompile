@@ -104,30 +104,28 @@ namespace Script.Manager
 
 
         // Instaniate, Load GameObject Assets
-        public static async Task<GameObject> GetGameObjectAssetAsync(AssetCode assetCode, Transform parent, bool isOn)
+        public static async Task<GameObject> InstantiateGameObjectAssetAsync(AssetCode assetCode, Transform parent, bool isOn)
         {
-            GameObject targetObj;
-            if (true == assetHandlers.TryGetValue((int)assetCode, out AsyncOperationHandle handler))
-            {
-                targetObj = (GameObject)handler.Result;
-                targetObj.SetActive(isOn);
-            }
-            else
-            {
-                targetObj = await InstantiateGameObjectAsync(assetCode, parent, isOn);
-            }
+            AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
+            GameObject targetObj = await handle.Task;
+            targetObj.SetActive(isOn);
+
+            assetHandlers.Add(targetObj.GetInstanceID(), handle);
 
             MessageManager.Publish(MessageType.GET_ASSET, new OnGetAsset_GameObject(assetCode, targetObj));
             return targetObj;
         }
-        private static async Task<GameObject> InstantiateGameObjectAsync(AssetCode assetCode, Transform parent, bool isOn)
-        {
-            AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
-            GameObject go = await handle.Task;
-            go.SetActive(isOn);
 
-            assetHandlers.Add(go.GetInstanceID(), handle);
-            return go;
+        public static bool TryGetGameObjectAsset<T>(int instanceID, out T target) where T : MonoBehaviour
+        {
+             if (false == assetHandlers.TryGetValue(instanceID, out AsyncOperationHandle handler))
+            {
+                target = null;
+                return false;
+            }
+
+            target = ((GameObject)handler.Result).GetComponent<T>();
+            return true;
         }
 
 
@@ -144,6 +142,17 @@ namespace Script.Manager
         public static UILoadingCurtainObject GetLoadingCurtain()
         {
             return loadingCurtain;
+        }
+
+        // Dispose
+        public static void Dispose(int instanceID)
+        {
+            if (true == assetHandlers.TryGetValue(instanceID, out var handler))
+            {
+                GameObject.Destroy((handler.Result as GameObject));
+                handler.Release();
+                assetHandlers.Remove(instanceID);
+            }
         }
     }
 }
