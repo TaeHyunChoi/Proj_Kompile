@@ -115,10 +115,10 @@ namespace Script.Manager
             Data = data;
         }
     }
-    public readonly struct OnSelectItem
+    public readonly struct OnSelect_UITitleMenu
     {
         public readonly int ValueInt;
-        public OnSelectItem(int value)
+        public OnSelect_UITitleMenu(int value)
         {
             ValueInt = value;
         }

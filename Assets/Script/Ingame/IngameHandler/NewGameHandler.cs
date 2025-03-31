@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Script.Content
 {
-    public class EnterFieldHandler : _IngameHandlerBase, IMessageReceiver
+    public class NewGameHandler : _IngameHandlerBase, IMessageReceiver
     {
         private enum State
         { 
@@ -22,7 +22,7 @@ namespace Script.Content
         private State state;
         private int gridKey;
 
-        public EnterFieldHandler(int targetGridKey)
+        public NewGameHandler(int targetGridKey)
         {
             handlerType = IngameHandlerType.ENTER_FIELD;
 

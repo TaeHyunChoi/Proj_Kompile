@@ -98,7 +98,7 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
     {
         if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
         {
-            MessageManager.Publish(MessageType.SELECT_ITEM, new OnSelectItem(index));
+            MessageManager.Publish(MessageType.SELECT_ITEM, new OnSelect_UITitleMenu(index));
             return true;
         }
 
