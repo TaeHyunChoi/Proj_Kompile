@@ -15,6 +15,12 @@ MonoBehaviour:
   m_GroupName: Prefab
   m_GUID: 1d65d67df1f29b84985014df8920ec2b
   m_SerializeEntries:
+  - m_GUID: 06091f8160267704ca920385c19218fe
+    m_Address: UI_LoadingCurtain
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - objectPrefab
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 70fbb103688cbb6468c8786d84d31ff1
     m_Address: UI_TitleMenuObject
     m_ReadOnly: 0

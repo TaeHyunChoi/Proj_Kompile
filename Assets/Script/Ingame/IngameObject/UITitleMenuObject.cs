@@ -121,4 +121,19 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
 
         return true;
     }
+
+    public void WaitUpdate()
+    {
+        state = State.WAIT;
+    }
+    public void ReplayUpdate()
+    {
+        state = State.UPDATE;
+    }
+
+    private void OnDisable()
+    {
+        IngameManager.RemoveInputUpdater(this);
+        anchoredPositions = null;
+    }
 }

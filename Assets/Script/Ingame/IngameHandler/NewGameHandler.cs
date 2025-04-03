@@ -2,6 +2,7 @@ using Script.Data;
 using Script.Index;
 using Script.Manager;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Script.Content
 {
@@ -10,43 +11,78 @@ namespace Script.Content
         private enum State
         { 
             NONE = 0,
-
-            LOAD_MAP_DATA,
-            SET_MAP_INSTANCE,
-            SET_PLYAER_INSTANCE,
-
+            LOADING_FADEIN,
+            END_OPENING,
+            LOAD_PLAYER,
+            INIT_FIELD, // + LOAD_MAP
+            LOADING_FADEOUT,
             CLOSE
         }
 
+        private Task<GameObject> loadTask;
         private Task loadMapTask;
+        private UILoadingCurtainObject loadingCurtainObject;
         private State state;
-        private int gridKey;
 
-        public NewGameHandler(int targetGridKey)
+        public NewGameHandler()
         {
-            handlerType = IngameHandlerType.ENTER_FIELD;
-
-            state = State.LOAD_MAP_DATA;
-            gridKey = targetGridKey;
-
-            IngameManager.AddIngameHandler(this);
+            handlerType = IngameHandlerType.NEW_GAME;
+            MessageManager.AddReceiver(this, false);
+            state = State.NONE;
             MoveNext();
         }
 
         public bool Receive<T>(MessageType type, T data) where T : struct
         {
-            if (type == MessageType.GET_ASSET
-                && data is OnGetAsset_MapGridData getRawMapGridData)
+            if (type == MessageType.GET_ASSET)
             {
-                AssetCode code = getRawMapGridData.AssetCode;
-                MapGridData grid = getRawMapGridData.Data;
+                if (data is OnGetAsset_GameObject onGetAsset)
+                {
+                    switch (onGetAsset.AssetCode)
+                    {
+                        case AssetCode.UI_LoadingCurtain:
+                            if (true == AssetManager.TryGetGameObjectAsset(onGetAsset.InstanceID, out loadingCurtainObject))
+                            {
+                                loadingCurtainObject.On(true);
+                                state = State.LOADING_FADEIN;
+                                MoveNext();
+                                return true;
+                            }
+                            break;
+                    }
+                }
+                else if (data is OnGetAsset_MapGridData getRawMapGridData)
+                {
+                    AssetCode code = getRawMapGridData.AssetCode;
+                    MapGridData grid = getRawMapGridData.Data;
 
-                loadMapTask.Dispose();
-                loadMapTask = null;
+                    loadMapTask.Dispose();
+                    loadMapTask = null;
 
-                state = State.CLOSE;
+                    state = State.CLOSE;
 
-                return true;
+                    return true;
+                }
+            }
+            else if (type == MessageType.END_OBJECT_PROCESS)
+            {
+                if (data is OnEndProcess onEnd)
+                {
+                    switch (onEnd.AssetCode)
+                    {
+                        case AssetCode.UI_LoadingCurtain:
+                            if (1 == onEnd.endCode)
+                            {
+                                state = State.END_OPENING;
+                            }
+                            else
+                            {
+                                state = State.CLOSE;
+                            }
+                            MoveNext();
+                            return true;
+                    }
+                }
             }
 
             return false;
@@ -56,16 +92,24 @@ namespace Script.Content
         {
             switch (state)
             {
-                case State.LOAD_MAP_DATA:
-                    //loadMapTask = DataManager.ReadBinaryRawMapGridDataAsync(gridKey);
+                case State.NONE:
+                    Transform parent = AssetManager.GetCanvas(CanvasType.OVERLAY_LOADING).transform;
+                    loadTask = AssetManager.InstantiateGameObjectAssetAsync(AssetCode.UI_LoadingCurtain, parent, true);
+                    state = State.LOADING_FADEIN;
                     break;
-
-
+                case State.LOADING_FADEIN:
+                    // Receive()
+                    break;
+                case State.END_OPENING:
+                    IngameManager.RemoveIngameHandler(IngameHandlerType.OPENING);
+                    state = State.LOADING_FADEOUT;
+                    loadingCurtainObject.On(false);
+                    break;
+                case State.LOADING_FADEOUT:
+                    // Receive()
+                    break;
                 case State.CLOSE:
-
-                    // '탐험하기' 태스크를 생성한다? 이건 field manager에서 하는 게 좋을 듯?
                     return IngameHandlerState.SUCCESS;
-
                 default:
                     return IngameHandlerState.FAILURE;
             }

@@ -48,6 +48,16 @@ namespace Script.Manager
             updaterList[index].Add(addUpdater);
         }
 
+        public static void RemoveIngameHandler(IngameHandlerType handlerType)
+        {
+            ingameHandler[handlerType].Dispose();
+            ingameHandler.Remove(handlerType);
+        }
+        public static void RemoveInputUpdater(IIngameUpdater updater)
+        {
+            Updater.Remove(updater);
+        }
+
 
         // 얘는 FieldExploreHandler로 빠질 수도?
         public static bool TryAddMapRawGridData(int gridKey, MapGridData rawMapGridData)

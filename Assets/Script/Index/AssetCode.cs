@@ -2,9 +2,11 @@ namespace Script.Index
 {
     public enum CanvasType
     {
-        NONE = 0,
-        CAMERA,
-        OVERLAY
+        NONE = -1,
+
+        CAMERA = 0,
+        OVERLAY,
+        OVERLAY_LOADING,
     }
 
     /// <summary>
@@ -18,6 +20,7 @@ namespace Script.Index
 
         OP_TitleObject,
 
+        UI_LoadingCurtain,
         UI_TitleMenuObject,
 
         UnitBase,

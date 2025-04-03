@@ -18,6 +18,7 @@ namespace Script.Content
             LOAD_TITLE_MENU,
             SELECT_TITLE_MENU,
 
+            WAIT,
             END
         }
 
@@ -58,6 +59,8 @@ namespace Script.Content
                 case State.SELECT_TITLE_MENU:
                     // Receive() => next state;
                     // Invoke Input();
+                    break;
+                case State.WAIT:
                     break;
                 case State.END:
                     Dispose();
@@ -103,7 +106,7 @@ namespace Script.Content
                                 }
                                 break;
                             default:
-                                Debug.Assert(false, $"OpeningHandler: Wrong Asset Code ({type}, {onGetAsset.AssetCode})");
+                                Debug.Log($"OpeningHandler: Skip Receive(OnGetAsset_GameObject, {type}, {onGetAsset.AssetCode})");
                                 break;
                         }
 
@@ -118,7 +121,7 @@ namespace Script.Content
                             case AssetCode.OP_TitleObject:      nextState = State.LOAD_TITLE_MENU; break;
                             case AssetCode.UI_TitleMenuObject:  nextState = State.END;  break;
                             default:
-                                Debug.Assert(false, $"OpeningHandler: Wrong Asset Code ({type}, {onEndProcess.AssetCode})");
+                                //Debug.Assert(false, $"OpeningHandler: Wrong Asset Code ({type}, {onEndProcess.AssetCode})");
                                 return false;
                         }
                     }
@@ -172,7 +175,10 @@ namespace Script.Content
             switch (type)
             {
                 case NEW_GAME:
-                    // IngameManager.AddHandler(NewGameHandler);
+                    IngameManager.AddIngameHandler(new NewGameHandler());
+                    uiTitleMenu.WaitUpdate();
+                    state = State.WAIT;
+                    // Receive => EndProcess
                     break;
                 case LOAD_GAME:
                     break;
@@ -189,10 +195,12 @@ namespace Script.Content
 
         public override void Dispose()
         {
-            AssetManager.Dispose(titleObject.GetInstanceID());
+            AssetManager.Dispose(titleObject.gameObject.GetInstanceID());
+            //titleObject.OnDisable();
             titleObject = null;
 
-            AssetManager.Dispose(uiTitleMenu.GetInstanceID());
+            AssetManager.Dispose(uiTitleMenu.gameObject.GetInstanceID());
+            //uiTitleMenu.OnDisable();
             uiTitleMenu = null;
 
             MessageManager.Dispose(this);

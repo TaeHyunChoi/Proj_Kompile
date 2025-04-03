@@ -23,8 +23,6 @@ namespace Script.Manager
         private static readonly Dictionary<int, AsyncOperationHandle> assetHandlers  = new Dictionary<int, AsyncOperationHandle>();
 
         private static Transform[] canvasParents;
-        private static UILoadingCurtainObject loadingCurtain;
-
 
         // Manage Binary File
         public static void WriteBinaryFile<T>(T data, string dataPath, string fileName, string addressableGroup = null)
@@ -95,11 +93,12 @@ namespace Script.Manager
         //  Initialize/Cache UI, UI Canvas
         public static void Initialize(Transform mainTransform)
         {
-            canvasParents = new Transform[2];
+            canvasParents = new Transform[3];
             Transform uiParent = mainTransform.GetChild(1);
-            canvasParents[0] = uiParent.GetChild(0);
-            canvasParents[1] = uiParent.GetChild(1);
-            loadingCurtain = uiParent.GetChild(2).GetChild(0).GetComponentInChildren<UILoadingCurtainObject>();
+            for (int i = 0; i < canvasParents.Length; ++i)
+            {
+                canvasParents[i] = uiParent.GetChild(i);
+            }
         }
 
 
@@ -134,17 +133,17 @@ namespace Script.Manager
         {
             switch (type)
             {
-                case CanvasType.CAMERA: return canvasParents[0];
-                case CanvasType.OVERLAY: return canvasParents[1];
-                default: return null;
+                case CanvasType.CAMERA:
+                case CanvasType.OVERLAY:
+                case CanvasType.OVERLAY_LOADING:
+                    return canvasParents[(int)type];
+                default: 
+                    return null;
             }
-        }
-        public static UILoadingCurtainObject GetLoadingCurtain()
-        {
-            return loadingCurtain;
         }
 
         // Dispose
+        // 오호라.. object instance id가 아니라 task번호가 저장되었나 보네?
         public static void Dispose(int instanceID)
         {
             if (true == assetHandlers.TryGetValue(instanceID, out var handler))

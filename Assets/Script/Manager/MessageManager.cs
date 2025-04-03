@@ -32,7 +32,11 @@ namespace Script.Manager
         {
             for (int i = ingameReceivers.Count - 1; i >= 0; --i)
             {
-                ingameReceivers[i].Receive(type, data);
+                ingameReceivers[i]?.Receive(type, data);
+                //if (null != ingameReceivers[i])
+                //{
+                //    ingameReceivers[i].Receive(type, data);
+                //}
             }
         }
         public static void PublishInput(OnInputControl onInput)
@@ -48,7 +52,14 @@ namespace Script.Manager
 
         public static void Dispose(IMessageReceiver receiver)
         {
-            ingameReceivers.Remove(receiver);
+            for (int i = 0; i < ingameReceivers.Count; ++i)
+            {
+                if (receiver == ingameReceivers[i])
+                {
+                    ingameReceivers[i] = null;
+                }
+            }
+            //ingameReceivers.Remove(receiver);
             inputReceivers.Remove(receiver);
         }
     }
@@ -88,10 +99,12 @@ namespace Script.Manager
     public readonly struct OnEndProcess
     {
         public readonly AssetCode AssetCode;
+        public readonly int endCode;
 
-        public OnEndProcess(AssetCode index)
+        public OnEndProcess(AssetCode index, int end = 0)
         {
             AssetCode = index;
+            endCode   = end;
         }
     }
     public readonly struct OnGetAsset_GameObject

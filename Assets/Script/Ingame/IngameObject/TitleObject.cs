@@ -223,4 +223,12 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater
 
         return true;
     }
+
+    private void OnDisable()
+    {
+        IngameManager.RemoveInputUpdater(this);
+        images = null;
+        rects = null;
+        titleInitPositions = null;
+    }
 }

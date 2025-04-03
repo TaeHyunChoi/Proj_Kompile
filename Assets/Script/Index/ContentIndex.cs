@@ -12,7 +12,7 @@ namespace Script.Index
         NONE = 0,
 
         OPENING,
-        ENTER_FIELD,
+        NEW_GAME,
 
     }
     public enum IngameHandlerState
