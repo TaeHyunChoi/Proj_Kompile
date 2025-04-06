@@ -1,6 +1,7 @@
 using Script.Index;
 using Script.Interface;
 using Script.Manager;
+using Script.IngameMessage;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -196,7 +197,7 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater
                 break;
 
             default:
-                MessageManager.Publish(MessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.OP_TitleObject));
+                MessageManager.Publish(IngameMessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.OP_TitleObject));
                 return IngameUpdateState.SUCCESS;
         }
 

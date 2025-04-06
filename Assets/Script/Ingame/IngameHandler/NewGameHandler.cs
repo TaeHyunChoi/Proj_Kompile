@@ -1,11 +1,13 @@
-using Script.Data;
-using Script.Index;
-using Script.Manager;
-using System.Threading.Tasks;
-using UnityEngine;
-
 namespace Script.Content
 {
+    using Script.Data;
+    using Script.Index;
+    using Script.Interface;
+    using Script.IngameMessage;
+    using Script.Manager;
+    using System.Threading.Tasks;
+    using UnityEngine;
+
     public class NewGameHandler : _IngameHandlerBase, IMessageReceiver
     {
         private enum State
@@ -32,9 +34,9 @@ namespace Script.Content
             MoveNext();
         }
 
-        public bool Receive<T>(MessageType type, T data) where T : struct
+        public bool Receive<T>(IngameMessageType type, T data) where T : struct
         {
-            if (type == MessageType.GET_ASSET)
+            if (type == IngameMessageType.GET_ASSET)
             {
                 if (data is OnGetAsset_GameObject onGetAsset)
                 {
@@ -64,7 +66,7 @@ namespace Script.Content
                     return true;
                 }
             }
-            else if (type == MessageType.END_OBJECT_PROCESS)
+            else if (type == IngameMessageType.END_OBJECT_PROCESS)
             {
                 if (data is OnEndProcess onEnd)
                 {

@@ -6,6 +6,7 @@ namespace Script.Manager
     using UnityEngine.AddressableAssets;
     using UnityEngine.ResourceManagement.AsyncOperations;
     using Script.Index;
+    using Script.IngameMessage;
     using MessagePack;
     using Script.Data;
     using System.IO;
@@ -111,7 +112,7 @@ namespace Script.Manager
 
             assetHandlers.Add(targetObj.GetInstanceID(), handle);
 
-            MessageManager.Publish(MessageType.GET_ASSET, new OnGetAsset_GameObject(assetCode, targetObj));
+            MessageManager.Publish(IngameMessageType.GET_ASSET, new OnGetAsset_GameObject(assetCode, targetObj));
             return targetObj;
         }
 

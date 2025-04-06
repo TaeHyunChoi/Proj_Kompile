@@ -1,9 +1,8 @@
 namespace Script.Manager
 {
-    using Script.Data;
-    using Script.Index;
+    using Script.Interface;
+    using Script.IngameMessage;
     using System.Collections.Generic;
-    using UnityEngine;
 
     /// <summary>
     /// 비동기로 처리하기엔 사용하는 데이터가 (너무) 작아 동기적으로 처리
@@ -48,15 +47,16 @@ namespace Script.Manager
             }
         }
 
-        public static void Publish<T>(MessageType type, T data) where T : struct
+        public static void Publish<T>(IngameMessageType type, T data) where T : struct
         {
             for (int i = ingameReceivers.Count - 1; i >= 0; --i)
             {
-                ingameReceivers[i]?.Receive(type, data);
-                //if (null != ingameReceivers[i])
-                //{
-                //    ingameReceivers[i].Receive(type, data);
-                //}
+                if (null == ingameReceivers[i])
+                {
+                    continue;
+                }
+
+                ingameReceivers[i].Receive(type, data);
             }
         }
         public static void PublishInput(OnInputControl onInput)
@@ -67,7 +67,7 @@ namespace Script.Manager
                 {
                     continue;
                 }
-                if (true == inputReceivers[i].Receive(MessageType.INPUT_CONTROL, onInput))
+                if (true == inputReceivers[i].Receive(IngameMessageType.INPUT_CONTROL, onInput))
                 {
                     return;
                 }
@@ -93,79 +93,6 @@ namespace Script.Manager
             }
             //ingameReceivers.Remove(receiver);
             //inputReceivers.Remove(receiver);
-        }
-    }
-
-
-
-
-    public interface IMessageReceiver
-    {
-        public bool Receive<T>(MessageType type, T data) where T : struct;
-    }
-
-
-
-
-
-    // 얘도 다른 스크립트 파일로 넘기고 - 파일을 어찌 넘겨야 좋으려나?
-    public enum MessageType
-    { 
-        NONE,
-
-        INPUT_CONTROL,
-
-        GET_ASSET, 
-        END_OBJECT_PROCESS,
-        SELECT_ITEM,
-    }
-    public readonly struct OnInputControl
-    {
-        public readonly IDxInput.InputFlag inputFlag;
-
-        public OnInputControl(IDxInput.InputFlag inputFlagValue)
-        {
-            inputFlag = inputFlagValue;
-        }
-    }
-    public readonly struct OnEndProcess
-    {
-        public readonly AssetCode AssetCode;
-        public readonly int endCode;
-
-        public OnEndProcess(AssetCode index, int end = 0)
-        {
-            AssetCode = index;
-            endCode   = end;
-        }
-    }
-    public readonly struct OnGetAsset_GameObject
-    {
-        public readonly AssetCode AssetCode;
-        public readonly GameObject GameObject;
-        public int InstanceID => GameObject.GetInstanceID();
-        public OnGetAsset_GameObject(AssetCode index, GameObject targetObj)
-        {
-            AssetCode = index;
-            GameObject = targetObj;
-        }
-    }
-    public readonly struct OnGetAsset_MapGridData
-    {
-        public readonly AssetCode AssetCode;
-        public readonly MapGridData Data;
-        public OnGetAsset_MapGridData(AssetCode index, MapGridData data)
-        {
-            AssetCode = index;
-            Data = data;
-        }
-    }
-    public readonly struct OnSelect_UITitleMenu
-    {
-        public readonly int ValueInt;
-        public OnSelect_UITitleMenu(int value)
-        {
-            ValueInt = value;
         }
     }
 }

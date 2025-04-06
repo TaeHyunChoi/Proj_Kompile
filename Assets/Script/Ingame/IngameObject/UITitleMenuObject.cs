@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using Script.Index;
+using Script.IngameMessage;
 using static Script.Index.IDxInput;
 using Script.Interface;
 
@@ -88,7 +89,7 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
                 //작동 일시중지
                 break;
             case State.CLOSE:
-                MessageManager.Publish(MessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.UI_TitleMenuObject));
+                MessageManager.Publish(IngameMessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.UI_TitleMenuObject));
                 return IngameUpdateState.SUCCESS;
         }
         return IngameUpdateState.RUNNING;
@@ -98,7 +99,7 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
     {
         if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
         {
-            MessageManager.Publish(MessageType.SELECT_ITEM, new OnSelect_UITitleMenu(index));
+            MessageManager.Publish(IngameMessageType.SELECT_ITEM, new OnSelect_UITitleMenu(index));
             return true;
         }
 

@@ -2,6 +2,7 @@ namespace Script.Manager
 {
     using Script.Index;
     using Script.Interface;
+    using Script.IngameMessage;
     using UnityEngine;
     using UnityEngine.InputSystem;
     using static Script.Index.IDxInput;

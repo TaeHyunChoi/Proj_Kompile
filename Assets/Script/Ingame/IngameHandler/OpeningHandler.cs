@@ -3,6 +3,8 @@ namespace Script.Content
     using System.Threading.Tasks;
     using Script.Manager;
     using Script.Index;
+    using Script.Interface;
+    using Script.IngameMessage;
     using UnityEngine;
     using static UITitleMenuObject.MenuType;
 
@@ -72,13 +74,13 @@ namespace Script.Content
         }
 
 
-        public bool Receive<T>(MessageType type, T data) where T : struct
+        public bool Receive<T>(IngameMessageType type, T data) where T : struct
         {
             State nextState = State.NONE;
 
             switch (type)
             {
-                case MessageType.GET_ASSET:
+                case IngameMessageType.GET_ASSET:
                      if(data is OnGetAsset_GameObject onGetAsset)
                     {
                         switch (onGetAsset.AssetCode)
@@ -105,7 +107,7 @@ namespace Script.Content
                         }
                     }
                     break;
-                case MessageType.END_OBJECT_PROCESS:
+                case IngameMessageType.END_OBJECT_PROCESS:
                     if(data is OnEndProcess onEndProcess)
                     {
                         switch (onEndProcess.AssetCode)
@@ -117,13 +119,13 @@ namespace Script.Content
                         }
                     }
                     break;
-                case MessageType.INPUT_CONTROL:
+                case IngameMessageType.INPUT_CONTROL:
                     if (data is OnInputControl onInputCtrl)
                     {
                         return InvokeInput(state, onInputCtrl.inputFlag);
                     }
                     return false;
-                case MessageType.SELECT_ITEM:
+                case IngameMessageType.SELECT_ITEM:
                     if (data is OnSelect_UITitleMenu onSelect)
                     {
                         var menuType = (UITitleMenuObject.MenuType)onSelect.ValueInt;
