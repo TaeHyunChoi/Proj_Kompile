@@ -197,7 +197,6 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater
 
             default:
                 MessageManager.Publish(MessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.OP_TitleObject));
-
                 return IngameUpdateState.SUCCESS;
         }
 
@@ -226,6 +225,7 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater
 
     private void OnDisable()
     {
+        // IIngameUpdater 는 IngameManager에서 관리
         IngameManager.RemoveInputUpdater(this);
         images = null;
         rects = null;

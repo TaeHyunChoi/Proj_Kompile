@@ -44,7 +44,6 @@ namespace Script.Content
                 case State.INIT_OPENING:
                     Transform parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
                     loadTask = AssetManager.InstantiateGameObjectAssetAsync(AssetCode.OP_TitleObject, parent, true);
-                    state = State.PLAY_OPENING;
                     break;
                 case State.PLAY_OPENING:
                     // Receive() => next state;
@@ -53,7 +52,6 @@ namespace Script.Content
                 case State.LOAD_TITLE_MENU:
                     parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
                     loadTask = AssetManager.InstantiateGameObjectAssetAsync(AssetCode.UI_TitleMenuObject, parent, true);
-                    state = State.SELECT_TITLE_MENU;
                     //  Receive() => next state;
                     break;
                 case State.SELECT_TITLE_MENU:
@@ -88,29 +86,23 @@ namespace Script.Content
                             case AssetCode.OP_TitleObject:
                                 if (true == AssetManager.TryGetGameObjectAsset(onGetAsset.InstanceID, out titleObject))
                                 {
-                                    nextState = state;
-                                }
-                                else
-                                {
-                                    Debug.Assert(false, $"OpeningHandler: Fail To Get Asset ({type}, {onGetAsset.AssetCode})");
+                                    nextState = State.PLAY_OPENING;
                                 }
                                 break;
                             case AssetCode.UI_TitleMenuObject:
                                 if (true == AssetManager.TryGetGameObjectAsset(onGetAsset.InstanceID, out uiTitleMenu))
                                 {
-                                    nextState = state;
-                                }
-                                else
-                                {
-                                    Debug.Assert(false, $"OpeningHandler: Fail To Get Asset ({type}, {onGetAsset.AssetCode})");
+                                    nextState = State.SELECT_TITLE_MENU;
                                 }
                                 break;
                             default:
-                                Debug.Log($"OpeningHandler: Skip Receive(OnGetAsset_GameObject, {type}, {onGetAsset.AssetCode})");
                                 break;
                         }
 
-                        loadTask.Dispose();
+                        if(null != loadTask)
+                        {
+                            loadTask.ContinueWith(task => task.Dispose());
+                        }
                     }
                     break;
                 case MessageType.END_OBJECT_PROCESS:
@@ -121,7 +113,6 @@ namespace Script.Content
                             case AssetCode.OP_TitleObject:      nextState = State.LOAD_TITLE_MENU; break;
                             case AssetCode.UI_TitleMenuObject:  nextState = State.END;  break;
                             default:
-                                //Debug.Assert(false, $"OpeningHandler: Wrong Asset Code ({type}, {onEndProcess.AssetCode})");
                                 return false;
                         }
                     }
@@ -156,7 +147,7 @@ namespace Script.Content
         }
         private bool InvokeInput(State nowState, IDxInput.InputFlag inputFlag)
         {
-            switch (nowState)
+             switch (nowState)
             {
                 case State.PLAY_OPENING: 
                     return titleObject.Input(inputFlag);
@@ -196,11 +187,9 @@ namespace Script.Content
         public override void Dispose()
         {
             AssetManager.Dispose(titleObject.gameObject.GetInstanceID());
-            //titleObject.OnDisable();
             titleObject = null;
 
             AssetManager.Dispose(uiTitleMenu.gameObject.GetInstanceID());
-            //uiTitleMenu.OnDisable();
             uiTitleMenu = null;
 
             MessageManager.Dispose(this);

@@ -64,8 +64,6 @@ namespace Script.Manager
                 PublishInput();
             };
 
-            IngameManager.AddInputUpdater(this);
-
             void OnMove(InputAction.CallbackContext context)
             {
                 Vector2 direction = context.ReadValue<Vector2>();

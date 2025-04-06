@@ -102,6 +102,14 @@ namespace Script.Content
                     break;
                 case State.END_OPENING:
                     IngameManager.RemoveIngameHandler(IngameHandlerType.OPENING);
+                    state = State.LOAD_PLAYER;
+                    break;
+                case State.LOAD_PLAYER:
+                    Debug.Log(state);
+                    state = State.INIT_FIELD;
+                    break;
+                case State.INIT_FIELD:
+                    Debug.Log(state);
                     state = State.LOADING_FADEOUT;
                     loadingCurtainObject.On(false);
                     break;
@@ -109,6 +117,7 @@ namespace Script.Content
                     // Receive()
                     break;
                 case State.CLOSE:
+                    IngameManager.RemoveIngameHandler(this.handlerType);
                     return IngameHandlerState.SUCCESS;
                 default:
                     return IngameHandlerState.FAILURE;

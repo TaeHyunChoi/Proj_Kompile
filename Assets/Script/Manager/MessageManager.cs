@@ -18,12 +18,32 @@ namespace Script.Manager
         {
             if (false == ingameReceivers.Contains(receiver))
             {
+                for (int i = 0; i < ingameReceivers.Count; ++i)
+                {
+                    if (null == ingameReceivers[i])
+                    {
+                        ingameReceivers[i] = receiver;
+                        goto ADD_INPUT_RECEIVER;
+                    }
+                }
                 ingameReceivers.Add(receiver);
             }
 
-            if (true == hasInput
-                && false == inputReceivers.Contains(receiver))
+        ADD_INPUT_RECEIVER:
+            if (false == hasInput)
             {
+                return;
+            }
+            else if (false == inputReceivers.Contains(receiver))
+            {
+                for (int i = 0; i < inputReceivers.Count; ++i)
+                {
+                    if (null == inputReceivers[i])
+                    {
+                        inputReceivers[i] = receiver;
+                        return;
+                    }
+                }
                 inputReceivers.Add(receiver);
             }
         }
@@ -43,6 +63,10 @@ namespace Script.Manager
         {
             for (int i = inputReceivers.Count - 1; i >= 0; --i)
             {
+                if (null == inputReceivers[i])
+                {
+                    continue;
+                }
                 if (true == inputReceivers[i].Receive(MessageType.INPUT_CONTROL, onInput))
                 {
                     return;
@@ -59,8 +83,16 @@ namespace Script.Manager
                     ingameReceivers[i] = null;
                 }
             }
+
+            for (int i = 0; i < inputReceivers.Count; ++i)
+            {
+                if (receiver == inputReceivers[i])
+                {
+                    inputReceivers[i] = null;
+                }
+            }
             //ingameReceivers.Remove(receiver);
-            inputReceivers.Remove(receiver);
+            //inputReceivers.Remove(receiver);
         }
     }
 

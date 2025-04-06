@@ -18,7 +18,6 @@ namespace Script.Manager
         // ingame handler끼리 서로 데이터를 주고 받을 수도 있으므로 ingame manager에서 들고 있자.
         private static Dictionary<IngameHandlerType, _IngameHandlerBase> ingameHandler;
 
-        private static IIngameUpdater           inputUpdater;
         private static List<IIngameUpdater>[]   updaterList;
         private static List<IIngameUpdater> Updater      { get => updaterList[0]; set => updaterList[0] = value; }
         private static List<IIngameUpdater> FixedUpdater { get => updaterList[1]; set => updaterList[1] = value; }
@@ -27,10 +26,6 @@ namespace Script.Manager
         public static void AddIngameHandler(_IngameHandlerBase targetIngame)
         {
             ingameHandler.Add(targetIngame.HandlerType, targetIngame);
-        }
-        public static void AddInputUpdater(IIngameUpdater addUpdater)
-        {
-            inputUpdater = addUpdater;
         }
         public static void AddUpdater(UpdaterType type, IIngameUpdater addUpdater)
         {
@@ -55,9 +50,19 @@ namespace Script.Manager
         }
         public static void RemoveInputUpdater(IIngameUpdater updater)
         {
-            Updater.Remove(updater);
+            for (int i = 0; i < Updater.Count; ++i)
+            {
+                if (updater == Updater[i])
+                {
+                    Updater[i] = null;
+                }
+            }
+            //Updater.Remove(updater);
         }
-
+        public static void RemoveInputUpdater(int index)
+        {
+            Updater[index] = null;
+        }
 
         // 얘는 FieldExploreHandler로 빠질 수도?
         public static bool TryAddMapRawGridData(int gridKey, MapGridData rawMapGridData)
@@ -93,7 +98,7 @@ namespace Script.Manager
         private void Update()
         {
             // update: input
-            if (IngameUpdateState.FAILURE == inputUpdater.UpdateState())
+            if (IngameUpdateState.FAILURE == inputMgr.UpdateState())
             {
                 //Error
                 return;
@@ -113,7 +118,7 @@ namespace Script.Manager
                 {
                     case IngameUpdateState.SUCCESS:
                         ++nullCount;
-                        Updater[i] = null;
+                        RemoveInputUpdater(i);
                         break;
                     case IngameUpdateState.FAILURE:
 #if TEST_BUILD
