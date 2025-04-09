@@ -6,6 +6,7 @@ namespace Script.Manager
     using Script.Content;
     using Script.Interface;
     using Script.Data;
+    using static Script.Util.FuncUtil;
 
     public class IngameManager : MonoBehaviour
     {
@@ -16,17 +17,52 @@ namespace Script.Manager
         private static FieldMapManager  fieldMapMgr;
 
         // ingame handler끼리 서로 데이터를 주고 받을 수도 있으므로 ingame manager에서 들고 있자.
-        private static Dictionary<IngameHandlerType, _IngameHandlerBase> ingameHandler;
+        // 가장 마지막에 추가한 ingame_handler에게 input.Update()할 것이다.
+        private static List<_IngameHandlerBase> ingameHandler;
+        private static int targetHandlerIndex;
 
         private static List<IIngameUpdater>[]   updaterList;
         private static List<IIngameUpdater> Updater      { get => updaterList[0]; set => updaterList[0] = value; }
         private static List<IIngameUpdater> FixedUpdater { get => updaterList[1]; set => updaterList[1] = value; }
         private static List<IIngameUpdater> LateUpdater  { get => updaterList[2]; set => updaterList[2] = value; }
 
-        public static void AddIngameHandler(_IngameHandlerBase targetIngame)
+        // manage_ingame_handler
+        public static void AddIngameHander(IngameHandlerType type)
         {
-            ingameHandler.Add(targetIngame.HandlerType, targetIngame);
+            _IngameHandlerBase handler;
+            switch (type)
+            {
+                case IngameHandlerType.OPENING:
+                    handler = new OpeningHandler();
+                    break;
+                case IngameHandlerType.NEW_GAME:
+                    handler = new NewGameHandler();
+                    break;
+                default:
+
+                    return;
+            }
+
+            ingameHandler.Add(handler);
+            handler.MoveNext();
+            targetHandlerIndex += 1;
         }
+        public static void MoveNextHandler(IngameHandlerType type)
+        {
+            if (false == ingameHandler.TryGetIngameHandler(type, out var handler))
+            {
+                return;
+            }
+
+            if (IngameHandlerState.SUCCESS == handler.MoveNext())
+            {
+                handler.Dispose();
+                ingameHandler.Remove(handler);
+                targetHandlerIndex -= 1;
+            }
+        }
+
+        // manage_updater
         public static void AddUpdater(UpdaterType type, IIngameUpdater addUpdater)
         {
             int index = (int)type;
@@ -42,12 +78,6 @@ namespace Script.Manager
 
             updaterList[index].Add(addUpdater);
         }
-
-        public static void RemoveIngameHandler(IngameHandlerType handlerType)
-        {
-            ingameHandler[handlerType].Dispose();
-            ingameHandler.Remove(handlerType);
-        }
         public static void RemoveInputUpdater(IIngameUpdater updater)
         {
             for (int i = 0; i < Updater.Count; ++i)
@@ -58,10 +88,6 @@ namespace Script.Manager
                 }
             }
             //Updater.Remove(updater);
-        }
-        public static void RemoveInputUpdater(int index)
-        {
-            Updater[index] = null;
         }
 
         // 얘는 FieldExploreHandler로 빠질 수도?
@@ -87,14 +113,15 @@ namespace Script.Manager
 
             inputMgr      = new InputManager();
             fieldMapMgr   = new FieldMapManager();
-            ingameHandler = new Dictionary<IngameHandlerType, _IngameHandlerBase>();
+
+            ingameHandler = new List<_IngameHandlerBase>();
+            targetHandlerIndex = -1;
         }
         private void Start()
         {
-            AddIngameHandler(new OpeningHandler());
+            AddIngameHander(IngameHandlerType.OPENING);
         }
-
-
+        
         private void Update()
         {
             // update: input
@@ -118,7 +145,7 @@ namespace Script.Manager
                 {
                     case IngameUpdateState.SUCCESS:
                         ++nullCount;
-                        RemoveInputUpdater(i);
+                        Updater[i] = null;
                         break;
                     case IngameUpdateState.FAILURE:
 #if TEST_BUILD
@@ -149,6 +176,15 @@ namespace Script.Manager
         //private void FixedUpdate() { }
         //private void LateUpdate()  { }
 
+        public static void GetInput(IDxInput.InputFlag inputFlag)
+        {
+            if (targetHandlerIndex < 0)
+            {
+                return;
+            }
+
+            ingameHandler[targetHandlerIndex].ReceiveInput(inputFlag);
+        }
 
         private void OnEnable()
         {

@@ -11,7 +11,6 @@ namespace Script.Manager
     public static class MessageManager
     {
         private static readonly List<IMessageReceiver> ingameReceivers = new List<IMessageReceiver>();
-        private static readonly List<IMessageReceiver> inputReceivers  = new List<IMessageReceiver>();
 
         public static void AddReceiver(IMessageReceiver receiver, bool hasInput = false)
         {
@@ -22,28 +21,10 @@ namespace Script.Manager
                     if (null == ingameReceivers[i])
                     {
                         ingameReceivers[i] = receiver;
-                        goto ADD_INPUT_RECEIVER;
-                    }
-                }
-                ingameReceivers.Add(receiver);
-            }
-
-        ADD_INPUT_RECEIVER:
-            if (false == hasInput)
-            {
-                return;
-            }
-            else if (false == inputReceivers.Contains(receiver))
-            {
-                for (int i = 0; i < inputReceivers.Count; ++i)
-                {
-                    if (null == inputReceivers[i])
-                    {
-                        inputReceivers[i] = receiver;
                         return;
                     }
                 }
-                inputReceivers.Add(receiver);
+                ingameReceivers.Add(receiver);
             }
         }
 
@@ -59,20 +40,6 @@ namespace Script.Manager
                 ingameReceivers[i].Receive(type, data);
             }
         }
-        public static void PublishInput(OnInputControl onInput)
-        {
-            for (int i = inputReceivers.Count - 1; i >= 0; --i)
-            {
-                if (null == inputReceivers[i])
-                {
-                    continue;
-                }
-                if (true == inputReceivers[i].Receive(IngameMessageType.INPUT_CONTROL, onInput))
-                {
-                    return;
-                }
-            }
-        }
 
         public static void Dispose(IMessageReceiver receiver)
         {
@@ -83,16 +50,6 @@ namespace Script.Manager
                     ingameReceivers[i] = null;
                 }
             }
-
-            for (int i = 0; i < inputReceivers.Count; ++i)
-            {
-                if (receiver == inputReceivers[i])
-                {
-                    inputReceivers[i] = null;
-                }
-            }
-            //ingameReceivers.Remove(receiver);
-            //inputReceivers.Remove(receiver);
         }
     }
 }

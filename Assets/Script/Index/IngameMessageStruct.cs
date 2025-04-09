@@ -4,15 +4,6 @@ using UnityEngine;
 
 namespace Script.IngameMessage
 {
-    public readonly struct OnInputControl
-    {
-        public readonly IDxInput.InputFlag inputFlag;
-
-        public OnInputControl(IDxInput.InputFlag inputFlagValue)
-        {
-            inputFlag = inputFlagValue;
-        }
-    }
     public readonly struct OnEndProcess
     {
         public readonly AssetCode AssetCode;

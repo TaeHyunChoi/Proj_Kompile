@@ -31,7 +31,6 @@ namespace Script.Content
             handlerType = IngameHandlerType.NEW_GAME;
             MessageManager.AddReceiver(this, false);
             state = State.NONE;
-            MoveNext();
         }
 
         public bool Receive<T>(IngameMessageType type, T data) where T : struct
@@ -47,7 +46,7 @@ namespace Script.Content
                             {
                                 loadingCurtainObject.On(true);
                                 state = State.LOADING_FADEIN;
-                                MoveNext();
+                                IngameManager.MoveNextHandler(handlerType);
                                 return true;
                             }
                             break;
@@ -81,7 +80,7 @@ namespace Script.Content
                             {
                                 state = State.CLOSE;
                             }
-                            MoveNext();
+                            IngameManager.MoveNextHandler(handlerType);
                             return true;
                     }
                 }
@@ -103,23 +102,20 @@ namespace Script.Content
                     // Receive()
                     break;
                 case State.END_OPENING:
-                    IngameManager.RemoveIngameHandler(IngameHandlerType.OPENING);
-                    state = State.LOAD_PLAYER;
-                    break;
+                    Debug.Log(state);
+                    goto case State.LOAD_PLAYER;
                 case State.LOAD_PLAYER:
-                    Debug.Log(state);
-                    state = State.INIT_FIELD;
-                    break;
+                    Debug.Log(state = State.LOAD_PLAYER);
+                    goto case State.INIT_FIELD;
                 case State.INIT_FIELD:
-                    Debug.Log(state);
-                    state = State.LOADING_FADEOUT;
+                    Debug.Log(state = State.INIT_FIELD);
                     loadingCurtainObject.On(false);
-                    break;
+                    state = State.LOADING_FADEOUT;
+                    goto case State.LOADING_FADEOUT;
                 case State.LOADING_FADEOUT:
                     // Receive()
                     break;
                 case State.CLOSE:
-                    IngameManager.RemoveIngameHandler(this.handlerType);
                     return IngameHandlerState.SUCCESS;
                 default:
                     return IngameHandlerState.FAILURE;
@@ -129,7 +125,11 @@ namespace Script.Content
 
         public override void Dispose()
         {
-            throw new System.NotImplementedException();
+        }
+
+        public override void ReceiveInput(IDxInput.InputFlag inputFlag)
+        {
+            // nothing;
         }
     }
 }

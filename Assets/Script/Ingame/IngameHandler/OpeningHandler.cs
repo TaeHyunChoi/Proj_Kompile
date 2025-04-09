@@ -34,8 +34,6 @@ namespace Script.Content
             handlerType = IngameHandlerType.OPENING;
             state       = State.INIT_OPENING;
             MessageManager.AddReceiver(this, hasInput: true);
-
-            MoveNext();
         }
 
         public override IngameHandlerState MoveNext()
@@ -61,9 +59,9 @@ namespace Script.Content
                     // Invoke Input();
                     break;
                 case State.WAIT:
-                    break;
+                    // MoveNext()로 호출하면 곧장 END로 빠져서 Hnadler가 날아감.
+                    goto case State.END;
                 case State.END:
-                    Dispose();
                     return IngameHandlerState.SUCCESS;
                 default:
                     Debug.Assert(false, $"OpeningHandler: Wrong State ({state}");
@@ -119,12 +117,6 @@ namespace Script.Content
                         }
                     }
                     break;
-                case IngameMessageType.INPUT_CONTROL:
-                    if (data is OnInputControl onInputCtrl)
-                    {
-                        return InvokeInput(state, onInputCtrl.inputFlag);
-                    }
-                    return false;
                 case IngameMessageType.SELECT_ITEM:
                     if (data is OnSelect_UITitleMenu onSelect)
                     {
@@ -144,31 +136,15 @@ namespace Script.Content
             }
 
             state = nextState;
-            MoveNext();
+            IngameManager.MoveNextHandler(handlerType);
             return true;
-        }
-        private bool InvokeInput(State nowState, IDxInput.InputFlag inputFlag)
-        {
-             switch (nowState)
-            {
-                case State.PLAY_OPENING: 
-                    return titleObject.Input(inputFlag);
-
-                case State.SELECT_TITLE_MENU:  
-                    return uiTitleMenu.Input(inputFlag);
-
-                default:
-                    break;
-            }
-
-            return false;
         }
         private void SelectMenu(UITitleMenuObject.MenuType type)
         {
             switch (type)
             {
                 case NEW_GAME:
-                    IngameManager.AddIngameHandler(new NewGameHandler());
+                    IngameManager.AddIngameHander(IngameHandlerType.NEW_GAME);
                     uiTitleMenu.WaitUpdate();
                     state = State.WAIT;
                     // Receive => EndProcess
@@ -195,6 +171,17 @@ namespace Script.Content
             uiTitleMenu = null;
 
             MessageManager.Dispose(this);
+        }
+
+        public override void ReceiveInput(IDxInput.InputFlag inputFlag)
+        {
+            switch (state)
+            {
+                case State.PLAY_OPENING:        titleObject.Input(inputFlag); break;
+                case State.SELECT_TITLE_MENU:   uiTitleMenu.Input(inputFlag); break;
+                default:
+                    break;
+            }
         }
     }
 }

@@ -13,12 +13,10 @@ namespace Script.Manager
         private readonly InputAction enterInput;
         private readonly InputAction actionInput;
 
-        private static bool pause;
         private static InputFlag inputFlag;
 
         public InputManager()
         {
-            pause = false;
             inputFlag = InputFlag.NONE;
 
             moveInput = new InputAction("Move", InputActionType.Value, interactions: "Hold(duration=0.1)");
@@ -39,12 +37,12 @@ namespace Script.Manager
             enterInput.started  += (context) => 
             { 
                 inputFlag |=  InputFlag.ENTER;
-                PublishInput();
+                Input();
             };
             enterInput.canceled += (context) => 
             { 
                 inputFlag &= ~InputFlag.ENTER;
-                PublishInput();
+                Input();
             };
 
             actionInput = new InputAction("Action", InputActionType.Button);
@@ -52,17 +50,17 @@ namespace Script.Manager
             actionInput.started   += (context) => 
             { 
                 inputFlag |=  InputFlag.ACTION;
-                PublishInput();
+                Input();
             };
             actionInput.performed += (context) =>
             {
                 inputFlag |= InputFlag.ACTION;
-                PublishInput();
+                Input();
             };
             actionInput.canceled  += (context) => 
             { 
                 inputFlag &= ~InputFlag.ACTION;
-                PublishInput();
+                Input();
             };
 
             void OnMove(InputAction.CallbackContext context)
@@ -79,26 +77,11 @@ namespace Script.Manager
 
                 inputFlag = (inputFlag & InputFlag.ACT_ALL) | moveFlag;
 
-                PublishInput();
+                Input();
             }
         }
 
-
-
-        public void SetPause(bool on)
-        {
-            pause = on;
-        }
-
-        public void PublishInput()
-        {
-            if (true == pause)
-            {
-                return;
-            }
-
-            MessageManager.PublishInput(new OnInputControl(inputFlag));
-        }
+        public void Input() => IngameManager.GetInput(inputFlag);
 
         public void OnEnable()
         {
@@ -122,10 +105,9 @@ namespace Script.Manager
         {
             try
             {
-                if (false == pause
-                    && InputFlag.NONE != inputFlag)
+                if (InputFlag.NONE != inputFlag)
                 {
-                    PublishInput();
+                    Input();
                 }
 
                 return IngameUpdateState.RUNNING;

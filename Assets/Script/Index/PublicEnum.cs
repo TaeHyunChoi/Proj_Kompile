@@ -24,8 +24,6 @@ public enum IngameMessageType
 {
     NONE,
 
-    INPUT_CONTROL,
-
     GET_ASSET,
     END_OBJECT_PROCESS,
     SELECT_ITEM,
