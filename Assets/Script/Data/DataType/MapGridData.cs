@@ -1,6 +1,7 @@
 namespace Script.Data
 {
     using MessagePack;
+    using System.Collections.Generic;
 
     [MessagePackObject]
     public class MapGridData
@@ -11,6 +12,9 @@ namespace Script.Data
         [Key(1)]
         public ConcurrentDictionary<int, MapNavData> MapNavDataDictionary;
 
+        [Key(2)]
+        public List<string> assetFiles;
+
         // trigger 정보는 MapNavData.infoMask로 빠질라나 => 이거 개념이 뭐임?
         // MapGridData에서 무엇을 들고 있어야 할까?
 
@@ -18,8 +22,13 @@ namespace Script.Data
         {
             gridKey = targetGridKey;
             MapNavDataDictionary = new ConcurrentDictionary<int, MapNavData>();
+            assetFiles = new List<string>();
         }
 
+        public void AddAssetFile(string fileName)
+        {
+            assetFiles.Add(fileName);
+        }
         public bool TryAddNavMeshData(int key, MapNavData navData)
         {
             return MapNavDataDictionary.TryAdd(key, navData);

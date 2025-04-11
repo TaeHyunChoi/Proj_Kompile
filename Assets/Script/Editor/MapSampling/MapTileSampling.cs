@@ -1,14 +1,12 @@
 #if UNITY_EDITOR
 namespace MapSampling
 {
-    using System.Collections;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using UnityEngine;
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
-    using Script.Util;
     using Script.Data;
     using Script.Manager;
 
@@ -16,6 +14,7 @@ namespace MapSampling
     {
         private const int VERTEX_LIMIT = 65535;
         private readonly string assetGroupName = "MapRender";
+
 
         [SerializeField] private Transform instanceTransform;
         private ConcurrentDictionary<int, MapGridData> map;
@@ -32,12 +31,13 @@ namespace MapSampling
                 return;
             }
 
+            // sync : render data (unity api 사용하므로 async 불가)
+            //StartCoroutine(IESaveMesh(tiles));
+            map = new ConcurrentDictionary<int, MapGridData>();
+            IESaveMesh(tiles);
+
             // async : nav data
             Task taskSaveNavData = SaveMapNavDataAsync(tiles);
-
-            // sync : render data (unity api 사용하므로 async 불가)
-            StartCoroutine(IESaveMesh(tiles));
-
             await Task.WhenAll(taskSaveNavData);
             taskSaveNavData.Dispose();
 
@@ -46,7 +46,7 @@ namespace MapSampling
         }
         public async Task SaveMapNavDataAsync(EditMapData[] tiles)
         {
-            map = new ConcurrentDictionary<int, MapGridData>();
+            //map = new ConcurrentDictionary<int, MapGridData>();
             int length = tiles.Length;
             int i, t;
 
@@ -73,15 +73,8 @@ namespace MapSampling
                                                          addressableGroup: "MapNavi");
             }
         }
-        private struct TempData
-        {
-            public List<CombineInstance> combineInstances;
-            public List<Vector2> combinedUVs;
-            public int vertexCount;
-            public int index;
-        }
 
-        private IEnumerator IESaveMesh(EditMapData[] tiles)
+        private void IESaveMesh(EditMapData[] tiles)
         {
             Dictionary<long, TempData> tempDataDict = new Dictionary<long, TempData>();
 
@@ -114,7 +107,6 @@ namespace MapSampling
                     combinedMesh.uv = tempData.combinedUVs.ToArray();
 
                     SaveMesh(combinedMesh, tile.GridKey, tile.Layer, tempData.index, true, false);
-                    yield return null;
 
                     tempData.combineInstances.Clear();
                     tempData.combinedUVs.Clear();
@@ -146,21 +138,20 @@ namespace MapSampling
                     combinedMesh.uv = tempData.combinedUVs.ToArray();
 
                     SaveMesh(combinedMesh, (int)(kvp.Key >> 32), (int)(kvp.Key & 0xFFFF_FFFF), tempData.index, true, false);
-                    yield return null;
                 }
             }
 
             EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
         }
-
-
-
         private void SaveMesh(Mesh mesh, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
         {
+            if (false == map.ContainsKey(gridKey))
+            {
+                map.TryAdd(gridKey, new MapGridData(gridKey));
+            }
 
-            string gridLabel = $"MapRender_G{gridKey}";
-            string layerLabel = $"MapRender_L{layer}";
             string assetName = $"MapRender_G{gridKey}_L{layer}_{index}";
+            map[gridKey].AddAssetFile(assetName);
 
             var path = "Assets/Rcs/MapRender/" + assetName + ".asset";
             //var path = "Assets/Rcs/MapRender/" + $"MapRender_{gridKey}_{layer}" + ".asset";
@@ -187,8 +178,6 @@ namespace MapSampling
                 // Addressable 에셋 생성
                 var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);
                 entry.SetAddress(assetName);
-                entry.labels.Add(gridLabel);
-                entry.labels.Add(layerLabel);
 
                 EditorUtility.SetDirty(settings);
                 settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
@@ -201,7 +190,6 @@ namespace MapSampling
 
             AssetDatabase.SaveAssets();
         }
-
         private Vector2[] GetUVs(CombineInstance target, int textureIndex)
         {
             // for test? 이거 맞겠지?
@@ -237,7 +225,6 @@ namespace MapSampling
 
             return uvs;
         }
-
         public async void Load()
         {
             // scale ,x[sign,small_buffer,6], y[sign,small_buffer,4], z[sign,small_buffer,6]
@@ -263,6 +250,14 @@ namespace MapSampling
             Debug.Log($"END LOAD ({Time.time - time:F2} sec)");
 
             MapGridData data = getMapGridDataTask.GetAwaiter().GetResult();
+
+            string asset_file = string.Empty;
+            for (int i = 0; i < data.assetFiles.Count; ++i)
+            {
+                asset_file += $"{data.assetFiles[i]}, ";
+            }
+            Debug.Log($"file: {asset_file}");
+
             foreach (var key in data.MapNavDataDictionary.Keys)
             {
                 var layer   = (key >> shiftTileLayer) & 1;
@@ -273,11 +268,18 @@ namespace MapSampling
                 var z = (key >> shiftTileZ) & 0xFF;
 
                 Debug.Log($"[layer:{layer}][scale:{scale}][{x},{y},{z}]  [navi:{data.MapNavDataDictionary[key].naviMask}], [info:{data.MapNavDataDictionary[key].infoMask}]");
-
             }
 
             nowLoading = false;
             getMapGridDataTask.Dispose();
+        }
+
+        private class TempData
+        {
+            public List<CombineInstance> combineInstances;
+            public List<Vector2> combinedUVs;
+            public int vertexCount;
+            public int index;
         }
     }
 }

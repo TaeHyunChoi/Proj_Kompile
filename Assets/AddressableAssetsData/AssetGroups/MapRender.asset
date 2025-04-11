@@ -18,16 +18,12 @@ MonoBehaviour:
   - m_GUID: 2ac6ad4dd8f9ddc4993fd55928550c63
     m_Address: MapRender_G0_L1_0
     m_ReadOnly: 0
-    m_SerializedLabels:
-    - MapRender_G0
-    - MapRender_L1
+    m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5d443b1be671d5e46bdf370983310606
     m_Address: MapRender_G0_L2_0
     m_ReadOnly: 0
-    m_SerializedLabels:
-    - MapRender_G0
-    - MapRender_L2
+    m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
