@@ -26,6 +26,7 @@ namespace Script.Manager
         private static Transform[] canvasParents;
 
         // Manage Binary File
+#if UNITY_EDITOR
         public static void WriteBinaryFile<T>(T data, string dataPath, string fileName, string addressableGroup = null)
         {
             // 저장할 파일 경로 생성
@@ -60,6 +61,7 @@ namespace Script.Manager
                 AssetDatabase.SaveAssets();
             }
         }
+#endif
         public static async Task<T> ReadBinaryFileAsync<T>(int targetGridKey)
         {
             string label = $"MapNavi_{targetGridKey}";
