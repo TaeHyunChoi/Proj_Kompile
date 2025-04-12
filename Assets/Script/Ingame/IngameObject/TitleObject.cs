@@ -116,7 +116,7 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater
 
                 if (0 >= alpha)
                 {
-                    transform.GetChild(0).gameObject.SetActive(false);
+                    images[(int)ImageType.COMPANY_LOGO].gameObject.SetActive(false);
                     state = State.TITLE_INIT;
                 }
                 break;
