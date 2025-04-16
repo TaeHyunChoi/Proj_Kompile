@@ -17,7 +17,7 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
         WAIT,
         CLOSE
     }
-    public enum MenuType
+    public enum MenuType : int
     { 
         NEW_GAME = 0,
         LOAD_GAME,
@@ -89,23 +89,23 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
                 //작동 일시중지
                 break;
             case State.CLOSE:
-                MessageManager.Publish(IngameMessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.UI_TitleMenuObject));
+                MessageManager.Publish(IngameEventType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.UI_TitleMenuObject));
                 return IngameUpdateState.SUCCESS;
         }
         return IngameUpdateState.RUNNING;
     }
 
-    public bool Input(InputFlag inputFlag)
+    public int Input(InputFlag inputFlag)
     {
         if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
         {
-            MessageManager.Publish(IngameMessageType.SELECT_ITEM, new OnSelect_UITitleMenu(index));
-            return true;
+            MessageManager.Publish(IngameEventType.SELECT_ITEM, new OnSelect_UITitleMenu(index));
+            return index;
         }
 
         if (Time.time < lastInputTime + waitTime)
         {
-            return false;
+            return -1;
         }
         lastInputTime = Time.time;
 
@@ -120,11 +120,14 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
             selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
         }
 
-        return true;
+        return index;
     }
 
     public void WaitUpdate()
     {
+        alpha = 1f;
+        selectSlotImage.color = new Color(0.2232704f, 0.5052339f, 1f, alpha);
+
         state = State.WAIT;
     }
     public void ReplayUpdate()

@@ -32,34 +32,15 @@ namespace Script.Manager
             _IngameHandlerBase handler;
             switch (type)
             {
-                case IngameHandlerType.OPENING:
-                    handler = new OpeningHandler();
-                    break;
-                case IngameHandlerType.NEW_GAME:
-                    handler = new NewGameHandler();
-                    break;
+                case IngameHandlerType.OPENING:     handler = new OpeningHandler(); break;
+                case IngameHandlerType.NEW_GAME:    handler = new NewGameHandler(); break;
                 default:
-
                     return;
             }
 
             ingameHandler.Add(handler);
-            handler.MoveNext();
+            //handler.MoveNext();
             targetHandlerIndex += 1;
-        }
-        public static void MoveNextHandler(IngameHandlerType type)
-        {
-            if (false == ingameHandler.TryGetIngameHandler(type, out var handler))
-            {
-                return;
-            }
-
-            if (IngameHandlerState.SUCCESS == handler.MoveNext())
-            {
-                handler.Dispose();
-                ingameHandler.Remove(handler);
-                targetHandlerIndex -= 1;
-            }
         }
 
         // manage_updater
@@ -183,7 +164,7 @@ namespace Script.Manager
                 return;
             }
 
-            ingameHandler[targetHandlerIndex].ReceiveInput(inputFlag);
+            ingameHandler[targetHandlerIndex].Receive_Input(inputFlag);
         }
 
         private void OnEnable()

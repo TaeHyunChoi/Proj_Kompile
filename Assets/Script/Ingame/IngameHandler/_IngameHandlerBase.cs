@@ -8,8 +8,8 @@ namespace Script.Content
         protected IngameHandlerType handlerType;
         public IngameHandlerType HandlerType => handlerType;
 
-        public abstract IngameHandlerState MoveNext();
-        public abstract void ReceiveInput(InputFlag inputFlag);
+        //public abstract IngameHandlerState MoveNext();
+        public abstract void Receive_Input(InputFlag inputFlag);
         public abstract void Dispose();
     }
 }

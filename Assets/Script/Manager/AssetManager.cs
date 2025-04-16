@@ -21,7 +21,7 @@ namespace Script.Manager
     {
         public const string MAP_NAVI_DATA_PATH = "Rcs\\Bin\\MapNavRawData";
 
-        private static readonly Dictionary<int, AsyncOperationHandle> assetHandlers  = new Dictionary<int, AsyncOperationHandle>();
+        private static readonly Dictionary<int, AsyncOperationHandle> assetHandles  = new Dictionary<int, AsyncOperationHandle>();
 
         private static Transform[] canvasParents;
 
@@ -106,21 +106,39 @@ namespace Script.Manager
 
 
         // Instaniate, Load GameObject Assets
+        public static async Task<T> InstantiateGameObjectAsync<T>(AssetCode assetCode, CanvasType canvasType, bool isOn) where T : class
+        {
+            try
+            {
+                Transform parent = GetCanvas(canvasType);
+                AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
+                GameObject targetObj = await handle.Task;
+
+                targetObj.SetActive(isOn);
+                assetHandles.Add(targetObj.GetInstanceID(), handle);
+
+                return targetObj.GetComponent<T>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
         public static async Task<GameObject> InstantiateGameObjectAssetAsync(AssetCode assetCode, Transform parent, bool isOn)
         {
             AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
             GameObject targetObj = await handle.Task;
             targetObj.SetActive(isOn);
 
-            assetHandlers.Add(targetObj.GetInstanceID(), handle);
+            assetHandles.Add(targetObj.GetInstanceID(), handle);
 
-            MessageManager.Publish(IngameMessageType.GET_ASSET, new OnGetAsset_GameObject(assetCode, targetObj));
+            MessageManager.Publish(IngameEventType.GET_ASSET, new OnGetAsset_GameObject(assetCode, targetObj));
             return targetObj;
         }
 
-        public static bool TryGetGameObjectAsset<T>(int instanceID, out T target) where T : MonoBehaviour
+        public static bool TryGetIngameAsset<T>(int instanceID, out T target) where T : MonoBehaviour
         {
-             if (false == assetHandlers.TryGetValue(instanceID, out AsyncOperationHandle handler))
+             if (false == assetHandles.TryGetValue(instanceID, out AsyncOperationHandle handler))
             {
                 target = null;
                 return false;
@@ -146,14 +164,14 @@ namespace Script.Manager
         }
 
         // Dispose
-        // 오호라.. object instance id가 아니라 task번호가 저장되었나 보네?
         public static void Dispose(int instanceID)
         {
-            if (true == assetHandlers.TryGetValue(instanceID, out var handler))
+            if (true == assetHandles.TryGetValue(instanceID, out var handle))
             {
-                GameObject.Destroy((handler.Result as GameObject));
-                handler.Release();
-                assetHandlers.Remove(instanceID);
+                Addressables.ReleaseInstance(handle);
+                //GameObject.Destroy((handler.Result as GameObject));
+                //handler.Release();
+                assetHandles.Remove(instanceID);
             }
         }
     }

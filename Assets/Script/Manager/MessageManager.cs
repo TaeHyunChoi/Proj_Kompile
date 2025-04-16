@@ -28,7 +28,7 @@ namespace Script.Manager
             }
         }
 
-        public static void Publish<T>(IngameMessageType type, T data) where T : struct
+        public static void Publish<T>(IngameEventType type, T data) where T : struct
         {
             for (int i = ingameReceivers.Count - 1; i >= 0; --i)
             {
@@ -37,7 +37,7 @@ namespace Script.Manager
                     continue;
                 }
 
-                ingameReceivers[i].Receive(type, data);
+                ingameReceivers[i].Receive_IngameEvent(type, data);
             }
         }
 

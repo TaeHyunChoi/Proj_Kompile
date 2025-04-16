@@ -111,7 +111,7 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater
                 break;
 
             case State.LOGO_FADE_OUT:
-                alpha -= deltaTime * (logoAlphaDelta * 3);
+                alpha -= deltaTime * logoAlphaDelta;
                 images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
 
                 if (0 >= alpha)
@@ -197,22 +197,22 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater
                 break;
 
             default:
-                MessageManager.Publish(IngameMessageType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.OP_TitleObject));
+                MessageManager.Publish(IngameEventType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.OP_TitleObject));
                 return IngameUpdateState.SUCCESS;
         }
 
         return IngameUpdateState.RUNNING;
     }
 
-    public bool Input(IDxInput.InputFlag inputFlag)
+    public int Input(IDxInput.InputFlag inputFlag)
     {
         if (false == inputFlag.Contains(IDxInput.InputFlag.ACTION | IDxInput.InputFlag.ENTER))
         {
-            return false;
+            return -1;
         }
         if (State.LOGO_WAIT <= state)
         {
-            return false;
+            return -1;
         }
 
         alpha = 1f;
@@ -221,7 +221,7 @@ public partial class TitleObject : MonoBehaviour, IIngameUpdater
         waitTime *= 1.5f;
         state = State.LOGO_WAIT;
 
-        return true;
+        return 0;
     }
 
     private void OnDisable()

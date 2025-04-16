@@ -20,11 +20,20 @@ public enum UpdaterType
 
     INPUT
 }
-public enum IngameMessageType
+public enum IngameEventType
 {
     NONE,
 
     GET_ASSET,
     END_OBJECT_PROCESS,
     SELECT_ITEM,
+
+    // OPENING
+    OPENING_INSTANTIATE_TITLE,
+    OPENING_LOAD_TITLE_MENU,
+    OPENING_SELECT_NEW_GAME,
+    OPENING_SELECT_LOAD_GAME,
+    OPENING_SELECT_OPTION,
+    OPENING_SELECT_EXIT,
+
 }

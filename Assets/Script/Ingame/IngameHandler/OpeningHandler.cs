@@ -1,187 +1,121 @@
 namespace Script.Content
 {
-    using System.Threading.Tasks;
     using Script.Manager;
     using Script.Index;
     using Script.Interface;
     using Script.IngameMessage;
-    using UnityEngine;
     using static UITitleMenuObject.MenuType;
+    using UnityEngine;
 
     public partial class OpeningHandler : _IngameHandlerBase, IMessageReceiver
     {
-        private enum State
-        {
-            NONE,
-
-            INIT_OPENING,
-            PLAY_OPENING,
-
-            LOAD_TITLE_MENU,
-            SELECT_TITLE_MENU,
-
-            WAIT,
-            END
-        }
-
-        private State state;
-        private Task<GameObject>    loadTask;
         private TitleObject         titleObject;
-        private UITitleMenuObject   uiTitleMenu;
+        private UITitleMenuObject   uiTitleMenuObject;
+        private InputOpening        inputTarget;
 
         public OpeningHandler()
         {
             handlerType = IngameHandlerType.OPENING;
-            state       = State.INIT_OPENING;
+            inputTarget = InputOpening.NONE;
+
             MessageManager.AddReceiver(this, hasInput: true);
+
+            ExecuteIngameEventAsync(IngameEventType.OPENING_INSTANTIATE_TITLE);
         }
 
-        public override IngameHandlerState MoveNext()
+
+        // ingame evnet
+        public async void ExecuteIngameEventAsync(IngameEventType message_type)
         {
-            switch (state)
+            try
             {
-                case State.NONE:
-                case State.INIT_OPENING:
-                    Transform parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
-                    loadTask = AssetManager.InstantiateGameObjectAssetAsync(AssetCode.OP_TitleObject, parent, true);
-                    break;
-                case State.PLAY_OPENING:
-                    // Receive() => next state;
-                    // Invoke Input();
-                    break;
-                case State.LOAD_TITLE_MENU:
-                    parent = AssetManager.GetCanvas(CanvasType.OVERLAY).transform;
-                    loadTask = AssetManager.InstantiateGameObjectAssetAsync(AssetCode.UI_TitleMenuObject, parent, true);
-                    //  Receive() => next state;
-                    break;
-                case State.SELECT_TITLE_MENU:
-                    // Receive() => next state;
-                    // Invoke Input();
-                    break;
-                case State.WAIT:
-                    // MoveNext()로 호출하면 곧장 END로 빠져서 Hnadler가 날아감.
-                    goto case State.END;
-                case State.END:
-                    return IngameHandlerState.SUCCESS;
-                default:
-                    Debug.Assert(false, $"OpeningHandler: Wrong State ({state}");
-                    return IngameHandlerState.FAILURE;
+                switch (message_type)
+                {
+                    case IngameEventType.OPENING_INSTANTIATE_TITLE:
+                        titleObject = await AssetManager.InstantiateGameObjectAsync<TitleObject>(AssetCode.OP_TitleObject, CanvasType.OVERLAY, true);
+                        inputTarget = InputOpening.OPENING_OBJECT;
+                        break;
+                    case IngameEventType.OPENING_LOAD_TITLE_MENU:
+                        uiTitleMenuObject = await AssetManager.InstantiateGameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject, CanvasType.OVERLAY, true);
+                        inputTarget = InputOpening.UI_TITLE_MENU_OBJECT;
+                        break;
+                    case IngameEventType.OPENING_SELECT_NEW_GAME:
+                        IngameManager.AddIngameHander(IngameHandlerType.NEW_GAME);
+                        uiTitleMenuObject.WaitUpdate();
+                        inputTarget = InputOpening.NONE;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch
+            {
+                inputTarget = InputOpening.NONE;
+                Debug.Assert(false);
+            }
+        }
+        public bool Receive_IngameEvent<T>(IngameEventType message_type, T data) where T : struct
+        {
+            if (data is OnEndProcess onEndProcess
+                && AssetCode.OP_TitleObject == onEndProcess.AssetCode)
+            {
+                ExecuteIngameEventAsync(IngameEventType.OPENING_LOAD_TITLE_MENU);
+                return true;
             }
 
-            return IngameHandlerState.RUNNING;
+            return false;
         }
 
 
-        public bool Receive<T>(IngameMessageType type, T data) where T : struct
+        // input -> ingame event
+        public override void Receive_Input(IDxInput.InputFlag inputFlag)
         {
-            State nextState = State.NONE;
-
-            switch (type)
+            switch (inputTarget)
             {
-                case IngameMessageType.GET_ASSET:
-                     if(data is OnGetAsset_GameObject onGetAsset)
-                    {
-                        switch (onGetAsset.AssetCode)
-                        {
-                            case AssetCode.OP_TitleObject:
-                                if (true == AssetManager.TryGetGameObjectAsset(onGetAsset.InstanceID, out titleObject))
-                                {
-                                    nextState = State.PLAY_OPENING;
-                                }
-                                break;
-                            case AssetCode.UI_TitleMenuObject:
-                                if (true == AssetManager.TryGetGameObjectAsset(onGetAsset.InstanceID, out uiTitleMenu))
-                                {
-                                    nextState = State.SELECT_TITLE_MENU;
-                                }
-                                break;
-                            default:
-                                break;
-                        }
+                case InputOpening.OPENING_OBJECT: 
+                    titleObject.Input(inputFlag); 
+                    break;
+                case InputOpening.UI_TITLE_MENU_OBJECT:
+                    var menuIndex = (UITitleMenuObject.MenuType)uiTitleMenuObject.Input(inputFlag);
+                    IngameEventType next_event_type;
 
-                        if(null != loadTask)
-                        {
-                            loadTask.ContinueWith(task => task.Dispose());
-                        }
-                    }
-                    break;
-                case IngameMessageType.END_OBJECT_PROCESS:
-                    if(data is OnEndProcess onEndProcess)
+                    switch (menuIndex)
                     {
-                        switch (onEndProcess.AssetCode)
-                        {
-                            case AssetCode.OP_TitleObject:      nextState = State.LOAD_TITLE_MENU; break;
-                            case AssetCode.UI_TitleMenuObject:  nextState = State.END;  break;
-                            default:
-                                return false;
-                        }
+                        case NEW_GAME:  next_event_type = IngameEventType.OPENING_SELECT_NEW_GAME;  break;
+                        case LOAD_GAME: next_event_type = IngameEventType.OPENING_SELECT_LOAD_GAME; break;
+                        case OPTION:    next_event_type = IngameEventType.OPENING_SELECT_OPTION;    break;
+                        case EXIT:      next_event_type = IngameEventType.OPENING_SELECT_EXIT;      break;
+                        default: return;
                     }
-                    break;
-                case IngameMessageType.SELECT_ITEM:
-                    if (data is OnSelect_UITitleMenu onSelect)
-                    {
-                        var menuType = (UITitleMenuObject.MenuType)onSelect.ValueInt;
-                        SelectMenu(menuType);
-                        nextState = state;
-                    }
+
+                    ExecuteIngameEventAsync(next_event_type);
                     break;
                 default:
-                    Debug.Assert(false, $"OpeningHandler: Wrong Type ({type}, -)");
-                    return false;
-            }
-
-            if (State.NONE == nextState)
-            {
-                return false;
-            }
-
-            state = nextState;
-            IngameManager.MoveNextHandler(handlerType);
-            return true;
-        }
-        private void SelectMenu(UITitleMenuObject.MenuType type)
-        {
-            switch (type)
-            {
-                case NEW_GAME:
-                    IngameManager.AddIngameHander(IngameHandlerType.NEW_GAME);
-                    uiTitleMenu.WaitUpdate();
-                    state = State.WAIT;
-                    // Receive => EndProcess
                     break;
-                case LOAD_GAME:
-                    break;
-                case OPTION:
-                    break;
-                case EXIT:
-                    break;
-                default:
-                    // error? state 유지
-                    return;
             }
         }
 
 
+        // dispose
         public override void Dispose()
         {
             AssetManager.Dispose(titleObject.gameObject.GetInstanceID());
             titleObject = null;
 
-            AssetManager.Dispose(uiTitleMenu.gameObject.GetInstanceID());
-            uiTitleMenu = null;
+            AssetManager.Dispose(uiTitleMenuObject.gameObject.GetInstanceID());
+            uiTitleMenuObject = null;
 
             MessageManager.Dispose(this);
         }
 
-        public override void ReceiveInput(IDxInput.InputFlag inputFlag)
+
+        // data type
+        private enum InputOpening
         {
-            switch (state)
-            {
-                case State.PLAY_OPENING:        titleObject.Input(inputFlag); break;
-                case State.SELECT_TITLE_MENU:   uiTitleMenu.Input(inputFlag); break;
-                default:
-                    break;
-            }
+            NONE = 0,
+
+            OPENING_OBJECT,
+            UI_TITLE_MENU_OBJECT,
         }
     }
 }
