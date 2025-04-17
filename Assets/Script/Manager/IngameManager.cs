@@ -42,6 +42,18 @@ namespace Script.Manager
             //handler.MoveNext();
             targetHandlerIndex += 1;
         }
+        public static void RemoveIngameHandler(IngameHandlerType type)
+        {
+            for (int i = ingameHandler.Count - 1; i >= 0; --i)
+            {
+                if (type == ingameHandler[i].HandlerType)
+                {
+                    ingameHandler[i].Dispose();
+                    ingameHandler.RemoveAt(i);
+                    return;
+                }
+            }
+        }
 
         // manage_updater
         public static void AddUpdater(UpdaterType type, IIngameUpdater addUpdater)

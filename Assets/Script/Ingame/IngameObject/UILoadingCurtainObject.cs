@@ -24,7 +24,7 @@ public class UILoadingCurtainObject : MonoBehaviour, IIngameUpdater
         FADE,
     }
 
-    private float sign;
+    private float delta;
 
     private State state;
     private float alpha;
@@ -35,12 +35,12 @@ public class UILoadingCurtainObject : MonoBehaviour, IIngameUpdater
         if (true == on)
         {
             alpha = 0f;
-            sign = 1f;
+            delta = 1f;
         }
         else
         {
             alpha = 1f;
-            sign = -1f;
+            delta = -2f;
         }
         IngameManager.AddUpdater(UpdaterType.UPDATE, this);
     }
@@ -54,7 +54,7 @@ public class UILoadingCurtainObject : MonoBehaviour, IIngameUpdater
                 goto case State.FADE;
 
             case State.FADE:
-                alpha += sign * Time.deltaTime;
+                alpha += delta * Time.deltaTime;
                 FadeAlpha(alpha);
                 //loadingCurtain.FadeAlpha(alpha);
 

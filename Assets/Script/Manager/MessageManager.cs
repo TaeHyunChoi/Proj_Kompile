@@ -1,7 +1,6 @@
 namespace Script.Manager
 {
     using Script.Interface;
-    using Script.IngameMessage;
     using System.Collections.Generic;
 
     /// <summary>
@@ -47,6 +46,7 @@ namespace Script.Manager
             {
                 if (receiver == ingameReceivers[i])
                 {
+                    UnityEngine.Debug.Log($"{ingameReceivers[i].GetType().Name}.Dispose()");
                     ingameReceivers[i] = null;
                 }
             }
