@@ -14,6 +14,7 @@ namespace MapSampling
     {
         private const int VERTEX_LIMIT = 65535;
         private readonly string assetGroupName = "MapRender";
+        private readonly string MAP_NAVI_DATA_PATH = "Rcs\\Bin\\MapNavRawData";
 
 
         [SerializeField] private Transform instanceTransform;
@@ -68,7 +69,7 @@ namespace MapSampling
             foreach (var grid in map)
             {
                 AssetManager.WriteBinaryFile<MapGridData>(data: grid.Value,
-                                                         dataPath: AssetManager.MAP_NAVI_DATA_PATH,
+                                                         dataPath: MAP_NAVI_DATA_PATH,
                                                          fileName: $"MapNavi_{grid.Key}",
                                                          addressableGroup: "MapNavi");
             }
@@ -245,11 +246,8 @@ namespace MapSampling
             var time = Time.time;
             nowLoading = true;
 
-            var getMapGridDataTask = AssetManager.ReadBinaryFileAsync<MapGridData>(0);
-            await getMapGridDataTask;
+            MapGridData data = await AssetManager.ReadBinaryFileAsync<MapGridData>($"MapNavi_{0}");
             Debug.Log($"END LOAD ({Time.time - time:F2} sec)");
-
-            MapGridData data = getMapGridDataTask.GetAwaiter().GetResult();
 
             string asset_file = string.Empty;
             for (int i = 0; i < data.assetFiles.Count; ++i)
@@ -271,7 +269,6 @@ namespace MapSampling
             }
 
             nowLoading = false;
-            getMapGridDataTask.Dispose();
         }
 
         private class TempData

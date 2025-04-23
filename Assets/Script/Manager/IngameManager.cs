@@ -6,15 +6,18 @@ namespace Script.Manager
     using Script.Content;
     using Script.Interface;
     using Script.Data;
-    using static Script.Util.FuncUtil;
+    using System.Threading.Tasks;
 
     public class IngameManager : MonoBehaviour
     {
         private const int RESET_UPDATER_LIST_COUNT = 10;
 
+        private static PlayData         playerData;
+
         private static IngameManager    instance;
         private static InputManager     inputMgr;
-        private static FieldMapManager  fieldMapMgr;
+        private static FieldManager     fieldMgr;
+        private static IngameCamera     ingameCam;
 
         // ingame handler끼리 서로 데이터를 주고 받을 수도 있으므로 ingame manager에서 들고 있자.
         // 가장 마지막에 추가한 ingame_handler에게 input.Update()할 것이다.
@@ -26,7 +29,26 @@ namespace Script.Manager
         private static List<IIngameUpdater> FixedUpdater { get => updaterList[1]; set => updaterList[1] = value; }
         private static List<IIngameUpdater> LateUpdater  { get => updaterList[2]; set => updaterList[2] = value; }
 
-        // manage_ingame_handler
+        // play data
+        public static void InitPlayData()
+        {
+            playerData = new PlayData();
+            Debug.Log("NEWGAME_PLAYER_DATA");
+        }
+
+        // manager
+        public static async Task<bool> TryInitializeField()
+        {
+            fieldMgr = new FieldManager();
+            bool result = await fieldMgr.Init(playerData);
+
+            // 여기서 캠 설정도 넣는다?
+
+
+            return result;
+        }
+
+        // ingame_handler
         public static void AddIngameHander(IngameHandlerType type)
         {
             _IngameHandlerBase handler;
@@ -48,6 +70,7 @@ namespace Script.Manager
             {
                 if (type == ingameHandler[i].HandlerType)
                 {
+                    targetHandlerIndex -= 1;
                     ingameHandler[i].Dispose();
                     ingameHandler.RemoveAt(i);
                     return;
@@ -55,7 +78,13 @@ namespace Script.Manager
             }
         }
 
-        // manage_updater
+        // camera
+        public static void InitFollowingCamera(_IngameUnitBase player_character)
+        {
+            ingameCam.InitFollowingCamera(player_character);
+        }
+
+        // updater
         public static void AddUpdater(UpdaterType type, IIngameUpdater addUpdater)
         {
             int index = (int)type;
@@ -83,12 +112,6 @@ namespace Script.Manager
             //Updater.Remove(updater);
         }
 
-        // 얘는 FieldExploreHandler로 빠질 수도?
-        public static bool TryAddMapRawGridData(int gridKey, MapGridData rawMapGridData)
-        {
-            return fieldMapMgr.TryAddMapGridData(gridKey, rawMapGridData);
-        }
-
 
         private void Awake()
         {
@@ -100,15 +123,22 @@ namespace Script.Manager
             instance = this;
             DontDestroyOnLoad(gameObject);
 
-            updaterList = new List<IIngameUpdater>[3] { new List<IIngameUpdater>(), new List<IIngameUpdater>(), new List<IIngameUpdater>() };
+            updaterList = new List<IIngameUpdater>[3] 
+            { 
+                new List<IIngameUpdater>(), 
+                new List<IIngameUpdater>(), 
+                new List<IIngameUpdater>() 
+            };
 
             AssetManager.Initialize(this.transform);
 
-            inputMgr      = new InputManager();
-            fieldMapMgr   = new FieldMapManager();
+            inputMgr = new InputManager();
+            fieldMgr = new FieldManager();
 
             ingameHandler = new List<_IngameHandlerBase>();
             targetHandlerIndex = -1;
+
+            ingameCam = transform.GetComponentInChildren<IngameCamera>(true);
         }
         private void Start()
         {
@@ -141,9 +171,7 @@ namespace Script.Manager
                         Updater[i] = null;
                         break;
                     case IngameUpdateState.FAILURE:
-#if TEST_BUILD
-                        DevError.DebugAssert(ErrorCode.FAIL_TASK, updates[i].Type.ToString());
-#endif
+                        Debug.Assert(false, $"Updater[{i}].State == FAILTURE;");
                         break;
                     default:
                         // Running
@@ -166,8 +194,52 @@ namespace Script.Manager
                 Updater = newUpdater;
             }
         }
-        //private void FixedUpdate() { }
-        //private void LateUpdate()  { }
+        private void FixedUpdate() 
+        {
+            for (int i = 0; i < FixedUpdater.Count; ++i)
+            {
+                if (null == FixedUpdater[i])
+                {
+                    continue;
+                }
+
+                switch (FixedUpdater[i].UpdateState())
+                {
+                    case IngameUpdateState.SUCCESS:
+                        FixedUpdater[i] = null;
+                        break;
+                    case IngameUpdateState.FAILURE:
+                        Debug.Assert(false, $"FixedUpdater[{i}].State == FAILTURE;");
+                        break;
+                    default:
+                        // Running
+                        break;
+                }
+            }
+        }
+        private void LateUpdate()  
+        {
+            for (int i = 0; i < LateUpdater.Count; ++i)
+            {
+                if (null == LateUpdater[i])
+                {
+                    continue;
+                }
+
+                switch (LateUpdater[i].UpdateState())
+                {
+                    case IngameUpdateState.SUCCESS:
+                        LateUpdater[i] = null;
+                        break;
+                    case IngameUpdateState.FAILURE:
+                        Debug.Assert(false, $"LateUpdater[{i}].State == FAILTURE;");
+                        break;
+                    default:
+                        // Running
+                        break;
+                }
+            }
+        }
 
         public static void GetInput(IDxInput.InputFlag inputFlag)
         {

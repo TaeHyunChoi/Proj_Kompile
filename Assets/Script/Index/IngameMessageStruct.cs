@@ -44,4 +44,15 @@ namespace Script.IngameMessage
             ValueInt = value;
         }
     }
+
+
+    /// <summary> 로딩 커튼 on/off 완료 여부</summary>
+    public readonly struct OnEndLoadingCurtain
+    {
+        public readonly bool isOn;
+        public OnEndLoadingCurtain(bool on)
+        {
+            isOn = on;
+        }
+    }
 }

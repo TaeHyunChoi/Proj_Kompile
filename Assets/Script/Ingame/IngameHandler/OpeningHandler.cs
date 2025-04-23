@@ -9,7 +9,7 @@ namespace Script.Content
 
     public partial class OpeningHandler : _IngameHandlerBase, IMessageReceiver
     {
-        private TitleObject         titleObject;
+        private UITitleObject         titleObject;
         private UITitleMenuObject   uiTitleMenuObject;
         private InputOpening        inputTarget;
 
@@ -34,11 +34,11 @@ namespace Script.Content
                 switch (messageType)
                 {
                     case IngameEventType.OPENING_INSTANTIATE_TITLE:
-                        titleObject = await AssetManager.InstantiateGameObjectAsync<TitleObject>(AssetCode.OP_TitleObject, CanvasType.OVERLAY, true);
+                        titleObject = await AssetManager.InstantiateUIObjectAsync<UITitleObject>(AssetCode.OP_TitleObject, CanvasType.OVERLAY, true);
                         inputTarget = InputOpening.OPENING_OBJECT;
                         break;
                     case IngameEventType.OPENING_LOAD_TITLE_MENU:
-                        uiTitleMenuObject = await AssetManager.InstantiateGameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject, CanvasType.OVERLAY, true);
+                        uiTitleMenuObject = await AssetManager.InstantiateUIObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject, CanvasType.OVERLAY, true);
                         inputTarget = InputOpening.UI_TITLE_MENU_OBJECT;
                         break;
                     case IngameEventType.OPENING_SELECT_NEW_GAME:

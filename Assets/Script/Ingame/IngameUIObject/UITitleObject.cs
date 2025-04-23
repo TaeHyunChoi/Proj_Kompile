@@ -5,7 +5,7 @@ using Script.IngameMessage;
 using UnityEngine;
 using UnityEngine.UI;
 
-public partial class TitleObject : MonoBehaviour, IIngameUpdater
+public partial class UITitleObject : MonoBehaviour, IIngameUpdater
 {
     private enum ImageType
     {

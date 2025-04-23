@@ -15,8 +15,10 @@ namespace Script.Index
     public enum AssetCode
     {
         NONE = 0,
+        
 
         DB_MAP_GRID,
+        MapGridPrefab,
 
         OP_TitleObject,
 

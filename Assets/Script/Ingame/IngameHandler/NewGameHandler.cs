@@ -1,17 +1,16 @@
 namespace Script.Content
 {
-    using Script.Data;
     using Script.Index;
     using Script.Interface;
     using Script.IngameMessage;
     using Script.Manager;
-    using UnityEngine;
     using System.Threading.Tasks;
+    using System.Collections.Generic;
+    using System.Diagnostics;
 
     public class NewGameHandler : _IngameHandlerBase, IMessageReceiver
     {
         private UILoadingCurtainObject loadingCurtainObject;
-
 
         // Constructor
         public NewGameHandler()
@@ -21,59 +20,51 @@ namespace Script.Content
             ExecuteIngameEventAsync(IngameEventType.LOADING_CURTAIN_ON);
         }
 
+
         // Execute Event
         public override async void ExecuteIngameEventAsync(IngameEventType messageType)
         {
-            try
+            switch (messageType)
             {
-                switch (messageType)
-                {
-                    case IngameEventType.LOADING_CURTAIN_ON:
-                        loadingCurtainObject = await AssetManager.InstantiateGameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain, CanvasType.OVERLAY_LOADING, true);
-                        loadingCurtainObject.On(true);
-                        goto case IngameEventType.NEWGAME_INIT_PLAYER;
-                    
-                    case IngameEventType.NEWGAME_INIT_PLAYER:
-                        Debug.Log("NEWGAME_PLAYER_DATA");
-                        goto case IngameEventType.NEWGAME_INIT_FIELD;
+                case IngameEventType.LOADING_CURTAIN_ON:
+                    loadingCurtainObject = await AssetManager.InstantiateUIObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain, CanvasType.OVERLAY_LOADING, true);
+                    loadingCurtainObject.On(true);
+                    goto case IngameEventType.NEWGAME_INIT_PLAYER;
 
-                    case IngameEventType.NEWGAME_INIT_FIELD:
-                        Debug.Log("NEWGAME_INIT_FIELD");
-                        break;
+                case IngameEventType.NEWGAME_INIT_PLAYER:
+                    IngameManager.InitPlayData();
+                    goto case IngameEventType.NEWGAME_INIT_FIELD;
 
-                    case IngameEventType.LOADING_CURTAIN_OFF:
-                        await Task.Delay(500);
-                        loadingCurtainObject.On(false);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            catch
-            {
-                Debug.Assert(false);
+                case IngameEventType.NEWGAME_INIT_FIELD:
+                    // 필드 초기화
+                    await IngameManager.TryInitializeField();
+
+                    // Task.Yield();도 GC를 먹는다 => UniTask를 권장;
+                    while (false == loadingCurtainObject.IsOn)
+                    {
+                        await Task.Yield();
+                    }
+                    goto case IngameEventType.LOADING_CURTAIN_OFF;
+
+                case IngameEventType.LOADING_CURTAIN_OFF:
+                    await Task.Delay(200);
+                    loadingCurtainObject.On(false);
+                    break;
+                default:
+                    break;
             }
         }
-
-
-
         public bool Receive_IngameEvent<T>(IngameEventType type, T data) where T : struct
         {
-            if (data is OnEndProcess onEnd
-                && AssetCode.UI_LoadingCurtain == onEnd.AssetCode)
+            if (data is OnEndLoadingCurtain onEndLoadingCurtain)
             {
-                bool curtainOn = (1 == onEnd.endCode);
-
-                if (true == curtainOn)
+                if (true == onEndLoadingCurtain.isOn)
                 {
                     IngameManager.RemoveIngameHandler(IngameHandlerType.OPENING);
-
-                    // for test
-                    ExecuteIngameEventAsync(IngameEventType.LOADING_CURTAIN_OFF);
                 }
                 else
                 {
-                    IngameManager.RemoveIngameHandler(this.handlerType);
+                    IngameManager.RemoveIngameHandler(handlerType);
                 }
 
                 return true;
@@ -86,6 +77,8 @@ namespace Script.Content
             // nothing;
         }
 
+
+        // Dispose
         public override void Dispose()
         {
             MessageManager.Dispose(this);

@@ -29,6 +29,7 @@ public class UILoadingCurtainObject : MonoBehaviour, IIngameUpdater
     private State state;
     private float alpha;
 
+    public bool IsOn => alpha == 1f;
     public void On(bool on)
     {
         state = State.NONE;
@@ -40,7 +41,7 @@ public class UILoadingCurtainObject : MonoBehaviour, IIngameUpdater
         else
         {
             alpha = 1f;
-            delta = -2f;
+            delta = -1.5f;
         }
         IngameManager.AddUpdater(UpdaterType.UPDATE, this);
     }
@@ -61,7 +62,7 @@ public class UILoadingCurtainObject : MonoBehaviour, IIngameUpdater
                 alpha = System.Math.Clamp(alpha, 0, 1);
                 if (alpha <= 0 || alpha >= 1)
                 {
-                    MessageManager.Publish(IngameEventType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.UI_LoadingCurtain, end: (int)alpha));
+                    MessageManager.Publish(IngameEventType.END_OBJECT_PROCESS, new OnEndLoadingCurtain(alpha != 0));
                     return IngameUpdateState.SUCCESS;
                 }
                 break;

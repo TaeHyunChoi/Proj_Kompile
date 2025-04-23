@@ -6,7 +6,6 @@ namespace Script.Manager
     using UnityEngine.AddressableAssets;
     using UnityEngine.ResourceManagement.AsyncOperations;
     using Script.Index;
-    using Script.IngameMessage;
     using MessagePack;
     using Script.Data;
     using System.IO;
@@ -15,15 +14,16 @@ namespace Script.Manager
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
+    using static UnityEngine.Rendering.VirtualTexturing.Debugging;
 #endif
 
     public static partial class AssetManager
     {
-        public const string MAP_NAVI_DATA_PATH = "Rcs\\Bin\\MapNavRawData";
-
         private static readonly Dictionary<int, AsyncOperationHandle> assetHandles  = new Dictionary<int, AsyncOperationHandle>();
-
         private static Transform[] canvasParents;
+
+        private static Transform mapRoot;
+        private static Transform unitRoot;
 
         // Manage Binary File
 #if UNITY_EDITOR
@@ -62,33 +62,23 @@ namespace Script.Manager
             }
         }
 #endif
-        public static async Task<T> ReadBinaryFileAsync<T>(int targetGridKey)
+        public static async Task<T> ReadBinaryFileAsync<T>(string key)
         {
-            string label = $"MapNavi_{targetGridKey}";
-
             // 어드레서블 에셋 로드
-            AsyncOperationHandle<IList<TextAsset>> handler = Addressables.LoadAssetsAsync<TextAsset>(label, null);
-            await handler.Task;
+            AsyncOperationHandle<IList<TextAsset>> handle = Addressables.LoadAssetsAsync<TextAsset>(key, null);
+            await handle.Task;
 
-            if (handler.Status != AsyncOperationStatus.Succeeded || handler.Result.Count == 0)
+            if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result.Count == 0)
             {
-                throw new FileNotFoundException($"라벨에 해당하는 파일이 존재하지 않습니다: {label}");
+                throw new FileNotFoundException($"라벨에 해당하는 파일이 존재하지 않습니다: {key}");
             }
 
             // 파일에서 바이트 배열 읽기 및 역직렬화
-            int instanceID = handler.Result[0].GetInstanceID();
-            byte[] serializedData = handler.Result[0].bytes;
+            byte[] serializedData = handle.Result[0].bytes;
             T data = MessagePackSerializer.Deserialize<T>(serializedData);
 
-            // 에셋 매니저에서 들고 있고.. 규칙이 이상한데?
-            //AssetManager.AddHandler(instanceID, handler);
-
-            // 자료 구했다는 값을 전달하고
-            //MessageManager.Publish(Manager.MessageType.GET_ASSET, new OnGetAsset_MapGridData(Index.AssetCode.DB_MAP_GRID, data));
-
-            //데이터의 instanceID를 넘겨야 탐색이 가능한가?
-
-
+            // T라는 데이터로 저장했으니 원본 TextAsset은 가지고 있을 이유가 없다. -> 곧장 해제
+            Addressables.ReleaseInstance(handle);
             return data;
         }
 
@@ -97,16 +87,19 @@ namespace Script.Manager
         public static void Initialize(Transform mainTransform)
         {
             canvasParents = new Transform[3];
-            Transform uiParent = mainTransform.GetChild(1);
+            Transform uiParent = mainTransform.Find("UI");
             for (int i = 0; i < canvasParents.Length; ++i)
             {
                 canvasParents[i] = uiParent.GetChild(i);
             }
+
+            mapRoot  = mainTransform.Find("Map").transform;
+            unitRoot = mainTransform.Find("Unit").transform;
         }
 
 
         // Instaniate, Load GameObject Assets
-        public static async Task<T> InstantiateGameObjectAsync<T>(AssetCode assetCode, CanvasType canvasType, bool isOn) where T : class
+        public static async Task<T> InstantiateUIObjectAsync<T>(AssetCode assetCode, CanvasType canvasType, bool isOn) where T : class
         {
             try
             {
@@ -124,29 +117,109 @@ namespace Script.Manager
                 return null;
             }
         }
-        public static async Task<GameObject> InstantiateGameObjectAssetAsync(AssetCode assetCode, Transform parent, bool isOn)
+
+        // 하나로 합쳐도 좋지 않으려나?...
+        public static async Task<GameObject> InstantiateIngameObjectAsync<T>(AssetCode assetCode, bool isOn) where T : class
         {
-            AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
-            GameObject targetObj = await handle.Task;
-            targetObj.SetActive(isOn);
+            try
+            {
+                Transform parent = GetIngameObjectParent(assetCode);
+                AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
+                GameObject targetObj = await handle.Task;
 
-            assetHandles.Add(targetObj.GetInstanceID(), handle);
+                targetObj.SetActive(isOn);
+                assetHandles.Add(targetObj.GetInstanceID(), handle);
 
-            MessageManager.Publish(IngameEventType.GET_ASSET, new OnGetAsset_GameObject(assetCode, targetObj));
-            return targetObj;
+                return targetObj;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
-        public static bool TryGetIngameAsset<T>(int instanceID, out T target) where T : MonoBehaviour
+        private static Transform GetIngameObjectParent(AssetCode asset_code)
         {
-             if (false == assetHandles.TryGetValue(instanceID, out AsyncOperationHandle handler))
+            switch (asset_code)
             {
-                target = null;
-                return false;
+                case AssetCode.UnitBase:        return unitRoot;
+                case AssetCode.MapGridPrefab:   return mapRoot;
             }
 
-            target = ((GameObject)handler.Result).GetComponent<T>();
+            return null;
+        }
+
+
+        // 그냥 구조체로 묶는게 더 직관적일 듯?
+        public static async Task<(int, GameObject)> GetMapGridObjectPrefabAsync()
+        {
+            AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>("MapGridPrefab");
+            await handle.Task;
+
+            GameObject prefab = handle.Result;
+            int instanceID = prefab.GetInstanceID();
+
+            assetHandles.Add(instanceID, handle);
+
+            return (instanceID, prefab);
+        }
+        private static async Task<(int, Mesh)[]> GetMapGridMeshesAsync(List<string> keys)
+        {
+            int length = keys.Count;
+
+            AsyncOperationHandle<Mesh>[] meshTasks = new AsyncOperationHandle<Mesh>[length];
+            Task[] tasks  = new Task[length];
+            (int instanceID, Mesh mesh)[] result = new (int, Mesh)[length];
+
+            for (int i = 0; i < length; ++i)
+            {
+                meshTasks[i] = Addressables.LoadAssetAsync<Mesh>(keys[i]);
+                tasks[i]     = meshTasks[i].Task;
+            }
+            await Task.WhenAll(tasks);
+
+            for (int i = 0; i < length; ++i)
+            {
+                result[i] = (meshTasks[i].Result.GetInstanceID(), meshTasks[i].Result);
+                assetHandles.Add(result[i].instanceID, meshTasks[i]);
+            }
+
+            return result;
+        }
+
+        public static async Task<bool> InstaniateMapGrid(MapGridData data)
+        {
+            int length = data.assetFiles.Count;
+            int[] mesh_instance_id = new int[length]; //여기에 mesh.instance_id도 함께 들고 있어야 해제가 가능한 거 아니오? 아니구나.. 그냥 mesh instance만 들고 있으면 되는건구나.
+
+            (int prefab_id, GameObject prefab)      = await GetMapGridObjectPrefabAsync();
+            (int instanceID, Mesh mesh)[] mesh_data = await GetMapGridMeshesAsync(data.assetFiles);
+
+            // 여기서부터 unity main thread 로.
+            GameObject obj;
+            for (int i = 0; i < length; ++i)
+            {
+                obj = GameObject.Instantiate(prefab, mapRoot);
+                obj.transform.position = Vector3.zero;
+                obj.GetComponent<MeshFilter>().mesh = mesh_data[i].mesh;
+
+                mesh_instance_id[i] = mesh_data[i].instanceID;
+            }
+
+            data.SetChildObjectMeshIDs(mesh_instance_id); // 메쉬 에셋을 해제할 때에 사용
+            Dispose(prefab_id);
             return true;
         }
+
+
+        // Load Map Data
+        public static async Task<MapGridData> LoadMapGridData(int gridKey)
+        {
+            string assetKey = $"MapNavi_{gridKey}";
+            return await ReadBinaryFileAsync<MapGridData>(assetKey);
+        }
+
+
 
 
         // Get Cached UI, UI Canvas
@@ -163,15 +236,27 @@ namespace Script.Manager
             }
         }
 
+
         // Dispose
+        // unity main thread여야 한다고.. 흠..
+        // 그러면 아예 Updater() 이런 거에 넣어둬여 하나?
+        // main thread에 태울 방법이 무엇이 있을까?
+        // 코루틴처럼 태울 방법이 있으려나? 아니면 아예 코루틴을 쓰던가.
         public static void Dispose(int instanceID)
         {
             if (true == assetHandles.TryGetValue(instanceID, out var handle))
             {
                 Addressables.ReleaseInstance(handle);
-                //GameObject.Destroy((handler.Result as GameObject));
-                //handler.Release();
                 assetHandles.Remove(instanceID);
+            }
+        }
+
+        // 나중에 다시 타이밍 잡고 써야겠구만...
+        public static void Dispose(int[] instanceIDs)
+        {
+            for (int i = 0; i < instanceIDs.Length; ++i)
+            {
+                Dispose(instanceIDs[i]);
             }
         }
     }

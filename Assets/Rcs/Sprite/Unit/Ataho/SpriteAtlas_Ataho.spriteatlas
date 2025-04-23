@@ -1,0 +1,108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SpriteAtlas_Ataho
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 0
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: db4bae63cf976ab45906a1783afb75bb, type: 3}
+    bindAsDefault: 0
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - 4a512d40ec3e45d4bb2dc05ef0d59351: -5299341983969237341
+    - 1ff3f9a0f0c428e49a1dcd78d8248fd7: 2927780931842212934
+    - 7b21062182333e542b25de680c9aa95c: -5675716643971599528
+    - e6bbf391535623046928999555d64cc3: -7307842283543146795
+    - 7e82c5c1bb2efdd498d612182f87f5e6: -8633372655157745005
+    - 593b2cd37b0906740ae33c6c5112e700: -365044385641360468
+    - 7214a324cfc407a4e9efa1dd855ab671: -1078370065236338852
+    - 3b1f54543b31065489da4e4e9bd577ed: -8688910480350348910
+    - 51457416fc512c24ba739ce4634ebd4d: 3589850620817120259
+    - 511da35600e94bd469b4f640a6ead2d5: 21300000
+    - 99d5f1e6669142a45aae7479609da7bd: 8185563065791875171
+    - 5873d0f6eaf5ee84fbf6be3b76f22bb4: -1912716772566653806
+    - e584435728b411d4ca5af79b392cc4b3: -8806758135501145626
+    - c4f5afb77dfa2e548a84f558e4a1af11: -8557039293228002861
+    - 3d87dc58c8b53014dadb80d21625103c: 1025892167079591331
+    - b8f165b81975aaf49b3690dfa0acb5f8: -4011562595641134091
+    - 4467ecf9264a59c43affaa2ecc30db6a: 63217326183190748
+    - dfe0235a6b867284e83bd6c5a55ab1a1: -7376143277279250243
+    - cbc11b6b61e0b334391da371fc59d3a0: -2084348082026221834
+    - 99c38addae5e0e04aae9d4c62af3765a: 2750178941999587609
+    - 8ee8e3fe22587bd4384c069c1cbd05b8: -8921811215267831592
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: -5299341983969237341, guid: 4a512d40ec3e45d4bb2dc05ef0d59351, type: 3}
+  - {fileID: 2927780931842212934, guid: 1ff3f9a0f0c428e49a1dcd78d8248fd7, type: 3}
+  - {fileID: -5675716643971599528, guid: 7b21062182333e542b25de680c9aa95c, type: 3}
+  - {fileID: -7307842283543146795, guid: e6bbf391535623046928999555d64cc3, type: 3}
+  - {fileID: -8633372655157745005, guid: 7e82c5c1bb2efdd498d612182f87f5e6, type: 3}
+  - {fileID: -365044385641360468, guid: 593b2cd37b0906740ae33c6c5112e700, type: 3}
+  - {fileID: -1078370065236338852, guid: 7214a324cfc407a4e9efa1dd855ab671, type: 3}
+  - {fileID: -8688910480350348910, guid: 3b1f54543b31065489da4e4e9bd577ed, type: 3}
+  - {fileID: 3589850620817120259, guid: 51457416fc512c24ba739ce4634ebd4d, type: 3}
+  - {fileID: 21300000, guid: 511da35600e94bd469b4f640a6ead2d5, type: 3}
+  - {fileID: 8185563065791875171, guid: 99d5f1e6669142a45aae7479609da7bd, type: 3}
+  - {fileID: -1912716772566653806, guid: 5873d0f6eaf5ee84fbf6be3b76f22bb4, type: 3}
+  - {fileID: -8806758135501145626, guid: e584435728b411d4ca5af79b392cc4b3, type: 3}
+  - {fileID: -8557039293228002861, guid: c4f5afb77dfa2e548a84f558e4a1af11, type: 3}
+  - {fileID: 1025892167079591331, guid: 3d87dc58c8b53014dadb80d21625103c, type: 3}
+  - {fileID: -4011562595641134091, guid: b8f165b81975aaf49b3690dfa0acb5f8, type: 3}
+  - {fileID: 63217326183190748, guid: 4467ecf9264a59c43affaa2ecc30db6a, type: 3}
+  - {fileID: -7376143277279250243, guid: dfe0235a6b867284e83bd6c5a55ab1a1, type: 3}
+  - {fileID: -2084348082026221834, guid: cbc11b6b61e0b334391da371fc59d3a0, type: 3}
+  - {fileID: 2750178941999587609, guid: 99c38addae5e0e04aae9d4c62af3765a, type: 3}
+  - {fileID: -8921811215267831592, guid: 8ee8e3fe22587bd4384c069c1cbd05b8, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - sprite_18_0
+  - sprite_21_0
+  - sprite_01_0
+  - sprite_05_0
+  - sprite_08_0
+  - sprite_19_0
+  - sprite_14_0
+  - sprite_03_0
+  - sprite_17_0
+  - sprite_00
+  - sprite_02_0
+  - sprite_04_0
+  - sprite_10_0
+  - sprite_06_0
+  - sprite_13_0
+  - sprite_15_0
+  - sprite_09_0
+  - sprite_20_0
+  - sprite_12_0
+  - sprite_16_0
+  - sprite_07_0
+  m_RenderDataMap: {}
+  m_Tag: SpriteAtlas_Ataho
+  m_IsVariant: 0

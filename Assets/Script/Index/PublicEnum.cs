@@ -44,4 +44,7 @@ public enum IngameEventType
     NEWGAME_INIT_PLAYER,
     NEWGAME_INIT_FIELD,
 
+    // FIELD
+    FIELD_INIT,
+
 }

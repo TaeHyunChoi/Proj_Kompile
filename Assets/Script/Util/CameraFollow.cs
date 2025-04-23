@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
@@ -16,23 +13,23 @@ public class CameraFollow : MonoBehaviour
         mMainCam = transform.GetComponent<Camera>();
         enabled = false;
     }
-    public void SetFollow(Transform target)
-    {
-        mTarget = target;
-        transform.SetPositionAndRotation(OFFSET, ROTATION);
-        enabled = true;
-    }
-    public void SetFOV(float scale)
-    {
-        mMainCam.fieldOfView = 60f * scale;
-    }
-    public void StopFollow()
-    {
-        enabled = false;
-    }
+    //public void SetFollow(Transform target)
+    //{
+    //    mTarget = target;
+    //    transform.SetPositionAndRotation(OFFSET, ROTATION);
+    //    enabled = true;
+    //}
+    //public void SetFOV(float scale)
+    //{
+    //    mMainCam.fieldOfView = 60f * scale;
+    //}
+    //public void StopFollow()
+    //{
+    //    enabled = false;
+    //}
 
-    private void LateUpdate() 
-    {
-        transform.position = mTarget.position + OFFSET;
-    }
+    //private void LateUpdate() 
+    //{
+    //    transform.position = mTarget.position + OFFSET;
+    //}
 }
