@@ -15,59 +15,10 @@ MonoBehaviour:
   m_GroupName: Animation
   m_GUID: a00b46e57dbf6ef49bd181dab2b4a5cd
   m_SerializeEntries:
-  - m_GUID: 03e81f95d33b21e4fb475d9d6e2786f9
+  - m_GUID: d9534d69b73ce8f4d910c36d6a6dca77
     m_Address: AnimCtrl_Ataho
     m_ReadOnly: 0
-    m_SerializedLabels:
-    - anim
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3c8c1d2ca36ac1740b355d0dc9e0e779
-    m_Address: Assets/Rcs/Animation/Ataho/IDLE_FRONT.anim
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - anim
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 557cda7809143414b91319f88197c633
-    m_Address: Assets/Rcs/Animation/Ataho/MOVE_RIGHT.anim
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - anim
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6160dc6f5cc6ad043adc5b467f0ccd43
-    m_Address: Assets/Rcs/Animation/Ataho/IDLE_RIGHT.anim
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - anim
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b68b1ee9c5c142c4ab552344bbe53bf5
-    m_Address: Assets/Rcs/Animation/Ataho/IDLE_BACK.anim
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - anim
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: cb96d958abd0e764081635afbe8bc96d
-    m_Address: Assets/Rcs/Animation/Ataho/IDLE_LEFT.anim
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - anim
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: cc6341428192ab24fbe5ef2b0d1a6b28
-    m_Address: Assets/Rcs/Animation/Ataho/MOVE_LEFT.anim
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - anim
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: cf002a5d5cb8301418b9aa34b0593aac
-    m_Address: Assets/Rcs/Animation/Ataho/MOVE_FRONT.anim
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - anim
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: fca52506a485ec84a967a34aca4c1cd1
-    m_Address: Assets/Rcs/Animation/Ataho/MOVE_BACK.anim
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - anim
+    m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}

@@ -25,7 +25,23 @@ namespace Script.Manager
         private static Transform mapRoot;
         private static Transform unitRoot;
 
-        // Manage Binary File
+
+        // Initialize
+        public static void Initialize(Transform mainTransform)
+        {
+            canvasParents = new Transform[3];
+            Transform uiParent = mainTransform.Find("UI");
+            for (int i = 0; i < canvasParents.Length; ++i)
+            {
+                canvasParents[i] = uiParent.GetChild(i);
+            }
+
+            mapRoot = mainTransform.Find("Map").transform;
+            unitRoot = mainTransform.Find("Unit").transform;
+        }
+
+
+        // Table
 #if UNITY_EDITOR
         public static void WriteBinaryFile<T>(T data, string dataPath, string fileName, string addressableGroup = null)
         {
@@ -83,22 +99,7 @@ namespace Script.Manager
         }
 
 
-        //  Initialize/Cache UI, UI Canvas
-        public static void Initialize(Transform mainTransform)
-        {
-            canvasParents = new Transform[3];
-            Transform uiParent = mainTransform.Find("UI");
-            for (int i = 0; i < canvasParents.Length; ++i)
-            {
-                canvasParents[i] = uiParent.GetChild(i);
-            }
-
-            mapRoot  = mainTransform.Find("Map").transform;
-            unitRoot = mainTransform.Find("Unit").transform;
-        }
-
-
-        // Instaniate, Load GameObject Assets
+        // UI
         public static async Task<T> InstantiateUIObjectAsync<T>(AssetCode assetCode, CanvasType canvasType, bool isOn) where T : class
         {
             try
@@ -117,8 +118,21 @@ namespace Script.Manager
                 return null;
             }
         }
+        public static Transform GetCanvas(CanvasType type)
+        {
+            switch (type)
+            {
+                case CanvasType.CAMERA:
+                case CanvasType.OVERLAY:
+                case CanvasType.OVERLAY_LOADING:
+                    return canvasParents[(int)type];
+                default:
+                    return null;
+            }
+        }
 
-        // 하나로 합쳐도 좋지 않으려나?...
+
+        // Ingame Object
         public static async Task<GameObject> InstantiateIngameObjectAsync<T>(AssetCode assetCode, bool isOn) where T : class
         {
             try
@@ -137,7 +151,6 @@ namespace Script.Manager
                 return null;
             }
         }
-
         private static Transform GetIngameObjectParent(AssetCode asset_code)
         {
             switch (asset_code)
@@ -150,7 +163,19 @@ namespace Script.Manager
         }
 
 
-        // 그냥 구조체로 묶는게 더 직관적일 듯?
+        // Asset
+        public static async Task<(int, T)> LoadAsset<T>(string key) where T : class
+        {
+            var handle = Addressables.LoadAssetAsync<T>(key);
+            T value = await handle.Task;
+
+            var hash_code = value.GetHashCode();
+            assetHandles.Add(hash_code, handle);
+
+            return (hash_code, value);
+        }
+
+        // Map
         public static async Task<(int, GameObject)> GetMapGridObjectPrefabAsync()
         {
             AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>("MapGridPrefab");
@@ -186,7 +211,6 @@ namespace Script.Manager
 
             return result;
         }
-
         public static async Task<bool> InstaniateMapGrid(MapGridData data)
         {
             int length = data.assetFiles.Count;
@@ -210,30 +234,10 @@ namespace Script.Manager
             Dispose(prefab_id);
             return true;
         }
-
-
-        // Load Map Data
         public static async Task<MapGridData> LoadMapGridData(int gridKey)
         {
             string assetKey = $"MapNavi_{gridKey}";
             return await ReadBinaryFileAsync<MapGridData>(assetKey);
-        }
-
-
-
-
-        // Get Cached UI, UI Canvas
-        public static Transform GetCanvas(CanvasType type)
-        {
-            switch (type)
-            {
-                case CanvasType.CAMERA:
-                case CanvasType.OVERLAY:
-                case CanvasType.OVERLAY_LOADING:
-                    return canvasParents[(int)type];
-                default: 
-                    return null;
-            }
         }
 
 
@@ -250,7 +254,6 @@ namespace Script.Manager
                 assetHandles.Remove(instanceID);
             }
         }
-
         // 나중에 다시 타이밍 잡고 써야겠구만...
         public static void Dispose(int[] instanceIDs)
         {

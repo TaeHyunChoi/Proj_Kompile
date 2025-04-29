@@ -45,8 +45,16 @@ namespace Script.Manager
             IngameFieldPlayer player_character = obj.AddComponent<IngameFieldPlayer>();
             Debug.Assert(null != player_character, "player character null");
 
+            bool isInit = await player_character.Init();
+            Debug.Assert(true == isInit, "player character null");
+
             // 플레이어 캐릭터에게 무엇을 전달해야 할까요?
             player_character.transform.position = new Vector3(1f, 0f, 1f);
+
+            // 애니메이션을 어떻게 쥐어주면 좋을까?
+            // 유닛마다 여러 개의 애니메이션을 들고 있고..
+            // 어드레서블 에셋으로 관리해서 메모리 관리를 하고 싶은걸까?
+            // 그냥 animation controller 쥐어주는 게 좋을 것 같은데?
 
             // 플레이어 캐릭터 생성하기..
             // player data position도 가져와야 하고

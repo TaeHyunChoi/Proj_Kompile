@@ -14,13 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: Sprite
   m_GUID: 60d3d625f0eb5864aa2ee234a4f5ef5d
-  m_SerializeEntries:
-  - m_GUID: 20bd59b41190f0041b37d3f7fbeae365
-    m_Address: SpriteAtlas_Ataho
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - sprite
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:
