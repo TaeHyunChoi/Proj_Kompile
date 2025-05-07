@@ -10,7 +10,7 @@ public class IngameFieldPlayer : _IngameUnitBase
     public async Task<bool> Init()
     {
         animator = transform.GetComponent<Animator>();
-        anime_data = await AssetManager.LoadAsset<RuntimeAnimatorController>("AnimCtrl_Ataho");
+        anime_data = await AssetManager.LoadAssetAsync<RuntimeAnimatorController>("AnimCtrl_Ataho");
 
         animator.runtimeAnimatorController = anime_data.ctrl;
         //SetAnime();

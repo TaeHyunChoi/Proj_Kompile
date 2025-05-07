@@ -14,14 +14,15 @@ namespace Script.Manager
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
-    using static UnityEngine.Rendering.VirtualTexturing.Debugging;
+    using System;
 #endif
 
     public static partial class AssetManager
     {
+        // TODO: 얘 날려야 함. MapGrid쪽 정리 요망
         private static readonly Dictionary<int, AsyncOperationHandle> assetHandles  = new Dictionary<int, AsyncOperationHandle>();
-        private static Transform[] canvasParents;
 
+        private static Transform[] canvasParents;
         private static Transform mapRoot;
         private static Transform unitRoot;
 
@@ -94,77 +95,43 @@ namespace Script.Manager
             T data = MessagePackSerializer.Deserialize<T>(serializedData);
 
             // T라는 데이터로 저장했으니 원본 TextAsset은 가지고 있을 이유가 없다. -> 곧장 해제
-            Addressables.ReleaseInstance(handle);
+            handle.ReleaseHandleOnCompletion();
             return data;
         }
 
 
-        // UI
-        public static async Task<T> InstantiateUIObjectAsync<T>(AssetCode assetCode, CanvasType canvasType, bool isOn) where T : class
+        // Asset : GameObject가 예외? 케이스라서 분리하는게 나을 것 같기도 하고..
+        public static async Task<IngameAsset_t> InstantiateGameObjectAsync(AssetCode assetCode, bool isOn)
         {
-            try
-            {
-                Transform parent = GetCanvas(canvasType);
-                AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
-                GameObject targetObj = await handle.Task;
+            Transform parent = GetIngameObjectParent(assetCode);
+            AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
+            GameObject targetObj = await handle.Task;
+            targetObj.SetActive(isOn);
 
-                targetObj.SetActive(isOn);
-                assetHandles.Add(targetObj.GetInstanceID(), handle);
+            return new IngameAsset_t(assetCode, handle);
 
-                return targetObj.GetComponent<T>();
-            }
-            catch
+
+            // inner func: switch 좀 짜치긴 하는데 흠..
+            static Transform GetIngameObjectParent(AssetCode assetCode)
             {
+                switch (assetCode)
+                {
+                    case AssetCode.UnitBase:
+                        return unitRoot;
+
+                    case AssetCode.MapGridPrefab:
+                        return mapRoot;
+
+                    case AssetCode.OP_TitleObject:
+                    case AssetCode.UI_LoadingCurtain:
+                    case AssetCode.UI_TitleMenuObject:
+                        return canvasParents[(int)CanvasType.OVERLAY];
+                }
+
                 return null;
             }
         }
-        public static Transform GetCanvas(CanvasType type)
-        {
-            switch (type)
-            {
-                case CanvasType.CAMERA:
-                case CanvasType.OVERLAY:
-                case CanvasType.OVERLAY_LOADING:
-                    return canvasParents[(int)type];
-                default:
-                    return null;
-            }
-        }
-
-
-        // Ingame Object
-        public static async Task<GameObject> InstantiateIngameObjectAsync<T>(AssetCode assetCode, bool isOn) where T : class
-        {
-            try
-            {
-                Transform parent = GetIngameObjectParent(assetCode);
-                AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
-                GameObject targetObj = await handle.Task;
-
-                targetObj.SetActive(isOn);
-                assetHandles.Add(targetObj.GetInstanceID(), handle);
-
-                return targetObj;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-        private static Transform GetIngameObjectParent(AssetCode asset_code)
-        {
-            switch (asset_code)
-            {
-                case AssetCode.UnitBase:        return unitRoot;
-                case AssetCode.MapGridPrefab:   return mapRoot;
-            }
-
-            return null;
-        }
-
-
-        // Asset
-        public static async Task<(int, T)> LoadAsset<T>(string key) where T : class
+        public static async Task<(int, T)> LoadAssetAsync<T>(string key) where T : class
         {
             var handle = Addressables.LoadAssetAsync<T>(key);
             T value = await handle.Task;
@@ -176,7 +143,7 @@ namespace Script.Manager
         }
 
         // Map
-        public static async Task<(int, GameObject)> GetMapGridObjectPrefabAsync()
+        private static async Task<(int, GameObject)> GetMapGridObjectPrefabAsync()
         {
             AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>("MapGridPrefab");
             await handle.Task;
@@ -242,24 +209,12 @@ namespace Script.Manager
 
 
         // Dispose
-        // unity main thread여야 한다고.. 흠..
-        // 그러면 아예 Updater() 이런 거에 넣어둬여 하나?
-        // main thread에 태울 방법이 무엇이 있을까?
-        // 코루틴처럼 태울 방법이 있으려나? 아니면 아예 코루틴을 쓰던가.
         public static void Dispose(int instanceID)
         {
             if (true == assetHandles.TryGetValue(instanceID, out var handle))
             {
                 Addressables.ReleaseInstance(handle);
                 assetHandles.Remove(instanceID);
-            }
-        }
-        // 나중에 다시 타이밍 잡고 써야겠구만...
-        public static void Dispose(int[] instanceIDs)
-        {
-            for (int i = 0; i < instanceIDs.Length; ++i)
-            {
-                Dispose(instanceIDs[i]);
             }
         }
     }

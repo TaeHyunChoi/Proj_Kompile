@@ -40,11 +40,16 @@ namespace Script.Manager
             }
         }
 
-        public static void Dispose(IMessageReceiver receiver)
+        public static void Dispose(IMessageReceiver receiverOrNull)
         {
+            if (null == receiverOrNull)
+            {
+                return;
+            }
+
             for (int i = 0; i < ingameReceivers.Count; ++i)
             {
-                if (receiver == ingameReceivers[i])
+                if (receiverOrNull == ingameReceivers[i])
                 {
                     UnityEngine.Debug.Log($"{ingameReceivers[i].GetType().Name}.Dispose()");
                     ingameReceivers[i] = null;

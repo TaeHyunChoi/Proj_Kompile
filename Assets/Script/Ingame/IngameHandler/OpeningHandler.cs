@@ -5,17 +5,15 @@ namespace Script.Content
     using Script.Interface;
     using Script.IngameMessage;
     using static UITitleMenuObject.MenuType;
-    using UnityEngine;
 
     public partial class OpeningHandler : _IngameHandlerBase, IMessageReceiver
     {
-        private UITitleObject         titleObject;
-        private UITitleMenuObject   uiTitleMenuObject;
-        private InputOpening        inputTarget;
-
+        private UITitleObject     titleObject;
+        private UITitleMenuObject uiTitleMenuObject;
+        private InputOpening      inputTarget;
 
         // Constructor
-        public OpeningHandler()
+        public OpeningHandler() : base()
         {
             handlerType = IngameHandlerType.OPENING;
             inputTarget = InputOpening.NONE;
@@ -29,32 +27,29 @@ namespace Script.Content
         // Execute Event
         public override async void ExecuteIngameEventAsync(IngameEventType messageType)
         {
-            try
-            {
-                switch (messageType)
-                {
-                    case IngameEventType.OPENING_INSTANTIATE_TITLE:
-                        titleObject = await AssetManager.InstantiateUIObjectAsync<UITitleObject>(AssetCode.OP_TitleObject, CanvasType.OVERLAY, true);
-                        inputTarget = InputOpening.OPENING_OBJECT;
-                        break;
-                    case IngameEventType.OPENING_LOAD_TITLE_MENU:
-                        uiTitleMenuObject = await AssetManager.InstantiateUIObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject, CanvasType.OVERLAY, true);
-                        inputTarget = InputOpening.UI_TITLE_MENU_OBJECT;
-                        break;
-                    case IngameEventType.OPENING_SELECT_NEW_GAME:
-                        uiTitleMenuObject.WaitUpdate();
-                        inputTarget = InputOpening.NONE;
+            IngameAsset_t asset;
 
-                        IngameManager.AddIngameHander(IngameHandlerType.NEW_GAME);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            catch
+            switch (messageType)
             {
-                inputTarget = InputOpening.NONE;
-                Debug.Assert(false);
+                case IngameEventType.OPENING_INSTANTIATE_TITLE:
+                    asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.OP_TitleObject, true);
+                    assets.Add(asset);
+                    titleObject = asset.GetComponent<UITitleObject>();
+                    inputTarget = InputOpening.OPENING_OBJECT;
+                    break;
+                case IngameEventType.OPENING_LOAD_TITLE_MENU:
+                    asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.UI_TitleMenuObject, true);
+                    assets.Add(asset);
+                    uiTitleMenuObject = asset.GetComponent<UITitleMenuObject>();
+                    inputTarget = InputOpening.UI_TITLE_MENU_OBJECT;
+                    break;
+                case IngameEventType.OPENING_SELECT_NEW_GAME:
+                    uiTitleMenuObject.WaitUpdate();
+                    inputTarget = InputOpening.NONE;
+                    IngameManager.AddIngameHander(IngameHandlerType.NEW_GAME);
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -84,10 +79,10 @@ namespace Script.Content
 
                     switch (menuIndex)
                     {
-                        case NEW_GAME: next_event_type = IngameEventType.OPENING_SELECT_NEW_GAME; break;
+                        case NEW_GAME:  next_event_type = IngameEventType.OPENING_SELECT_NEW_GAME;  break;
                         case LOAD_GAME: next_event_type = IngameEventType.OPENING_SELECT_LOAD_GAME; break;
-                        case OPTION: next_event_type = IngameEventType.OPENING_SELECT_OPTION; break;
-                        case EXIT: next_event_type = IngameEventType.OPENING_SELECT_EXIT; break;
+                        case OPTION:    next_event_type = IngameEventType.OPENING_SELECT_OPTION;    break;
+                        case EXIT:      next_event_type = IngameEventType.OPENING_SELECT_EXIT;      break;
                         default: return;
                     }
 
@@ -98,19 +93,8 @@ namespace Script.Content
             }
         }
 
-
         // Dispose
-        public override void Dispose()
-        {
-            AssetManager.Dispose(titleObject.gameObject.GetInstanceID());
-            titleObject = null;
-
-            AssetManager.Dispose(uiTitleMenuObject.gameObject.GetInstanceID());
-            uiTitleMenuObject = null;
-
-            MessageManager.Dispose(this);
-        }
-
+        // base class: _IngameHandlerBase.Dispose();
 
         // Data Type
         private enum InputOpening

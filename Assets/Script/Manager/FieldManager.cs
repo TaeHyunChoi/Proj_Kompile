@@ -1,11 +1,13 @@
 namespace Script.Manager
 {
+    using Script.Content;
     using Script.Data;
+    using Script.Index;
     using System;
     using System.Threading.Tasks;
     using UnityEngine;
 
-    public class FieldManager
+    public class FieldManager : _IngameHandlerBase
     {
         private ConcurrentDictionary<int, MapGridData> mapGridData;
 
@@ -16,10 +18,15 @@ namespace Script.Manager
 
 
 
-        public FieldManager()
+        public FieldManager() : base()
         {
             mapGridData = new ConcurrentDictionary<int, MapGridData>();
             players     = new IngameFieldPlayer[3];
+        }
+
+        public override void ExecuteIngameEventAsync(IngameEventType messageType)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<bool> Init(PlayData playerData)
@@ -41,12 +48,12 @@ namespace Script.Manager
             }
 
             // instantiate player character :: parent를 지정해줘야하는구나?
-            GameObject obj = await AssetManager.InstantiateIngameObjectAsync<GameObject>(Script.Index.AssetCode.UnitBase, true);
-            IngameFieldPlayer player_character = obj.AddComponent<IngameFieldPlayer>();
-            Debug.Assert(null != player_character, "player character null");
+            IngameAsset_t asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.UnitBase, true);
+            assets.Add(asset);
 
+
+            IngameFieldPlayer player_character = asset.AddComponent<IngameFieldPlayer>();
             bool isInit = await player_character.Init();
-            Debug.Assert(true == isInit, "player character null");
 
             // 플레이어 캐릭터에게 무엇을 전달해야 할까요?
             player_character.transform.position = new Vector3(1f, 0f, 1f);
@@ -66,6 +73,11 @@ namespace Script.Manager
             IngameManager.InitFollowingCamera(player_character);
 
             return true;
+        }
+
+        public override void Receive_Input(IDxInput.InputFlag inputFlag)
+        {
+            throw new NotImplementedException();
         }
     }
 }

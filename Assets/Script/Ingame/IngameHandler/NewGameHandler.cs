@@ -5,15 +5,15 @@ namespace Script.Content
     using Script.IngameMessage;
     using Script.Manager;
     using System.Threading.Tasks;
+    using UnityEngine;
     using System.Collections.Generic;
-    using System.Diagnostics;
 
     public class NewGameHandler : _IngameHandlerBase, IMessageReceiver
     {
         private UILoadingCurtainObject loadingCurtainObject;
 
         // Constructor
-        public NewGameHandler()
+        public NewGameHandler() : base()
         {
             handlerType = IngameHandlerType.NEW_GAME;
             MessageManager.AddReceiver(this, false);
@@ -27,7 +27,10 @@ namespace Script.Content
             switch (messageType)
             {
                 case IngameEventType.LOADING_CURTAIN_ON:
-                    loadingCurtainObject = await AssetManager.InstantiateUIObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain, CanvasType.OVERLAY_LOADING, true);
+                    IngameAsset_t asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.UI_LoadingCurtain, true);
+                    assets.Add(asset);
+
+                    loadingCurtainObject = asset.GetComponent<UILoadingCurtainObject>();
                     loadingCurtainObject.On(true);
                     goto case IngameEventType.NEWGAME_INIT_PLAYER;
 
@@ -77,11 +80,7 @@ namespace Script.Content
             // nothing;
         }
 
-
         // Dispose
-        public override void Dispose()
-        {
-            MessageManager.Dispose(this);
-        }
+        // base class: _IngameHandlerBase.Dispose();
     }
 }
