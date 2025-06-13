@@ -4,7 +4,7 @@ namespace Script.Manager
     using System.Collections.Generic;
 
     /// <summary>
-    /// 비동기로 처리하기엔 사용하는 데이터가 (너무) 작아 동기적으로 처리
+    /// 비동기로 처리하기엔 사용하는 데이터가 (너무) 작아 동기적으로 처리 <br/>
     /// UniTask와 다르게 한 번 받는다고 해제하지 않음 => 해제 시점을 직접 조작
     /// </summary>
     public static class MessageManager
@@ -36,7 +36,7 @@ namespace Script.Manager
                     continue;
                 }
 
-                ingameReceivers[i].Receive_IngameEvent(type, data);
+                ingameReceivers[i].ReceiveIngameMessage(type, data);
             }
         }
 
@@ -51,7 +51,9 @@ namespace Script.Manager
             {
                 if (receiverOrNull == ingameReceivers[i])
                 {
+#if UNITY_EDITOR
                     UnityEngine.Debug.Log($"{ingameReceivers[i].GetType().Name}.Dispose()");
+#endif
                     ingameReceivers[i] = null;
                 }
             }

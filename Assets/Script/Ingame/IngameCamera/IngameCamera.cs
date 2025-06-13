@@ -1,9 +1,8 @@
 using UnityEngine;
 using Script.Interface;
 using Script.Index;
-using Script.Manager;
 
-public class IngameCamera : MonoBehaviour, IIngameUpdater
+public class IngameCamera : IngameMonoBehaviourBase, IIngameLateUpdater
 {
     private readonly Vector3 OFFSET = new Vector3(0f, 3f, -2f);
     private readonly Quaternion ROTATION = Quaternion.Euler(50f, 0f, 0f);
@@ -17,18 +16,17 @@ public class IngameCamera : MonoBehaviour, IIngameUpdater
     }
     public void InitFollowingCamera(_IngameUnitBase player_character)
     {
+        enabled = true;
+
         target = player_character.transform;
 
         transform.position = player_character.Position + OFFSET;
         transform.SetPositionAndRotation(OFFSET, ROTATION);
 
         mainCam.fieldOfView = 60f;
-
-        // 여기에 LateUpdater 추가하면 되는 것이지요?
-        IngameManager.AddUpdater(UpdaterType.LATE_UPDATE, this);
     }
 
-    public IngameUpdateState UpdateState()
+    public IngameUpdateState LateUpdateState()
     {
         if (null == target)
         {

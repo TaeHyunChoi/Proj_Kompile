@@ -5,7 +5,7 @@ using Script.IngameMessage;
 using UnityEngine;
 using UnityEngine.UI;
 
-public partial class UITitleObject : MonoBehaviour, IIngameUpdater
+public partial class UITitleObject : IngameMonoBehaviourBase, IIngameUpdater
 {
     private enum ImageType
     {
@@ -69,8 +69,6 @@ public partial class UITitleObject : MonoBehaviour, IIngameUpdater
         images[(int)ImageType.TITLE_LOGO_LOWER].color   = initColor;
         images[(int)ImageType.TITLE_LOGO_UPPER].color   = initColor;
         images[(int)ImageType.TITLE_FLASH].color        = initColor;
-
-        IngameManager.AddUpdater(UpdaterType.UPDATE, this);
     }
 
     public IngameUpdateState UpdateState()
@@ -80,10 +78,6 @@ public partial class UITitleObject : MonoBehaviour, IIngameUpdater
         switch (state)
         {
             case State.NONE:
-                state = State.LOGO_INIT;
-
-                goto case State.LOGO_INIT;
-
             case State.LOGO_INIT:
                 transform.GetChild(0).gameObject.SetActive(true);
                 alpha = 0f;
@@ -224,12 +218,12 @@ public partial class UITitleObject : MonoBehaviour, IIngameUpdater
         return 0;
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
-        // IIngameUpdater 는 IngameManager에서 관리
-        IngameManager.RemoveInputUpdater(this);
+        base.OnDisable();
+
         images = null;
-        rects = null;
+        rects  = null;
         titleInitPositions = null;
     }
 }

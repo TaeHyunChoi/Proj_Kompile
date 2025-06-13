@@ -8,7 +8,7 @@ using static Script.Index.IDxInput;
 using Script.Interface;
 
 
-public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
+public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater
 {
     private enum State
     { 
@@ -58,8 +58,6 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
         lastInputTime = 0;
 
         state = State.NONE;
-
-        IngameManager.AddUpdater(UpdaterType.UPDATE, this);
     }
 
     public IngameUpdateState UpdateState()
@@ -134,10 +132,10 @@ public class UITitleMenuObject : MonoBehaviour, IIngameUpdater
     {
         state = State.UPDATE;
     }
-
-    private void OnDisable()
+ 
+    protected override void OnDisable()
     {
-        IngameManager.RemoveInputUpdater(this);
+        base.OnDisable();
         anchoredPositions = null;
     }
 }

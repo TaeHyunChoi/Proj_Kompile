@@ -6,4 +6,12 @@ namespace Script.Interface
     {
         public IngameUpdateState UpdateState();
     }
+    public interface IIngameFixedUpdater
+    {
+        public IngameUpdateState FixedUpdateState();
+    }
+    public interface IIngameLateUpdater
+    {
+        public IngameUpdateState LateUpdateState();
+    }
 }

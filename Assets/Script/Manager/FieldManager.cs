@@ -24,7 +24,7 @@ namespace Script.Manager
             players     = new IngameFieldPlayer[3];
         }
 
-        public override void ExecuteIngameEventAsync(IngameEventType messageType)
+        protected override void ExecuteIngameEventAsync(IngameEventType messageType)
         {
             throw new NotImplementedException();
         }
@@ -75,7 +75,7 @@ namespace Script.Manager
             return true;
         }
 
-        public override void Receive_Input(IDxInput.InputFlag inputFlag)
+        public override void ReceiveIngameInput(IDxInput.InputFlag inputFlag)
         {
             throw new NotImplementedException();
         }

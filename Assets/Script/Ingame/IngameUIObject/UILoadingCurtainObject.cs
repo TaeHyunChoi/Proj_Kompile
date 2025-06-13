@@ -5,7 +5,7 @@ using Script.IngameMessage;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UILoadingCurtainObject : MonoBehaviour, IIngameUpdater
+public class UILoadingCurtainObject : IngameMonoBehaviourBase, IIngameUpdater
 {
     private Image image;
 
@@ -43,7 +43,6 @@ public class UILoadingCurtainObject : MonoBehaviour, IIngameUpdater
             alpha = 1f;
             delta = -1.5f;
         }
-        IngameManager.AddUpdater(UpdaterType.UPDATE, this);
     }
     public IngameUpdateState UpdateState()
     {

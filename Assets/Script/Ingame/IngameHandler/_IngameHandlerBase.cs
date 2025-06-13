@@ -13,8 +13,8 @@ namespace Script.Content
 
         public IngameHandlerType HandlerType => handlerType;
 
-        public abstract void ExecuteIngameEventAsync(IngameEventType messageType);
-        public abstract void Receive_Input(InputFlag inputFlag);
+        protected abstract void ExecuteIngameEventAsync(IngameEventType messageType);
+        public abstract void ReceiveIngameInput(InputFlag inputFlag);
 
         /// <summary> 신경 안쓰고 싶어서 virtual로 일괄 Dispose <br/>
         /// 필요하면 override 하여 기능 추가 </summary>
