@@ -10,21 +10,19 @@ namespace Script.Manager
 
     public class IngameManager : MonoBehaviour
     {
-        private const int RESET_UPDATER_LIST_COUNT = 10;
+        private static IngameManager    instance;
 
         private static PlayData         playerData;
 
-        private static IngameManager    instance;
         private static InputManager     inputMgr;
         private static FieldManager     fieldMgr;   // 사실 얘도 IngameHandler로 빠져야 함.
         private static IngameCamera     ingameCam;
 
-        private static List<_IngameHandlerBase> ingameHandler;
-        private static int targetHandlerIndex;
-
         private static List<IIngameUpdater>      updateList;
         private static List<IIngameFixedUpdater> fixedUpdateList;
         private static List<IIngameLateUpdater>  lateUpdateList;
+
+        private static List<_IngameHandlerBase> ingameHandler;
 
         public static void AddUpdater(IIngameUpdater updater)
         {
@@ -89,7 +87,6 @@ namespace Script.Manager
             }
 
             ingameHandler.Add(handler);
-            targetHandlerIndex += 1;
         }
         public static void RemoveIngameHandler(IngameHandlerType type)
         {
@@ -97,7 +94,6 @@ namespace Script.Manager
             {
                 if (type == ingameHandler[i].HandlerType)
                 {
-                    targetHandlerIndex -= 1;
                     ingameHandler[i].Dispose();
                     ingameHandler.RemoveAt(i);
                     return;
@@ -114,6 +110,7 @@ namespace Script.Manager
 
         private void Awake()
         {
+            // init instance
             if (instance != null)
             {
                 Destroy(gameObject);
@@ -122,20 +119,21 @@ namespace Script.Manager
             instance = this;
             DontDestroyOnLoad(gameObject);
 
+            // init data table
+            AssetManager.Initialize(this.transform);
+
+            // init ingame updaters
             updateList      = new List<IIngameUpdater>();
             fixedUpdateList = new List<IIngameFixedUpdater>();
             lateUpdateList  = new List<IIngameLateUpdater>();
 
-
-            AssetManager.Initialize(this.transform);
-
-            inputMgr = new InputManager();
-            fieldMgr = new FieldManager();
-
+            // init ingame handlers
             ingameHandler = new List<_IngameHandlerBase>();
-            targetHandlerIndex = -1;
-
+            
+            // init ingame managers
+            inputMgr = new InputManager();
             ingameCam = transform.GetComponentInChildren<IngameCamera>(true);
+            //fieldMgr = new FieldManager();
         }
         private void Start()
         {
@@ -144,13 +142,6 @@ namespace Script.Manager
         
         private void Update()
         {
-            // update: input
-            if (IngameUpdateState.FAILURE == inputMgr.UpdateState())
-            {
-                //Error
-                return;
-            }
-
             for (int i = 0; i < updateList.Count; ++i)
             {
                 switch (updateList[i].UpdateState())
@@ -208,17 +199,6 @@ namespace Script.Manager
                         break;
                 }
             }
-        }
-
-        // Queue처럼 사용하려고 했나?...
-        public static void GetInput(IDxInput.InputFlag inputFlag)
-        {
-            if (targetHandlerIndex < 0)
-            {
-                return;
-            }
-
-            ingameHandler[targetHandlerIndex].ReceiveIngameInput(inputFlag);
         }
 
         private void OnEnable()

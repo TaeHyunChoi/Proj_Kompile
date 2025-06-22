@@ -87,7 +87,7 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater
                 //작동 일시중지
                 break;
             case State.CLOSE:
-                MessageManager.Publish(IngameEventType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.UI_TitleMenuObject));
+                MessageManager.Publish(new OnEndProcess(AssetCode.UI_TitleMenuObject));
                 return IngameUpdateState.SUCCESS;
         }
         return IngameUpdateState.RUNNING;
@@ -97,7 +97,7 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater
     {
         if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
         {
-            MessageManager.Publish(IngameEventType.SELECT_ITEM, new OnSelect_UITitleMenu(index));
+            MessageManager.Publish(new OnSelect_UITitleMenu(index));
             return index;
         }
 

@@ -4,8 +4,7 @@ namespace Script.Content
     using Script.Interface;
     using Script.Manager;
     using System.Collections.Generic;
-    using static Script.Index.IDxInput;
-
+    
     public abstract class _IngameHandlerBase
     {
         protected IngameHandlerType handlerType;
@@ -14,7 +13,6 @@ namespace Script.Content
         public IngameHandlerType HandlerType => handlerType;
 
         protected abstract void ExecuteIngameEventAsync(IngameEventType messageType);
-        public abstract void ReceiveIngameInput(InputFlag inputFlag);
 
         /// <summary> 신경 안쓰고 싶어서 virtual로 일괄 Dispose <br/>
         /// 필요하면 override 하여 기능 추가 </summary>
@@ -34,6 +32,18 @@ namespace Script.Content
         public _IngameHandlerBase()
         {
             assets = new List<IngameAsset_t>();
+
+            if (this is IMessageReceiver receiver)
+            {
+                MessageManager.AddReceiver(receiver);
+            }
         }
+        //~_IngameHandlerBase()
+        //{
+        //    if (this is IMessageReceiver receiver)
+        //    {
+        //        MessageManager.Dispose(receiver);
+        //    }
+        //}
     }
 }

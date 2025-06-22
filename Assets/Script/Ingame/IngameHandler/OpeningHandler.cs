@@ -12,14 +12,10 @@ namespace Script.Content
         private UITitleMenuObject uiTitleMenuObject;
         private InputOpening      inputTarget;
 
-
-        // Constructor
         public OpeningHandler() : base()
         {
             handlerType = IngameHandlerType.OPENING;
             inputTarget = InputOpening.NONE;
-
-            MessageManager.AddReceiver(this, hasInput: true);
 
             ExecuteIngameEventAsync(IngameEventType.OPENING_INSTANTIATE_TITLE);
         }
@@ -53,37 +49,38 @@ namespace Script.Content
                     break;
             }
         }
-        public override void ReceiveIngameInput(IDxInput.InputFlag inputFlag)
-        {
-            switch (inputTarget)
-            {
-                case InputOpening.OPENING_OBJECT:
-                    titleObject.Input(inputFlag);
-                    break;
-                case InputOpening.UI_TITLE_MENU_OBJECT:
-                    var menuIndex = (UITitleMenuObject.MenuType)uiTitleMenuObject.Input(inputFlag);
-                    IngameEventType next_event_type;
-
-                    switch (menuIndex)
-                    {
-                        case NEW_GAME: next_event_type = IngameEventType.OPENING_SELECT_NEW_GAME; break;
-                        case LOAD_GAME: next_event_type = IngameEventType.OPENING_SELECT_LOAD_GAME; break;
-                        case OPTION: next_event_type = IngameEventType.OPENING_SELECT_OPTION; break;
-                        case EXIT: next_event_type = IngameEventType.OPENING_SELECT_EXIT; break;
-                        default: return;
-                    }
-
-                    ExecuteIngameEventAsync(next_event_type);
-                    break;
-                default:
-                    break;
-            }
-        }
-
 
         // Recevie Ingame Message
-        public bool ReceiveIngameMessage<T>(IngameEventType messageType, T data) where T : struct
+        public bool ReceiveIngameMessage<T>(T data) where T : struct
         {
+            if (data is OnInput onInput)
+            {
+                var inputFlag = onInput.InputFlagValue;
+
+                switch (inputTarget)
+                {
+                    case InputOpening.OPENING_OBJECT:
+                        titleObject.Input(inputFlag);
+                        break;
+                    case InputOpening.UI_TITLE_MENU_OBJECT:
+                        var menuIndex = (UITitleMenuObject.MenuType)uiTitleMenuObject.Input(inputFlag);
+                        IngameEventType next_event_type;
+
+                        switch (menuIndex)
+                        {
+                            case NEW_GAME:  next_event_type = IngameEventType.OPENING_SELECT_NEW_GAME;  break;
+                            case LOAD_GAME: next_event_type = IngameEventType.OPENING_SELECT_LOAD_GAME; break;
+                            case OPTION:    next_event_type = IngameEventType.OPENING_SELECT_OPTION;    break;
+                            case EXIT:      next_event_type = IngameEventType.OPENING_SELECT_EXIT;      break;
+                            default: 
+                                return false;
+                        }
+                        ExecuteIngameEventAsync(next_event_type);
+                        break;
+                    default:
+                        break;
+                }
+            }
             if (data is OnEndProcess onEndProcess
                 && AssetCode.OP_TitleObject == onEndProcess.AssetCode)
             {
@@ -94,12 +91,12 @@ namespace Script.Content
             return false;
         }
 
-
         // Dispose
         // base class: _IngameHandlerBase.Dispose();
 
 
         // Data Type
+
         private enum InputOpening
         {
             NONE = 0,

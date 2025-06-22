@@ -1,9 +1,9 @@
-using Script.Data;
-using Script.Index;
-using UnityEngine;
-
 namespace Script.IngameMessage
 {
+    using UnityEngine;
+    using Script.Data;
+    using Script.Index;
+
     public readonly struct OnEndProcess
     {
         public readonly AssetCode AssetCode;
@@ -53,6 +53,15 @@ namespace Script.IngameMessage
         public OnEndLoadingCurtain(bool on)
         {
             isOn = on;
+        }
+    }
+
+    public readonly struct OnInput
+    {
+        public readonly IDxInput.InputFlag InputFlagValue;
+        public OnInput(IDxInput.InputFlag flag)
+        {
+            InputFlagValue = flag;
         }
     }
 }

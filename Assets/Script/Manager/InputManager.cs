@@ -1,10 +1,10 @@
 namespace Script.Manager
 {
-    using Script.Index;
-    using Script.Interface;
-    using Script.IngameMessage;
+    using System;
     using UnityEngine;
     using UnityEngine.InputSystem;
+    using Script.Index;
+    using Script.Interface;
     using static Script.Index.IDxInput;
 
     public class InputManager : IIngameUpdater
@@ -37,12 +37,10 @@ namespace Script.Manager
             enterInput.started  += (context) => 
             { 
                 inputFlag |=  InputFlag.ENTER;
-                Input();
             };
             enterInput.canceled += (context) => 
             { 
                 inputFlag &= ~InputFlag.ENTER;
-                Input();
             };
 
             actionInput = new InputAction("Action", InputActionType.Button);
@@ -50,20 +48,19 @@ namespace Script.Manager
             actionInput.started   += (context) => 
             { 
                 inputFlag |=  InputFlag.ACTION;
-                Input();
             };
             actionInput.performed += (context) =>
             {
                 inputFlag |= InputFlag.ACTION;
-                Input();
             };
             actionInput.canceled  += (context) => 
             { 
                 inputFlag &= ~InputFlag.ACTION;
-                Input();
             };
 
-            void OnMove(InputAction.CallbackContext context)
+            IngameManager.AddUpdater(this);
+
+            static void OnMove(InputAction.CallbackContext context)
             {
                 Vector2 direction = context.ReadValue<Vector2>();
                 float x = direction.x;
@@ -76,12 +73,8 @@ namespace Script.Manager
                 if (y < 0) { moveFlag |= InputFlag.DOWN; }
 
                 inputFlag = (inputFlag & InputFlag.ACT_ALL) | moveFlag;
-
-                Input();
             }
         }
-
-        public void Input() => IngameManager.GetInput(inputFlag);
 
         public void OnEnable()
         {
@@ -107,16 +100,15 @@ namespace Script.Manager
             {
                 if (InputFlag.NONE != inputFlag)
                 {
-                    Input();
+                    MessageManager.Publish(new IngameMessage.OnInput(inputFlag));
                 }
-
                 return IngameUpdateState.RUNNING;
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.LogError($"InputManager.UpdateState 예외 발생: {ex}");
                 return IngameUpdateState.FAILURE;
             }
-
         }
     }
 }

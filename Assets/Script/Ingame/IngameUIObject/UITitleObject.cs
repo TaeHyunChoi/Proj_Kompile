@@ -191,7 +191,7 @@ public partial class UITitleObject : IngameMonoBehaviourBase, IIngameUpdater
                 break;
 
             default:
-                MessageManager.Publish(IngameEventType.END_OBJECT_PROCESS, new OnEndProcess(AssetCode.OP_TitleObject));
+                MessageManager.Publish(new OnEndProcess(AssetCode.OP_TitleObject));
                 return IngameUpdateState.SUCCESS;
         }
 

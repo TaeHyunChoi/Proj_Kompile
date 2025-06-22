@@ -74,10 +74,5 @@ namespace Script.Manager
 
             return true;
         }
-
-        public override void ReceiveIngameInput(IDxInput.InputFlag inputFlag)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

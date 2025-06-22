@@ -2,6 +2,7 @@ namespace Script.Manager
 {
     using Script.Interface;
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     /// <summary>
     /// 비동기로 처리하기엔 사용하는 데이터가 (너무) 작아 동기적으로 처리 <br/>
@@ -11,23 +12,21 @@ namespace Script.Manager
     {
         private static readonly List<IMessageReceiver> ingameReceivers = new List<IMessageReceiver>();
 
-        public static void AddReceiver(IMessageReceiver receiver, bool hasInput = false)
+        public static void AddReceiver(IMessageReceiver receiver)
         {
             if (false == ingameReceivers.Contains(receiver))
             {
-                for (int i = 0; i < ingameReceivers.Count; ++i)
-                {
-                    if (null == ingameReceivers[i])
-                    {
-                        ingameReceivers[i] = receiver;
-                        return;
-                    }
-                }
                 ingameReceivers.Add(receiver);
+            }
+            else
+            {
+#if UNITY_EDITOR
+                Debug.Assert(false, $"Already Have Message Receiver ({receiver.ToString()})");
+#endif
             }
         }
 
-        public static void Publish<T>(IngameEventType type, T data) where T : struct
+        public static void Publish<T>(T data) where T : struct
         {
             for (int i = ingameReceivers.Count - 1; i >= 0; --i)
             {
@@ -36,7 +35,7 @@ namespace Script.Manager
                     continue;
                 }
 
-                ingameReceivers[i].ReceiveIngameMessage(type, data);
+                ingameReceivers[i].ReceiveIngameMessage(data);
             }
         }
 
@@ -54,10 +53,9 @@ namespace Script.Manager
 #if UNITY_EDITOR
                     UnityEngine.Debug.Log($"{ingameReceivers[i].GetType().Name}.Dispose()");
 #endif
-                    ingameReceivers[i] = null;
+                    ingameReceivers.RemoveAt(i);
                 }
             }
         }
     }
 }
-

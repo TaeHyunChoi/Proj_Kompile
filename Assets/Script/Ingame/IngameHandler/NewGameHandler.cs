@@ -13,7 +13,7 @@ namespace Script.Content
         public NewGameHandler() : base()
         {
             handlerType = IngameHandlerType.NEW_GAME;
-            MessageManager.AddReceiver(this, false);
+            MessageManager.AddReceiver(this);
             ExecuteIngameEventAsync(IngameEventType.LOADING_CURTAIN_ON);
         }
 
@@ -61,7 +61,7 @@ namespace Script.Content
                     break;
             }
         }
-        public bool ReceiveIngameMessage<T>(IngameEventType type, T data) where T : struct
+        public bool ReceiveIngameMessage<T>(T data) where T : struct
         {
             if (data is OnEndLoadingCurtain onEndLoadingCurtain)
             {
@@ -78,10 +78,6 @@ namespace Script.Content
             }
 
             return false;
-        }
-        public override void ReceiveIngameInput(IDxInput.InputFlag inputFlag)
-        {
-            // nothing;
         }
 
         // Dispose

@@ -61,7 +61,7 @@ public class UILoadingCurtainObject : IngameMonoBehaviourBase, IIngameUpdater
                 alpha = System.Math.Clamp(alpha, 0, 1);
                 if (alpha <= 0 || alpha >= 1)
                 {
-                    MessageManager.Publish(IngameEventType.END_OBJECT_PROCESS, new OnEndLoadingCurtain(alpha != 0));
+                    MessageManager.Publish(new OnEndLoadingCurtain(alpha != 0));
                     return IngameUpdateState.SUCCESS;
                 }
                 break;
