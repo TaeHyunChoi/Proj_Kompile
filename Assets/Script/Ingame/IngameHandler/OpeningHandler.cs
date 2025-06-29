@@ -91,12 +91,6 @@ namespace Script.Content
             return false;
         }
 
-        // Dispose
-        // base class: _IngameHandlerBase.Dispose();
-
-
-        // Data Type
-
         private enum InputOpening
         {
             NONE = 0,

@@ -99,10 +99,6 @@ namespace Script.Manager
             return data;
         }
 
-
-        // Asset : GameObject가 예외? 케이스라서 분리하는게 나을 것 같기도 하고..
-        // OnDisable()에서 자동으로 해제되도록 하는 게 나을까?...
-        // 상속을 받아서 사용할 거라면 '자동화'에 초점을 맞춰서 처리하도록 합시다..
         public static async Task<IngameAsset_t> InstantiateGameObjectAsync(AssetCode assetCode, bool isOn)
         {
             Transform parent = GetIngameObjectParent(assetCode);

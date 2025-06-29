@@ -24,8 +24,6 @@ public enum IngameEventType
 {
     NONE,
 
-    INPUT,
-
     GET_ASSET,
     END_OBJECT_PROCESS,
     SELECT_ITEM,
