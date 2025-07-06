@@ -14,12 +14,10 @@ namespace Script.Manager
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
-    using System;
 #endif
 
     public static partial class AssetManager
     {
-        // TODO: 얘 날려야 함. MapGrid쪽 정리 요망
         private static readonly Dictionary<int, AsyncOperationHandle> assetHandles  = new Dictionary<int, AsyncOperationHandle>();
 
         private static Transform[] canvasParents;
@@ -99,6 +97,7 @@ namespace Script.Manager
             return data;
         }
 
+        //뭔가가 뭔가 하다.. 고민 좀...
         public static async Task<IngameAsset_t> InstantiateGameObjectAsync(AssetCode assetCode, bool isOn)
         {
             Transform parent = GetIngameObjectParent(assetCode);
@@ -214,6 +213,73 @@ namespace Script.Manager
                 Addressables.ReleaseInstance(handle);
                 assetHandles.Remove(instanceID);
             }
+        }
+    }
+
+    public static partial class AssetManager    // 신규 코드 테스트 중 (with ai)
+    {
+        private static readonly Dictionary<string, InstanceEntry> _instances = new Dictionary<string, InstanceEntry>();
+
+        public static async Task<GameObject> CreateInstanceAsync(string key, Transform parent = null)
+        {
+            if (false == _instances.TryGetValue(key, out InstanceEntry entry))
+            {
+                AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(key);
+                await handle.Task;
+
+                entry = new InstanceEntry(handle, IsUsePooling(key));
+                _instances.Add(key, entry);
+            }
+
+            GameObject instance;
+
+            if (true == entry.HasPooledInstance())
+            {
+                instance = entry.Pool.Dequeue();
+                instance.SetActive(true);
+            }
+            else
+            {
+                AsyncOperationHandle<GameObject> instHandle = Addressables.InstantiateAsync(key, parent);
+                instance = await instHandle.Task;
+            }
+
+            entry.AddReference();
+            return instance;
+        }
+        public static void ReleaseInstance(string key, GameObject instance)
+        {
+            if (false == _instances.TryGetValue(key, out InstanceEntry entry))
+            {
+                return;
+            }
+
+            if (true == entry.UsePooling)
+            //&& false == entry.Pool.Contains(instance))
+            {
+                instance.SetActive(false);
+                entry.Pool.Enqueue(instance);
+            }
+            else
+            {
+                Addressables.ReleaseInstance(instance);
+            }
+
+            entry.RemoveReference();
+
+            if (true == entry.ShouldRelease())
+            {
+                Addressables.Release(entry.Handle);
+                _instances.Remove(key);
+            }
+        }
+
+        private static bool IsUsePooling(string key)
+        {
+            // logic
+            // ...
+
+            return false;
         }
     }
 }
