@@ -48,11 +48,13 @@ namespace Script.Manager
             }
 
             // instantiate player character :: parent를 지정해줘야하는구나?
-            IngameAsset_t asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.UnitBase, true);
-            assets.Add(asset);
+            //IngameAsset_t asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.UnitBase, true);
+            //assets.Add(asset);
+            GameObject obj = await AssetManager.CreateInstanceAsync(AssetCode.UnitBase);
 
 
-            IngameFieldPlayer player_character = asset.AddComponent<IngameFieldPlayer>();
+            //IngameFieldPlayer player_character = asset.AddComponent<IngameFieldPlayer>();
+            IngameFieldPlayer player_character = obj.AddComponent<IngameFieldPlayer>();
             bool isInit = await player_character.Init();
 
             // 플레이어 캐릭터에게 무엇을 전달해야 할까요?

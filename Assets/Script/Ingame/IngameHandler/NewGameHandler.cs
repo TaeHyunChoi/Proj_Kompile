@@ -4,6 +4,7 @@ namespace Script.Content
     using Script.Interface;
     using Script.IngameMessage;
     using Script.Manager;
+    using UnityEngine;
 
     public class NewGameHandler : _IngameHandlerBase, IMessageReceiver
     {
@@ -24,10 +25,13 @@ namespace Script.Content
             switch (messageType)
             {
                 case IngameEventType.LOADING_CURTAIN_ON:
-                    IngameAsset_t asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.UI_LoadingCurtain, true);
-                    assets.Add(asset);
+                    //IngameAsset_t asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.UI_LoadingCurtain, true);
+                    //assets.Add(asset);
+                    GameObject obj = await AssetManager.CreateInstanceAsync(AssetCode.UI_LoadingCurtain);
 
-                    loadingCurtainObject = asset.GetComponent<UILoadingCurtainObject>();
+
+                    //loadingCurtainObject = asset.GetComponent<UILoadingCurtainObject>();
+                    loadingCurtainObject = obj.GetComponent<UILoadingCurtainObject>();
                     loadingCurtainObject.On(true);
                     goto case IngameEventType.NEWGAME_INIT_PLAYER;
 

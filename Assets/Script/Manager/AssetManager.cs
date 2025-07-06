@@ -97,36 +97,34 @@ namespace Script.Manager
             return data;
         }
 
-        //뭔가가 뭔가 하다.. 고민 좀...
-        public static async Task<IngameAsset_t> InstantiateGameObjectAsync(AssetCode assetCode, bool isOn)
+        //public static async Task<IngameAsset_t> InstantiateGameObjectAsync(AssetCode assetCode, bool isOn)
+        //{
+        //    Transform parent = GetIngameObjectParent(assetCode);
+        //    AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
+        //    GameObject targetObj = await handle.Task;
+        //    targetObj.SetActive(isOn);
+
+        //    return new IngameAsset_t(assetCode, handle);
+        //}
+        private static Transform GetIngameObjectParent(AssetCode assetCode)
         {
-            Transform parent = GetIngameObjectParent(assetCode);
-            AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
-            GameObject targetObj = await handle.Task;
-            targetObj.SetActive(isOn);
-
-            return new IngameAsset_t(assetCode, handle);
-
-            static Transform GetIngameObjectParent(AssetCode assetCode)
+            switch (assetCode)
             {
-                switch (assetCode)
-                {
-                    case AssetCode.UnitBase:
-                        return unitRoot;
+                case AssetCode.UnitBase:
+                    return unitRoot;
 
-                    case AssetCode.MapGridPrefab:
-                        return mapRoot;
+                case AssetCode.MapGridPrefab:
+                    return mapRoot;
 
-                    case AssetCode.OP_TitleObject:
-                    case AssetCode.UI_LoadingCurtain:
-                    case AssetCode.UI_TitleMenuObject:
-                        return canvasParents[(int)CanvasType.OVERLAY];
-                    default:
-                        break;
-                }
-
-                return null;
+                case AssetCode.OP_TitleObject:
+                case AssetCode.UI_LoadingCurtain:
+                case AssetCode.UI_TitleMenuObject:
+                    return canvasParents[(int)CanvasType.OVERLAY];
+                default:
+                    break;
             }
+
+            return null;
         }
         public static async Task<(int, T)> LoadAssetAsync<T>(string key) where T : class
         {
@@ -220,8 +218,11 @@ namespace Script.Manager
     {
         private static readonly Dictionary<string, InstanceEntry> _instances = new Dictionary<string, InstanceEntry>();
 
-        public static async Task<GameObject> CreateInstanceAsync(string key, Transform parent = null)
+        public static async Task<GameObject> CreateInstanceAsync(AssetCode assetCode)
         {
+            string key = assetCode.ToString();
+            Transform parent = GetIngameObjectParent(assetCode);
+
             if (false == _instances.TryGetValue(key, out InstanceEntry entry))
             {
                 AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(key);
@@ -247,8 +248,10 @@ namespace Script.Manager
             entry.AddReference();
             return instance;
         }
-        public static void ReleaseInstance(string key, GameObject instance)
+
+        public static void ReleaseInstance(AssetCode assetCode, GameObject instance)
         {
+            string key = assetCode.ToString();
             if (false == _instances.TryGetValue(key, out InstanceEntry entry))
             {
                 return;
@@ -271,9 +274,12 @@ namespace Script.Manager
             {
                 Addressables.Release(entry.Handle);
                 _instances.Remove(key);
+
+#if UNITY_EDITOR
+                Debug.Log($"[TEST] Release[{assetCode}]");
+#endif
             }
         }
-
         private static bool IsUsePooling(string key)
         {
             // logic

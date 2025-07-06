@@ -5,6 +5,7 @@ namespace Script.Content
     using Script.Interface;
     using Script.IngameMessage;
     using static UITitleMenuObject.MenuType;
+    using UnityEngine;
 
     public partial class OpeningHandler : _IngameHandlerBase, IMessageReceiver
     {
@@ -24,26 +25,33 @@ namespace Script.Content
         // Ingame Handler
         protected override async void ExecuteIngameEventAsync(IngameEventType messageType)
         {
-            IngameAsset_t asset;
+            //IngameAsset_t asset;
+            GameObject obj;
 
             switch (messageType)
             {
                 case IngameEventType.OPENING_INSTANTIATE_TITLE:
-                    asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.OP_TitleObject, true);
-                    assets.Add(asset);
-                    titleObject = asset.GetComponent<UITitleObject>();
+                    var target_asset_code = AssetCode.OP_TitleObject;
+                    obj = await AssetManager.CreateInstanceAsync(target_asset_code);
+                    asset_codes.Add(new (target_asset_code, obj));
+                    //assets.Add(asset);
+                    titleObject = obj.GetComponent<UITitleObject>();
                     inputTarget = InputOpening.OPENING_OBJECT;
                     break;
                 case IngameEventType.OPENING_LOAD_TITLE_MENU:
-                    asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.UI_TitleMenuObject, true);
-                    assets.Add(asset);
-                    uiTitleMenuObject = asset.GetComponent<UITitleMenuObject>();
+                    target_asset_code = AssetCode.UI_TitleMenuObject;
+                    obj = await AssetManager.CreateInstanceAsync(target_asset_code);
+                    asset_codes.Add(new(target_asset_code, obj));
+                    //assets.Add(asset);
+                    uiTitleMenuObject = obj.GetComponent<UITitleMenuObject>();
                     inputTarget = InputOpening.UI_TITLE_MENU_OBJECT;
                     break;
                 case IngameEventType.OPENING_SELECT_NEW_GAME:
                     uiTitleMenuObject.WaitUpdate();
                     inputTarget = InputOpening.NONE;
                     IngameManager.AddIngameHander(IngameHandlerType.NEW_GAME);
+                    //for test
+                    IngameManager.RemoveIngameHandler(IngameHandlerType.OPENING);
                     break;
                 default:
                     break;
