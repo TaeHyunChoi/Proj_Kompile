@@ -7,13 +7,14 @@ namespace Script.Index
         SUCCESS,
         FAILURE
     };
-    public enum IngameHandlerType
+    public enum IngameProcedureType
     {
         NONE = 0,
+        
+        LOADING,
 
         OPENING,
         NEW_GAME,
-
     }
     public enum IngameHandlerState
     {

@@ -5,53 +5,42 @@ namespace Script.Content
     using Script.Interface;
     using Script.IngameMessage;
     using static UITitleMenuObject.MenuType;
-    using UnityEngine;
 
-    public partial class OpeningHandler : _IngameHandlerBase, IMessageReceiver
+    public partial class OpeningProcedure : IngameProcedureBase, IMessageReceiver
     {
         private UITitleObject     titleObject;
         private UITitleMenuObject uiTitleMenuObject;
         private InputOpening      inputTarget;
 
-        public OpeningHandler() : base()
+        public OpeningProcedure() : base()
         {
-            handlerType = IngameHandlerType.OPENING;
+            procedureType = IngameProcedureType.OPENING;
             inputTarget = InputOpening.NONE;
 
             ExecuteIngameEventAsync(IngameEventType.OPENING_INSTANTIATE_TITLE);
         }
 
-
-        // Ingame Handler
+        // Execute Event
         protected override async void ExecuteIngameEventAsync(IngameEventType messageType)
         {
-            //IngameAsset_t asset;
-            GameObject obj;
-
             switch (messageType)
             {
                 case IngameEventType.OPENING_INSTANTIATE_TITLE:
-                    var target_asset_code = AssetCode.OP_TitleObject;
-                    obj = await AssetManager.CreateInstanceAsync(target_asset_code);
-                    asset_codes.Add(new (target_asset_code, obj));
-                    //assets.Add(asset);
-                    titleObject = obj.GetComponent<UITitleObject>();
+                    titleObject = await CreateIngameObjectAsync<UITitleObject>(AssetCode.OP_TitleObject);
                     inputTarget = InputOpening.OPENING_OBJECT;
                     break;
                 case IngameEventType.OPENING_LOAD_TITLE_MENU:
-                    target_asset_code = AssetCode.UI_TitleMenuObject;
-                    obj = await AssetManager.CreateInstanceAsync(target_asset_code);
-                    asset_codes.Add(new(target_asset_code, obj));
-                    //assets.Add(asset);
-                    uiTitleMenuObject = obj.GetComponent<UITitleMenuObject>();
+                    uiTitleMenuObject = await CreateIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject);
                     inputTarget = InputOpening.UI_TITLE_MENU_OBJECT;
                     break;
                 case IngameEventType.OPENING_SELECT_NEW_GAME:
+                    // 여기서부터의 절차를 어떻게 하면 좋을까?에 대한 고민이 필요하겠군.
+                    // 핸들러가 여러 개 쓰이는 상황이다. => IngameManager로 넘기는 게 맞지 않나?
+                    // 좋은 '규칙' 뭐 없나...
                     uiTitleMenuObject.WaitUpdate();
                     inputTarget = InputOpening.NONE;
-                    IngameManager.AddIngameHander(IngameHandlerType.NEW_GAME);
-                    //for test
-                    IngameManager.RemoveIngameHandler(IngameHandlerType.OPENING);
+                    IngameManager.AddIngameHander(IngameProcedureType.LOADING);
+                    //IngameManager.AddIngameHander(IngameHandlerType.NEW_GAME);
                     break;
                 default:
                     break;
@@ -89,11 +78,13 @@ namespace Script.Content
                         break;
                 }
             }
-            if (data is OnEndProcess onEndProcess
-                && AssetCode.OP_TitleObject == onEndProcess.AssetCode)
+            if (data is OnEndProcess onEndProcess)
             {
-                ExecuteIngameEventAsync(IngameEventType.OPENING_LOAD_TITLE_MENU);
-                return true;
+                if (AssetCode.OP_TitleObject == onEndProcess.AssetCode)
+                {
+                    ExecuteIngameEventAsync(IngameEventType.OPENING_LOAD_TITLE_MENU);
+                    return true;
+                }
             }
 
             return false;

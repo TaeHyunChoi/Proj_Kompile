@@ -7,7 +7,7 @@ namespace Script.Manager
     using System.Threading.Tasks;
     using UnityEngine;
 
-    public class FieldManager : _IngameHandlerBase
+    public class x_FieldManager : IngameProcedureBase
     {
         private ConcurrentDictionary<int, MapGridData> mapGridData;
 
@@ -18,7 +18,7 @@ namespace Script.Manager
 
 
 
-        public FieldManager() : base()
+        public x_FieldManager() : base()
         {
             mapGridData = new ConcurrentDictionary<int, MapGridData>();
             players     = new IngameFieldPlayer[3];

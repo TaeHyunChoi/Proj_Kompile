@@ -4,52 +4,20 @@ namespace Script.Manager
     using UnityEngine;
     using Script.Index;
     using Script.Content;
-    using Script.Interface;
     using Script.Data;
     using System.Threading.Tasks;
 
-    public class IngameManager : MonoBehaviour
+    public partial class IngameManager : MonoBehaviour
     {
         private static IngameManager    instance;
 
         private static PlayData         playerData;
 
         private static InputManager     inputMgr;
-        private static FieldManager     fieldMgr;   // 사실 얘도 IngameHandler로 빠져야 함.
+        //private static x_FieldManager     fieldMgr;   // 사실 얘도 IngameHandler로 빠져야 함.
         private static IngameCamera     ingameCam;
 
-        private static List<IIngameUpdater>      updateList;
-        private static List<IIngameFixedUpdater> fixedUpdateList;
-        private static List<IIngameLateUpdater>  lateUpdateList;
-
-        private static List<_IngameHandlerBase> ingameHandler;
-
-        public static void AddUpdater(IIngameUpdater updater)
-        {
-            updateList.Add(updater);
-        }
-        public static void AddFixedUpdater(IIngameFixedUpdater fixedUpdater)
-        {
-            fixedUpdateList.Add(fixedUpdater);
-        }
-        public static void AddLateUpdater(IIngameLateUpdater lateUpdater)
-        {
-            lateUpdateList.Add(lateUpdater);
-        }
-
-        public static void RemoveUpdater(IIngameUpdater updater)
-        {
-            updateList.Remove(updater);
-        }
-        public static void RemoveFixedUpdater(IIngameFixedUpdater fixedUpdater)
-        {
-            fixedUpdateList.Remove(fixedUpdater);
-        }
-        public static void RemoveLateUpdater(IIngameLateUpdater lateUpdater)
-        {
-            lateUpdateList.Remove(lateUpdater);
-        }
-
+        private static List<IngameProcedureBase> ingameProcedures;
 
         // play data
         public static void InitPlayData()
@@ -63,46 +31,51 @@ namespace Script.Manager
 
 
         // manager
-        public static async Task<bool> TryInitializeField()
-        {
-            fieldMgr = new FieldManager();
-            bool result = await fieldMgr.Init(playerData);
+        //public static async Task<bool> TryInitializeField()
+        //{
+        //    fieldMgr = new x_FieldManager();
+        //    bool result = await fieldMgr.Init(playerData);
 
-            // 여기서 캠 설정도 넣는다?
-            //MessageManager.Publish(IngameEventType.END_OBJECT_PROCESS,)
-            return result;
-        }
+        //    // 여기서 캠 설정도 넣는다?
+        //    //MessageManager.Publish(IngameEventType.END_OBJECT_PROCESS,)
+        //    return result;
+        //}
 
 
         // ingame_handler
-        public static void AddIngameHander(IngameHandlerType type)
+        public static void AddIngameHander(IngameProcedureType type)
         {
-            _IngameHandlerBase handler;
+            IngameProcedureBase handler;
             switch (type)
             {
-                case IngameHandlerType.OPENING:     handler = new OpeningHandler(); break;
-                case IngameHandlerType.NEW_GAME:    handler = new NewGameHandler(); break;
+                case IngameProcedureType.OPENING:     handler = new OpeningProcedure(); break;
+                case IngameProcedureType.NEW_GAME:    handler = new NewGameProcedure(); break;
                 default:
                     return;
             }
 
-            ingameHandler.Add(handler);
+            ingameProcedures.Add(handler);
         }
-        public static void RemoveIngameHandler(IngameHandlerType type)
+        public static void RemoveIngameHandler(IngameProcedureType type)
         {
-            for (int i = ingameHandler.Count - 1; i >= 0; --i)
+            for (int i = ingameProcedures.Count - 1; i >= 0; --i)
             {
-                if (type == ingameHandler[i].HandlerType)
+                if (type == ingameProcedures[i].HandlerType)
                 {
-                    ingameHandler[i].Dispose();
-                    ingameHandler.RemoveAt(i);
+                    ingameProcedures[i].Dispose();
+                    ingameProcedures.RemoveAt(i);
                     return;
                 }
             }
         }
+        public static void MoveNextIngameHandler(IngameProcedureType nextHandlerType)
+        {
+            LoadingProcedure loadingHandler = new LoadingProcedure(nextHandlerType);
+            ingameProcedures.Add(loadingHandler);
+        }
 
         // camera
-        public static void InitFollowingCamera(_IngameUnitBase player_character)
+        public static void InitFollowingCamera(IngameUnitBase player_character)
         {
             ingameCam.InitFollowingCamera(player_character);
         }
@@ -123,82 +96,19 @@ namespace Script.Manager
             AssetManager.Initialize(this.transform);
 
             // init ingame updaters
-            updateList      = new List<IIngameUpdater>();
-            fixedUpdateList = new List<IIngameFixedUpdater>();
-            lateUpdateList  = new List<IIngameLateUpdater>();
+            IngameUpdater updater = transform.GetComponent<IngameUpdater>();
+            updater.Initialize();
 
             // init ingame handlers
-            ingameHandler = new List<_IngameHandlerBase>();
+            ingameProcedures = new List<IngameProcedureBase>();
             
             // init ingame managers
             inputMgr = new InputManager();
             ingameCam = transform.GetComponentInChildren<IngameCamera>(true);
-            //fieldMgr = new FieldManager();
         }
         private void Start()
         {
-            AddIngameHander(IngameHandlerType.OPENING);
-        }
-        
-        private void Update()
-        {
-            for (int i = 0; i < updateList.Count; ++i)
-            {
-                switch (updateList[i].UpdateState())
-                {
-                    case IngameUpdateState.SUCCESS:
-                        updateList.RemoveAt(i--);
-                        break;
-                    case IngameUpdateState.FAILURE:
-#if UNITY_EDITOR
-                        Debug.Assert(false, $"Updater[{i}].State == FAILTURE;");
-#endif
-                        break;
-                    default:
-                        // Running
-                        break;
-                }
-            }
-        }
-        private void FixedUpdate() 
-        {
-            for (int i = 0; i < fixedUpdateList.Count; ++i)
-            {
-                switch (fixedUpdateList[i].FixedUpdateState())
-                {
-                    case IngameUpdateState.SUCCESS:
-                        fixedUpdateList.RemoveAt(i--);
-                        break;
-                    case IngameUpdateState.FAILURE:
-#if UNITY_EDITOR
-                        Debug.Assert(false, $"FixedUpdater[{i}].State == FAILTURE;");
-#endif
-                        break;
-                    default:
-                        // Running
-                        break;
-                }
-            }
-        }
-        private void LateUpdate()  
-        {
-            for (int i = 0; i < lateUpdateList.Count; ++i)
-            {
-                switch (lateUpdateList[i].LateUpdateState())
-                {
-                    case IngameUpdateState.SUCCESS:
-                        lateUpdateList.RemoveAt(i--);
-                        break;
-                    case IngameUpdateState.FAILURE:
-#if UNITY_EDITOR
-                        Debug.Assert(false, $"LateUpdater[{i}].State == FAILTURE;");
-#endif
-                        break;
-                    default:
-                        // Running
-                        break;
-                }
-            }
+            AddIngameHander(IngameProcedureType.OPENING);
         }
 
         private void OnEnable()

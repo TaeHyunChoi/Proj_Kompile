@@ -8,30 +8,30 @@ public class IngameMonoBehaviourBase : MonoBehaviour
     {
         if (this is IIngameUpdater updater)
         {
-            IngameManager.AddUpdater(updater);
+            IngameUpdater.AddUpdater(updater);
         }
         if (this is IIngameFixedUpdater fixedUpdater)
         {
-            IngameManager.AddFixedUpdater(fixedUpdater);
+            IngameUpdater.AddFixedUpdater(fixedUpdater);
         }
         if (this is IIngameLateUpdater lateUpdater)
         {
-            IngameManager.AddLateUpdater(lateUpdater);
+            IngameUpdater.AddLateUpdater(lateUpdater);
         }
     }
     protected virtual void OnDisable()
     {
         if (this is IIngameUpdater updater)
         {
-            IngameManager.RemoveUpdater(updater);
+            IngameUpdater.RemoveUpdater(updater);
         }
         if (this is IIngameFixedUpdater fixedUpdater)
         {
-            IngameManager.RemoveFixedUpdater(fixedUpdater);
+            IngameUpdater.RemoveFixedUpdater(fixedUpdater);
         }
         if (this is IIngameLateUpdater lateUpdater)
         {
-            IngameManager.RemoveLateUpdater(lateUpdater);
+            IngameUpdater.RemoveLateUpdater(lateUpdater);
         }
     }
 }

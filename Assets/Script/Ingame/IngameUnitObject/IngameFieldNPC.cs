@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class IngameFieldNPC : _IngameUnitBase
+public class IngameFieldNPC : IngameUnitBase
 {
 
 }

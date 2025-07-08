@@ -2,7 +2,7 @@ using Script.Manager;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public class IngameFieldPlayer : _IngameUnitBase
+public class IngameFieldPlayer : IngameUnitBase
 {
     private Animator animator;
     private (int code, RuntimeAnimatorController ctrl) anime_data;

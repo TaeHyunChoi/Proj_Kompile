@@ -14,7 +14,7 @@ public class IngameCamera : IngameMonoBehaviourBase, IIngameLateUpdater
     {
         mainCam = transform.GetComponent<Camera>();
     }
-    public void InitFollowingCamera(_IngameUnitBase player_character)
+    public void InitFollowingCamera(IngameUnitBase player_character)
     {
         enabled = true;
 

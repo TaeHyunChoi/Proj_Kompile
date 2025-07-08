@@ -97,15 +97,6 @@ namespace Script.Manager
             return data;
         }
 
-        //public static async Task<IngameAsset_t> InstantiateGameObjectAsync(AssetCode assetCode, bool isOn)
-        //{
-        //    Transform parent = GetIngameObjectParent(assetCode);
-        //    AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(assetCode.ToString(), parent);
-        //    GameObject targetObj = await handle.Task;
-        //    targetObj.SetActive(isOn);
-
-        //    return new IngameAsset_t(assetCode, handle);
-        //}
         private static Transform GetIngameObjectParent(AssetCode assetCode)
         {
             switch (assetCode)
@@ -280,6 +271,7 @@ namespace Script.Manager
 #endif
             }
         }
+
         private static bool IsUsePooling(string key)
         {
             // logic
