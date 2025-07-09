@@ -1,5 +1,6 @@
 namespace Script.Manager
 {
+    using Script.Index;
     using Script.Interface;
     using System.Collections.Generic;
     using System.Diagnostics;

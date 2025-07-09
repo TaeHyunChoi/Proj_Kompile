@@ -55,13 +55,4 @@ namespace Script.IngameMessage
             isOn = on;
         }
     }
-
-    public readonly struct OnInput
-    {
-        public readonly IDxInput.InputFlag InputFlagValue;
-        public OnInput(IDxInput.InputFlag flag)
-        {
-            InputFlagValue = flag;
-        }
-    }
 }

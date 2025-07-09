@@ -18,6 +18,11 @@ public class IngameMonoBehaviourBase : MonoBehaviour
         {
             IngameUpdater.AddLateUpdater(lateUpdater);
         }
+
+        if (this is IInputReceiver inputReceiver)
+        {
+            InputManager.AddInputReceiver(inputReceiver);
+        }
     }
     protected virtual void OnDisable()
     {
@@ -32,6 +37,11 @@ public class IngameMonoBehaviourBase : MonoBehaviour
         if (this is IIngameLateUpdater lateUpdater)
         {
             IngameUpdater.RemoveLateUpdater(lateUpdater);
+        }
+
+        if (this is IInputReceiver inputReceiver)
+        {
+            InputManager.RemoveInputReceiver(inputReceiver);
         }
     }
 }

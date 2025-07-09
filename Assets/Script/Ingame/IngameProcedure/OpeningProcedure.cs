@@ -1,22 +1,14 @@
 namespace Script.Content
 {
-    using Script.Manager;
     using Script.Index;
     using Script.Interface;
     using Script.IngameMessage;
-    using static UITitleMenuObject.MenuType;
-
+    
     public partial class OpeningProcedure : IngameProcedureBase, IMessageReceiver
     {
-        private UITitleObject     titleObject;
-        private UITitleMenuObject uiTitleMenuObject;
-        private InputOpening      inputTarget;
-
         public OpeningProcedure() : base()
         {
             procedureType = IngameProcedureType.OPENING;
-            inputTarget = InputOpening.NONE;
-
             ExecuteIngameEventAsync(IngameEventType.OPENING_INSTANTIATE_TITLE);
         }
 
@@ -26,21 +18,19 @@ namespace Script.Content
             switch (messageType)
             {
                 case IngameEventType.OPENING_INSTANTIATE_TITLE:
-                    titleObject = await CreateIngameObjectAsync<UITitleObject>(AssetCode.OP_TitleObject);
-                    inputTarget = InputOpening.OPENING_OBJECT;
+                    UITitleObject titleObject = await GetIngameObjectAsync<UITitleObject>(AssetCode.OP_TitleObject);
+                    ingameObjects.Add(new (AssetCode.OP_TitleObject, titleObject.gameObject));
                     break;
                 case IngameEventType.OPENING_LOAD_TITLE_MENU:
-                    uiTitleMenuObject = await CreateIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject);
-                    inputTarget = InputOpening.UI_TITLE_MENU_OBJECT;
+                    var uiTitleMenuObject = await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject);
+                    ingameObjects.Add(new(AssetCode.UI_TitleMenuObject, uiTitleMenuObject.gameObject));
                     break;
                 case IngameEventType.OPENING_SELECT_NEW_GAME:
-                    // 여기서부터의 절차를 어떻게 하면 좋을까?에 대한 고민이 필요하겠군.
-                    // 핸들러가 여러 개 쓰이는 상황이다. => IngameManager로 넘기는 게 맞지 않나?
-                    // 좋은 '규칙' 뭐 없나...
+                    uiTitleMenuObject = await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject);
                     uiTitleMenuObject.WaitUpdate();
-                    inputTarget = InputOpening.NONE;
-                    IngameManager.AddIngameHander(IngameProcedureType.LOADING);
-                    //IngameManager.AddIngameHander(IngameHandlerType.NEW_GAME);
+
+                    // 여기서 스위칭을 더 잘하면 좋을 것 같은데
+                    //IngameManager.AddIngameProcedure(IngameProcedureType.LOADING);
                     break;
                 default:
                     break;
@@ -50,34 +40,28 @@ namespace Script.Content
         // Recevie Ingame Message
         public bool ReceiveIngameMessage<T>(T data) where T : struct
         {
-            if (data is OnInput onInput)
+            if (data is OnSelect_UITitleMenu onSelectMenu)
             {
-                var inputFlag = onInput.InputFlagValue;
+                var menuType = onSelectMenu.ValueInt;
+                IngameEventType next_event_type;
 
-                switch (inputTarget)
+                switch (menuType)
                 {
-                    case InputOpening.OPENING_OBJECT:
-                        titleObject.Input(inputFlag);
-                        break;
-                    case InputOpening.UI_TITLE_MENU_OBJECT:
-                        var menuIndex = (UITitleMenuObject.MenuType)uiTitleMenuObject.Input(inputFlag);
-                        IngameEventType next_event_type;
-
-                        switch (menuIndex)
-                        {
-                            case NEW_GAME:  next_event_type = IngameEventType.OPENING_SELECT_NEW_GAME;  break;
-                            case LOAD_GAME: next_event_type = IngameEventType.OPENING_SELECT_LOAD_GAME; break;
-                            case OPTION:    next_event_type = IngameEventType.OPENING_SELECT_OPTION;    break;
-                            case EXIT:      next_event_type = IngameEventType.OPENING_SELECT_EXIT;      break;
-                            default: 
-                                return false;
-                        }
-                        ExecuteIngameEventAsync(next_event_type);
-                        break;
+                    case 0: next_event_type = IngameEventType.OPENING_SELECT_NEW_GAME;  break;
+                    case 1: next_event_type = IngameEventType.OPENING_SELECT_LOAD_GAME; break;
+                    case 2: next_event_type = IngameEventType.OPENING_SELECT_OPTION;    break;
+                    case 3: next_event_type = IngameEventType.OPENING_SELECT_EXIT;      break;
                     default:
-                        break;
+                        return false;
                 }
+
+                ExecuteIngameEventAsync(next_event_type);
+                return true;
             }
+
+            // OnEnd 라고 하니까 헷갈림.
+            // MoveNext()라고 표현하는게 더 좋을 듯
+            // 그렇다면? IngameEventType.OPENING_SELECT_NEW_GAME 에서도 완료 후 Message.MoveNext(CLOSE_OPENING_PROCEDURE); 식으로 하는게 좋을 듯
             if (data is OnEndProcess onEndProcess)
             {
                 if (AssetCode.OP_TitleObject == onEndProcess.AssetCode)
@@ -88,14 +72,6 @@ namespace Script.Content
             }
 
             return false;
-        }
-
-        private enum InputOpening
-        {
-            NONE = 0,
-
-            OPENING_OBJECT,
-            UI_TITLE_MENU_OBJECT,
         }
     }
 }

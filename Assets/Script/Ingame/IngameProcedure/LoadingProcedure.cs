@@ -20,7 +20,7 @@ namespace Script.Content
             switch (messageType)
             {
                 case IngameEventType.LOADING_CURTAIN_ON:
-                    curtainObject = await CreateIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain);
+                    curtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain);
                     curtainObject.On(true);
                     break;
             }

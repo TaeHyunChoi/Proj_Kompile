@@ -4,8 +4,9 @@ using Script.Manager;
 using Script.IngameMessage;
 using UnityEngine;
 using UnityEngine.UI;
+using static Script.Index.IDxInput;
 
-public partial class UITitleObject : IngameMonoBehaviourBase, IIngameUpdater
+public partial class UITitleObject : IngameMonoBehaviourBase, IIngameUpdater, IInputReceiver
 {
     private enum ImageType
     {
@@ -198,15 +199,24 @@ public partial class UITitleObject : IngameMonoBehaviourBase, IIngameUpdater
         return IngameUpdateState.RUNNING;
     }
 
-    public int Input(IDxInput.InputFlag inputFlag)
+    protected override void OnDisable()
     {
-        if (false == inputFlag.Contains(IDxInput.InputFlag.ACTION | IDxInput.InputFlag.ENTER))
+        base.OnDisable();
+
+        images = null;
+        rects  = null;
+        titleInitPositions = null;
+    }
+
+    public bool ReceiveInput(IDxInput.InputFlag flag)
+    {
+        if (false == flag.Contains(IDxInput.InputFlag.ACTION | IDxInput.InputFlag.ENTER))
         {
-            return -1;
+            return false;
         }
         if (State.LOGO_WAIT <= state)
         {
-            return -1;
+            return false;
         }
 
         alpha = 1f;
@@ -215,15 +225,6 @@ public partial class UITitleObject : IngameMonoBehaviourBase, IIngameUpdater
         waitTime *= 1.5f;
         state = State.LOGO_WAIT;
 
-        return 0;
-    }
-
-    protected override void OnDisable()
-    {
-        base.OnDisable();
-
-        images = null;
-        rects  = null;
-        titleInitPositions = null;
+        return true;
     }
 }

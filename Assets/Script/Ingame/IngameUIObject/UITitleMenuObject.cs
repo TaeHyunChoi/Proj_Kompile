@@ -8,7 +8,7 @@ using static Script.Index.IDxInput;
 using Script.Interface;
 
 
-public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater
+public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater, IInputReceiver
 {
     private enum State
     { 
@@ -17,14 +17,7 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater
         WAIT,
         CLOSE
     }
-    public enum MenuType : int
-    { 
-        NEW_GAME = 0,
-        LOAD_GAME,
-        OPTION,
-        EXIT
-    }
-
+    
     [SerializeField] private Transform menuParent;
     [SerializeField] private Image selectSlotImage;
 
@@ -93,34 +86,6 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater
         return IngameUpdateState.RUNNING;
     }
 
-    public int Input(InputFlag inputFlag)
-    {
-        if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
-        {
-            MessageManager.Publish(new OnSelect_UITitleMenu(index));
-            return index;
-        }
-
-        if (Time.time < lastInputTime + waitTime)
-        {
-            return -1;
-        }
-        lastInputTime = Time.time;
-
-        if (true == inputFlag.Contains(InputFlag.UP))
-        {
-            index = ((index - 1) + 4) % 4;
-            selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
-        }
-        if (true == inputFlag.Contains(InputFlag.DOWN))
-        {
-            index = ((index + 1) + 4) % 4;
-            selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
-        }
-
-        return index;
-    }
-
     public void WaitUpdate()
     {
         alpha = 1f;
@@ -137,5 +102,36 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater
     {
         base.OnDisable();
         anchoredPositions = null;
+    }
+
+    public bool ReceiveInput(InputFlag inputFlag)
+    {
+        if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
+        {
+            MessageManager.Publish(new OnSelect_UITitleMenu(index));
+            return true;
+        }
+
+        if (Time.time < lastInputTime + waitTime)
+        {
+            // 다음 입력을 "씹어버려야 하므로" true;로 반환
+            MessageManager.Publish(new OnSelect_UITitleMenu(-1));
+            return true;
+        }
+
+        lastInputTime = Time.time;
+
+        if (true == inputFlag.Contains(InputFlag.UP))
+        {
+            index = ((index - 1) + 4) % 4;
+            selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
+        }
+        if (true == inputFlag.Contains(InputFlag.DOWN))
+        {
+            index = ((index + 1) + 4) % 4;
+            selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
+        }
+
+        return true;
     }
 }

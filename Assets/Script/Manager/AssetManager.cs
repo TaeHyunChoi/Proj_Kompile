@@ -209,7 +209,7 @@ namespace Script.Manager
     {
         private static readonly Dictionary<string, InstanceEntry> _instances = new Dictionary<string, InstanceEntry>();
 
-        public static async Task<GameObject> CreateInstanceAsync(AssetCode assetCode)
+        public static async Task<GameObject> GetOrNewInstanceAsync(AssetCode assetCode)
         {
             string key = assetCode.ToString();
             Transform parent = GetIngameObjectParent(assetCode);

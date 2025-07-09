@@ -6,6 +6,8 @@ namespace Script.Manager
     using Script.Index;
     using Script.Interface;
     using static Script.Index.IDxInput;
+    using System.Collections.Generic;
+    using static Unity.IO.LowLevel.Unsafe.AsyncReadManagerMetrics;
 
     public class InputManager : IIngameUpdater
     {
@@ -13,6 +15,7 @@ namespace Script.Manager
         private readonly InputAction enterInput;
         private readonly InputAction actionInput;
 
+        private static readonly List<IInputReceiver> inputReceivers = new List<IInputReceiver>();
         private static InputFlag inputFlag;
 
         public InputManager()
@@ -59,22 +62,22 @@ namespace Script.Manager
             };
 
             IngameUpdater.AddUpdater(this);
-
-            static void OnMove(InputAction.CallbackContext context)
-            {
-                Vector2 direction = context.ReadValue<Vector2>();
-                float x = direction.x;
-                float y = direction.y;
-
-                InputFlag moveFlag = InputFlag.NONE;
-                if (x > 0) { moveFlag |= InputFlag.RIGHT; }
-                if (x < 0) { moveFlag |= InputFlag.LEFT; }
-                if (y > 0) { moveFlag |= InputFlag.UP; }
-                if (y < 0) { moveFlag |= InputFlag.DOWN; }
-
-                inputFlag = (inputFlag & InputFlag.ACT_ALL) | moveFlag;
-            }
         }
+        private void OnMove(InputAction.CallbackContext context)
+        {
+            Vector2 direction = context.ReadValue<Vector2>();
+            float x = direction.x;
+            float y = direction.y;
+
+            InputFlag moveFlag = InputFlag.NONE;
+            if (x > 0) { moveFlag |= InputFlag.RIGHT; }
+            if (x < 0) { moveFlag |= InputFlag.LEFT; }
+            if (y > 0) { moveFlag |= InputFlag.UP; }
+            if (y < 0) { moveFlag |= InputFlag.DOWN; }
+
+            inputFlag = (inputFlag & InputFlag.ACT_ALL) | moveFlag;
+        }
+
 
         public void OnEnable()
         {
@@ -94,14 +97,32 @@ namespace Script.Manager
             actionInput.Dispose();
         }
 
+        public static void AddInputReceiver(IInputReceiver receiver)
+        {
+            inputReceivers.Add(receiver);
+        }
+        public static void RemoveInputReceiver(IInputReceiver receiver)
+        {
+            inputReceivers.Remove(receiver);
+        }
+
         public IngameUpdateState UpdateState()
         {
             try
             {
                 if (InputFlag.NONE != inputFlag)
                 {
-                    MessageManager.Publish(new IngameMessage.OnInput(inputFlag));
+                    //MessageManager.Publish(new IngameMessage.OnInput(inputFlag));
+
+                    for (int i = inputReceivers.Count - 1; i >= 0; --i)
+                    {
+                        if (true == inputReceivers[i].ReceiveInput(inputFlag))
+                        {
+                            return IngameUpdateState.RUNNING;
+                        }
+                    }
                 }
+
                 return IngameUpdateState.RUNNING;
             }
             catch (Exception ex)

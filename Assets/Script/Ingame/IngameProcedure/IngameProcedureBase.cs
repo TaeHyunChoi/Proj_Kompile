@@ -31,10 +31,13 @@ namespace Script.Content
             }
         }
 
-        protected async Task<T> CreateIngameObjectAsync<T>(AssetCode assetCode) where T:IngameMonoBehaviourBase
+        protected async Task<T> GetIngameObjectAsync<T>(AssetCode assetCode) where T:IngameMonoBehaviourBase
         {
-            GameObject obj = await AssetManager.CreateInstanceAsync(assetCode);
-            ingameObjects.Add(new(assetCode, obj));
+            GameObject obj = await AssetManager.GetOrNewInstanceAsync(assetCode);
+            if (null == obj)
+            {
+                return null;
+            }
 
             return obj.GetComponent<T>();
         }

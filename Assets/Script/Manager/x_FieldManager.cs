@@ -50,7 +50,7 @@ namespace Script.Manager
             // instantiate player character :: parent를 지정해줘야하는구나?
             //IngameAsset_t asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.UnitBase, true);
             //assets.Add(asset);
-            GameObject obj = await AssetManager.CreateInstanceAsync(AssetCode.UnitBase);
+            GameObject obj = await AssetManager.GetOrNewInstanceAsync(AssetCode.UnitBase);
 
 
             //IngameFieldPlayer player_character = asset.AddComponent<IngameFieldPlayer>();

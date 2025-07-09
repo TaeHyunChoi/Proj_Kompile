@@ -14,7 +14,6 @@ namespace Script.Manager
         private static PlayData         playerData;
 
         private static InputManager     inputMgr;
-        //private static x_FieldManager     fieldMgr;   // 사실 얘도 IngameHandler로 빠져야 함.
         private static IngameCamera     ingameCam;
 
         private static List<IngameProcedureBase> ingameProcedures;
@@ -29,34 +28,21 @@ namespace Script.Manager
 #endif
         }
 
-
-        // manager
-        //public static async Task<bool> TryInitializeField()
-        //{
-        //    fieldMgr = new x_FieldManager();
-        //    bool result = await fieldMgr.Init(playerData);
-
-        //    // 여기서 캠 설정도 넣는다?
-        //    //MessageManager.Publish(IngameEventType.END_OBJECT_PROCESS,)
-        //    return result;
-        //}
-
-
-        // ingame_handler
-        public static void AddIngameHander(IngameProcedureType type)
+        // ingame procedure
+        public static void AddIngameProcedure(IngameProcedureType type)
         {
-            IngameProcedureBase handler;
+            IngameProcedureBase proc;
             switch (type)
             {
-                case IngameProcedureType.OPENING:     handler = new OpeningProcedure(); break;
-                case IngameProcedureType.NEW_GAME:    handler = new NewGameProcedure(); break;
+                case IngameProcedureType.OPENING:     proc = new OpeningProcedure(); break;
+                case IngameProcedureType.NEW_GAME:    proc = new NewGameProcedure(); break;
                 default:
                     return;
             }
 
-            ingameProcedures.Add(handler);
+            ingameProcedures.Add(proc);
         }
-        public static void RemoveIngameHandler(IngameProcedureType type)
+        public static void RemoveIngameProcedure(IngameProcedureType type)
         {
             for (int i = ingameProcedures.Count - 1; i >= 0; --i)
             {
@@ -67,11 +53,6 @@ namespace Script.Manager
                     return;
                 }
             }
-        }
-        public static void MoveNextIngameHandler(IngameProcedureType nextHandlerType)
-        {
-            LoadingProcedure loadingHandler = new LoadingProcedure(nextHandlerType);
-            ingameProcedures.Add(loadingHandler);
         }
 
         // camera
@@ -95,20 +76,20 @@ namespace Script.Manager
             // init data table
             AssetManager.Initialize(this.transform);
 
-            // init ingame updaters
+            // init updater
             IngameUpdater updater = transform.GetComponent<IngameUpdater>();
             updater.Initialize();
 
-            // init ingame handlers
-            ingameProcedures = new List<IngameProcedureBase>();
-            
-            // init ingame managers
+            // init manager
             inputMgr = new InputManager();
             ingameCam = transform.GetComponentInChildren<IngameCamera>(true);
+
+            // init procedures
+            ingameProcedures = new List<IngameProcedureBase>();
         }
         private void Start()
         {
-            AddIngameHander(IngameProcedureType.OPENING);
+            AddIngameProcedure(IngameProcedureType.OPENING);
         }
 
         private void OnEnable()
