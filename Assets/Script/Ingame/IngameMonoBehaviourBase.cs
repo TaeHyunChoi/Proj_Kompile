@@ -9,6 +9,9 @@ public class IngameMonoBehaviourBase : MonoBehaviour
         if (this is IIngameUpdater updater)
         {
             IngameUpdater.AddUpdater(updater);
+#if UNITY_EDITOR
+            Debug.Log($"[IngameMonoBehaviourBase] Add Updater({updater.GetType().Name})");
+#endif
         }
         if (this is IIngameFixedUpdater fixedUpdater)
         {

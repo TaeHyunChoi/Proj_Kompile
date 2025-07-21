@@ -5,13 +5,13 @@ namespace Script.Manager
     using Script.Index;
     using Script.Content;
     using Script.Data;
-    using System.Threading.Tasks;
+    using Script.IngameMessage;
 
     public partial class IngameManager : MonoBehaviour
     {
         private static IngameManager    instance;
 
-        private static PlayData         playerData;
+        private static PlayData         playData;
 
         private static InputManager     inputMgr;
         private static IngameCamera     ingameCam;
@@ -19,34 +19,58 @@ namespace Script.Manager
         private static List<IngameProcedureBase> ingameProcedures;
 
         // play data
-        public static void InitPlayData()
+        public static void AddNewPlayData()
         {
-            playerData = new PlayData();
+            playData = new PlayData();
 
 #if UNITY_EDITOR
             Debug.Log("NEWGAME_PLAYER_DATA");
 #endif
         }
+        public static PlayData GetPlayData()
+        {
+            return playData;
+        }
 
         // ingame procedure
+        private static Queue<IngameEventType> nextEventTypeQueue;
+        public static void EnqueueNextEventType(IngameEventType next)
+        {
+            nextEventTypeQueue.Enqueue(next);
+        }
+        public static void MoveNextEventType()
+        {
+            if (0 >= nextEventTypeQueue.Count)
+            {
+                return;
+            }
+
+            IngameEventType nextEventType = nextEventTypeQueue.Dequeue();
+            MessageManager.Publish(new OnMoveNextEvent(nextEventType));
+        }
+
         public static void AddIngameProcedure(IngameProcedureType type)
         {
+            InputManager.Clear();
+
             IngameProcedureBase proc;
             switch (type)
             {
-                case IngameProcedureType.OPENING:     proc = new OpeningProcedure(); break;
-                case IngameProcedureType.NEW_GAME:    proc = new NewGameProcedure(); break;
+                case IngameProcedureType.OPENING:   proc = new OpeningProcedure();  break;
+                case IngameProcedureType.NEW_GAME:  proc = new NewGameProcedure();  break;
+                case IngameProcedureType.FIELD:     proc = new x_FieldManager();    break;
                 default:
                     return;
             }
 
+            proc.Start();
             ingameProcedures.Add(proc);
         }
         public static void RemoveIngameProcedure(IngameProcedureType type)
         {
             for (int i = ingameProcedures.Count - 1; i >= 0; --i)
             {
-                if (type == ingameProcedures[i].HandlerType)
+                if (true == ingameProcedures[i].IsType(type))
                 {
                     ingameProcedures[i].Dispose();
                     ingameProcedures.RemoveAt(i);
@@ -86,6 +110,7 @@ namespace Script.Manager
 
             // init procedures
             ingameProcedures = new List<IngameProcedureBase>();
+            nextEventTypeQueue = new Queue<IngameEventType>();
         }
         private void Start()
         {

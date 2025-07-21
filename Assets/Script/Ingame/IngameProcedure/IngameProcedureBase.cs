@@ -12,9 +12,14 @@ namespace Script.Content
         protected IngameProcedureType procedureType;
         protected List<(AssetCode code, GameObject obj)> ingameObjects;
 
-        public IngameProcedureType HandlerType => procedureType;
+        public abstract void Start();
 
-        protected abstract void ExecuteIngameEventAsync(IngameEventType messageType);
+        public bool IsType(IngameProcedureType type)
+        {
+            return type == procedureType;
+        }
+
+        protected abstract Task<bool> ExecuteIngameEventAsync(IngameEventType eventType);
 
         /// <summary> 신경 안쓰고 싶어서 virtual로 일괄 Dispose <br/>
         /// 필요하면 override 하여 기능 추가 </summary>
@@ -33,6 +38,14 @@ namespace Script.Content
 
         protected async Task<T> GetIngameObjectAsync<T>(AssetCode assetCode) where T:IngameMonoBehaviourBase
         {
+            for (int i = 0; i < ingameObjects.Count; ++i)
+            {
+                if (assetCode == ingameObjects[i].code)
+                {
+                    return ingameObjects[i].obj.GetComponent<T>();
+                }
+            }
+
             GameObject obj = await AssetManager.GetOrNewInstanceAsync(assetCode);
             if (null == obj)
             {

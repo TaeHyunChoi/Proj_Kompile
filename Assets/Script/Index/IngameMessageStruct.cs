@@ -4,17 +4,6 @@ namespace Script.IngameMessage
     using Script.Data;
     using Script.Index;
 
-    public readonly struct OnEndProcess
-    {
-        public readonly AssetCode AssetCode;
-        public readonly int endCode;
-
-        public OnEndProcess(AssetCode index, int end = 0)
-        {
-            AssetCode = index;
-            endCode = end;
-        }
-    }
     public readonly struct OnGetAsset_GameObject
     {
         public readonly AssetCode AssetCode;
@@ -46,13 +35,12 @@ namespace Script.IngameMessage
     }
 
 
-    /// <summary> 로딩 커튼 on/off 완료 여부</summary>
-    public readonly struct OnEndLoadingCurtain
+    public readonly struct OnMoveNextEvent
     {
-        public readonly bool isOn;
-        public OnEndLoadingCurtain(bool on)
+        public readonly IngameEventType EventType;
+        public OnMoveNextEvent(IngameEventType ingameEventType)
         {
-            isOn = on;
+            EventType = ingameEventType;
         }
     }
 }

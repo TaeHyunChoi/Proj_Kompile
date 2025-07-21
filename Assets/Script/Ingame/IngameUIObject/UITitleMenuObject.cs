@@ -7,7 +7,6 @@ using Script.IngameMessage;
 using static Script.Index.IDxInput;
 using Script.Interface;
 
-
 public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater, IInputReceiver
 {
     private enum State
@@ -80,7 +79,7 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater, IInput
                 //작동 일시중지
                 break;
             case State.CLOSE:
-                MessageManager.Publish(new OnEndProcess(AssetCode.UI_TitleMenuObject));
+                //MessageManager.Publish(new OnMoveNextEvent(IngameEventType.OPENING_SELECT_NEW_GAME));
                 return IngameUpdateState.SUCCESS;
         }
         return IngameUpdateState.RUNNING;
@@ -114,8 +113,6 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater, IInput
 
         if (Time.time < lastInputTime + waitTime)
         {
-            // 다음 입력을 "씹어버려야 하므로" true;로 반환
-            MessageManager.Publish(new OnSelect_UITitleMenu(-1));
             return true;
         }
 

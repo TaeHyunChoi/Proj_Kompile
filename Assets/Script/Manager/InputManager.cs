@@ -131,5 +131,10 @@ namespace Script.Manager
                 return IngameUpdateState.FAILURE;
             }
         }
+
+        public static void Clear()
+        {
+            inputFlag = InputFlag.NONE;
+        }
     }
 }

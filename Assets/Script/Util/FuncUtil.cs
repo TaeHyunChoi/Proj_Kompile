@@ -6,20 +6,7 @@ namespace Script.Util
 
     public static class FuncUtil
     {
-        public static bool TryGetIngameHandler(this List<IngameProcedureBase> handlers, IngameProcedureType targetType, out IngameProcedureBase handler)
-        {
-            for (int i = handlers.Count - 1; i >= 0; --i)
-            {
-                if (targetType == handlers[i].HandlerType)
-                {
-                    handler = handlers[i];
-                    return true;
-                }
-            }
 
-            handler = null;
-            return false;
-        }
     }
 
 }

@@ -39,7 +39,6 @@ namespace Script.Manager
             unitRoot = mainTransform.Find("Unit").transform;
         }
 
-
         // Table
 #if UNITY_EDITOR
         public static void WriteBinaryFile<T>(T data, string dataPath, string fileName, string addressableGroup = null)
@@ -218,6 +217,19 @@ namespace Script.Manager
             {
                 AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(key);
                 await handle.Task;
+
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    var obj = handle.Result;
+                    var hash_code = obj.GetHashCode();
+                    assetHandles.Add(hash_code, handle);
+                    Debug.Log($"[AssetManager] Successfully loaded asset: {key}");
+                }
+                else
+                {
+                    Debug.LogError($"[AssetManager] Failed to load asset '{key}'. Status: {handle.Status}, Exception: {handle.OperationException}");
+                    throw new System.Exception($"Failed to load asset: {key}. Error: {handle.OperationException}");
+                }
 
                 entry = new InstanceEntry(handle, IsUsePooling(key));
                 _instances.Add(key, entry);

@@ -1,10 +1,11 @@
 using Script.Index;
+using System.Threading.Tasks;
 
 namespace Script.Interface
 {
     public interface IMessageReceiver
     {
-        public bool ReceiveIngameMessage<T>(T data) where T : struct;
+        public Task<bool> ReceiveIngameMessage<T>(T data) where T : struct;
     }
 
     public interface IInputReceiver

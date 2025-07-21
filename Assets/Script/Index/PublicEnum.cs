@@ -29,6 +29,7 @@ public enum IngameEventType
     SELECT_ITEM,
 
     // LOADING
+    LOADING_PROCEED,
     LOADING_CURTAIN_ON,
     LOADING_CURTAIN_OFF,
 
@@ -39,6 +40,7 @@ public enum IngameEventType
     OPENING_SELECT_LOAD_GAME,
     OPENING_SELECT_OPTION,
     OPENING_SELECT_EXIT,
+    OPENING_DISPOSE,
 
     // NEW_GAME
     NEWGAME_INIT_PLAYER,

@@ -11,10 +11,10 @@ namespace Script.Index
     {
         NONE = 0,
         
-        LOADING,
-
         OPENING,
         NEW_GAME,
+
+        FIELD,
     }
     public enum IngameHandlerState
     {
