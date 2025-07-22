@@ -44,7 +44,8 @@ public enum IngameEventType
 
     // NEW_GAME
     NEWGAME_INIT_PLAYER,
-    NEWGAME_INIT_FIELD,
+    NEWGAME_INITIALIZE,
+    NEWGAME_DISPOSE,
 
     // FIELD
     FIELD_INIT,

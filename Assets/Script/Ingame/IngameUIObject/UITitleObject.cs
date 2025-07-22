@@ -192,7 +192,8 @@ public partial class UITitleObject : IngameMonoBehaviourBase, IIngameUpdater, II
                 break;
 
             default:
-                MessageManager.Publish(new OnMoveNextEvent(IngameEventType.OPENING_LOAD_TITLE_MENU));
+                MessageManager.Publish(new OnEndEvent(IngameEventType.OPENING_INSTANTIATE_TITLE));
+                enabled = false;
                 return IngameUpdateState.SUCCESS;
         }
 

@@ -113,7 +113,7 @@ namespace Script.Manager
 
         /// <summary> 큐에서 메시지를 비동기적으로 처리. 단일 처리기만 활성화되도록 보장한다.
         /// </summary>
-        private static async Task ProcessQueueAsync()
+        private static async void ProcessQueueAsync()
         {
             if (true == isProcessingQueue)
             {

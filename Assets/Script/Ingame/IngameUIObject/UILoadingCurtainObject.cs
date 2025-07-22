@@ -9,21 +9,19 @@ public class UILoadingCurtainObject : IngameMonoBehaviourBase, IIngameUpdater
 {
     private Image image;
     
-    private State state;
     private float delta;
     private float alpha;
 
     private void Awake()
     {
         image = transform.GetComponent<Image>();
+        enabled = false;
     }
     public void On(bool on)
     {
-        state = State.FADE;
-
         if (true == on)
         {
-            alpha = 0f;
+            alpha = float.Epsilon;
             delta = 1f;
         }
         else
@@ -31,35 +29,27 @@ public class UILoadingCurtainObject : IngameMonoBehaviourBase, IIngameUpdater
             alpha = 1f;
             delta = -1.5f;
         }
+
+        enabled = true;
     }
     public IngameUpdateState UpdateState()
     {
-        switch (state)
-        {
-            case State.FADE:
-                alpha += delta * Time.deltaTime;
-                image.color = new Color(0f, 0f, 0f, alpha);
+        // idea: 이걸 sin 함수로 구현할 순 없나?
+        alpha = System.Math.Clamp(alpha + delta * Time.deltaTime, float.Epsilon, 1f);
+        image.color = new Color(0f, 0f, 0f, alpha);
 
-                var prev_alpha = alpha;
-                alpha = System.Math.Clamp(alpha, 0, 1);
-                Debug.Log($"[TEST] {prev_alpha:F6} => {alpha:F6}");
-                if (alpha <= 0 || alpha >= 1)
-                {
-                    IngameManager.MoveNextEventType();
-                    state = State.CLOSE;
-                    Debug.Log($"[TEST] Close Loading ({alpha:F6})");
-                }
-                break;
-            case State.CLOSE:
-                return IngameUpdateState.SUCCESS;
+        if (alpha <= float.Epsilon)
+        {
+            MessageManager.Publish(new OnEndEvent(IngameEventType.LOADING_CURTAIN_OFF));
+            enabled = false;
+            return IngameUpdateState.SUCCESS;
+        }
+        else if (alpha >= 1)
+        {
+            MessageManager.Publish(new OnEndEvent(IngameEventType.LOADING_CURTAIN_ON));
+            enabled = false;
         }
 
         return IngameUpdateState.RUNNING;
-    }
-
-    private enum State
-    {
-        FADE,
-        CLOSE
     }
 }

@@ -34,11 +34,10 @@ namespace Script.IngameMessage
         }
     }
 
-
-    public readonly struct OnMoveNextEvent
+    public readonly struct OnEndEvent
     {
         public readonly IngameEventType EventType;
-        public OnMoveNextEvent(IngameEventType ingameEventType)
+        public OnEndEvent(IngameEventType ingameEventType)
         {
             EventType = ingameEventType;
         }

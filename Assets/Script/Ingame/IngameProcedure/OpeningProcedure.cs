@@ -12,9 +12,9 @@ namespace Script.Content
         {
             procedureType = IngameProcedureType.OPENING;
         }
-        public override async void Start()
+        public override async Task<bool> Start()
         {
-            await ExecuteIngameEventAsync(IngameEventType.OPENING_INSTANTIATE_TITLE);
+            return await ExecuteIngameEventAsync(IngameEventType.OPENING_INSTANTIATE_TITLE);
         }
 
         protected override async Task<bool> ExecuteIngameEventAsync(IngameEventType messageType)
@@ -25,18 +25,15 @@ namespace Script.Content
                     UITitleObject titleObject = await GetIngameObjectAsync<UITitleObject>(AssetCode.OP_TitleObject);
                     ingameObjects.Add(new(AssetCode.OP_TitleObject, titleObject.gameObject));
                     break;
-
                 case IngameEventType.OPENING_LOAD_TITLE_MENU:
                     var uiTitleMenuObject = await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject);
                     ingameObjects.Add(new(AssetCode.UI_TitleMenuObject, uiTitleMenuObject.gameObject));
                     break;
-
                 case IngameEventType.OPENING_SELECT_NEW_GAME:
                     uiTitleMenuObject = await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject);
                     uiTitleMenuObject.WaitUpdate();
                     IngameManager.AddIngameProcedure(IngameProcedureType.NEW_GAME);
                     break;
-
                 default:
                     return false;
             }
@@ -63,10 +60,12 @@ namespace Script.Content
 
                 return await ExecuteIngameEventAsync(next_event_type);
             }
-
-            if (data is OnMoveNextEvent onMoveNextEvent)
+            if (data is OnEndEvent onEndEvent)
             {
-                return await ExecuteIngameEventAsync(onMoveNextEvent.EventType);
+                if (IngameEventType.OPENING_INSTANTIATE_TITLE == onEndEvent.EventType)
+                {
+                    return await ExecuteIngameEventAsync(IngameEventType.OPENING_LOAD_TITLE_MENU);
+                }
             }
 
             return false;

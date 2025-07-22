@@ -12,16 +12,27 @@ namespace Script.Content
         {
             procedureType = IngameProcedureType.NEW_GAME;
         }
-        public override async void Start()
+
+        public override async Task<bool> Start()
         {
-            await ExecuteIngameEventAsync(IngameEventType.LOADING_CURTAIN_ON);
+            return await ExecuteIngameEventAsync(IngameEventType.LOADING_CURTAIN_ON);
         }
 
         public async Task<bool> ReceiveIngameMessage<T>(T data) where T : struct
         {
-            if (data is OnMoveNextEvent onNextEvent)
+            if (data is OnEndEvent onEndEvent)
             {
-                return await ExecuteIngameEventAsync(onNextEvent.EventType);
+                IngameEventType nextEventType;
+                switch (onEndEvent.EventType)
+                {
+                    case IngameEventType.LOADING_CURTAIN_ON:   nextEventType = IngameEventType.OPENING_DISPOSE;       break;
+                    case IngameEventType.FIELD_INIT:           nextEventType = IngameEventType.LOADING_CURTAIN_OFF;   break;
+                    case IngameEventType.LOADING_CURTAIN_OFF:  nextEventType = IngameEventType.NEWGAME_DISPOSE;       break;
+                    default:
+                        return false;
+                }
+
+                return await ExecuteIngameEventAsync(nextEventType);
             }
 
             return false;
@@ -34,25 +45,25 @@ namespace Script.Content
                 case IngameEventType.LOADING_CURTAIN_ON:
                     UILoadingCurtainObject loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain);
                     ingameObjects.Add(new(AssetCode.UI_LoadingCurtain, loadingCurtainObject.gameObject));
-                    IngameManager.EnqueueNextEventType(IngameEventType.OPENING_DISPOSE);
                     loadingCurtainObject.On(true);
-                    // IngameManager에서 NextEventType을 들고 있으면 어떨까요?
                     break;
 
                 case IngameEventType.OPENING_DISPOSE:
                     IngameManager.RemoveIngameProcedure(IngameProcedureType.OPENING);
-                    goto case IngameEventType.NEWGAME_INIT_FIELD;
+                    goto case IngameEventType.NEWGAME_INITIALIZE;
 
-                case IngameEventType.NEWGAME_INIT_FIELD:
+                case IngameEventType.NEWGAME_INITIALIZE:
                     UnityEngine.Debug.Log($"[NewGameProcedure] NEWGAME_INIT_FIELD");
                     IngameManager.AddNewPlayData();
                     IngameManager.AddIngameProcedure(IngameProcedureType.FIELD);
-                    //break;
-                    goto case IngameEventType.LOADING_CURTAIN_OFF;
+                    break;
 
                 case IngameEventType.LOADING_CURTAIN_OFF:
                     loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain);
                     loadingCurtainObject.On(false);
+                    break;
+                case IngameEventType.NEWGAME_DISPOSE:
+                    IngameManager.RemoveIngameProcedure(IngameProcedureType.NEW_GAME);
                     break;
 
                 default:

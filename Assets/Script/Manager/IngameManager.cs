@@ -33,22 +33,6 @@ namespace Script.Manager
         }
 
         // ingame procedure
-        private static Queue<IngameEventType> nextEventTypeQueue;
-        public static void EnqueueNextEventType(IngameEventType next)
-        {
-            nextEventTypeQueue.Enqueue(next);
-        }
-        public static void MoveNextEventType()
-        {
-            if (0 >= nextEventTypeQueue.Count)
-            {
-                return;
-            }
-
-            IngameEventType nextEventType = nextEventTypeQueue.Dequeue();
-            MessageManager.Publish(new OnMoveNextEvent(nextEventType));
-        }
-
         public static void AddIngameProcedure(IngameProcedureType type)
         {
             InputManager.Clear();
@@ -63,8 +47,8 @@ namespace Script.Manager
                     return;
             }
 
-            proc.Start();
             ingameProcedures.Add(proc);
+            proc.Start();
         }
         public static void RemoveIngameProcedure(IngameProcedureType type)
         {
@@ -110,7 +94,6 @@ namespace Script.Manager
 
             // init procedures
             ingameProcedures = new List<IngameProcedureBase>();
-            nextEventTypeQueue = new Queue<IngameEventType>();
         }
         private void Start()
         {

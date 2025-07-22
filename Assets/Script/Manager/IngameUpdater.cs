@@ -48,60 +48,34 @@ namespace Script.Manager
         {
             for (int i = 0; i < updateList.Count; ++i)
             {
-                switch (updateList[i].UpdateState())
-                {
-                    case IngameUpdateState.SUCCESS:
-                        updateList.RemoveAt(i--);
-                        break;
-                    case IngameUpdateState.FAILURE:
+                // update 다 돌린 후에 해당 updater.enabled = false;를 하면 알아서 updaterList에서 날린다.
 #if UNITY_EDITOR
-                        Debug.Assert(false, $"Updater[{i}].State == FAILTURE;");
+                Debug.Assert(IngameUpdateState.FAILURE != updateList[i].UpdateState());
+#else
+                updateList[i].UpdateState();
 #endif
-                        break;
-                    default:
-                        // Running
-                        break;
-                }
             }
         }
         private void FixedUpdate()
         {
             for (int i = 0; i < fixedUpdateList.Count; ++i)
             {
-                switch (fixedUpdateList[i].FixedUpdateState())
-                {
-                    case IngameUpdateState.SUCCESS:
-                        fixedUpdateList.RemoveAt(i--);
-                        break;
-                    case IngameUpdateState.FAILURE:
 #if UNITY_EDITOR
-                        Debug.Assert(false, $"FixedUpdater[{i}].State == FAILTURE;");
+                Debug.Assert(IngameUpdateState.FAILURE != fixedUpdateList[i].FixedUpdateState());
+#else
+                fixedUpdateList[i].FixedUpdateState();
 #endif
-                        break;
-                    default:
-                        // Running
-                        break;
-                }
             }
         }
         private void LateUpdate()
         {
             for (int i = 0; i < lateUpdateList.Count; ++i)
             {
-                switch (lateUpdateList[i].LateUpdateState())
-                {
-                    case IngameUpdateState.SUCCESS:
-                        lateUpdateList.RemoveAt(i--);
-                        break;
-                    case IngameUpdateState.FAILURE:
 #if UNITY_EDITOR
-                        Debug.Assert(false, $"LateUpdater[{i}].State == FAILTURE;");
+                Debug.Assert(IngameUpdateState.FAILURE != lateUpdateList[i].LateUpdateState());
+#else
+                lateUpdateList[i].LateUpdateState();
 #endif
-                        break;
-                    default:
-                        // Running
-                        break;
-                }
             }
         }
     }

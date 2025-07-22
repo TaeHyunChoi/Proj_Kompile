@@ -12,7 +12,7 @@ namespace Script.Content
         protected IngameProcedureType procedureType;
         protected List<(AssetCode code, GameObject obj)> ingameObjects;
 
-        public abstract void Start();
+        public abstract Task<bool> Start();
 
         public bool IsType(IngameProcedureType type)
         {
