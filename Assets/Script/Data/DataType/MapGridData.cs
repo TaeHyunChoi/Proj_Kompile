@@ -1,7 +1,6 @@
 namespace Script.Data
 {
     using MessagePack;
-    using Script.Manager;
     using System.Collections.Generic;
 
     [MessagePackObject]
@@ -19,16 +18,13 @@ namespace Script.Data
         [IgnoreMember] // 런타임 중에만 사용한다.
         public int[] mesh_asset_instanceIDs;
 
+        [IgnoreMember] // 런타임 중에만 사용한다.
+        public UnityEngine.GameObject gameObject;
+
         public void SetChildObjectMeshIDs(int[] ids)
         {
             mesh_asset_instanceIDs = ids;
         }
-        //~MapGridData()
-        //{
-        //    // 이게 여기에 있으면 안되는거구나?
-        //    AssetManager.Dispose(mesh_asset_instanceIDs);
-        //    mesh_asset_instanceIDs = null;
-        //}
 
 #if UNITY_EDITOR
         public MapGridData(int targetGridKey)

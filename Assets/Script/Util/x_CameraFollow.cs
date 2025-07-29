@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class CameraFollow : MonoBehaviour
+public class x_CameraFollow : MonoBehaviour
 {
     private readonly Vector3    OFFSET   = new Vector3(0f, 3f, -2f);
     private readonly Quaternion ROTATION = Quaternion.Euler(50f, 0f, 0f);

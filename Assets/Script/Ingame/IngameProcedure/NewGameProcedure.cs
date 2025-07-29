@@ -43,7 +43,7 @@ namespace Script.Content
             switch (eventType)
             {
                 case IngameEventType.LOADING_CURTAIN_ON:
-                    UILoadingCurtainObject loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain);
+                    UILoadingCurtainObject loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain, AssetParentType.CANVAS_OVERAY);
                     ingameObjects.Add(new(AssetCode.UI_LoadingCurtain, loadingCurtainObject.gameObject));
                     loadingCurtainObject.On(true);
                     break;
@@ -59,7 +59,7 @@ namespace Script.Content
                     break;
 
                 case IngameEventType.LOADING_CURTAIN_OFF:
-                    loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain);
+                    loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain, AssetParentType.CANVAS_OVERAY);
                     loadingCurtainObject.On(false);
                     break;
                 case IngameEventType.NEWGAME_DISPOSE:

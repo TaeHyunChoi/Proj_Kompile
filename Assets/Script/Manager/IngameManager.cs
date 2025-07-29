@@ -5,7 +5,6 @@ namespace Script.Manager
     using Script.Index;
     using Script.Content;
     using Script.Data;
-    using Script.IngameMessage;
 
     public partial class IngameManager : MonoBehaviour
     {
@@ -13,7 +12,7 @@ namespace Script.Manager
 
         private static PlayData         playData;
 
-        private static InputManager     inputMgr;
+        private static InputHandler     inputHandler;
         private static IngameCamera     ingameCam;
 
         private static List<IngameProcedureBase> ingameProcedures;
@@ -35,14 +34,14 @@ namespace Script.Manager
         // ingame procedure
         public static void AddIngameProcedure(IngameProcedureType type)
         {
-            InputManager.Clear();
+            InputHandler.Clear();
 
             IngameProcedureBase proc;
             switch (type)
             {
                 case IngameProcedureType.OPENING:   proc = new OpeningProcedure();  break;
                 case IngameProcedureType.NEW_GAME:  proc = new NewGameProcedure();  break;
-                case IngameProcedureType.FIELD:     proc = new x_FieldManager();    break;
+                case IngameProcedureType.FIELD:     proc = new EnterFieldProcedure();    break;
                 default:
                     return;
             }
@@ -89,7 +88,7 @@ namespace Script.Manager
             updater.Initialize();
 
             // init manager
-            inputMgr = new InputManager();
+            inputHandler = new InputHandler();
             ingameCam = transform.GetComponentInChildren<IngameCamera>(true);
 
             // init procedures
@@ -102,11 +101,11 @@ namespace Script.Manager
 
         private void OnEnable()
         {
-            inputMgr.OnEnable();
+            inputHandler.OnEnable();
         }
         private void OnDisable()
         {
-            inputMgr.OnDisable();
+            inputHandler.OnDisable();
         }
     }
 }

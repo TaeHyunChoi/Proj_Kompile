@@ -8,48 +8,28 @@ namespace Script.Manager
     using System.Threading.Tasks;
     using UnityEngine;
 
-    public class x_FieldManager : IngameProcedureBase
+    public class EnterFieldProcedure : IngameProcedureBase
     {
-        private ConcurrentDictionary<int, MapGridData> mapGridData;
-
+        // 이거를 모두 FieldManager.cs 로 넘기는 게 맞는 거 같은데?
+        // private ConcurrentDictionary<int, MapGridData> mapGridData;
         // player character units
-        private IngameFieldPlayer[] players;
+        // private IngameFieldPlayer[] players;
 
-        // npcs
-
-
-
-        public x_FieldManager() : base()
-        {
-            mapGridData = new ConcurrentDictionary<int, MapGridData>();
-            players     = new IngameFieldPlayer[3];
-        }
 
         public override async Task<bool> Start()
         {
-            // get grid data
+            // get player data - 여기 들어오기 전에 먼저 가져왔다고 치고...
             PlayData playData = IngameManager.GetPlayData();
-            int gridKey = playData.Grid;
-            MapGridData targetData = await AssetManager.LoadMapGridData(gridKey);
-            bool result = mapGridData.TryAdd(gridKey, targetData);
-            if (false == result)
-            {
-                throw new Exception("fail to add map grid data;");
-            }
 
-            // instantiate grid objects
-            result = await AssetManager.InstaniateMapGrid(mapGridData[gridKey]);
-            if (false == result)
-            {
-                throw new Exception("fail to instantiate map grid objects;");
-            }
+            // MapGridData를 어떻게 관리하면 좋을까요?...
+            MapGridData targetData = await AssetManager.Temp(playData.Grid);
+            //MapGridData targetData = await AssetManager.LoadMapGridBinaryData(gridKey);
+            //bool result = mapGridData.TryAdd(gridKey, targetData); //뭐야 그럼 해제는 어떻게 함? 아이고..
+            //result = await AssetManager.InstaniateMapGrid(mapGridData[gridKey]);
 
-            // instantiate player character :: parent를 지정해줘야하는구나?
-            //IngameAsset_t asset = await AssetManager.InstantiateGameObjectAsync(AssetCode.UnitBase, true);
-            //assets.Add(asset);
-            GameObject obj = await AssetManager.GetOrNewInstanceAsync(AssetCode.UnitBase);
 
-            //IngameFieldPlayer player_character = asset.AddComponent<IngameFieldPlayer>();
+            // set playable unit
+            GameObject obj = await AssetManager.GetOrNewInstanceAsync(AssetCode.UnitBase, AssetParentType.UNIT_ROOT);
             IngameFieldPlayer player_character = obj.AddComponent<IngameFieldPlayer>();
             bool isInit = await player_character.Init();
 
@@ -80,3 +60,4 @@ namespace Script.Manager
         }
     }
 }
+ 

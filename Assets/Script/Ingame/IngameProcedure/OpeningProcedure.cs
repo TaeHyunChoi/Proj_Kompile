@@ -22,15 +22,15 @@ namespace Script.Content
             switch (messageType)
             {
                 case IngameEventType.OPENING_INSTANTIATE_TITLE:
-                    UITitleObject titleObject = await GetIngameObjectAsync<UITitleObject>(AssetCode.OP_TitleObject);
+                    UITitleObject titleObject = await GetIngameObjectAsync<UITitleObject>(AssetCode.OP_TitleObject, AssetParentType.CANVAS_OVERAY);
                     ingameObjects.Add(new(AssetCode.OP_TitleObject, titleObject.gameObject));
                     break;
                 case IngameEventType.OPENING_LOAD_TITLE_MENU:
-                    var uiTitleMenuObject = await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject);
+                    var uiTitleMenuObject = await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject, AssetParentType.CANVAS_OVERAY);
                     ingameObjects.Add(new(AssetCode.UI_TitleMenuObject, uiTitleMenuObject.gameObject));
                     break;
                 case IngameEventType.OPENING_SELECT_NEW_GAME:
-                    uiTitleMenuObject = await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject);
+                    uiTitleMenuObject = await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject, AssetParentType.CANVAS_OVERAY);
                     uiTitleMenuObject.WaitUpdate();
                     IngameManager.AddIngameProcedure(IngameProcedureType.NEW_GAME);
                     break;

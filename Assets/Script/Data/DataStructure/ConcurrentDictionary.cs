@@ -212,6 +212,18 @@ namespace Script.Data
                 _lock.ExitWriteLock();
             }
         }
+        public bool TryRemove(TKey key)
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                return _dictionary.Remove(key);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
 
         public void Clear()
         {

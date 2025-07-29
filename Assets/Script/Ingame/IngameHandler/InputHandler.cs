@@ -7,9 +7,8 @@ namespace Script.Manager
     using Script.Interface;
     using static Script.Index.IDxInput;
     using System.Collections.Generic;
-    using static Unity.IO.LowLevel.Unsafe.AsyncReadManagerMetrics;
 
-    public class InputManager : IIngameUpdater
+    public class InputHandler : IIngameUpdater
     {
         private readonly InputAction moveInput;
         private readonly InputAction enterInput;
@@ -18,7 +17,7 @@ namespace Script.Manager
         private static readonly List<IInputReceiver> inputReceivers = new List<IInputReceiver>();
         private static InputFlag inputFlag;
 
-        public InputManager()
+        public InputHandler()
         {
             inputFlag = InputFlag.NONE;
 
@@ -108,28 +107,21 @@ namespace Script.Manager
 
         public IngameUpdateState UpdateState()
         {
-            try
+            if (InputFlag.NONE == inputFlag)
             {
-                if (InputFlag.NONE != inputFlag)
+                goto CLOSE;
+            }
+
+            for (int i = inputReceivers.Count - 1; i >= 0; --i)
+            {
+                if (true == inputReceivers[i].ReceiveInput(inputFlag))
                 {
-                    //MessageManager.Publish(new IngameMessage.OnInput(inputFlag));
-
-                    for (int i = inputReceivers.Count - 1; i >= 0; --i)
-                    {
-                        if (true == inputReceivers[i].ReceiveInput(inputFlag))
-                        {
-                            return IngameUpdateState.RUNNING;
-                        }
-                    }
+                    goto CLOSE;
                 }
+            }
 
-                return IngameUpdateState.RUNNING;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"InputManager.UpdateState 예외 발생: {ex}");
-                return IngameUpdateState.FAILURE;
-            }
+        CLOSE:
+            return IngameUpdateState.RUNNING;
         }
 
         public static void Clear()
