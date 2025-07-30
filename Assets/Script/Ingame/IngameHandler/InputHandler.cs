@@ -108,7 +108,6 @@ namespace Script.Manager
 
             for (int i = inputReceivers.Count - 1; i >= 0; --i)
             {
-                Debug.Log($"[InputHandler] {System.Convert.ToString((int)inputFlag, 2)}");
                 if (true == inputReceivers[i].ReceiveInput(inputFlag))
                 {
                     goto CLOSE;

@@ -4,7 +4,6 @@ namespace Script.Manager
     using Script.Index;
     using Script.IngameMessage;
     using System.Threading.Tasks;
-    using UnityEditor.AddressableAssets.Build;
     using UnityEngine;
 
     public class FieldManager
