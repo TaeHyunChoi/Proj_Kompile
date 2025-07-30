@@ -9,6 +9,7 @@ namespace Script.Manager
     public partial class IngameManager : MonoBehaviour
     {
         private static IngameManager    instance;
+        private static FieldManager     fieldMgr;
 
         private static PlayData         playData;
 
@@ -20,7 +21,7 @@ namespace Script.Manager
         // play data
         public static void AddNewPlayData()
         {
-            playData = new PlayData();
+
 
 #if UNITY_EDITOR
             Debug.Log("NEWGAME_PLAYER_DATA");
@@ -31,6 +32,19 @@ namespace Script.Manager
             return playData;
         }
 
+        // manager
+        public static async void EnterField(PlayData data)
+        {
+#if UNITY_EDITOR
+            Debug.Log("[IngameManager] EnterNewField");
+#endif
+
+            playData = data;
+            fieldMgr = new FieldManager();
+
+            await fieldMgr.Initialize(playData);
+        }
+
         // ingame procedure
         public static void AddIngameProcedure(IngameProcedureType type)
         {
@@ -39,9 +53,8 @@ namespace Script.Manager
             IngameProcedureBase proc;
             switch (type)
             {
-                case IngameProcedureType.OPENING:   proc = new OpeningProcedure();  break;
-                case IngameProcedureType.NEW_GAME:  proc = new NewGameProcedure();  break;
-                case IngameProcedureType.FIELD:     proc = new EnterFieldProcedure();    break;
+                case IngameProcedureType.OPENING:   proc = new OpeningProcedure();      break;
+                case IngameProcedureType.NEW_GAME:  proc = new NewGameProcedure();      break;
                 default:
                     return;
             }

@@ -1,6 +1,7 @@
 namespace Script.Data
 {
     using MessagePack;
+    using Script.Manager;
     using System.Collections.Generic;
 
     [MessagePackObject]
@@ -24,6 +25,20 @@ namespace Script.Data
         public void SetChildObjectMeshIDs(int[] ids)
         {
             mesh_asset_instanceIDs = ids;
+        }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < mesh_asset_instanceIDs.Length; ++i)
+            {
+                AssetManager.Dispose(mesh_asset_instanceIDs[i]);
+            }
+        }
+
+        // 이거 괜찮나?
+        ~MapGridData()
+        {
+            Dispose();
         }
 
 #if UNITY_EDITOR

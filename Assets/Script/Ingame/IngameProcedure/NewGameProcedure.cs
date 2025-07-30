@@ -4,6 +4,7 @@ namespace Script.Content
     using Script.IngameMessage;
     using Script.Interface;
     using Script.Manager;
+    using Script.Data;
     using System.Threading.Tasks;
 
     public class NewGameProcedure : IngameProcedureBase, IMessageReceiver
@@ -53,9 +54,8 @@ namespace Script.Content
                     goto case IngameEventType.NEWGAME_INITIALIZE;
 
                 case IngameEventType.NEWGAME_INITIALIZE:
-                    UnityEngine.Debug.Log($"[NewGameProcedure] NEWGAME_INIT_FIELD");
-                    IngameManager.AddNewPlayData();
-                    IngameManager.AddIngameProcedure(IngameProcedureType.FIELD);
+                    InputHandler.Clear();
+                    IngameManager.EnterField(new PlayData());
                     break;
 
                 case IngameEventType.LOADING_CURTAIN_OFF:

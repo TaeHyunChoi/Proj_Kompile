@@ -79,7 +79,6 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater, IInput
                 //작동 일시중지
                 break;
             case State.CLOSE:
-                //MessageManager.Publish(new OnMoveNextEvent(IngameEventType.OPENING_SELECT_NEW_GAME));
                 return IngameUpdateState.SUCCESS;
         }
         return IngameUpdateState.RUNNING;

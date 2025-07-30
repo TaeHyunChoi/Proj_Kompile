@@ -19,12 +19,13 @@ namespace Script.Manager
     public static partial class AssetManager
     {
         // Map?
-        public static async Task<bool> InstaniateMapGrid(MapGridData data)
+        public static async Task<MapGridData> InstaniateMapGrid(int gridKey)
         {
-            int length = data.assetFiles.Count;
-            int[] mesh_instance_id = new int[length]; //여기에 mesh.instance_id도 함께 들고 있어야 해제가 가능한 거 아니오? 아니구나.. 그냥 mesh instance만 들고 있으면 되는건구나.
+            MapGridData data = await ReadBinaryFileAsync<MapGridData>($"MapNavi_{gridKey}");
 
-            (int instanceID, Mesh mesh)[] mesh_data = await GetMapGridMeshesAsync(data.assetFiles); // 얘를 어디서, 어떻게 처리하느냐가 문제네
+            int length = data.assetFiles.Count;
+            int[] mesh_instance_id = new int[length];
+            (int instanceID, Mesh mesh)[] mesh_data = await GetMapGridMeshesAsync(data.assetFiles);
 
             GameObject obj;
             for (int i = 0; i < length; ++i)
@@ -37,9 +38,8 @@ namespace Script.Manager
                 await Task.Yield();
             }
 
-            data.SetChildObjectMeshIDs(mesh_instance_id); // 메쉬 에셋을 해제할 때에 사용
-            //Dispose(prefab_id);
-            return true;
+            data.SetChildObjectMeshIDs(mesh_instance_id);
+            return data;
         }
         private static async Task<(int, Mesh)[]> GetMapGridMeshesAsync(List<string> keys)
         {
@@ -117,17 +117,6 @@ namespace Script.Manager
             string assetKey = $"MapNavi_{gridKey}";
             return await ReadBinaryFileAsync<MapGridData>(assetKey);
         }
-
-
-        public static async Task<MapGridData> Temp(int gridKey)
-        {
-            MapGridData data = await ReadBinaryFileAsync<MapGridData>($"MapNavi_{gridKey}");
-            await InstaniateMapGrid(data);
-
-            return data;
-        }
-
-
 
         // GameObject Instance
         public static async Task<GameObject> GetOrNewInstanceAsync(AssetCode assetCode, AssetParentType parentType)

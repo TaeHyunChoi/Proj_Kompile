@@ -1,6 +1,5 @@
 namespace Script.Manager
 {
-    using System;
     using UnityEngine;
     using UnityEngine.InputSystem;
     using Script.Index;
@@ -15,24 +14,20 @@ namespace Script.Manager
         private readonly InputAction actionInput;
 
         private static readonly List<IInputReceiver> inputReceivers = new List<IInputReceiver>();
-        private static InputFlag inputFlag;
 
+        private static InputFlag inputFlag;
         public InputHandler()
         {
             inputFlag = InputFlag.NONE;
 
-            moveInput = new InputAction("Move", InputActionType.Value, interactions: "Hold(duration=0.1)");
+            moveInput = new InputAction("Move", InputActionType.Value);
             moveInput.AddCompositeBinding("2DVector")
                      .With("Up",    "<Keyboard>/upArrow")
                      .With("Down",  "<Keyboard>/downArrow")
                      .With("Left",  "<Keyboard>/leftArrow")
                      .With("Right", "<Keyboard>/rightArrow");
-            //moveAction.AddBinding("<Gamepad>/leftStick");
-
-            // OnMove() : local function
-            moveInput.started   += OnMove;
-            moveInput.performed += OnMove;
-            moveInput.canceled  += OnMove;
+            moveInput.performed += OnMovePerformed;
+            moveInput.canceled  += OnMoveCanceled;
 
             enterInput = new InputAction("Enter", InputActionType.Button);
             enterInput.AddBinding("<Keyboard>/z");
@@ -62,21 +57,20 @@ namespace Script.Manager
 
             IngameUpdater.AddUpdater(this);
         }
-        private void OnMove(InputAction.CallbackContext context)
+        private void OnMovePerformed(InputAction.CallbackContext context)
         {
             Vector2 direction = context.ReadValue<Vector2>();
-            float x = direction.x;
-            float y = direction.y;
 
-            InputFlag moveFlag = InputFlag.NONE;
-            if (x > 0) { moveFlag |= InputFlag.RIGHT; }
-            if (x < 0) { moveFlag |= InputFlag.LEFT; }
-            if (y > 0) { moveFlag |= InputFlag.UP; }
-            if (y < 0) { moveFlag |= InputFlag.DOWN; }
-
-            inputFlag = (inputFlag & InputFlag.ACT_ALL) | moveFlag;
+            inputFlag &= ~InputFlag.MOVE_ALL;
+            if (direction.x >  0.1f) { inputFlag |= InputFlag.RIGHT; }
+            if (direction.x < -0.1f) { inputFlag |= InputFlag.LEFT;  }
+            if (direction.y >  0.1f) { inputFlag |= InputFlag.UP;    }
+            if (direction.y < -0.1f) { inputFlag |= InputFlag.DOWN;  }
         }
-
+        private void OnMoveCanceled(InputAction.CallbackContext context)
+        {
+            inputFlag &= ~InputFlag.MOVE_ALL;
+        }
 
         public void OnEnable()
         {
@@ -114,6 +108,7 @@ namespace Script.Manager
 
             for (int i = inputReceivers.Count - 1; i >= 0; --i)
             {
+                Debug.Log($"[InputHandler] {System.Convert.ToString((int)inputFlag, 2)}");
                 if (true == inputReceivers[i].ReceiveInput(inputFlag))
                 {
                     goto CLOSE;

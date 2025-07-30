@@ -33,6 +33,7 @@ namespace Script.Content
                     uiTitleMenuObject = await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject, AssetParentType.CANVAS_OVERAY);
                     uiTitleMenuObject.WaitUpdate();
                     IngameManager.AddIngameProcedure(IngameProcedureType.NEW_GAME);
+                    InputHandler.RemoveInputReceiver(await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject, AssetParentType.CANVAS_OVERAY));
                     break;
                 default:
                     return false;
