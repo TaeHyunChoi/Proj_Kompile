@@ -121,6 +121,7 @@ namespace Script.Manager
         public static void Clear()
         {
             inputFlag = InputFlag.NONE;
+            inputReceivers.Clear();
         }
     }
 }

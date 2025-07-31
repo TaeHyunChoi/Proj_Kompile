@@ -30,10 +30,7 @@ namespace Script.Content
                     ingameObjects.Add(new(AssetCode.UI_TitleMenuObject, uiTitleMenuObject.gameObject));
                     break;
                 case IngameEventType.OPENING_SELECT_NEW_GAME:
-                    uiTitleMenuObject = await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject, AssetParentType.CANVAS_OVERAY);
-                    uiTitleMenuObject.WaitUpdate();
                     IngameManager.AddIngameProcedure(IngameProcedureType.NEW_GAME);
-                    InputHandler.RemoveInputReceiver(await GetIngameObjectAsync<UITitleMenuObject>(AssetCode.UI_TitleMenuObject, AssetParentType.CANVAS_OVERAY));
                     break;
                 default:
                     return false;

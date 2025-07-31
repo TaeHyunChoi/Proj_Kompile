@@ -54,7 +54,6 @@ namespace Script.Content
                     goto case IngameEventType.NEWGAME_INITIALIZE;
 
                 case IngameEventType.NEWGAME_INITIALIZE:
-                    InputHandler.Clear();
                     IngameManager.EnterField(new PlayData());
                     break;
 

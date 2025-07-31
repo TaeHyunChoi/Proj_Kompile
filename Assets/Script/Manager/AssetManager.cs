@@ -119,10 +119,9 @@ namespace Script.Manager
         }
 
         // GameObject Instance
-        public static async Task<GameObject> GetOrNewInstanceAsync(AssetCode assetCode, AssetParentType parentType)
+        public static async Task<GameObject> GetOrNewInstanceAsync(AssetCode assetCode, AssetParentType parentType, bool usePooling = false)
         {
             string key = assetCode.ToString();
-            Transform parent = GetIngameObjectParent(parentType);
 
             if (false == _gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
             {
@@ -142,7 +141,7 @@ namespace Script.Manager
                     throw new System.Exception($"Failed to load asset: {key}. Error: {handle.OperationException}");
                 }
 
-                entry = new InstanceEntry(handle, usePooling: true);
+                entry = new InstanceEntry(handle, usePooling);
                 _gameObjectInstances.TryAdd(key, entry);
             }
 
@@ -155,6 +154,7 @@ namespace Script.Manager
             }
             else
             {
+                Transform parent = GetIngameObjectParent(parentType);
                 AsyncOperationHandle<GameObject> instHandle = Addressables.InstantiateAsync(key, parent);
                 instance = await instHandle.Task;
             }
@@ -207,7 +207,7 @@ namespace Script.Manager
                 _gameObjectInstances.TryRemove(key);
 
 #if UNITY_EDITOR
-                Debug.Log($"[TEST] Release[{assetCode}]");
+                Debug.Log($"[AssetManager] Release[{assetCode}]");
 #endif
             }
         }
