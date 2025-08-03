@@ -155,16 +155,13 @@ namespace MapSampling
             map[gridKey].AddAssetFile(assetName);
 
             var path = "Assets/Rcs/MapRender/" + assetName + ".asset";
-            //var path = "Assets/Rcs/MapRender/" + $"MapRender_{gridKey}_{layer}" + ".asset";
-
-            // 이미 같은 이름의 에셋이 있는지 확인합니다.
             if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path))
             {
                 AssetDatabase.DeleteAsset(path);
             }
 
-            var meshToSave = (makeNewInstance) ? Object.Instantiate(mesh) as Mesh : mesh;
-            if (optimizeMesh)
+            var meshToSave = (true == makeNewInstance) ? Object.Instantiate(mesh) as Mesh : mesh;
+            if (true == optimizeMesh)
             {
                 MeshUtility.Optimize(meshToSave);
             }

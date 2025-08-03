@@ -12,7 +12,7 @@ namespace Script.Data
     [ExecuteAlways]  // 에디터에서 텍스쳐 곧장 적용하기 위함
     public class EditMapData : MonoBehaviour
     {
-        private const int SPRITE_WIDTH = 256;
+        private const int SPRITE_WIDTH  = 256;
         private const int SPRITE_HEIGHT = 256;
 
         [Header("Render")]
@@ -20,17 +20,15 @@ namespace Script.Data
         [SerializeField] private int layer;
         [SerializeField] private TextureIndex textureType;
 
-        private MeshFilter meshFilter;
+        private MeshFilter  meshFilter;
         private MeshRenderer meshRenderer;
-
         private ulong naviMask;
-        private uint infoMask;
+        private uint  infoMask;
+        private int   gridKey;
 
         public MeshFilter MeshFilter => meshFilter;
         public MeshRenderer MeshRenderer => meshRenderer;
         public int Layer => layer;
-
-        private int gridKey;
         public int GridKey => gridKey;
         public int TextureIndex => (int)textureType;
 
@@ -172,8 +170,6 @@ namespace Script.Data
             Vector3Int diffInt = diff.ToInt();
 
             // scale ,x[sign,small_buffer,6], y[sign,small_buffer,4], z[sign,small_buffer,6]
-            // layer 정보도 필요하네
-            // const 변수들을 어디서 저장하는게 좋으려나?
             const byte shiftTileLayer = 23;
             const byte shiftIsHalfScale = 22;
             const byte shiftTileX = 14;
@@ -193,39 +189,38 @@ namespace Script.Data
         // [NavMesh] Height
         private ulong GetNaviMaskRotated(int rot, bool isSmall)
         {
+            int[,] matrix = GetHeightMatrixRotated(rot);
+
             ulong newMask = 0;
-
-            var matrix = GetHeightMatrixRotated(rot);
-            matrix = RotateMatrix(matrix, rot);
-
             ulong mask = 0;
-            int i = 0;
-            for (i = 0; i < 13; ++i)
+
+            int shift;
+            for (shift = 0; shift < 13; ++shift)
             {
-                switch (i)
+                switch (shift)
                 {
-                    case 0: mask = (ulong)matrix[0, 4]; break;
-                    case 1: mask = (ulong)matrix[2, 4]; break;
-                    case 2: mask = (ulong)matrix[4, 4]; break;
-                    case 3: mask = (ulong)matrix[1, 3]; break;
-                    case 4: mask = (ulong)matrix[3, 3]; break;
-                    case 5: mask = (ulong)matrix[0, 2]; break;
-                    case 6: mask = (ulong)matrix[2, 2]; break;
-                    case 7: mask = (ulong)matrix[4, 2]; break;
-                    case 8: mask = (ulong)matrix[1, 1]; break;
-                    case 9: mask = (ulong)matrix[3, 1]; break;
+                    case  0: mask = (ulong)matrix[0, 4]; break;
+                    case  1: mask = (ulong)matrix[2, 4]; break;
+                    case  2: mask = (ulong)matrix[4, 4]; break;
+                    case  3: mask = (ulong)matrix[1, 3]; break;
+                    case  4: mask = (ulong)matrix[3, 3]; break;
+                    case  5: mask = (ulong)matrix[0, 2]; break;
+                    case  6: mask = (ulong)matrix[2, 2]; break;
+                    case  7: mask = (ulong)matrix[4, 2]; break;
+                    case  8: mask = (ulong)matrix[1, 1]; break;
+                    case  9: mask = (ulong)matrix[3, 1]; break;
                     case 10: mask = (ulong)matrix[0, 0]; break;
                     case 11: mask = (ulong)matrix[2, 0]; break;
                     case 12: mask = (ulong)matrix[4, 0]; break;
                     default: break;
                 }
 
-                newMask |= mask << i * 4;
+                newMask |= mask << shift * 4;
             }
 
             if (true == isSmall)
             {
-                newMask |= 1ul << (4 * i);
+                newMask |= 1ul << (4 * shift);
             }
 
             return newMask;
@@ -258,7 +253,7 @@ namespace Script.Data
                 flag >>= 4;
             }
 
-            return matrix;
+            return RotateMatrix(matrix, rot);
         }
         private int[,] RotateMatrix(int[,] matrix, int rot)
         {
@@ -337,47 +332,8 @@ namespace Script.Data
             meshRenderer.SetPropertyBlock(propertyBlock);
         }
 
-        //private void ApplyTexture()
-        //{
-        //    meshFilter = transform.GetComponent<MeshFilter>();
-        //    meshRenderer = transform.GetComponent<MeshRenderer>();
-
-        //    Texture texture = meshRenderer.sharedMaterial.mainTexture;
-        //    int textureWidth = texture.width;
-        //    int textureHeight = texture.height;
-
-        //    // UV 좌표 계산
-
-        //    // texture 몇 개씩 들어가는지 구하는 프로퍼티나 상수가 필요할 듯? 정리하면 되겠다.
-        //    int columnIndex = (int)textureType % 8;
-        //    int rowIndex = (int)textureType / 8;
-
-        //    float uMin = columnIndex * (SPRITE_WIDTH / (float)textureWidth);
-        //    float uMax = (columnIndex + 1) * (SPRITE_WIDTH / (float)textureWidth);
-        //    float vMin = 1.0f - (rowIndex + 1) * (SPRITE_HEIGHT / (float)textureHeight);
-        //    float vMax = 1.0f - rowIndex * (SPRITE_HEIGHT / (float)textureHeight);
-
-        //    Mesh mesh = meshFilter.sharedMesh;
-
-        //    var uvs = mesh.uv;
-        //    var vertices = mesh.vertices;
-
-        //    for (int i = 0; i < uvs.Length; i++)
-        //    {
-        //        float u = Mathf.Lerp(uMin, uMax, vertices[i].x); // X축 기준
-        //        float v = Mathf.Lerp(vMin, vMax, vertices[i].y); // Y축 기준
-
-        //        u = Mathf.Clamp01(u);
-        //        v = Mathf.Clamp01(v);
-
-        //        uvs[i] = new Vector2(u, v);
-        //    }
-        //    mesh.uv = uvs;
-        //}
-
         //[Render] 
         // ...
-
     }
 }
 #endif
