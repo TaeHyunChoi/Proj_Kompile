@@ -35,21 +35,13 @@ namespace Script.Data
         // Bake(Set) NavMesh Info
         public void InitNaviMask(int[] heights, bool isSmall)
         {
-            int i = 0;
-            foreach (int height in heights)
+            int i, height;
+            ulong heightFlag;
+            for (i = 0; i < heights.Length; i += 4)
             {
-                ulong h;
-                if (-1 == height)
-                {
-                    h = 0b1111;
-                }
-                else
-                {
-                    h = (ulong)height;
-                }
-
-                naviMask |= h << i;
-                i += 4;
+                height = heights[i];
+                heightFlag = (-1 == height) ? 0b_1111 : (ulong)height;
+                naviMask |= heightFlag << i;
             }
 
             if (true == isSmall)
