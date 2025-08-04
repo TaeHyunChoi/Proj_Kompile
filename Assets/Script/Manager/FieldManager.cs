@@ -3,6 +3,7 @@ namespace Script.Manager
     using Script.Data;
     using Script.Index;
     using Script.IngameMessage;
+    using Script.Interface;
     using System.Threading.Tasks;
     using UnityEngine;
 
@@ -10,7 +11,6 @@ namespace Script.Manager
     {
         private MapGridData currentMapGrid; // 일단 하나만 올려보자.
         private IngameFieldPlayer[] player_character = new IngameFieldPlayer[3];
-
 
         public async Task<bool> Initialize(PlayData playData)
         {
@@ -37,6 +37,11 @@ namespace Script.Manager
 
             MessageManager.Publish(new OnEndEvent(IngameEventType.FIELD_INIT));
             return true;
+        }
+
+        public void Dispose()
+        {
+            currentMapGrid?.Dispose();
         }
     }
 }

@@ -118,7 +118,16 @@ namespace Script.Manager
         }
         private void OnDisable()
         {
-            inputHandler.OnDisable();
+            inputHandler?.OnDisable();
+            fieldMgr?.Dispose();
+
+            if (ingameProcedures != null)
+            {
+                for (int i = ingameProcedures.Count - 1; i >= 0; --i)
+                {
+                    ingameProcedures[i].Dispose();
+                }
+            }
         }
     }
 }

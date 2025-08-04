@@ -61,6 +61,7 @@ namespace Script.Content
                     loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain, AssetParentType.CANVAS_OVERAY);
                     loadingCurtainObject.On(false);
                     break;
+
                 case IngameEventType.NEWGAME_DISPOSE:
                     IngameManager.RemoveIngameProcedure(IngameProcedureType.NEW_GAME);
                     break;

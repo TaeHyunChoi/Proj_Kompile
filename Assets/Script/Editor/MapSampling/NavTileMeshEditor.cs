@@ -15,12 +15,12 @@ public static class NavTileMeshEditor
 };
     private static readonly (int, int, int)[] VirtualTriangleVertex = new (int, int, int)[]
     {
-        (  0,  3,  1), (  1, 3,  6), (  3,  5,  6),
-        (  0,  5,  3), (  1, 4,  2), (  2,  4,  7),
-        (  4,  6,  7), (  1, 6,  4), (  5,  8,  6),
-        (  6,  8, 11), (  8, 0, 11), (  5,  0,  8),
-        (  6,  9,  7), (  7, 9, 12), (  9,  1, 12),
-        (  6,  1,  9)
+        (  0,  3,  1), (  1,  3,  6), (  3,  5,  6),
+        (  0,  5,  3), (  1,  4,  2), (  2,  4,  7),
+        (  4,  6,  7), (  1,  6,  4), (  5,  8,  6),
+        (  6,  8, 11), (  8, 10, 11), (  5, 10,  8),
+        (  6,  9,  7), (  7,  9, 12), (  9, 11, 12),
+        (  6, 11,  9)
     };
     private static readonly int[] ExceptTriangleMask = new int[]
 {
