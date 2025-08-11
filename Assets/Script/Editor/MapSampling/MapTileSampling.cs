@@ -18,8 +18,9 @@ namespace MapSampling
 
 
         [SerializeField] private Transform instanceTransform;
-        private ConcurrentDictionary<int, MapGridData> map;
+        [SerializeField] int sceneIndex = 0;
 
+        private ConcurrentDictionary<int, MapGridData> map;
         private bool nowLoading = false;
 
         public async void Save()
@@ -56,7 +57,7 @@ namespace MapSampling
             for (i = 0; i < length; i++)
             {
                 t = i;
-                initTasks[t] = tiles[t].BakeMesh(map);
+                initTasks[t] = tiles[t].BakeMesh(sceneIndex, map);
             }
             await Task.WhenAll(initTasks);
             for (i = 0; i < length; i++)

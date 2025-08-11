@@ -7,6 +7,8 @@ namespace Script.Data
     using Script.Util;
     using Script.Index;
     using static Script.Index.Index;
+    using Script.Util;
+
 
     [Serializable]   // 에셋으로 저장하기 위함
     [ExecuteAlways]  // 에디터에서 텍스쳐 곧장 적용하기 위함
@@ -49,7 +51,7 @@ namespace Script.Data
                 naviMask |= 1ul << i;
             }
         }
-        public async Task BakeMesh(ConcurrentDictionary<int, MapGridData> map)
+        public async Task BakeMesh(int sceneIndex, ConcurrentDictionary<int, MapGridData> map)
         {
             if (true == isOnlyRender)
             {
@@ -65,17 +67,14 @@ namespace Script.Data
                 Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
                 return;
             }
+            GetPivotRotated(rotInt, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
             await Task.Yield();
 
-            // get: pivot key
-            GetPivotRotated(rotInt, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
-            gridKey = GetGridKeyMask(gridPivot);
-            int tileKey = GetTileKeyMask(gridPivot, tilePivot, isSmall);
-
+            gridKey = MapUtil.GetGridKeyMask(sceneIndex, gridPivot);
+            int tileKey = MapUtil.GetTileKeyMask(gridPivot, tilePivot, layer, isSmall);
 
             // set: map
             map.TryAdd(gridKey, new MapGridData(gridKey));
-
 
             // set: map[grid].NavMesh
             naviMask = GetNaviMaskRotated(rotInt, isSmall); // ?? of 64 bits used
@@ -89,94 +88,24 @@ namespace Script.Data
         }
         private void GetPivotRotated(int rot, bool isSmall, out Vector3 gridPivot, out Vector3 tilePivot)
         {
-            // tile pivot
+            // tile pivot : pivot 기준으로 회전을 시키면 pivot 좌표가 아래처럼 바뀐다는 뜻.
             Vector3 rotated;
             switch (rot)
             {
-                case 90: rotated = new Vector3(0f, 0f, -1f); break;
+                case 90:  rotated = new Vector3( 0f, 0f, -1f); break;
                 case 180: rotated = new Vector3(-1f, 0f, -1f); break;
-                case 270: rotated = new Vector3(-1f, 0f, 0f); break;
-                default: rotated = Vector3.zero; break;
+                case 270: rotated = new Vector3(-1f, 0f,  0f); break;
+                default:  rotated = Vector3.zero; break;
             }
             rotated *= isSmall ? 0.5f : 1f;
             tilePivot = transform.position + rotated;
 
-            // grid pivot
-            var gx = Mathf.FloorToInt(tilePivot.x / GRID_X_LENGTH);
-            var gy = Mathf.FloorToInt(tilePivot.y / GRID_Y_LENGTH);
-            var gz = Mathf.FloorToInt(tilePivot.z / GRID_Z_LENGTH);
-            gridPivot = new Vector3(gx, gy, gz);
+            // grid pivot: 
+            gridPivot = MapUtil.GetGridPivot(tilePivot);
         }
-        private int GetGridKeyMask(Vector3 gridPivot)
-        {
-            // 비트 쉬프트: 2진법 기준으로 오른쪽(작은 수)부터 z,y,x 이므로 상대적으로 z를 먼저 지정
-            const int SHIFT_GRID_Z = 0;
-            const int SHIFT_GRID_Z_SIGN = FIELD_HALF_LENGTH;
 
-            const int SHIFT_GRID_Y = SHIFT_GRID_Z_SIGN + 1;
-            const int SHIFT_GRID_Y_SIGN = SHIFT_GRID_Y + FIELD_HALF_LENGTH;
-
-            const int SHIFT_GRID_X = SHIFT_GRID_Y_SIGN + 1;
-            const int SHIFT_GRID_X_SIGN = SHIFT_GRID_X + FIELD_HALF_LENGTH;
-
-
-            Vector3Int gridInt = gridPivot.ToInt();
-            int gridFlag = 0;
-
-            int x = gridInt.x;
-            int y = gridInt.y;
-            int z = gridInt.z;
-
-            if (x < 0)
-            {
-                gridFlag |= 1 << SHIFT_GRID_X_SIGN;
-                x *= -1;
-            }
-            gridFlag |= x << SHIFT_GRID_X;
-
-            if (y < 0)
-            {
-                gridFlag |= 1 << SHIFT_GRID_Y_SIGN;
-                y *= -1;
-            }
-            gridFlag |= y << SHIFT_GRID_Y;
-
-            if (z < 0)
-            {
-                gridFlag |= 1 << SHIFT_GRID_Z_SIGN;
-                z *= -1;
-            }
-            gridFlag |= z << SHIFT_GRID_Z;
-
-            return (ushort)gridFlag;
-        }
-        private int GetTileKeyMask(Vector3 gridPivot, Vector3 tilePivot, bool isSmall)
-        {
-            gridPivot = new Vector3(gridPivot.x * 32, gridPivot.y * 4, gridPivot.z * 32);
-
-            Vector3 diff = tilePivot - gridPivot;
-            if (true == isSmall)
-            {
-                diff *= 2f;
-            }
-            Vector3Int diffInt = diff.ToInt();
-
-            // scale ,x[sign,small_buffer,6], y[sign,small_buffer,4], z[sign,small_buffer,6]
-            const byte shiftTileLayer = 23;
-            const byte shiftIsHalfScale = 22;
-            const byte shiftTileX = 14;
-            const byte shiftTileY = 8;
-            const byte shiftTileZ = 0;
-
-            int mask = 0;
-            mask |= layer << shiftTileLayer;
-            mask |= isSmall ? 1 << shiftIsHalfScale : 0;
-            mask |= (diffInt.x) << shiftTileX;
-            mask |= (diffInt.y) << shiftTileY;
-            mask |= (diffInt.z) << shiftTileZ;
-
-            return mask;
-        }
+        
+        
 
         // [NavMesh] Height
         private ulong GetNaviMaskRotated(int rot, bool isSmall)
