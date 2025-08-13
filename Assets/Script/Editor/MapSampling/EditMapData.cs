@@ -1,17 +1,16 @@
 #if UNITY_EDITOR
 namespace Script.Data
 {
-    using System;
-    using UnityEngine;
-    using System.Threading.Tasks;
-    using Script.Util;
     using Script.Index;
-    using static Script.Index.Index;
     using Script.Util;
+    using System;
+    using System.Threading.Tasks;
+    using UnityEditor;
+    using UnityEngine;
+    using static Script.Index.Index;
 
-
-    [Serializable]   // 에셋으로 저장하기 위함
-    [ExecuteAlways]  // 에디터에서 텍스쳐 곧장 적용하기 위함
+    [Serializable]       // 에셋으로 저장하기 위함
+    [ExecuteInEditMode]  // 에디터에서 텍스쳐 곧장 적용하기 위함
     public class EditMapData : MonoBehaviour
     {
         private const int SPRITE_WIDTH  = 256;
@@ -22,11 +21,11 @@ namespace Script.Data
         [SerializeField] private int layer;
         [SerializeField] private TextureIndex textureType;
 
-        private MeshFilter  meshFilter;
-        private MeshRenderer meshRenderer;
-        private ulong naviMask;
-        private uint  infoMask;
-        private int   gridKey;
+        [SerializeField] private MeshFilter meshFilter;
+        [SerializeField] private MeshRenderer meshRenderer;
+        [SerializeField] private ulong naviMask;
+        [SerializeField] private uint infoMask;
+        [SerializeField] private int gridKey;
 
         public MeshFilter MeshFilter => meshFilter;
         public MeshRenderer MeshRenderer => meshRenderer;
@@ -50,8 +49,10 @@ namespace Script.Data
             {
                 naviMask |= 1ul << i;
             }
+
+            EditorUtility.SetDirty(this);
         }
-        public async Task BakeMesh(int sceneIndex, ConcurrentDictionary<int, MapGridData> map)
+        public async Task Bake(int sceneIndex, ConcurrentDictionary<int, MapGridData> map)
         {
             if (true == isOnlyRender)
             {
@@ -70,15 +71,14 @@ namespace Script.Data
             GetPivotRotated(rotInt, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
             await Task.Yield();
 
-            gridKey = MapUtil.GetGridKeyMask(sceneIndex, gridPivot);
-            int tileKey = MapUtil.GetTileKeyMask(gridPivot, tilePivot, layer, isSmall);
+            // set: map[grid].NavMesh
+            naviMask = GetNaviMaskRotated(rotInt, isSmall);
+            infoMask = GetInfoMask();
 
-            // set: map
+            gridKey = MapUtil.GetGridKeyMask(sceneIndex, gridPivot);
             map.TryAdd(gridKey, new MapGridData(gridKey));
 
-            // set: map[grid].NavMesh
-            naviMask = GetNaviMaskRotated(rotInt, isSmall); // ?? of 64 bits used
-            infoMask = GetInfoMask();
+            int tileKey = MapUtil.GetTileKeyMask(gridPivot, tilePivot, layer, isSmall);
             map[gridKey].TryAddNavMeshData(tileKey, new MapNavData(naviMask, infoMask));
 
 

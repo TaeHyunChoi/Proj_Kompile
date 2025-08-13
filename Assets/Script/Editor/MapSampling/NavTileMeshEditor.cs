@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using Script.Data;
 using Script.Util;
 using UnityEditor;
@@ -192,3 +193,4 @@ public static class NavTileMeshEditor
         return count;
     }
 }
+#endif // UNITY_EDITOR

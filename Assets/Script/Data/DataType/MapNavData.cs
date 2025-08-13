@@ -1,5 +1,6 @@
 
 using MessagePack;
+using Script.Util;
 
 namespace Script.Data
 {

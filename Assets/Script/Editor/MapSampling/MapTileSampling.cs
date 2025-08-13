@@ -1,14 +1,16 @@
 #if UNITY_EDITOR
 namespace MapSampling
 {
+    using Script.Data;
+    using Script.Manager;
+    using Script.Util;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using UnityEngine;
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
-    using Script.Data;
-    using Script.Manager;
+    using UnityEngine;
+    using static Script.Util.MapUtil;
 
     public class MapTileSampling : MonoBehaviour
     {
@@ -45,6 +47,23 @@ namespace MapSampling
 
             AssetDatabase.Refresh();
             Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
+
+            // for test
+            foreach (var grid in map.Values)
+            { 
+                foreach(var kvp in grid.MapNavDataDictionary)
+                {
+                    Debug.Log($"GridKey: {grid.gridKey}, Key: {kvp.Key}, NaviMask: {kvp.Value.naviMask}, InfoMask: {kvp.Value.infoMask}");
+
+                    //좌표값은 확인했고...
+                    //Vector3 gridPivot = grid.gridKey.GetGridPivot();
+                    //MapTileInfo tileInfo = kvp.Key.GetTilePivot();
+                    //tileInfo.Debug(gridPivot);
+
+                    // naviMask 확인 필요
+                    // ...
+                }
+            }
         }
         public async Task SaveMapNavDataAsync(EditMapData[] tiles)
         {
@@ -57,7 +76,7 @@ namespace MapSampling
             for (i = 0; i < length; i++)
             {
                 t = i;
-                initTasks[t] = tiles[t].BakeMesh(sceneIndex, map);
+                initTasks[t] = tiles[t].Bake(sceneIndex, map);
             }
             await Task.WhenAll(initTasks);
             for (i = 0; i < length; i++)

@@ -21,6 +21,18 @@ MonoBehaviour:
     m_SerializedLabels:
     - MapNavi_0
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 326af9a86f4cbf940aaff930732dcc84
+    m_Address: MapNavi_129
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - MapNavi_129
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bd9c629dea705ba4eb36bd66e082600a
+    m_Address: MapNavi_8454144
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - MapNavi_8454144
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

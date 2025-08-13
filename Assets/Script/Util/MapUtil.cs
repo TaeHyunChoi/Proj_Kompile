@@ -4,6 +4,9 @@ namespace Script.Util
 
     public static class MapUtil
     {
+        // for on grid
+        public static int SIZE_GRID_AXIS => GRID_MAX_VALUE;
+
         // _SIGN은 '부호(+/-) 플래그'
         private const int SHIFT_GRID_Z      = 0;
         private const int SHIFT_GRID_Z_SIGN = 7;
@@ -12,7 +15,7 @@ namespace Script.Util
         private const int SHIFT_GRID_X      = 16;
         private const int SHIFT_GRID_X_SIGN = 23;
         private const int SHIFT_SCENE_INDEX = 24;
-        private const int GRID_MAX_VALUE    = 0b_0111_1111; // == 127
+        private const int GRID_MAX_VALUE    = 0b_0011_1111; // == 63
 
         private const int SHIFT_TILE_Z      = 0;
         private const int SHIFT_TILE_Y      = 8;
@@ -60,7 +63,6 @@ namespace Script.Util
             return gridFlag;
         }
 
-
         public static Vector3 GetGridPivot(Vector3 tilePivot)
         {
             float gx = Mathf.FloorToInt(tilePivot.x / GRID_MAX_VALUE);
@@ -68,7 +70,6 @@ namespace Script.Util
             float gz = Mathf.FloorToInt(tilePivot.z / GRID_MAX_VALUE);
             return new Vector3(gx, gy, gz);
         }
-
 
         /// <summary>
         /// grid_pivot으로부터 상대적인 거리를 계산하여 tile_pivot을 구한다. <br/>
@@ -97,5 +98,60 @@ namespace Script.Util
             return mask;
         }
 
+        public static MapTileInfo GetTilePivot(this int key)
+        {
+            int x = (key >> SHIFT_TILE_X) & 0xFF;
+            int y = (key >> SHIFT_TILE_Y) & 0xFF;
+            int z = (key >> SHIFT_TILE_Z) & 0xFF;
+            bool isSmall = (key & (1 << SHIFT_TILE_SMALL)) != 0;
+            int layer = (key >> SHIFT_TILE_LAYER) & 0b_0000_0111; // 3 bits
+
+            return new MapTileInfo(x, y, z, isSmall, layer);
+        }
+
+        public static Vector3 GetGridPivot(this int key)
+        {
+            int sceneIndex = (key >> SHIFT_SCENE_INDEX) & 0xFF;
+            int x = (key >> SHIFT_GRID_X) & 0b_0111_1111; // 7 bits
+            int y = (key >> SHIFT_GRID_Y) & 0b_0111_1111; // 7 bits
+            int z = (key >> SHIFT_GRID_Z) & 0b_0111_1111; // 7 bits
+            if ((key & (1 << SHIFT_GRID_X_SIGN)) != 0)
+            {
+                x *= -1;
+            }
+            if ((key & (1 << SHIFT_GRID_Y_SIGN)) != 0)
+            {
+                y *= -1;
+            }
+            if ((key & (1 << SHIFT_GRID_Z_SIGN)) != 0)
+            {
+                z *= -1;
+            }
+            return new Vector3(x, y, z);
+        }
+
+        public readonly struct MapTileInfo
+        {
+            public readonly Vector3 Pivot;
+            public readonly int Layer;
+            public readonly bool IsSmall;
+
+            public MapTileInfo(int x, int y, int z, bool isSmall, int layer)
+            {
+                IsSmall = isSmall;
+                Layer = layer;
+
+                float size = isSmall ? 0.5f : 1f;
+                Pivot = size * new Vector3(x, y, z);
+            }
+
+#if UNITY_EDITOR
+            public void Debug(Vector3 gridPivot)
+            {
+                var pivot_coord = Pivot + gridPivot;
+                UnityEngine.Debug.Log($"Tile Info: Pivot({pivot_coord.x:F0}, {pivot_coord.y:F0}, {pivot_coord.z:F0}), Layer: {Layer}, IsSmall: {IsSmall}");
+            }
+#endif
+        }
     }
 }
