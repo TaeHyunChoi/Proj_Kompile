@@ -1,19 +1,18 @@
 
 using MessagePack;
-using Script.Util;
 
 namespace Script.Data
 {
     [MessagePackObject]
-    public struct MapNavData
+    public struct MapTileData
     {
         [Key(0)]
-        public ulong naviMask;
+        public ulong naviMask; // [layer:3bits], [heights:52bits(4*13)]
 
         [Key(1)]
         public uint infoMask;
 
-        public MapNavData(ulong nav, uint info)
+        public MapTileData(ulong nav, uint info)
         {
             naviMask = nav;
             infoMask = info;

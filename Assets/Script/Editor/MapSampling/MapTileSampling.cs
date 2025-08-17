@@ -10,13 +10,12 @@ namespace MapSampling
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
     using UnityEngine;
-    using static Script.Util.MapUtil;
 
     public class MapTileSampling : MonoBehaviour
     {
-        private const int VERTEX_LIMIT = 65535;
-        private readonly string assetGroupName = "MapRender";
-        private readonly string MAP_NAVI_DATA_PATH = "Rcs\\Bin\\MapNavRawData";
+        private const int VERTEX_LIMIT              = 65535;
+        private readonly string assetGroupName      = "MapRender";
+        private readonly string MAP_NAVI_DATA_PATH  = "Rcs\\Bin\\MapNavRawData";
 
 
         [SerializeField] private Transform instanceTransform;
@@ -49,21 +48,26 @@ namespace MapSampling
             Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
 
             // for test
+            Vector3 grid_pivot;
+            Vector3 tile_pivot;
             foreach (var grid in map.Values)
             { 
                 foreach(var kvp in grid.MapNavDataDictionary)
                 {
-                    Debug.Log($"GridKey: {grid.gridKey}, Key: {kvp.Key}, NaviMask: {kvp.Value.naviMask}, InfoMask: {kvp.Value.infoMask}");
+                    // grid pivot
+                    grid_pivot = MapUtil.GetGridPivot(grid.gridKey);
 
-                    //좌표값은 확인했고...
-                    //Vector3 gridPivot = grid.gridKey.GetGridPivot();
-                    //MapTileInfo tileInfo = kvp.Key.GetTilePivot();
-                    //tileInfo.Debug(gridPivot);
+                    // tile pivot
+                    int tileKey = kvp.Key;
+                    tile_pivot = MapUtil.GetTilePivot(grid.gridKey, kvp.Key);
 
-                    // naviMask 확인 필요
-                    // ...
+                    Debug.Log($"Grid_Pivot:{grid_pivot}, Tile_Pivot:{tile_pivot}");
+
+                    //ulong naviMask = kvp.Value.naviMask; // navi_layer, heights
                 }
             }
+
+            System.GC.Collect();
         }
         public async Task SaveMapNavDataAsync(EditMapData[] tiles)
         {
@@ -103,7 +107,7 @@ namespace MapSampling
             for (int i = 0; i < tiles.Length; ++i)
             {
                 tile = tiles[i];
-                long key = tile.GridKey << 32 | tile.Layer;
+                long key = tile.GridKey << 32 | tile.RenderLayer;
 
                 if (!tempDataDict.ContainsKey(key))
                 {
@@ -127,7 +131,7 @@ namespace MapSampling
                     combinedMesh.CombineMeshes(tempData.combineInstances.ToArray(), true, true);
                     combinedMesh.uv = tempData.combinedUVs.ToArray();
 
-                    SaveMesh(combinedMesh, tile.GridKey, tile.Layer, tempData.index, true, false);
+                    SaveMesh(combinedMesh, tile.GridKey, tile.NaviLayer, tempData.index, true, false);
 
                     tempData.combineInstances.Clear();
                     tempData.combinedUVs.Clear();

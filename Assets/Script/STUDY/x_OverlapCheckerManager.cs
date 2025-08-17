@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using System.Linq;
 
-public class OverlapCheckerManager
+public class x_OverlapCheckerManager
 {
     // Job에 전달할 데이터 배열
     private NativeArray<float2> nativeTriangleA;
@@ -42,7 +42,7 @@ public class OverlapCheckerManager
         nativeOverlapResults = new NativeArray<bool>(numChecks, Allocator.Persistent);
 
         // Job 인스턴스 생성 및 스케줄링
-        var job = new TriangleCircleOverlapJob
+        var job = new x_TriangleCircleOverlapJob
         {
             TriangleA = nativeTriangleA,
             TriangleB = nativeTriangleB,

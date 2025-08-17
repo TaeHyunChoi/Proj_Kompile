@@ -4,7 +4,7 @@ using UnityEngine;
 using Unity.Mathematics;
 using System.Linq;
 
-public class OverlapCheckerJobSystem : MonoBehaviour
+public class x_OverlapCheckerJobSystem : MonoBehaviour
 {
     [Header("Input Data (must have the same length)")]
     public Vector2[] triangleA;
@@ -36,7 +36,7 @@ public class OverlapCheckerJobSystem : MonoBehaviour
         var nativeCircleRadii = new NativeArray<float>(circleRadii, Allocator.TempJob);
         var nativeOverlapResults = new NativeArray<bool>(numChecks, Allocator.TempJob);
 
-        var job = new TriangleCircleOverlapJob
+        var job = new x_TriangleCircleOverlapJob
         {
             TriangleA = nativeTriangleA,
             TriangleB = nativeTriangleB,

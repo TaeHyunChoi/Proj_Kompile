@@ -1,12 +1,12 @@
 using UnityEngine;
 
-public class Temp : MonoBehaviour
+public class x_Temp : MonoBehaviour
 {
-    private OverlapCheckerManager overlapManager;
+    private x_OverlapCheckerManager overlapManager;
 
     void Start()
     {
-        overlapManager = new OverlapCheckerManager();
+        overlapManager = new x_OverlapCheckerManager();
 
         // 예시 데이터 준비
         Vector2[] triA = { new Vector2(0, 0), new Vector2(1, 1) };

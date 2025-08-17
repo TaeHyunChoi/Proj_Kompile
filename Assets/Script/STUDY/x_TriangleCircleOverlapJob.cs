@@ -2,7 +2,7 @@ using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
 
-public struct TriangleCircleOverlapJob : IJobParallelFor
+public struct x_TriangleCircleOverlapJob : IJobParallelFor
 {
     [ReadOnly] public NativeArray<float2> TriangleA;
     [ReadOnly] public NativeArray<float2> TriangleB;

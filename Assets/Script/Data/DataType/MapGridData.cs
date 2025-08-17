@@ -11,7 +11,7 @@ namespace Script.Data
         public int gridKey;
 
         [Key(1)]
-        public ConcurrentDictionary<int, MapNavData> MapNavDataDictionary;
+        public ConcurrentDictionary<int, MapTileData> MapNavDataDictionary;
 
         [Key(2)]
         public List<string> assetFiles;
@@ -45,14 +45,14 @@ namespace Script.Data
         public MapGridData(int targetGridKey)
         {
             gridKey = targetGridKey;
-            MapNavDataDictionary = new ConcurrentDictionary<int, MapNavData>();
+            MapNavDataDictionary = new ConcurrentDictionary<int, MapTileData>();
             assetFiles = new List<string>();
         }
         public void AddAssetFile(string fileName)
         {
             assetFiles.Add(fileName);
         }
-        public bool TryAddNavMeshData(int key, MapNavData navData)
+        public bool TryAdd(int key, MapTileData navData)
         {
             return MapNavDataDictionary.TryAdd(key, navData);
         }

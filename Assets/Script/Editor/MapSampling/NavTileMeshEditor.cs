@@ -75,19 +75,19 @@ public static class NavTileMeshEditor
         }
 
         bool isSuccess;
-        var testPrefab = new GameObject(fileName);
+        GameObject prefabObject = new GameObject(fileName);
         {
-            var filter = testPrefab.AddComponent<MeshFilter>();
-            filter.mesh = mesh;
-            var renderer = testPrefab.AddComponent<MeshRenderer>();
+            var filter   = prefabObject.AddComponent<MeshFilter>();
+            filter.mesh  = mesh;
+            var renderer = prefabObject.AddComponent<MeshRenderer>();
             var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Editor/Texture/mat_NavTile_00.mat"); //임의로 생성한 매터리얼
             renderer.sharedMaterial = material;
 
             // 타일 정보를 유니티의 NavMesh를 Bake하는 것처럼 데이터 저장할 때 호출하는 함수
-            var navTileMesh = testPrefab.AddComponent<EditMapData>();
-            navTileMesh.InitNaviMask(inputHeights, isSmall);
+            var maptilePrefab = prefabObject.AddComponent<EditMapData>();
+            maptilePrefab.InitializePrefab(inputHeights, isSmall);
 
-            PrefabUtility.SaveAsPrefabAsset(testPrefab, path, out isSuccess);
+            PrefabUtility.SaveAsPrefabAsset(prefabObject, path, out isSuccess);
         }
 
         if (true == isSuccess)
@@ -102,7 +102,7 @@ public static class NavTileMeshEditor
         }
 
         //testPrefab을 Scene에 생성했으나 필요 없으니 없앤다.
-        Object.DestroyImmediate(testPrefab);
+        Object.DestroyImmediate(prefabObject);
     }
 
     /// <summary> 입력받은 높이값[13]을 Mesh 정보로 변환하여 저장 </summary>

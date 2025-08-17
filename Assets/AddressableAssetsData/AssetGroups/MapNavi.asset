@@ -15,6 +15,12 @@ MonoBehaviour:
   m_GroupName: MapNavi
   m_GUID: 745b2625ea6a44146bbf6c3fc2cf7ad7
   m_SerializeEntries:
+  - m_GUID: 1612112f8690a2c478d16a4e1341d269
+    m_Address: MapNavi_192
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - MapNavi_192
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2a05f870765c1954bb37f05a514d16b0
     m_Address: MapNavi_0
     m_ReadOnly: 1
@@ -32,6 +38,12 @@ MonoBehaviour:
     m_ReadOnly: 1
     m_SerializedLabels:
     - MapNavi_8454144
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d28b70fd4fbe88c4eb5c51c77b4e7b8e
+    m_Address: MapNavi_12582912
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - MapNavi_12582912
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}

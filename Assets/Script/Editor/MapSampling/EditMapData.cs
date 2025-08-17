@@ -7,6 +7,7 @@ namespace Script.Data
     using System.Threading.Tasks;
     using UnityEditor;
     using UnityEngine;
+    using UnityEngine.UI;
     using static Script.Index.Index;
 
     [Serializable]       // 에셋으로 저장하기 위함
@@ -16,42 +17,70 @@ namespace Script.Data
         private const int SPRITE_WIDTH  = 256;
         private const int SPRITE_HEIGHT = 256;
 
-        [Header("Render")]
-        [SerializeField] private bool isOnlyRender;
-        [SerializeField] private int layer;
-        [SerializeField] private TextureIndex textureType;
+        private const int TOTAL_BITS = 13;
+        private const int BITS_PER_CELL = 4;
+        private const int MATRIX_SIZE = 5;
 
+        private static readonly Vector2Int[] INDEX_MAP = new Vector2Int[]
+            {
+                new Vector2Int(0, 4), new Vector2Int(2, 4), new Vector2Int(4, 4),
+                new Vector2Int(1, 3), new Vector2Int(3, 3),
+                new Vector2Int(0, 2), new Vector2Int(2, 2), new Vector2Int(4, 2),
+                new Vector2Int(1, 1), new Vector2Int(3, 1),
+                new Vector2Int(0, 0), new Vector2Int(2, 0), new Vector2Int(4, 0)
+            };
+
+        [Header("Render")]
         [SerializeField] private MeshFilter meshFilter;
         [SerializeField] private MeshRenderer meshRenderer;
-        [SerializeField] private ulong naviMask;
-        [SerializeField] private uint infoMask;
-        [SerializeField] private int gridKey;
+        [SerializeField] private bool isOnlyRender;
+        [SerializeField] private int renderLayer;
+        [SerializeField] private TextureIndex textureType;
 
+        [Header("Data")]
+        [SerializeField] private int naviLayer;
+        [SerializeField] private ulong heightMask;
+
+        //private int gridKey;
+        [SerializeField] private uint infoMask;
+
+        private bool isSmall;
+
+        public int GridKey { get; private set; }
         public MeshFilter MeshFilter => meshFilter;
-        public MeshRenderer MeshRenderer => meshRenderer;
-        public int Layer => layer;
-        public int GridKey => gridKey;
+        public int RenderLayer => renderLayer;
+        public int NaviLayer => naviLayer;
         public int TextureIndex => (int)textureType;
 
-        // Bake(Set) NavMesh Info
-        public void InitNaviMask(int[] heights, bool isSmall)
+        private void Awake()
         {
-            int i, height;
+            // ExecuteInEditMode 라서 Edit Mode 에서도 호출된다.
+            meshFilter = transform.GetComponent<MeshFilter>();
+            meshRenderer = transform.GetComponent<MeshRenderer>();
+        }
+
+        /// <summary> 프리팹 데이터를 초기화 ( != 실제 맵 타일 오브젝트) <br/>
+        /// heights, isSmall 데이터만 저장한다.
+        /// </summary>
+        public void InitializePrefab(int[] heights, bool isSmall)
+        {
+            int height;
             ulong heightFlag;
-            for (i = 0; i < heights.Length; i += 4)
+  
+            for (int i = 0; i < heights.Length; i += 4)
             {
-                height = heights[i];
-                heightFlag = (-1 == height) ? 0b_1111 : (ulong)height;
-                naviMask |= heightFlag << i;
+                height      = heights[i];
+                heightFlag  = (-1 == height) ? 0b_1111 : (ulong)height;
+                heightMask |= heightFlag << i;
             }
 
-            if (true == isSmall)
-            {
-                naviMask |= 1ul << i;
-            }
+            this.isSmall = isSmall;
 
             EditorUtility.SetDirty(this);
         }
+
+
+
         public async Task Bake(int sceneIndex, ConcurrentDictionary<int, MapGridData> map)
         {
             if (true == isOnlyRender)
@@ -59,174 +88,115 @@ namespace Script.Data
                 return;
             }
 
-            // get: (rotated) pivot
-            bool isSmall = (naviMask >> (4 * 13)) != 0;
-            int rotInt = (transform.rotation.y).ToInt();
+            Vector3 position = transform.position;
+            float rotY = transform.position.y;
+            await Task.Yield();
+
+            // 모든 타일이 1*1 또는 0.5f*0.5f 격자에 맞춰서 배치되어 있음
+            // 즉, 현재 타일에 회전값을 적용하면 tile_pivot 값이 나온다.
+            // tile_pivot을 기준으로 grid_pivot값을 구한다.
+
+            Vector3 gridPivot = MapUtil.GetGridPivot(position);
+            int gridKey = MapUtil.GetGridKeyMask(sceneIndex, gridPivot);
+            GridKey = gridKey;
+
+            Vector3 tilePivot = MapUtil.GetTilePivot(position, rotY, isSmall);
+            int tileKey = MapUtil.GetTileKeyMask(gridPivot, tilePivot, isSmall);
+
+            ulong naviMask = GetRotatedHeightMask(rotY);
+            //infoMask = GetInfoMask();
+
+            map.TryAdd(gridKey, new MapGridData(gridKey));
+            map[gridKey].TryAdd(tileKey, new MapTileData(naviMask, infoMask));
+        }
+
+
+        private ulong GetRotatedHeightMask(float rotY)
+        {
+            int rotInt = Mathf.RoundToInt(rotY);
             rotInt = (rotInt + 360) % 360;
             if (rotInt % 90 != 0)
             {
                 Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
-                return;
+                return 0ul;
             }
-            GetPivotRotated(rotInt, isSmall, out Vector3 gridPivot, out Vector3 tilePivot);
-            await Task.Yield();
 
-            // set: map[grid].NavMesh
-            naviMask = GetNaviMaskRotated(rotInt, isSmall);
-            infoMask = GetInfoMask();
+            ulong[,] heightMatrix  = BitmaskToMatrix(heightMask);
+            ulong[,] rotatedMatrix = RotateMatrix(heightMatrix, rotInt);
+            ulong    rotatedHeightMask   = MatrixToBitmask(rotatedMatrix);
 
-            gridKey = MapUtil.GetGridKeyMask(sceneIndex, gridPivot);
-            map.TryAdd(gridKey, new MapGridData(gridKey));
+            ulong layerMask = (ulong)naviLayer << (TOTAL_BITS * BITS_PER_CELL);
 
-            int tileKey = MapUtil.GetTileKeyMask(gridPivot, tilePivot, layer, isSmall);
-            map[gridKey].TryAddNavMeshData(tileKey, new MapNavData(naviMask, infoMask));
-
-
-            // set: map[grid].Render
-            // ...
-
+            return layerMask | rotatedHeightMask;
         }
-        private void GetPivotRotated(int rot, bool isSmall, out Vector3 gridPivot, out Vector3 tilePivot)
+        private ulong[,] BitmaskToMatrix(ulong mask)
         {
-            // tile pivot : pivot 기준으로 회전을 시키면 pivot 좌표가 아래처럼 바뀐다는 뜻.
-            Vector3 rotated;
-            switch (rot)
-            {
-                case 90:  rotated = new Vector3( 0f, 0f, -1f); break;
-                case 180: rotated = new Vector3(-1f, 0f, -1f); break;
-                case 270: rotated = new Vector3(-1f, 0f,  0f); break;
-                default:  rotated = Vector3.zero; break;
-            }
-            rotated *= isSmall ? 0.5f : 1f;
-            tilePivot = transform.position + rotated;
+            ulong[,] matrix = new ulong[MATRIX_SIZE, MATRIX_SIZE];
+            ulong cellValue;
+            int row, col;
 
-            // grid pivot: 
-            gridPivot = MapUtil.GetGridPivot(tilePivot);
+            for (int i = 0; i < TOTAL_BITS; ++i)
+            {
+                cellValue = mask & 0b1111;
+                row = INDEX_MAP[i].x;
+                col = INDEX_MAP[i].y;
+
+                matrix[row, col] = cellValue;
+                mask >>= BITS_PER_CELL;
+            }
+
+            return matrix;
         }
-
-        
-        
-
-        // [NavMesh] Height
-        private ulong GetNaviMaskRotated(int rot, bool isSmall)
-        {
-            int[,] matrix = GetHeightMatrixRotated(rot);
-
-            ulong newMask = 0;
-            ulong mask = 0;
-
-            int shift;
-            for (shift = 0; shift < 13; ++shift)
-            {
-                switch (shift)
-                {
-                    case  0: mask = (ulong)matrix[0, 4]; break;
-                    case  1: mask = (ulong)matrix[2, 4]; break;
-                    case  2: mask = (ulong)matrix[4, 4]; break;
-                    case  3: mask = (ulong)matrix[1, 3]; break;
-                    case  4: mask = (ulong)matrix[3, 3]; break;
-                    case  5: mask = (ulong)matrix[0, 2]; break;
-                    case  6: mask = (ulong)matrix[2, 2]; break;
-                    case  7: mask = (ulong)matrix[4, 2]; break;
-                    case  8: mask = (ulong)matrix[1, 1]; break;
-                    case  9: mask = (ulong)matrix[3, 1]; break;
-                    case 10: mask = (ulong)matrix[0, 0]; break;
-                    case 11: mask = (ulong)matrix[2, 0]; break;
-                    case 12: mask = (ulong)matrix[4, 0]; break;
-                    default: break;
-                }
-
-                newMask |= mask << shift * 4;
-            }
-
-            if (true == isSmall)
-            {
-                newMask |= 1ul << (4 * shift);
-            }
-
-            return newMask;
-        }
-        private int[,] GetHeightMatrixRotated(int rot)
-        {
-            var matrix = new int[5, 5];
-            var flag = naviMask;
-            for (var i = 0; i < 13; i++)
-            {
-                var h = (int)(flag & 0b1111);
-
-                switch (i)
-                {
-                    case 0: matrix[0, 4] = h; break;
-                    case 1: matrix[2, 4] = h; break;
-                    case 2: matrix[4, 4] = h; break;
-                    case 3: matrix[1, 3] = h; break;
-                    case 4: matrix[3, 3] = h; break;
-                    case 5: matrix[0, 2] = h; break;
-                    case 6: matrix[2, 2] = h; break;
-                    case 7: matrix[4, 2] = h; break;
-                    case 8: matrix[1, 1] = h; break;
-                    case 9: matrix[3, 1] = h; break;
-                    case 10: matrix[0, 0] = h; break;
-                    case 11: matrix[2, 0] = h; break;
-                    case 12: matrix[4, 0] = h; break;
-                }
-
-                flag >>= 4;
-            }
-
-            return RotateMatrix(matrix, rot);
-        }
-        private int[,] RotateMatrix(int[,] matrix, int rot)
+        private ulong[,] RotateMatrix(ulong[,] matrix, int rot)
         {
             if (0 == rot)
             {
                 return matrix;
             }
 
-            var n = matrix.GetLength(0); // 행렬 크기
-            var rotated = new int[n, n];
-
-            for (var i = 0; i < n; i++)
+            ulong[,] rotated = new ulong[MATRIX_SIZE, MATRIX_SIZE];
+            for (int i = 0; i < MATRIX_SIZE; i++)
             {
-                for (var j = 0; j < n; j++)
+                for (int j = 0; j < MATRIX_SIZE; j++)
                 {
                     switch (rot)
                     {
-                        case 270:
-                            rotated[j, n - 1 - i] = matrix[i, j];
+                        case 90:
+                            rotated[j, MATRIX_SIZE - 1 - i] = matrix[i, j];
                             break;
                         case 180:
-                            rotated[n - 1 - i, n - 1 - j] = matrix[i, j];
+                            rotated[MATRIX_SIZE - 1 - i, MATRIX_SIZE - 1 - j] = matrix[i, j];
                             break;
-                        case 90:
-                            rotated[n - 1 - j, i] = matrix[i, j];
-                            break;
-                        default:
+                        case 270:
+                            rotated[MATRIX_SIZE - 1 - j, i] = matrix[i, j];
                             break;
                     }
                 }
             }
-
             return rotated;
         }
-
-
-        // [NavMesh] Info
-        private uint GetInfoMask()
+        private ulong MatrixToBitmask(ulong[,] matrix)
         {
-            // not yet developed;
-            return 0;
+            ulong newMask = 0ul;
+            ulong mask;
+
+            int row, col;
+            for (int i = 0; i < TOTAL_BITS; ++i)
+            {
+                row = INDEX_MAP[i].x;
+                col = INDEX_MAP[i].y;
+                mask = matrix[row, col];
+
+                newMask |= mask << i * BITS_PER_CELL;
+            }
+
+            return newMask;
         }
 
-        // [Render] Texture
+
         private void OnValidate()
         {
-            ApplyTexture();
-        }
-        private void ApplyTexture()
-        {
-            meshFilter = transform.GetComponent<MeshFilter>();
-            meshRenderer = transform.GetComponent<MeshRenderer>();
+            // ApplyTexture();
 
             // 공유된 Material 유지
             Texture texture = meshRenderer.sharedMaterial.mainTexture;
@@ -242,7 +212,7 @@ namespace Script.Data
             Vector2 uvOffset = new Vector2(uMin, vMin); // UV 시작 좌표
             Vector2 uvScale = new Vector2(SPRITE_WIDTH / (float)textureWidth, SPRITE_HEIGHT / (float)textureHeight); // 크기
 
-            // ✅ MaterialPropertyBlock을 사용해 개별 속성 적용
+            // MaterialPropertyBlock을 사용해 개별 속성 적용
             MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
             meshRenderer.GetPropertyBlock(propertyBlock);
 
@@ -252,9 +222,6 @@ namespace Script.Data
 
             meshRenderer.SetPropertyBlock(propertyBlock);
         }
-
-        //[Render] 
-        // ...
     }
 }
 #endif
