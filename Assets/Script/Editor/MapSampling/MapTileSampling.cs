@@ -87,14 +87,14 @@ namespace MapSampling
                 initTasks[t].Dispose();
             }
 
-            // save data
-            foreach (var grid in map)
-            {
-                AssetManager.WriteBinaryFile<MapGridData>(data: grid.Value,
-                                                         dataPath: MAP_NAVI_DATA_PATH,
-                                                         fileName: $"MapNavi_{grid.Key}",
-                                                         addressableGroup: "MapNavi");
-            }
+            //// save data
+            //foreach (var grid in map)
+            //{
+            //    AssetManager.WriteBinaryFile<MapGridData>(data: grid.Value,
+            //                                             dataPath: MAP_NAVI_DATA_PATH,
+            //                                             fileName: $"MapNavi_{grid.Key}",
+            //                                             addressableGroup: "MapNavi");
+            //}
         }
 
         private void IESaveMesh(EditMapData[] tiles)
@@ -192,6 +192,15 @@ namespace MapSampling
             if (true == optimizeMesh)
             {
                 MeshUtility.Optimize(meshToSave);
+            }
+
+            // save data
+            foreach (var grid in map)
+            {
+                AssetManager.WriteBinaryFile<MapGridData>(data: grid.Value,
+                                                         dataPath: MAP_NAVI_DATA_PATH,
+                                                         fileName: $"MapNavi_{grid.Key}",
+                                                         addressableGroup: "MapNavi");
             }
 
             AssetDatabase.CreateAsset(meshToSave, path);

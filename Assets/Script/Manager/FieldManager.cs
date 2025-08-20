@@ -3,7 +3,6 @@ namespace Script.Manager
     using Script.Data;
     using Script.Index;
     using Script.IngameMessage;
-    using Script.Interface;
     using System.Threading.Tasks;
     using UnityEngine;
 
