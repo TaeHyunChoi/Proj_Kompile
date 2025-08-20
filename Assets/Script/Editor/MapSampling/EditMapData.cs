@@ -7,8 +7,6 @@ namespace Script.Data
     using System.Threading.Tasks;
     using UnityEditor;
     using UnityEngine;
-    using UnityEngine.UI;
-    using static Script.Index.Index;
 
     [Serializable]       // 에셋으로 저장하기 위함
     [ExecuteInEditMode]  // 에디터에서 텍스쳐 곧장 적용하기 위함
@@ -67,11 +65,11 @@ namespace Script.Data
             int height;
             ulong heightFlag;
   
-            for (int i = 0; i < heights.Length; i += 4)
+            for (int i = 0; i < heights.Length; ++i)
             {
                 height      = heights[i];
-                heightFlag  = (-1 == height) ? 0b_1111 : (ulong)height;
-                heightMask |= heightFlag << i;
+                heightFlag  = (-1 == height) ? MapUtil.HEIGHT_MASK : (ulong)height;
+                heightMask |= heightFlag << i * MapUtil.HEIGHT_BITS;
             }
 
             this.isSmall = isSmall;
@@ -89,14 +87,14 @@ namespace Script.Data
             }
 
             Vector3 position = transform.position;
-            float rotY = transform.position.y;
+            float rotY = transform.eulerAngles.y;
             await Task.Yield();
 
             // 모든 타일이 1*1 또는 0.5f*0.5f 격자에 맞춰서 배치되어 있음
             // 즉, 현재 타일에 회전값을 적용하면 tile_pivot 값이 나온다.
             // tile_pivot을 기준으로 grid_pivot값을 구한다.
 
-            Vector3 gridPivot = MapUtil.GetGridPivot(position);
+            Vector3 gridPivot = MapUtil.GetGridPivot(position, rotY);
             int gridKey = MapUtil.GetGridKeyMask(sceneIndex, gridPivot);
             GridKey = gridKey;
 
@@ -137,7 +135,7 @@ namespace Script.Data
 
             for (int i = 0; i < TOTAL_BITS; ++i)
             {
-                cellValue = mask & 0b1111;
+                cellValue = mask & MapUtil.HEIGHT_MASK;
                 row = INDEX_MAP[i].x;
                 col = INDEX_MAP[i].y;
 

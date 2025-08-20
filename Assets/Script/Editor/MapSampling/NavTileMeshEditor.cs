@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using Script.Data;
 using Script.Util;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -47,15 +48,31 @@ public static class NavTileMeshEditor
     private const float HEIGHT_UNIT_VALUE  = 0.125f;    // 높이값의 단위. (height * 0.125f). 0 ~ 1의 값을 가진다.
     private const int   TRIANGLE_FULL_MASK = 0x_FFFF;   // 하나의 mesh 안에 4*4, 16개의 triangle로 이뤄졌다.
 
-    public static void SaveData(string fileName, bool isSmall, int[] inputHeights)
+    private static StringBuilder stringBuilder = new StringBuilder();
+
+    public static void SaveData(string fileName, bool isSmall, int[] heights)
     {
+        int height;
+        ulong heightFlag;
+        ulong heightMask = 0;
+        for (int i = 0; i < heights.Length; ++i)
+        {
+            height = heights[i];
+            heightFlag = (-1 == height) ? MapUtil.HEIGHT_MASK : (ulong)height;
+            heightMask |= heightFlag << i * MapUtil.HEIGHT_BITS;
+        }
+
+        stringBuilder.Append(fileName).Append("_").Append(heightMask);
+        fileName = stringBuilder.ToString();
+        stringBuilder.Clear();
+
         // set file name
         if (true == isSmall)
         {
             fileName += "_s";
         }
 
-        Mesh mesh = InstantiateMesh(inputHeights);
+        Mesh mesh = InstantiateMesh(heights);
 
         // create | save mesh
         var path = "Assets/Rcs/NavTile/Mesh/NavTileMesh_" + fileName + ".asset";
@@ -68,7 +85,13 @@ public static class NavTileMeshEditor
         Debug.Log("Mesh asset created: " + fileName);
 
         // create|save prefab for test
-        path = "Assets/Editor/Prefab/nav_" + fileName + "_test.prefab";
+        stringBuilder.Append("Assets/Editor/Prefab/");
+        stringBuilder.Append($"{fileName}");
+        stringBuilder.Append(".prefab");
+
+        path = stringBuilder.ToString();
+        stringBuilder.Clear();
+
         if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
         {
             AssetDatabase.DeleteAsset(path);
@@ -85,7 +108,7 @@ public static class NavTileMeshEditor
 
             // 타일 정보를 유니티의 NavMesh를 Bake하는 것처럼 데이터 저장할 때 호출하는 함수
             var maptilePrefab = prefabObject.AddComponent<EditMapData>();
-            maptilePrefab.InitializePrefab(inputHeights, isSmall);
+            maptilePrefab.InitializePrefab(heights, isSmall);
 
             PrefabUtility.SaveAsPrefabAsset(prefabObject, path, out isSuccess);
         }

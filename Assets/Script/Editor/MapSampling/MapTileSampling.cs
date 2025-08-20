@@ -37,13 +37,13 @@ namespace MapSampling
             // sync : render data (unity api 사용하므로 async 불가)
             //StartCoroutine(IESaveMesh(tiles));
             map = new ConcurrentDictionary<int, MapGridData>();
-            IESaveMesh(tiles);
 
             // async : nav data
             Task taskSaveNavData = SaveMapNavDataAsync(tiles);
             await Task.WhenAll(taskSaveNavData);
             taskSaveNavData.Dispose();
 
+            IESaveMesh(tiles);
             AssetDatabase.Refresh();
             Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
 
@@ -62,8 +62,6 @@ namespace MapSampling
                     tile_pivot = MapUtil.GetTilePivot(grid.gridKey, kvp.Key);
 
                     Debug.Log($"Grid_Pivot:{grid_pivot}, Tile_Pivot:{tile_pivot}");
-
-                    //ulong naviMask = kvp.Value.naviMask; // navi_layer, heights
                 }
             }
 
@@ -102,14 +100,15 @@ namespace MapSampling
         private void IESaveMesh(EditMapData[] tiles)
         {
             Dictionary<long, TempData> tempDataDict = new Dictionary<long, TempData>();
-
             EditMapData tile;
+            TempData tempData;
+
             for (int i = 0; i < tiles.Length; ++i)
             {
                 tile = tiles[i];
-                long key = tile.GridKey << 32 | tile.RenderLayer;
+                long key = tile.RenderLayer << 32 | sceneIndex << 24 | tile.GridKey;
 
-                if (!tempDataDict.ContainsKey(key))
+                if (false == tempDataDict.ContainsKey(key))
                 {
                     tempDataDict[key] = new TempData
                     {
@@ -120,7 +119,7 @@ namespace MapSampling
                     };
                 }
 
-                TempData tempData = tempDataDict[key];
+                tempData = tempDataDict[key];
 
                 int currentVertexCount = tempData.vertexCount;
                 int tileVertexCount = tile.MeshFilter.sharedMesh.vertexCount;
@@ -131,7 +130,8 @@ namespace MapSampling
                     combinedMesh.CombineMeshes(tempData.combineInstances.ToArray(), true, true);
                     combinedMesh.uv = tempData.combinedUVs.ToArray();
 
-                    SaveMesh(combinedMesh, tile.GridKey, tile.NaviLayer, tempData.index, true, false);
+                    // VERTEX 꽉 채워졌으면 중도에 하나 생성하고
+                    SaveMesh(combinedMesh, sceneIndex, tile.GridKey, tile.NaviLayer, tempData.index, true, false);
 
                     tempData.combineInstances.Clear();
                     tempData.combinedUVs.Clear();
@@ -153,29 +153,33 @@ namespace MapSampling
                 tempDataDict[key] = tempData;
             }
 
+            // 마지막까지 남은 데이터를 마저 생성하는거네
             foreach (var kvp in tempDataDict)
             {
-                TempData tempData = kvp.Value;
+                tempData = kvp.Value;
                 if (tempData.combineInstances.Count > 0)
                 {
                     Mesh combinedMesh = new Mesh();
                     combinedMesh.CombineMeshes(tempData.combineInstances.ToArray(), true, true);
                     combinedMesh.uv = tempData.combinedUVs.ToArray();
 
-                    SaveMesh(combinedMesh, (int)(kvp.Key >> 32), (int)(kvp.Key & 0xFFFF_FFFF), tempData.index, true, false);
+                    // long key = tile.RenderLayer << 32 | sceneIndex << 24 | tile.GridKey;
+                    int gridKey   = (int)(kvp.Key & 0x00FF_FFFF);
+                    int layerMask = (int)(kvp.Key >> 32);
+                    SaveMesh(combinedMesh, sceneIndex, gridKey, layerMask, tempData.index, true, false);
                 }
             }
 
             EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
         }
-        private void SaveMesh(Mesh mesh, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
+        private void SaveMesh(Mesh mesh, int sceneIndex, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
         {
             if (false == map.ContainsKey(gridKey))
             {
                 map.TryAdd(gridKey, new MapGridData(gridKey));
             }
 
-            string assetName = $"MapRender_G{gridKey}_L{layer}_{index}";
+            string assetName = $"MapRender_{sceneIndex}_G{gridKey}_L{layer}_{index}";
             map[gridKey].AddAssetFile(assetName);
 
             var path = "Assets/Rcs/MapRender/" + assetName + ".asset";

@@ -15,38 +15,23 @@ MonoBehaviour:
   m_GroupName: MapRender
   m_GUID: d20cb78037ea68b4c9806d32461477c7
   m_SerializeEntries:
-  - m_GUID: 2ac6ad4dd8f9ddc4993fd55928550c63
-    m_Address: MapRender_G0_L1_0
+  - m_GUID: 103ab75a137e94b48865032f8c8198ab
+    m_Address: MapRender_0_G12582912_L0_0
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3802dc8d7b2cc5a42bb0dc1ae35d6011
-    m_Address: MapRender_G0_L8454144_0
+  - m_GUID: 604b328a2933a254a80c6b21cd0ef7b5
+    m_Address: MapRender_0_G192_L0_0
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 4ba9ba23c68db9245ab06ceda5cd5d7d
-    m_Address: MapRender_G0_L0_0
+  - m_GUID: ad689aef5ef4c0944bfc4a96e96df420
+    m_Address: MapRender_0_G0_L0_0
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 51c911eca5d23ff48badcc4a68cb4c82
-    m_Address: MapRender_G0_L129_0
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5c01ac1625190de4fbb9196aa20d1678
-    m_Address: MapRender_G0_L12582912_0
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5d443b1be671d5e46bdf370983310606
-    m_Address: MapRender_G0_L2_0
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: feaccd9ce113a7d4595e46bddc74958c
-    m_Address: MapRender_G0_L192_0
+  - m_GUID: bd8a3f366b277634ba0afcf56e2b31f6
+    m_Address: MapRender_0_G12583104_L0_0
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

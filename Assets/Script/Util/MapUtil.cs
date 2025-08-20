@@ -17,6 +17,7 @@ namespace Script.Util
         private const int SHIFT_GRID_X      = 16;
         private const int SHIFT_GRID_X_SIGN = 23;
         private const int SHIFT_SCENE_INDEX = 24;
+
         private const int GRID_MAX_VALUE    = 64;
         private const int GRID_COORD_MASK   = 0b_0011_1111;
 
@@ -26,6 +27,37 @@ namespace Script.Util
         private const int SHIFT_TILE_SMALL  = 24;
         //private const int SHIFT_TILE_LAYER  = 25;
 
+        public const int HEIGHT_MASK = 0b_1111;
+        public const int HEIGHT_BITS = 4;
+
+        public static Vector3 GetGridPivot(Vector3 position, float rotY)
+        {
+            // get: (rotated) pivot
+            int rotInt = Mathf.RoundToInt(rotY);
+            rotInt = (rotInt + 360) % 360;
+            if (rotInt % 90 != 0)
+            {
+                Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
+                return default;
+            }
+
+            // tile pivot : pivot 기준으로 회전을 시키면 pivot 좌표가 아래처럼 바뀐다는 뜻.
+            Vector3 rotated;
+            switch (rotInt)
+            {
+                case 90: rotated = new Vector3(0f, 0f, -1f); break;
+                case 180: rotated = new Vector3(-1f, 0f, -1f); break;
+                case 270: rotated = new Vector3(-1f, 0f, 0f); break;
+                default: rotated = Vector3.zero; break;
+            }
+
+            position += rotated;
+            float gx = Mathf.FloorToInt(position.x / GRID_MAX_VALUE) * GRID_MAX_VALUE;
+            float gy = Mathf.FloorToInt(position.y / GRID_MAX_VALUE) * GRID_MAX_VALUE;
+            float gz = Mathf.FloorToInt(position.z / GRID_MAX_VALUE) * GRID_MAX_VALUE;
+            return new Vector3(gx, gy, gz);
+        }
+        
         /// <summary> 
         /// grid의 좌표는 각 축마다 [-127,127] 사이의 값을 가진다. <br/>
         /// scene_index를 부여하여 여러 씬을 사용할 수 있도록 하였다. <br/>
@@ -150,7 +182,7 @@ namespace Script.Util
         }
         public static Vector3 GetGridPivot(int key)
         {
-            int sceneIndex = (key >> SHIFT_SCENE_INDEX) & 0xFF;
+            //int sceneIndex = (key >> SHIFT_SCENE_INDEX) & 0xFF;
 
             int x = (key >> SHIFT_GRID_X) & GRID_COORD_MASK;
             int y = (key >> SHIFT_GRID_Y) & GRID_COORD_MASK;
