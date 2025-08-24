@@ -9,7 +9,6 @@ namespace Script.Manager
     public partial class IngameManager : MonoBehaviour
     {
         private static IngameManager    instance;
-        private static FieldManager     fieldMgr;
 
         private static PlayData         playData;
 
@@ -40,7 +39,7 @@ namespace Script.Manager
 #endif
 
             playData = data;
-            fieldMgr = new FieldManager();
+            FieldManager fieldMgr = new FieldManager();
 
             await fieldMgr.Initialize(playData);
         }
@@ -119,7 +118,6 @@ namespace Script.Manager
         private void OnDisable()
         {
             inputHandler?.OnDisable();
-            fieldMgr?.Dispose();
 
             if (ingameProcedures != null)
             {

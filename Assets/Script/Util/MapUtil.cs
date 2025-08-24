@@ -2,6 +2,7 @@ namespace Script.Util
 {
     using UnityEngine;
     using Script.Data;
+    using System.IO.Compression;
 
     // => MapTileInfo, Coordinate
     public static partial class MapUtil
@@ -21,10 +22,10 @@ namespace Script.Util
         private const int GRID_MAX_VALUE    = 64;
         private const int GRID_COORD_MASK   = 0b_0011_1111;
 
-        private const int SHIFT_TILE_Z      = 0;
-        private const int SHIFT_TILE_Y      = 8;
-        private const int SHIFT_TILE_X      = 16;
-        private const int SHIFT_TILE_SMALL  = 24;
+        public const int SHIFT_TILE_Z      = 0;
+        public const int SHIFT_TILE_Y      = 8;
+        public const int SHIFT_TILE_X      = 16;
+        public const int SHIFT_TILE_SMALL  = 24;
         //private const int SHIFT_TILE_LAYER  = 25;
 
         public const int HEIGHT_MASK = 0b_1111;
@@ -243,6 +244,45 @@ namespace Script.Util
         private static Vector2[] triB  = new Vector2[64];
         private static Vector2[] triC  = new Vector2[64];
         private static Vector2[] tiles = new Vector2[4];
+
+        public static int GetQuarantInTile(Vector3 pivot, Vector3 position)
+        {
+            Vector3 diff = position - pivot;
+
+            bool xHalfOrMore = diff.x >= 0.5f;
+            bool zHalfOrMore = diff.z > 0.5f;
+
+            if (true == xHalfOrMore)
+            {
+                if (true == zHalfOrMore) { return 1; }
+                else                     { return 4; }
+            }
+            else
+            {
+                if (true == zHalfOrMore) { return 2; }
+                else                     { return 3; }
+            }
+        }
+
+
+        public static int GetGridCoordKey(int scene_index, Vector3 position)
+        {
+            Vector3 grid_pivot = GetGridPivot(position);
+            return GetGridKeyMask(scene_index, grid_pivot);
+        }
+        public static int GetTileCoordKey(Vector3 position)
+        {
+            Vector3 grid_pivot = GetGridPivot(position);
+            Vector3 diff = position - grid_pivot;
+            Vector3Int diffInt = diff.ToInt();
+
+            int mask = 0;
+            mask |= (diffInt.z) << SHIFT_TILE_Z;
+            mask |= (diffInt.y) << SHIFT_TILE_Y;
+            mask |= (diffInt.x) << SHIFT_TILE_X;
+
+            return mask;
+        }
 
         public static void ScheduleOverlapCheck(MapGridData data, Vector3 next_position)
         {

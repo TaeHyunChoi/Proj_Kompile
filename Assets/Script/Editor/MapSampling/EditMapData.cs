@@ -101,7 +101,7 @@ namespace Script.Data
             Vector3 tilePivot = MapUtil.GetTilePivot(position, rotY, isSmall);
             int tileKey = MapUtil.GetTileKeyMask(gridPivot, tilePivot, isSmall);
 
-            ulong naviMask = GetRotatedHeightMask(rotY);
+            long naviMask = GetRotatedHeightMask(rotY);
             //infoMask = GetInfoMask();
 
             map.TryAdd(gridKey, new MapGridData(gridKey));
@@ -109,14 +109,14 @@ namespace Script.Data
         }
 
 
-        private ulong GetRotatedHeightMask(float rotY)
+        private long GetRotatedHeightMask(float rotY)
         {
             int rotInt = Mathf.RoundToInt(rotY);
             rotInt = (rotInt + 360) % 360;
             if (rotInt % 90 != 0)
             {
                 Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
-                return 0ul;
+                return 0l;
             }
 
             ulong[,] heightMatrix  = BitmaskToMatrix(heightMask);
@@ -125,7 +125,7 @@ namespace Script.Data
 
             ulong layerMask = (ulong)naviLayer << (TOTAL_BITS * BITS_PER_CELL);
 
-            return layerMask | rotatedHeightMask;
+            return (long)(layerMask | rotatedHeightMask);
         }
         private ulong[,] BitmaskToMatrix(ulong mask)
         {

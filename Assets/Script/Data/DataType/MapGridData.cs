@@ -2,6 +2,7 @@ namespace Script.Data
 {
     using MessagePack;
     using Script.Manager;
+    using Script.Util;
     using System.Collections.Generic;
 
     [MessagePackObject]
@@ -22,11 +23,17 @@ namespace Script.Data
         [IgnoreMember] // 런타임 중에만 사용한다.
         public UnityEngine.GameObject gameObject;
 
+        public int GetSceneIndex() => gridKey >> 24;
+
+        public bool TryGetTileData(int tileIntKey, out MapTileData tileData)
+        {
+            return MapNavDataDictionary.TryGetValue(tileIntKey, out tileData);
+        }
+
         public void SetChildObjectMeshIDs(int[] ids)
         {
             mesh_asset_instanceIDs = ids;
         }
-
         public void Dispose()
         {
             for (int i = 0; i < mesh_asset_instanceIDs.Length; ++i)
