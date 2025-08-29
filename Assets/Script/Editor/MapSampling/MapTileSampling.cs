@@ -55,11 +55,11 @@ namespace MapSampling
                 foreach(var kvp in grid.MapNavDataDictionary)
                 {
                     // grid pivot
-                    grid_pivot = MapUtil.GetGridPivot(grid.gridKey);
+                    grid_pivot = EditMapUtil.GetGridPivot(grid.gridKey);
 
                     // tile pivot
                     int tileKey = kvp.Key;
-                    tile_pivot = MapUtil.GetTilePivot(grid.gridKey, kvp.Key);
+                    tile_pivot = EditMapUtil.GetTilePivot(grid.gridKey, kvp.Key);
 
                     Debug.Log($"Grid_Pivot:{grid_pivot}, Tile_Pivot:{tile_pivot}");
                 }

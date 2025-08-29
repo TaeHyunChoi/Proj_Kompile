@@ -3,6 +3,7 @@ namespace Script.Data
 {
     using Script.Index;
     using Script.Util;
+    using static Script.Index.MapTileIndex;
     using System;
     using System.Threading.Tasks;
     using UnityEditor;
@@ -68,8 +69,8 @@ namespace Script.Data
             for (int i = 0; i < heights.Length; ++i)
             {
                 height      = heights[i];
-                heightFlag  = (-1 == height) ? MapUtil.HEIGHT_MASK : (ulong)height;
-                heightMask |= heightFlag << i * MapUtil.HEIGHT_BITS;
+                heightFlag  = (-1 == height) ? HEIGHT_MASK : (ulong)height;
+                heightMask |= heightFlag << i * HEIGHT_BITS;
             }
 
             this.isSmall = isSmall;
@@ -94,12 +95,12 @@ namespace Script.Data
             // 즉, 현재 타일에 회전값을 적용하면 tile_pivot 값이 나온다.
             // tile_pivot을 기준으로 grid_pivot값을 구한다.
 
-            Vector3 gridPivot = MapUtil.GetGridPivot(position, rotY);
-            int gridKey = MapUtil.GetGridKeyMask(sceneIndex, gridPivot);
+            Vector3 gridPivot = EditMapUtil.GetGridPivot(position, rotY);
+            int gridKey = EditMapUtil.GetGridKeyMask(sceneIndex, gridPivot);
             GridKey = gridKey;
 
-            Vector3 tilePivot = MapUtil.GetTilePivot(position, rotY, isSmall);
-            int tileKey = MapUtil.GetTileKeyMask(gridPivot, tilePivot, isSmall);
+            Vector3 tilePivot = EditMapUtil.GetTilePivot(position, rotY, isSmall);
+            int tileKey = EditMapUtil.GetTileKeyMask(gridPivot, tilePivot, isSmall);
 
             long naviMask = GetRotatedHeightMask(rotY);
             //infoMask = GetInfoMask();
@@ -135,7 +136,7 @@ namespace Script.Data
 
             for (int i = 0; i < TOTAL_BITS; ++i)
             {
-                cellValue = mask & MapUtil.HEIGHT_MASK;
+                cellValue = mask & HEIGHT_MASK;
                 row = INDEX_MAP[i].x;
                 col = INDEX_MAP[i].y;
 

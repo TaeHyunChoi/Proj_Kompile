@@ -8,14 +8,18 @@ using static Script.Index.IDxInput;
 using Script.Util;
 using Script.Data;
 
-public class IngameFieldPlayer : IngameUnitBase, IInputReceiver
+public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpdater
 {
     private Animator animator;
     private int index;
 
+    private Vector3 last_input_position;
+
     public async Task<bool> Init(int index)
     {
         this.index = index;
+        last_input_position = transform.position;
+
         asset_hash_codes = new List<int>();
 
         animator = transform.GetComponent<Animator>();
@@ -28,57 +32,67 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver
     }
 
     // 나중에 직접 조작 캐릭터(Playable)과 동료(Follower)를 분리해서 구현해야겠군..
+    // 아무런 입력이 없으면 호출되지 않는다.
     public bool ReceiveInput(InputFlag inputFlag)
     {
-        Vector3 dir = Vector3.zero;
-        if (true == inputFlag.Contains(InputFlag.UP))    { dir += Vector3.forward; }
-        if (true == inputFlag.Contains(InputFlag.DOWN))  { dir += Vector3.back;    }
-        if (true == inputFlag.Contains(InputFlag.LEFT))  { dir += Vector3.left;    }
-        if (true == inputFlag.Contains(InputFlag.RIGHT)) { dir += Vector3.right;   }
+        switch (index)
+        {
+            case 0:
+                Vector3 dir = Vector3.zero;
+                if (true == inputFlag.Contains(InputFlag.UP))    { dir += Vector3.forward; }
+                if (true == inputFlag.Contains(InputFlag.DOWN))  { dir += Vector3.back; }
+                if (true == inputFlag.Contains(InputFlag.LEFT))  { dir += Vector3.left; }
+                if (true == inputFlag.Contains(InputFlag.RIGHT)) { dir += Vector3.right; }
+                dir.Normalize();
 
-        dir.Normalize();
-        Move(transform.position + 10f * Time.deltaTime * dir);
+                // 여기서 CheckCollision이 맞는거 아니냐 사실
+                FieldManager.CheckMove(transform.position + base.moveSpeed * Time.deltaTime * dir);
+                return true;
+        }
+
+        // 오늘은 프로세스 좀 정리합시다.
+
         // 여기서 애니메이션도 4방향 또는 8방향으로 설정하면 된다..
         // 8방향 애니메이션 만들 수 있으면 참 좋을텐데~ AI로 구현 가능?
 
-        return true;
+        return false;
     }
 
     private void Move(Vector3 next_position)
     {
-        // 여기서부터 MapUtil 또는 FieldManager에 넘겨서 처리하면 좋을 듯
-
         // grid
-        int scene_index = FieldManager.SceneIndex;
-        int grid_coord_key = MapUtil.GetGridCoordKey(scene_index, next_position);
-        if (false == FieldManager.ContainMapGrid(grid_coord_key))
-        {
-            return;
-        }
+        //int scene_index = FieldManager.SceneIndex;
+        //int grid_coord_key = MapUtil.GetGridCoordKey(scene_index, next_position);
+        //if (false == FieldManager.ContainMapGrid(grid_coord_key))
+        //{
+        //    return;
+        //}
 
-        // tiles
-        // 인접 타입을 가져오는건 메임 프레임에서 동기적으로 실행 -> static으로 하나만 들고 있어도 되려나?
-        int tile_coord_key = MapUtil.GetTileCoordKey(next_position);
-        if (false == FieldManager.TryGetCollisionTiles(grid_coord_key, next_position, out MapTileData[] targetTiles))
-        {
-            return;
-        }
+        // tiles overlapped: unit_collider에 닿는 대상 타일 => targetTiles;
+        //if (false == FieldManager.TryCheckOverlapTiles(grid_coord_key, next_position, out MapTileData[] targetTiles))
+        //{
+        //    return;
+        //}
 
-        // 여기서부터 Job-System 사용하도록 설정이 필요함...
-        // 학습 진행 ㄱㄱ
-        for (int i = 0; i < targetTiles.Length; ++i)
-        {
-            if (false == targetTiles[i].IsValid())
-            {
-                continue;
-            }
-
-
-        }
+        // 대상 타일 내 triangles 중에서 + unit_collider와 맞닿는 triangle이 '모두' 유효해야 한다.
+        //last_input_position = next_position;
+        //int next_tile_key = MapUtil.GetTileCoordKey(next_position);
+        //Vector3 next_tile_pivot = MapUtil.GetTilePivot(grid_coord_key, next_tile_key);
+        //MapTileOverlapJobManager.Instance.ScheduleCheckOverlapTrianglesInTile(next_tile_pivot, next_position, 0.5f, targetTiles); 
     }
 
     public void SetAnime(string key)
     {
         animator.Play(key);
+    }
+
+    public IngameUpdateState FixedUpdateState()
+    {
+        if (true == MapTileOverlapJobManager.Instance.CheckIfJobIsDone())
+        {
+            transform.position = last_input_position;
+        }
+
+        return IngameUpdateState.RUNNING;
     }
 }

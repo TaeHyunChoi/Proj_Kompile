@@ -76,6 +76,7 @@ namespace Script.Manager
         private static Transform mapRoot;
         private static Transform unitRoot;
 
+        private static System.Threading.SynchronizationContext mainSyncContext;
 
         // Initialize
         public static void Initialize(Transform mainTransform)
@@ -89,6 +90,8 @@ namespace Script.Manager
 
             mapRoot = mainTransform.Find("Map").transform;
             unitRoot = mainTransform.Find("Unit").transform;
+
+            mainSyncContext = System.Threading.SynchronizationContext.Current;
         }
 
 
@@ -226,11 +229,15 @@ namespace Script.Manager
         }
         public static void Dispose(int instanceID)
         {
-            if (true == _nonGameObjectInstances.TryGetValue(instanceID, out var handle))
+            mainSyncContext.Post((state) =>
             {
-                Addressables.ReleaseInstance(handle);
-                _nonGameObjectInstances.TryRemove(instanceID);
-            }
+                if (_nonGameObjectInstances.TryGetValue(instanceID, out var handle))
+                {
+                    Addressables.ReleaseInstance(handle);
+                    _nonGameObjectInstances.TryRemove(instanceID);
+                }
+            },
+            null);
         }
     }
 

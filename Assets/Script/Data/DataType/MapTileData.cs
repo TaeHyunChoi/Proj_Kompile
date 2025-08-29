@@ -1,8 +1,9 @@
-
-using MessagePack;
-
 namespace Script.Data
 {
+    using MessagePack;
+    using Script.Util;
+    using UnityEngine;
+
     [MessagePackObject]
     public struct MapTileData
     {
@@ -18,9 +19,28 @@ namespace Script.Data
             infoMask = info;
         }
 
-        public bool IsValid()
+        public readonly Vector3 GetTrianglePoints(int triangle_index, int point_index)
         {
-            return 0 <= naviMask;
+            int index = Index.MapTileIndex.TriangleVertex[triangle_index * 3 + point_index];
+            float y = ((naviMask >> index * 4) & 0b_1111) * 0.125f;
+
+            return MapUtil.GetVertexPoint(index, y);
+        }
+    }
+
+    public readonly struct IngameMapTileData
+    {
+        public readonly int GridKey;
+        public readonly int TileKey;
+        public readonly long NaviMask;
+        public readonly uint InfoMask;
+
+        public IngameMapTileData(int g, int t, MapTileData data)
+        {
+            GridKey = g;
+            TileKey = t;
+            NaviMask = data.naviMask;
+            InfoMask = data.infoMask;
         }
     }
 }

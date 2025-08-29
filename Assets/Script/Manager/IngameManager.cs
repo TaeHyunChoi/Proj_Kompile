@@ -5,10 +5,16 @@ namespace Script.Manager
     using Script.Index;
     using Script.Content;
     using Script.Data;
+    using NUnit.Framework.Constraints;
 
     public partial class IngameManager : MonoBehaviour
     {
         private static IngameManager    instance;
+
+
+        private static FieldManager fieldMgr;
+        private static MapTileOverlapJobManager overlapJobManager;
+
 
         private static PlayData         playData;
 
@@ -39,8 +45,9 @@ namespace Script.Manager
 #endif
 
             playData = data;
-            FieldManager fieldMgr = new FieldManager();
 
+            overlapJobManager = new MapTileOverlapJobManager();
+            fieldMgr = new FieldManager();
             await fieldMgr.Initialize(playData);
         }
 

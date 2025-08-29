@@ -1,0 +1,53 @@
+
+namespace Script.Index
+{
+    public static class MapTileIndex
+    {
+        // triangle
+        /// <summary> 타일 내부에서 삼각형을 만들 때에 연결하는 vertex 배열
+        /// </summary>
+        public static readonly int[] TriangleVertex = new int[]
+        {
+            0,  3,  1, // virtual_vertex 0,3,1을 연결하면 1번 삼각형이다.
+            1,  3,  6,
+            3,  5,  6,
+            0,  5,  3,
+            1,  4,  2,
+            2,  4,  7,
+            4,  6,  7,
+            1,  6,  4,
+            5,  8,  6,
+            6,  8, 11,
+            8, 10, 11,
+            5, 10,  8,
+            6,  9,  7,
+            7,  9, 12,
+            9, 11, 12,
+            6, 11,  9
+        };
+
+        // for on grid
+        public static int SIZE_GRID_AXIS => GRID_MAX_VALUE;
+
+        // _SIGN은 '부호(+/-) 플래그'
+        public const int SHIFT_GRID_Z = 0;
+        public const int SHIFT_GRID_Z_SIGN = 7;
+        public const int SHIFT_GRID_Y = 8;
+        public const int SHIFT_GRID_Y_SIGN = 15;
+        public const int SHIFT_GRID_X = 16;
+        public const int SHIFT_GRID_X_SIGN = 23;
+        public const int SHIFT_SCENE_INDEX = 24;
+        public const int GRID_MAX_VALUE = 64;
+        public const int GRID_COORD_MASK = 0b_0011_1111;
+
+        public const int SHIFT_TILE_Z = 0;
+        public const int SHIFT_TILE_Y = 8;
+        public const int SHIFT_TILE_X = 16;
+        public const int SHIFT_TILE_SMALL = 24;
+        //private const int SHIFT_TILE_LAYER  = 25;
+
+        public const int HEIGHT_MASK = 0b_1111;
+        public const int HEIGHT_BITS = 4;
+    }
+}
+

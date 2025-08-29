@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using Script.Data;
 using Script.Util;
+using static Script.Index.MapTileIndex;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
@@ -15,15 +16,6 @@ public static class NavTileMeshEditor
         new Vector3(0.75f, 0f,    0.75f),   new Vector3(0f,    0f,    1f   ),   new Vector3(0.5f,  0f,    1f),
         new Vector3(1f,    0f,    1f   )
 };
-    private static readonly (int, int, int)[] VirtualTriangleVertex = new (int, int, int)[]
-    {
-        (  0,  3,  1), (  1,  3,  6), (  3,  5,  6),
-        (  0,  5,  3), (  1,  4,  2), (  2,  4,  7),
-        (  4,  6,  7), (  1,  6,  4), (  5,  8,  6),
-        (  6,  8, 11), (  8, 10, 11), (  5, 10,  8),
-        (  6,  9,  7), (  7,  9, 12), (  9, 11, 12),
-        (  6, 11,  9)
-    };
     private static readonly int[] ExceptTriangleMask = new int[]
 {
         TRIANGLE_FULL_MASK & ~(1 <<  0 | 1 <<  3),
@@ -58,8 +50,8 @@ public static class NavTileMeshEditor
         for (int i = 0; i < heights.Length; ++i)
         {
             height = heights[i];
-            heightFlag = (-1 == height) ? MapUtil.HEIGHT_MASK : (ulong)height;
-            heightMask |= heightFlag << i * MapUtil.HEIGHT_BITS;
+            heightFlag = (-1 == height) ? HEIGHT_MASK : (ulong)height;
+            heightMask |= heightFlag << i * HEIGHT_BITS;
         }
 
         stringBuilder.Append(fileName).Append("_").Append(heightMask);
@@ -173,9 +165,10 @@ public static class NavTileMeshEditor
         {
             if (0 != (flag & triangleMask))
             {
-                _triangle[verticeIndex]     = VirtualTriangleVertex[triangleIndex].Item1;
-                _triangle[verticeIndex + 1] = VirtualTriangleVertex[triangleIndex].Item2;
-                _triangle[verticeIndex + 2] = VirtualTriangleVertex[triangleIndex].Item3;
+                int index = triangleIndex * 3;
+                _triangle[verticeIndex]     = TriangleVertex[index + 0];
+                _triangle[verticeIndex + 1] = TriangleVertex[index + 1];
+                _triangle[verticeIndex + 2] = TriangleVertex[index + 2];
 
                 verticeIndex += 3;
             }

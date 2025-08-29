@@ -25,6 +25,10 @@ namespace Script.Data
 
         public int GetSceneIndex() => gridKey >> 24;
 
+        public bool ContainTile(int tKey)
+        {
+            return MapNavDataDictionary.ContainsKey(tKey);
+        }
         public bool TryGetTileData(int tileIntKey, out MapTileData tileData)
         {
             return MapNavDataDictionary.TryGetValue(tileIntKey, out tileData);
