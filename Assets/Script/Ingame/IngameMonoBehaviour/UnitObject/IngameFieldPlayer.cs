@@ -45,15 +45,9 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
                 if (true == inputFlag.Contains(InputFlag.RIGHT)) { dir += Vector3.right; }
                 dir.Normalize();
 
-                // 여기서 CheckCollision이 맞는거 아니냐 사실
-                FieldManager.CheckMove(transform.position + base.moveSpeed * Time.deltaTime * dir);
+                FieldManager.CheckPlayerMove(transform.position + base.moveSpeed * Time.deltaTime * dir);
                 return true;
         }
-
-        // 오늘은 프로세스 좀 정리합시다.
-
-        // 여기서 애니메이션도 4방향 또는 8방향으로 설정하면 된다..
-        // 8방향 애니메이션 만들 수 있으면 참 좋을텐데~ AI로 구현 가능?
 
         return false;
     }

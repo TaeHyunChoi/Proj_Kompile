@@ -1,12 +1,14 @@
 #if UNITY_EDITOR
 
-//using Script.Util;
 using UnityEngine;
 using static Script.Index.MapTileIndex;
 
+/// <summary> 맵타일 관련하여 '에디터'에서만 사용하는 함수.
+/// 비슷한 기능으로 함수가 많아지니까 헷갈려서 분리;
+/// 개발하면서 함수 기능은 다시 정리하던가 그럽시다.
+/// </summary>
 public static class EditMapUtil
 {
-
     public static Vector3 GetGridPivot(Vector3 position, float rotY)
     {
         // get: (rotated) pivot
@@ -110,9 +112,9 @@ public static class EditMapUtil
             diff *= 2f;
         }
 
-        int x = Mathf.RoundToInt(gridPivot.x);
-        int y = Mathf.RoundToInt(gridPivot.y);
-        int z = Mathf.RoundToInt(gridPivot.z);
+        int x = Mathf.RoundToInt(diff.x);
+        int y = Mathf.RoundToInt(diff.y);
+        int z = Mathf.RoundToInt(diff.z);
 
         int mask = 0;
         mask |= z << SHIFT_TILE_Z;

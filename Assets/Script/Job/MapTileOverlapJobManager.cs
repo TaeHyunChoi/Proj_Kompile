@@ -80,7 +80,7 @@ namespace Script.Manager
         /// <param name="center"></param>
         /// <param name="radius"></param>
         /// <param name="tile">언제나 4개씩 들어온다. 하나라도 없으면 함수 호출을 하지 않는다.</param>
-        public void ScheduleCheckOverlapTrianglesInTile(Vector3 next_tile_pivot, Vector3 center, float radius, params MapTileData[] tiles)
+        public void ScheduleCheckOverlapTrianglesInTile(Vector3 next_tile_pivot, Vector3 center, float radius, params IngameMapTileData[] tiles)
         {
             if (true == isJobScheduled)
             {
@@ -90,7 +90,8 @@ namespace Script.Manager
                 return;
             }
 
-            MapTileData tile;
+            // 쓰읍.. 여기 뭔가 마음에 안드는데..
+            IngameMapTileData tile;
             float3 pivot;
             int index = 0;
             for (int i = 0; i < tiles.Length; ++i)

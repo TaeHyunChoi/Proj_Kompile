@@ -1,6 +1,8 @@
 
 namespace Script.Index
 {
+    using UnityEngine;
+
     public static class MapTileIndex
     {
         // triangle
@@ -28,6 +30,14 @@ namespace Script.Index
 
         // for on grid
         public static int SIZE_GRID_AXIS => GRID_MAX_VALUE;
+
+        public static readonly Vector3[] RELATIVE_COORD_BY_QUARANT = new Vector3[]
+        {
+            new Vector3( 1f, 0f, 0f), new Vector3(0f, 0f,  1f),  new Vector3( 1f,0,  1f),  // 1사분면
+            new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f,  1f),  new Vector3(-1f,0,  1f),  // 2사분면
+            new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, -1f),  new Vector3(-1f,0, -1f),  // 3사분면
+            new Vector3( 1f, 0f, 0f), new Vector3(0f, 0f, -1f),  new Vector3( 1f,0, -1f),  // 4사분면
+        };
 
         // _SIGN은 '부호(+/-) 플래그'
         public const int SHIFT_GRID_Z = 0;
