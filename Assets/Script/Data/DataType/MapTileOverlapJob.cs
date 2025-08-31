@@ -1,37 +1,50 @@
 namespace Script.Data
 {
+    using Script.Util;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
 
-    // Modified Job Struct
-    public struct TriangleCircleOverlapJob : IJobParallelFor
+    /// <summary> 위치로부터 반경 radius 에 닿은 타일 삼각형들이 이동 가능한지 여부 판단
+    /// </summary>
+    public struct MapTileMovableJob : IJobParallelFor
     {
-        // Job의 나머지 멤버 변수들은 float3로 변경되어야 합니다.
-        [ReadOnly] public NativeArray<float3> TriangleA;
-        [ReadOnly] public NativeArray<float3> TriangleB;
-        [ReadOnly] public NativeArray<float3> TriangleC;
+        [ReadOnly] public NativeArray<IngameMapTileData> IngameMapTileData;
         [ReadOnly] public float3 SphereCenter;
         [ReadOnly] public float SphereRadius;
-        public NativeArray<bool> OverlapResults;
+        public NativeArray<bool> Results;
 
         public void Execute(int index)
         {
-            float3 a = TriangleA[index];
-            float3 b = TriangleB[index];
-            float3 c = TriangleC[index];
+            IngameMapTileData data = IngameMapTileData[index];
 
-            // 데이터는 존재하나 닿지 않는 곳에 있다면 return true;를 해야 하나?
-
-            float3 closestPoint = ClosestPointOnTriangle(SphereCenter, a, b, c);
-            float distSq = math.distancesq(closestPoint, SphereCenter);
+            float3 closestPoint;
+            float distSq;
             float radiusSq = SphereRadius * SphereRadius;
 
-            OverlapResults[index] = distSq <= radiusSq;
+            for (int i = 0; i < Index.MapTileIndex.TRIANGLES_COUNT; ++i)
+            {
+                bool setTriangle = true;
+                setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 0, out float3 a);
+                setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 1, out float3 b);
+                setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 2, out float3 c);
+
+                closestPoint = ClosestPointOnTriangle(SphereCenter, a, b, c);
+                distSq = math.distancesq(closestPoint, SphereCenter);
+
+                // 영역이 겹쳤는데 & 해당 삼각형이 존재하지 않는다면? 이동 불가.
+                if (distSq <= radiusSq 
+                    && false == setTriangle)
+                {
+                    Results[index] = false;
+                    return;
+                }
+            }
+
+            Results[index] = true;
         }
 
-        /// <summary>
-        /// 3D 공간에서 점과 삼각형 사이의 가장 가까운 점을 찾는 함수입니다.
+        /// <summary> 3D 공간에서 점과 삼각형 사이의 가장 가까운 점을 찾는 함수입니다.
         /// </summary>
         private static float3 ClosestPointOnTriangle(float3 p, float3 a, float3 b, float3 c)
         {

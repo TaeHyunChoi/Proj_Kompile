@@ -1,8 +1,6 @@
 namespace Script.Data
 {
     using MessagePack;
-    using Script.Util;
-    using UnityEngine;
 
     [MessagePackObject]
     public struct MapTileData
@@ -33,14 +31,6 @@ namespace Script.Data
             TileKey = t;
             NaviMask = data.naviMask;
             InfoMask = data.infoMask;
-        }
-
-        public readonly Vector3 GetTrianglePoints(int triangle_index, int point_index)
-        {
-            int index = Index.MapTileIndex.TriangleVertex[triangle_index * 3 + point_index];
-            float y = ((NaviMask >> index * 4) & 0b_1111) * 0.125f;
-
-            return MapUtil.GetVertexPoint(index, y);
         }
     }
 }

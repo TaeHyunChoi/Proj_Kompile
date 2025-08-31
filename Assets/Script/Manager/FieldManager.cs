@@ -76,11 +76,8 @@ namespace Script.Manager
                 return;
             }
 
-            // 수정 필요
-            Vector3 next_tile_pivot = MapUtil.GetTilePivotPosition(next_position, isSmall);
             float radius = 0.5f;
-            MapTileOverlapJobManager.Instance.ScheduleCheckOverlapTrianglesInTile(next_tile_pivot, next_position, radius, target_tiles);
-
+            MapTileOverlapJobManager.Instance.ScheduleJob_MapTileMovable(next_position, isSmall, radius, target_tiles);
         }
 
         /// <summary> </summary>

@@ -1,10 +1,11 @@
 namespace Script.Util
 {
-    using static Index.MapTileIndex;
     using UnityEngine;
+    using Script.Data;
+    using static Index.MapTileIndex;
 
-    // => MapTileInfo, Coordinate
-    public static partial class MapUtil 
+
+    public static partial class MapUtil
     {
         public static (int, int) GetCoordKey(Vector3 position, bool isSmall)
         {
@@ -74,6 +75,7 @@ namespace Script.Util
 
             return new Vector3(x, y, z);
         }
+
         private static int PositionToTileMask(Vector3 diff, bool isSmall)
         {
             int x = Mathf.RoundToInt(diff.x);
@@ -95,8 +97,6 @@ namespace Script.Util
             return mask;
         }
 
-        /// <summary> </summary>
-        /// <returns>현재 </returns>
         public static int GetQuarantInTile(Vector3 position, bool isSmall)
         {
             Vector3 tilePivot = GetTilePivotPosition(position, isSmall);
@@ -139,8 +139,22 @@ namespace Script.Util
 
             return new Vector3(x, y, z);
         }
-    
-        // ------------
 
+        public static bool TryGetTrianglePoint(IngameMapTileData data, int tri_index, int pt_index, out Unity.Mathematics.float3 point)
+        {
+            int pt_virtual_index = TriangleVertex[tri_index * 3 + pt_index];
+            int pt_height_mask = (int)((data.NaviMask >> pt_virtual_index * 4) & 0b_1111);
+
+            // 유효하지 않은 point
+            if (0x1000 < pt_height_mask)
+            {
+                point = default;
+                return false;
+            }
+
+            float y = pt_height_mask * 0.125f;
+            point = MapUtil.GetVertexPoint(pt_virtual_index, y);
+            return true;
+        }
     }
 }

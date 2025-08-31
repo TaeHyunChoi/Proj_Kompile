@@ -6,6 +6,7 @@ namespace Script.Index
     public static class MapTileIndex
     {
         // triangle
+        public const int TRIANGLES_COUNT = 16;
         /// <summary> 타일 내부에서 삼각형을 만들 때에 연결하는 vertex 배열
         /// </summary>
         public static readonly int[] TriangleVertex = new int[]
