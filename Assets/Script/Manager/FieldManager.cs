@@ -76,6 +76,10 @@ namespace Script.Manager
                 return;
             }
 
+            // job에서 연산이 너무 많아서 딜레이가 생긴다...?
+            // 삼각형 16*4 나눠서 64개 job으로 병렬 계산으로 시도해보자.
+            // 하.. 그런 것이로구만...
+            // 아니면 병렬 합치느라 딜레이가 생기는 것일지도?
             float radius = 0.5f;
             MapTileOverlapJobManager.Instance.ScheduleJob_MapTileMovable(next_position, isSmall, radius, target_tiles);
         }

@@ -8,7 +8,7 @@ using static Script.Index.IDxInput;
 using Script.Util;
 using Script.Data;
 
-public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpdater
+public class IngameFieldPlayer : IngameUnitBase, IInputReceiver
 {
     private Animator animator;
     private int index;
@@ -60,15 +60,5 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
     public void SetAnime(string key)
     {
         animator.Play(key);
-    }
-
-    public IngameUpdateState FixedUpdateState()
-    {
-        if (true == MapTileOverlapJobManager.Instance.CheckIfJobIsDone())
-        {
-            transform.position = last_input_position;
-        }
-
-        return IngameUpdateState.RUNNING;
     }
 }

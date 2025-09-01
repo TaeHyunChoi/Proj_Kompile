@@ -5,6 +5,7 @@ namespace Script.Manager
     using Unity.Jobs;
     using Unity.Mathematics;
     using UnityEngine;
+    using System.Diagnostics;
 
     public class MapTileOverlapJobManager
     {
@@ -40,7 +41,7 @@ namespace Script.Manager
             if (true == isJobScheduled)
             {
 #if UNITY_EDITOR
-                Debug.Log($"[MapTileOverlapManager] Job is already scheduled. Please wait for the current job to complete.");
+                UnityEngine.Debug.Log($"[MapTileOverlapManager] Job is already scheduled. Please wait for the current job to complete.");
 #endif
                 return;
             }
@@ -60,35 +61,21 @@ namespace Script.Manager
                 Results             = results
             };
 
-            jobHandle = job.Schedule(length, length);
-            isJobScheduled = true;
-        }
 
-        public bool CheckIfJobIsDone()
-        {
-            if (false == isJobScheduled)
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            for (int i = 0; i < job.IngameMapTileData.Length; ++i)
             {
-                return false;
+                job.Execute(i);
             }
 
-            bool isDone = false;
+            // 6. Job 실행 시간 측정 종료
+            stopwatch.Stop();
 
-            if (true == jobHandle.IsCompleted)
-            {
-                jobHandle.Complete();
-                isJobScheduled = false;
+            // 7. 결과 출력
+            UnityEngine.Debug.Log($"Job Execution Time: {stopwatch.Elapsed.TotalMilliseconds:F2} ms");
 
-                for (int i = 0; i < results.Length; ++i)
-                {
-                    if (false == results[i])
-                    {
-                        isDone = false;
-                        break;
-                    }
-                }
-            }
-
-            return isDone;
         }
 
         ~MapTileOverlapJobManager()
