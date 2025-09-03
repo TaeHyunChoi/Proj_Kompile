@@ -134,10 +134,10 @@ namespace Script.Manager
                 {
                     target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
                 }
-                // 타일 정보가 없는 경우도 필요하구나 => 맵 끝에 도달했을 때
-                else
+                // 해당 타일의 데이터가 없는데 좌표는 겹친다 => 이동 불가하도록 처리 (ex. 맵 끝에 도달)
+                else if(true == MapUtil.IsOverlaped(neighbor_tile_pivot, TileScale, next_move_position))
                 {
-                    target_tiles[index++] = new IngameMapTileData(grid_key, tile_key);
+                    return 0;
                 }
             }
 

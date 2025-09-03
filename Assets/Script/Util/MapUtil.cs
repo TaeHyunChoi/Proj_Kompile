@@ -1,9 +1,9 @@
 namespace Script.Util
 {
-    using UnityEngine;
     using Script.Data;
-    using static Index.MapTileIndex;
     using Unity.Mathematics;
+    using UnityEngine;
+    using static Index.MapTileIndex;
 
     public static partial class MapUtil
     {
@@ -107,13 +107,13 @@ namespace Script.Util
 
             if (diff.z >= halfTileSize)
             {
-                if (diff.x >= halfTileSize) { return 1; }
-                else { return 2; }
+                if (diff.x >= halfTileSize) { return 0; }
+                else { return 1; }
             }
             else
             {
-                if (diff.z >= halfTileSize) { return 4; }
-                else { return 3; }
+                if (diff.z >= halfTileSize) { return 3; }
+                else { return 2; }
             }
         }
 
@@ -179,6 +179,27 @@ namespace Script.Util
             return index;
         }
 
+        public static bool IsOverlaped(Vector3 pivot, float scale, Vector3 center)
+        {
+            float radius = scale * 0.25f;
+
+            // 1. 원의 중심을 사각형에 가장 가까운 점으로 제한합니다.
+            // 이 계산은 XZ 평면에서 이루어집니다.
+            float closestX = Mathf.Clamp(center.x, pivot.x, pivot.x + scale);
+            float closestZ = Mathf.Clamp(center.z, pivot.z, pivot.z + scale);
+
+            // 2. 사각형의 가장 가까운 점을 기준으로 Vector3를 생성합니다.
+            Vector3 closestPoint = new Vector3(closestX, pivot.y, closestZ);
+
+            // 3. 가장 가까운 점과 원의 중심 사이의 거리를 계산합니다.
+            // Vector3.Distance는 제곱근 연산을 포함하므로,
+            // 성능을 위해 SqrMagnitude를 사용하여 제곱 거리로 비교하는 것이 더 효율적입니다.
+            float distanceSquared = (closestPoint - center).sqrMagnitude;
+            float radiusSquared = radius * radius;
+
+            // 4. 거리가 반지름보다 작거나 같으면 겹치는 것입니다.
+            return distanceSquared <= radiusSquared;
+        }
         public static float CalculateYOnPlane(float3 a, float3 b, float3 c, float tx, float tz)
         {
             // 평면을 정의하는 두 벡터를 구합니다.

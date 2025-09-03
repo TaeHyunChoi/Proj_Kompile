@@ -5,21 +5,16 @@ using UnityEngine;
 using Script.Interface;
 using Script.Index;
 using static Script.Index.IDxInput;
-using Script.Util;
-using Script.Data;
 
 public class IngameFieldPlayer : IngameUnitBase, IInputReceiver
 {
     private Animator animator;
     private int index;
 
-    private Vector3 last_input_position;
-
     public async Task<bool> Init(int index)
     {
         this.index = index;
-        last_input_position = transform.position;
-
+    
         asset_hash_codes = new List<int>();
 
         animator = transform.GetComponent<Animator>();

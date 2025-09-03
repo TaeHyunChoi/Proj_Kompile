@@ -2,7 +2,6 @@ namespace Script.Data
 {
     using Script.Util;
     using Unity.Collections;
-    using Unity.Jobs;
     using Unity.Mathematics;
 
     /// <summary> 위치로부터 반경 radius 에 닿은 타일 삼각형들이 이동 가능한지 여부 판단
