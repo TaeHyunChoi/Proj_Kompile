@@ -7,14 +7,13 @@ namespace Script.Data
 
     /// <summary> 위치로부터 반경 radius 에 닿은 타일 삼각형들이 이동 가능한지 여부 판단
     /// </summary>
-    public struct MapTileMovableJob : IJobParallelFor
+    public struct MapTileMovableJob
     {
         [ReadOnly] public NativeArray<IngameMapTileData> IngameMapTileData;
         [ReadOnly] public float3 SphereCenter;
         [ReadOnly] public float SphereRadius;
-        public NativeArray<bool> Results;
 
-        public void Execute(int index)
+        public bool Execute(int index)
         {
             IngameMapTileData data = IngameMapTileData[index];
 
@@ -36,12 +35,11 @@ namespace Script.Data
                 if (distSq <= radiusSq 
                     && false == setTriangle)
                 {
-                    Results[index] = false;
-                    return;
+                    return false;
                 }
             }
 
-            Results[index] = true;
+            return true;
         }
 
         /// <summary> 3D 공간에서 점과 삼각형 사이의 가장 가까운 점을 찾는 함수입니다.

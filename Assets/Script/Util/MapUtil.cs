@@ -3,7 +3,7 @@ namespace Script.Util
     using UnityEngine;
     using Script.Data;
     using static Index.MapTileIndex;
-
+    using Unity.Mathematics;
 
     public static partial class MapUtil
     {
@@ -117,32 +117,9 @@ namespace Script.Util
             }
         }
 
-        public static Vector3 GetVertexPoint(int virtual_index, float y)
+        public static bool TryGetTrianglePoint(IngameMapTileData data, int tri_index, int vertice, out Unity.Mathematics.float3 point)
         {
-            float x = 0f, z = 0f;
-            switch (virtual_index)
-            {
-                case  0: x = 0.00f; z = 0.00f; break;
-                case  1: x = 0.50f; z = 0.00f; break;
-                case  2: x = 1.00f; z = 0.00f; break;
-                case  3: x = 0.25f; z = 0.25f; break;
-                case  4: x = 0.75f; z = 0.25f; break;
-                case  5: x = 0.00f; z = 0.50f; break;
-                case  6: x = 0.50f; z = 0.50f; break;
-                case  7: x = 1.00f; z = 0.50f; break;
-                case  8: x = 0.25f; z = 0.75f; break;
-                case  9: x = 0.75f; z = 0.75f; break;
-                case 10: x = 0.00f; z = 1.00f; break;
-                case 11: x = 0.50f; z = 1.00f; break;
-                case 12: x = 1.00f; z = 1.00f; break;
-            }
-
-            return new Vector3(x, y, z);
-        }
-
-        public static bool TryGetTrianglePoint(IngameMapTileData data, int tri_index, int pt_index, out Unity.Mathematics.float3 point)
-        {
-            int pt_virtual_index = TriangleVertex[tri_index * 3 + pt_index];
+            int pt_virtual_index = TriangleVertex[tri_index * 3 + vertice];
             int pt_height_mask = (int)((data.NaviMask >> pt_virtual_index * 4) & 0b_1111);
 
             // 유효하지 않은 point
@@ -152,9 +129,87 @@ namespace Script.Util
                 return false;
             }
 
+            float x, z;
             float y = pt_height_mask * 0.125f;
-            point = MapUtil.GetVertexPoint(pt_virtual_index, y);
+
+            switch (pt_virtual_index)
+            {
+                case 0: x = 0.00f; z = 0.00f; break;
+                case 1: x = 0.50f; z = 0.00f; break;
+                case 2: x = 1.00f; z = 0.00f; break;
+                case 3: x = 0.25f; z = 0.25f; break;
+                case 4: x = 0.75f; z = 0.25f; break;
+                case 5: x = 0.00f; z = 0.50f; break;
+                case 6: x = 0.50f; z = 0.50f; break;
+                case 7: x = 1.00f; z = 0.50f; break;
+                case 8: x = 0.25f; z = 0.75f; break;
+                case 9: x = 0.75f; z = 0.75f; break;
+                case 10: x = 0.00f; z = 1.00f; break;
+                case 11: x = 0.50f; z = 1.00f; break;
+                case 12: x = 1.00f; z = 1.00f; break;
+                default: x = 0.00f; z = 0.00f; break;
+            }
+
+            point = data.TilePosition + new Vector3(x, y, z);
             return true;
+        }
+
+        public static int GetTriangleIndex(Vector3 position, bool isSmall)
+        {
+            Vector3 tilePivot = MapUtil.GetTilePivotPosition(position, isSmall);
+            Vector3 diff = position - tilePivot;
+
+            float x = Mathf.Round(diff.x * 100f) * 0.01f;
+            float z = Mathf.Round(diff.z * 100f) * 0.01f;
+
+            int index = 0;
+            index += (x >= 0.5f) ? 4 : 0;
+            index += (z >= 0.5f) ? 8 : 0;
+
+            x = Mathf.Round((x % 0.5f) * 100f) * 0.01f;
+            z = Mathf.Round((z % 0.5f) * 100f) * 0.01f;
+
+            bool zEx = z >= x;
+            bool zEnx = z >= -x + 0.5f;
+
+            if      (!zEx &  zEnx) { index += 1; }
+            else if ( zEx &  zEnx) { index += 2; }
+            else if ( zEx & !zEnx) { index += 3; }
+
+            return index;
+        }
+
+        public static float CalculateYOnPlane(float3 a, float3 b, float3 c, float tx, float tz)
+        {
+            // 평면을 정의하는 두 벡터를 구합니다.
+            float3 ab = b - a;
+            float3 ac = c - a;
+
+            // 두 벡터의 외적을 통해 평면의 법선 벡터를 구합니다.
+            float3 normal = Vector3.Cross(ab, ac);
+
+            // 평면의 방정식: A(x - x0) + B(y - y0) + C(z - z0) = 0
+            // 법선 벡터의 성분이 A, B, C가 됩니다.
+            float A = normal.x;
+            float B = normal.y;
+            float C = normal.z;
+
+            // B가 0인 경우, 평면이 y축에 수직이므로 이 방법으로는 y값을 계산할 수 없습니다.
+            // 이 경우, 사용자의 입력 또는 전제에 문제가 있을 수 있습니다.
+            if (Mathf.Abs(B) < 1e-6)
+            {
+                Debug.LogError("The plane is parallel to the Y-axis. Cannot solve for y.");
+                return float.NaN; // 유효하지 않은 값을 반환
+            }
+
+            // 평면의 방정식에 (tx, ty, tz)를 대입하고 ty에 대해 정리합니다.
+            // A * (tx - a.x) + B * (ty - a.y) + C * (tz - a.z) = 0
+            // B * (ty - a.y) = -A * (tx - a.x) - C * (tz - a.z)
+            // ty - a.y = (-A * (tx - a.x) - C * (tz - a.z)) / B
+            // ty = a.y + (-A * (tx - a.x) - C * (tz - a.z)) / B
+
+            float ty = a.y + (-A * (tx - a.x) - C * (tz - a.z)) / B;
+            return Mathf.RoundToInt(ty * 100f) * 0.01f;
         }
     }
 }

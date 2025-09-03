@@ -31,8 +31,6 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver
         return true;
     }
 
-    // 나중에 직접 조작 캐릭터(Playable)과 동료(Follower)를 분리해서 구현해야겠군..
-    // 아무런 입력이 없으면 호출되지 않는다.
     public bool ReceiveInput(InputFlag inputFlag)
     {
         switch (index)
@@ -46,10 +44,9 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver
                 dir.Normalize();
 
                 Vector3 nextPosition = transform.position + base.moveSpeed * Time.deltaTime * dir;
-                if (last_input_position != nextPosition)
+                if (true == FieldManager.TryMovePlayer(nextPosition, out float y))
                 {
-                    FieldManager.CheckPlayerMove(nextPosition);
-                    last_input_position = nextPosition;
+                    transform.position = new Vector3(nextPosition.x, y, nextPosition.z);
                     return true;
                 }
                 break;

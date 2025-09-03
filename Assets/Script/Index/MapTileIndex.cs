@@ -51,10 +51,11 @@ namespace Script.Index
         public const int GRID_MAX_VALUE = 64;
         public const int GRID_COORD_MASK = 0b_0011_1111;
 
-        public const int SHIFT_TILE_Z = 0;
-        public const int SHIFT_TILE_Y = 8;
-        public const int SHIFT_TILE_X = 16;
+        public const int SHIFT_TILE_Z     =  0;
+        public const int SHIFT_TILE_Y     =  8;
+        public const int SHIFT_TILE_X     = 16;
         public const int SHIFT_TILE_SMALL = 24;
+        public const int TILE_COORD_MASK  = 0b_1111_1111;
         //private const int SHIFT_TILE_LAYER  = 25;
 
         public const int HEIGHT_MASK = 0b_1111;

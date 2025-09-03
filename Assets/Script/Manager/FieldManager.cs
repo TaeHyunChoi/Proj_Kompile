@@ -5,13 +5,12 @@ namespace Script.Manager
     using Script.IngameMessage;
     using Script.Util;
     using System.Threading.Tasks;
+    using Unity.Mathematics;
     using UnityEngine;
-    
+    using System.Diagnostics;
+
     public class FieldManager
     {
-        private static FieldManager instance;
-        public static FieldManager Instance => instance;
-
         private static ConcurrentDictionary<int, MapGridData> currentMapGrid; // 일단 하나만 올려보자.
         private static IngameFieldPlayer[] player_character = new IngameFieldPlayer[3];
 
@@ -31,13 +30,8 @@ namespace Script.Manager
         public async Task<bool> Initialize(PlayData playData)
         {
 #if UNITY_EDITOR
-            Debug.Log($"[FieldManager] Initialize(PlayerData)");
+            UnityEngine.Debug.Log($"[FieldManager] Initialize(PlayerData)");
 #endif
-            if (null != instance)
-            {
-                return false;
-            }
-            instance = this;
 
             // instantiage map
             currentMapGrid = new ConcurrentDictionary<int, MapGridData>();
@@ -60,7 +54,7 @@ namespace Script.Manager
             }
             else
             {
-                Debug.Assert(false, "[TEST] Fail to initialize player_character");
+                UnityEngine.Debug.Assert(false, "[TEST] Fail to initialize player_character");
                 return false;
             }
 
@@ -68,20 +62,47 @@ namespace Script.Manager
             return true;
         }
 
-        public static void CheckPlayerMove(Vector3 next_position)
+        public static bool TryMovePlayer(Vector3 next_position, out float y)
         {
+            // 3. Job 실행 시간 측정 시작
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            y = 0f;
+
             int count = GetTargetTiles(next_position);
             if (0 >= count)
             {
-                return;
+                return false;
             }
 
-            // job에서 연산이 너무 많아서 딜레이가 생긴다...?
-            // 삼각형 16*4 나눠서 64개 job으로 병렬 계산으로 시도해보자.
-            // 하.. 그런 것이로구만...
-            // 아니면 병렬 합치느라 딜레이가 생기는 것일지도?
-            float radius = 0.5f;
-            MapTileOverlapJobManager.Instance.ScheduleJob_MapTileMovable(next_position, isSmall, radius, target_tiles);
+            float radius = 1f;
+
+            // 근데 앞에서 isMovable;을 확인했으므로 사실 필요 없긴 함 ㅎ; 
+            bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(next_position, isSmall, radius, target_tiles);
+            if (false == isMovable)
+            {
+                return false;
+            }
+
+            // 다음 위치의 타일 정보 : IngameMapTileData target_tiles[0]; => GetTargetTiles(Vector3)에서 그렇게 정했음~!!
+            IngameMapTileData targetTile = target_tiles[0];
+
+            // 현재 위치가 i번 삼각형 안에 있다
+            int i = MapUtil.GetTriangleIndex(next_position, isSmall);
+
+            // 삼각형 꼭지점 좌표 구하고..
+            MapUtil.TryGetTrianglePoint(targetTile, i, 0, out float3 a);
+            MapUtil.TryGetTrianglePoint(targetTile, i, 1, out float3 b);
+            MapUtil.TryGetTrianglePoint(targetTile, i, 2, out float3 c);
+
+            y = MapUtil.CalculateYOnPlane(a, b, c, next_position.x, next_position.z);
+
+            // 6. Job 실행 시간 측정 종료
+            stopwatch.Stop();
+            UnityEngine.Debug.Log($"[TEST] {a:F1},{b:F1},{c:F1} => ({next_position.x:F1}, {y:F1},{next_position.z:F1}), {stopwatch.Elapsed.TotalMilliseconds:F2} ms");
+
+            return isMovable; 
         }
 
         /// <summary> </summary>
@@ -113,6 +134,11 @@ namespace Script.Manager
                 {
                     target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
                 }
+                // 타일 정보가 없는 경우도 필요하구나 => 맵 끝에 도달했을 때
+                else
+                {
+                    target_tiles[index++] = new IngameMapTileData(grid_key, tile_key);
+                }
             }
 
             return index;
@@ -137,7 +163,6 @@ namespace Script.Manager
             }
 
             player_character = null;
-            instance = null;
         }
     }
 }
