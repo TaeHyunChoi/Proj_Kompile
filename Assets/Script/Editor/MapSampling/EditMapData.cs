@@ -117,7 +117,7 @@ namespace Script.Data
             if (rotInt % 90 != 0)
             {
                 Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
-                return 0l;
+                return 0;
             }
 
             ulong[,] heightMatrix  = BitmaskToMatrix(heightMask);

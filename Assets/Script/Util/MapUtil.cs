@@ -230,7 +230,7 @@ namespace Script.Util
             // ty = a.y + (-A * (tx - a.x) - C * (tz - a.z)) / B
 
             float ty = a.y + (-A * (tx - a.x) - C * (tz - a.z)) / B;
-            return Mathf.RoundToInt(ty * 100f) * 0.01f;
+            return Mathf.Clamp01(ty);
         }
     }
 }

@@ -62,11 +62,28 @@ namespace Script.Manager
             return true;
         }
 
+        private static readonly Stopwatch stopwatch = new Stopwatch();
+
+        public static bool TryMovePlayer(Vector3 position, Vector3 dir, float speed, out float y)
+        {
+            y = 0f;
+
+            float radius = 0.5f;
+            Vector3 checker = position + radius * dir;
+
+            (int gKey, int tKey) = MapUtil.GetCoordKey(checker, false);
+            if (false == FieldManager.currentMapGrid[0].ContainTile(tKey))
+            {
+                return false;
+            }
+
+
+            return TryMovePlayer(position + speed * dir, out y);
+        }
         public static bool TryMovePlayer(Vector3 next_position, out float y)
         {
             // 3. Job 실행 시간 측정 시작
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
+            //stopwatch.Restart();
 
             y = 0f;
 
@@ -76,9 +93,7 @@ namespace Script.Manager
                 return false;
             }
 
-            float radius = 1f;
-
-            // 근데 앞에서 isMovable;을 확인했으므로 사실 필요 없긴 함 ㅎ; 
+            float radius = 0.5f;
             bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(next_position, isSmall, radius, target_tiles);
             if (false == isMovable)
             {
@@ -99,8 +114,8 @@ namespace Script.Manager
             y = MapUtil.CalculateYOnPlane(a, b, c, next_position.x, next_position.z);
 
             // 6. Job 실행 시간 측정 종료
-            stopwatch.Stop();
-            UnityEngine.Debug.Log($"[TEST] {a:F1},{b:F1},{c:F1} => ({next_position.x:F1}, {y:F1},{next_position.z:F1}), {stopwatch.Elapsed.TotalMilliseconds:F2} ms");
+            //stopwatch.Stop();
+            //UnityEngine.Debug.Log($"[TEST] {a:F3},{b:F3},{c:F3} => ({next_position.x:F3}, {y:F3},{next_position.z:F3}), {stopwatch.Elapsed.TotalMilliseconds:F3} ms");
 
             return isMovable; 
         }
