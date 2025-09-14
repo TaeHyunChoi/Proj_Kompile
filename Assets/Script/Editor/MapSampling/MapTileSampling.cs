@@ -3,14 +3,15 @@ namespace MapSampling
 {
     using Script.Data;
     using Script.Manager;
+    using System.Collections;
     using System.Collections.Generic;
+    using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
-    using Unity.Collections;
-    using UnityEngine;
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
+    using UnityEngine;
 
     public class MapTileSampling : MonoBehaviour
     {
@@ -18,20 +19,25 @@ namespace MapSampling
         private readonly string assetGroupName      = "MapRender";
         private readonly string MAP_NAVI_DATA_PATH  = "Rcs\\Bin\\MapNavRawData";
 
+        private readonly int3[] neighbor_position = new int3[]
+            {
+                new int3(-1, 0,-1), new int3(0, 0, -1), new int3( 1, 0, -1), new int3( 1, 0, 0),
+                new int3( 1, 0, 1), new int3(0, 0,  1), new int3(-1, 0,  1), new int3(-1, 0, 0)
+            };
 
         [SerializeField] private Transform instanceTransform;
         [SerializeField] int sceneIndex = 0;
 
         private bool nowLoading = false;
 
-        public void Save()
+        public IEnumerator Save()
         {
             // set data
             EditMapData[] tiles = instanceTransform.GetComponentsInChildren<EditMapData>();
             if (0 == tiles.Length)
             {
                 Debug.LogWarning("NavTileMesh.Length = 0;");
-                return;
+                yield break;
             }
 
             // JobSystem -> EditMapData 일괄 생성
@@ -65,7 +71,11 @@ namespace MapSampling
                 Data       = native_array_result
             };
             JobHandle jobHandle = job.Schedule(tiles.Length, 64);
-            jobHandle.Complete();
+
+            while (false == jobHandle.IsCompleted)
+            {
+                yield return null;
+            }
 
             // Map 등록
             var map = new ConcurrentDictionary<int, MapGridData>();
@@ -87,10 +97,7 @@ namespace MapSampling
 
             // BFS 알고리즘 -> EditMaplinkMask 생성
             EditMapTileData start_data = native_array_result[0];
-            LinkTiles(map, start_data);
-
-            // 이왕 하는 김에 Coroutine으로 만들어서 프리징 막읍시다.
-            // ...
+            yield return StartCoroutine(LinkTiles(map, start_data));
 
 
             //SaveTileMeshes(map, tiles);
@@ -115,7 +122,6 @@ namespace MapSampling
             //    }
             //}
 
-
             native_array_scene_index.Dispose();
             native_array_nav_layer.Dispose();
             native_array_position.Dispose();
@@ -127,9 +133,53 @@ namespace MapSampling
         }
 
 
-        private void LinkTiles(ConcurrentDictionary<int, MapGridData> map, EditMapTileData start_data)
+        private IEnumerator LinkTiles(ConcurrentDictionary<int, MapGridData> map, EditMapTileData start_data)
         {
+            HashSet<int3> visited = new HashSet<int3>(); // gridKey, tileKey
 
+            Queue<EditMapTileData> queue = new Queue<EditMapTileData>();
+            queue.Enqueue(start_data);
+
+            EditMapTileData tile;
+            int3 tile_pivot_int;
+
+            int3 tile_target_int;
+            int grid_target_key;
+            int tile_target_key;
+
+            while (queue.Count > 0)
+            {
+                tile           = queue.Dequeue();
+                tile_pivot_int = tile.GetTilePivotInt();
+
+                for (int i = 0; i < neighbor_position.Length; ++i)
+                {
+                    tile_target_int = tile_pivot_int + neighbor_position[i];
+
+                    grid_target_key = EditMapUtil.PositionIntToGridKey(tile_target_int);
+                    if (false == map.ContainsKey(grid_target_key))
+                    {
+                        continue;
+                    }
+
+                    tile_target_key = EditMapUtil.PositionIntToTileKey(tile_target_int);
+                    if (false == map[grid_target_key].TryGetTileData(tile_target_key, out MapTileData tile_data))
+                    {
+                        continue;
+                    }
+
+                    Debug.Log($"{tile_pivot_int}.link({i}) => {tile_target_key}");
+
+                    // 주변에 타일이 존재하는지 확인하고(8방향)
+                    // 각 방향에서 연결된 타일이 있는지 확인하고(3방향)
+                    // 둘 다 만족하면 link에 맞춰서 추가 - 인덱스가 필요하네.
+                    // (주변) visited에 등록된 타일인지 확인 후 queue에 추가
+                }
+
+                // (본인)확인이 완료된 타일이므로 visited로 체크
+                visited.Add(tile_pivot_int);
+                yield return null;
+            }
         }
 
         private void SaveTileMeshes(ConcurrentDictionary<int, MapGridData>  map, EditMapData[] tiles)

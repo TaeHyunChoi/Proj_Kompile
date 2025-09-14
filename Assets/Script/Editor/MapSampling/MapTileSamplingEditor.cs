@@ -21,11 +21,17 @@ namespace  MapSampling
         
             if (GUILayout.Button("Save"))
             {
-                _sampler?.Save();
+                if (null != _sampler)
+                {
+                    _sampler.StartCoroutine(_sampler.Save());
+                }
             }
             if (GUILayout.Button("Load"))
             {
-                _sampler?.Load();
+                if (null != _sampler)
+                {
+                    _sampler.Load();
+                }
             }
         }
     }  

@@ -26,71 +26,11 @@ public static class EditMapUtil
             new Vector2Int(0, 0), new Vector2Int(2, 0), new Vector2Int(4, 0)
     };
 
-
-    public static Vector3 GetGridPivot(Vector3 position, float rotY)
-    {
-        // get: (rotated) pivot
-        int rotInt = Mathf.RoundToInt(rotY);
-        rotInt = (rotInt + 360) % 360;
-        if (rotInt % 90 != 0)
-        {
-            Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
-            return default;
-        }
-
-        // tile pivot : pivot 기준으로 회전을 시키면 pivot 좌표가 아래처럼 바뀐다는 뜻.
-        Vector3 rotated;
-        switch (rotInt)
-        {
-            case 90: rotated = new Vector3(0f, 0f, -1f); break;
-            case 180: rotated = new Vector3(-1f, 0f, -1f); break;
-            case 270: rotated = new Vector3(-1f, 0f, 0f); break;
-            default: rotated = Vector3.zero; break;
-        }
-
-        position += rotated;
-        float gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
-        float gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
-        float gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
-        return new Vector3(gx, gy, gz);
-    }
     /// <summary> 
     /// grid의 좌표는 각 축마다 [-127,127] 사이의 값을 가진다. <br/>
     /// scene_index를 부여하여 여러 씬을 사용할 수 있도록 하였다. <br/>
     /// scene[value_8], x[sign_1, value_7], y[sign_1, value_7], z[sign_1, value_7]
     /// </summary>
-    public static int GetGridKeyMask(int sceneIndex, Vector3 gridPivot)
-    {
-        int sceneIndexMask = sceneIndex << SHIFT_SCENE_INDEX;
-        int gridPivotMask = 0;
-
-        int x = Mathf.RoundToInt(gridPivot.x);
-        int y = Mathf.RoundToInt(gridPivot.y);
-        int z = Mathf.RoundToInt(gridPivot.z);
-
-        if (x < 0)
-        {
-            gridPivotMask |= 1 << SHIFT_GRID_X_SIGN;
-            x *= -1;
-        }
-        gridPivotMask |= x << SHIFT_GRID_X;
-
-        if (y < 0)
-        {
-            gridPivotMask |= 1 << SHIFT_GRID_Y_SIGN;
-            y *= -1;
-        }
-        gridPivotMask |= y << SHIFT_GRID_Y;
-
-        if (z < 0)
-        {
-            gridPivotMask |= 1 << SHIFT_GRID_Z_SIGN;
-            z *= -1;
-        }
-        gridPivotMask |= z << SHIFT_GRID_Z;
-
-        return sceneIndexMask | gridPivotMask;
-    }
     public static int GetGridKeyMask(int sceneIndex, float3 position, float rotY)
     {
         // get: (rotated) pivot
@@ -113,9 +53,9 @@ public static class EditMapUtil
         }
 
         position += rotated;
-        int gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
-        int gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
-        int gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
+        int gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS);
+        int gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS);
+        int gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS);
 
         int sceneIndexMask = sceneIndex << SHIFT_SCENE_INDEX;
         int gridPivotMask = 0;
@@ -143,111 +83,107 @@ public static class EditMapUtil
 
         return sceneIndexMask | gridPivotMask;
     }
-
-
-    public static Vector3 GetTilePivot(Vector3 position, float rotY, bool isSmall)
-    {
-        // get: (rotated) pivot
-        int rotInt = Mathf.RoundToInt(rotY);
-        rotInt = (rotInt + 360) % 360;
-        if (rotInt % 90 != 0)
-        {
-            Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
-            return default;
-        }
-
-        // tile pivot : pivot 기준으로 회전을 시키면 pivot 좌표가 아래처럼 바뀐다는 뜻.
-        Vector3 rotated;
-        switch (rotInt)
-        {
-            case 90: rotated = new Vector3(0f, 0f, -1f); break;
-            case 180: rotated = new Vector3(-1f, 0f, -1f); break;
-            case 270: rotated = new Vector3(-1f, 0f, 0f); break;
-            default: rotated = Vector3.zero; break;
-        }
-        rotated *= isSmall ? 0.5f : 1f;
-        return position + rotated;
-    }
-    /// <summary>
-    /// grid_pivot으로부터 상대적인 거리를 계산하여 tile_pivot을 구한다. <br/>
-    /// (grid가 parent object이고 tile이 child object라고 생각하자) <br/>
-    /// nav[empty_4, layer_3, small_1], x[small_value_1, value_7], y[small_value_1, value_7], z[small_value_1, value_7] <br/>
-    /// -- layer: 각 타일의 레이어를 나타낸다. <br/>
-    /// -- small: 타일이 작은 크기인지 여부를 나타낸다. <br/>
-    /// -- small_value_1: 작은 크기일 경우, 크기가 작아지므로 그만큼 더 많은 타일값을 저장해야 한다. 그래서 비워둔다. <br/>
-    /// </summary>
-    public static int GetTileKeyMask(Vector3 gridPivot, Vector3 tilePivot, bool isSmall)
-    {
-        Vector3 diff = tilePivot - gridPivot;
-        if (true == isSmall)
-        {
-            diff *= 2f;
-        }
-
-        int x = Mathf.RoundToInt(diff.x);
-        int y = Mathf.RoundToInt(diff.y);
-        int z = Mathf.RoundToInt(diff.z);
-
-        int mask = 0;
-        mask |= z << SHIFT_TILE_Z;
-        mask |= y << SHIFT_TILE_Y;
-        mask |= x << SHIFT_TILE_X;
-        mask |= isSmall ? 1 << SHIFT_TILE_SMALL : 0;
-
-        return mask;
-    }
     public static int GetTileKeyMask(float3 position)
     {
         int x = Mathf.RoundToInt(position.x % SIZE_GRID_AXIS);
+        if (x < 0)
+        {
+            x += SIZE_GRID_AXIS;
+        }
+
         int y = Mathf.RoundToInt(position.y % SIZE_GRID_AXIS);
+        if (y < 0)
+        {
+            y += SIZE_GRID_AXIS;
+        }
+
         int z = Mathf.RoundToInt(position.z % SIZE_GRID_AXIS);
+        if (z < 0)
+        {
+            z += SIZE_GRID_AXIS;
+        }
 
         int tileKeyMask = 0;
         tileKeyMask |= x << SHIFT_TILE_X;
         tileKeyMask |= y << SHIFT_TILE_Y;
         tileKeyMask |= z << SHIFT_TILE_Z;
 
+        Debug.Log($"[Tile Key Mask]{System.Convert.ToString(tileKeyMask, 2)}");
         return tileKeyMask;
     }
-    public static Vector3 GetTilePivot(int gridKey, int tileKey)
+
+    public static int3 GetGridPosition(int gKey)
     {
-        Vector3 gridPivot = GetGridPivot(gridKey);
+        int gx = (gKey >> SHIFT_GRID_X) & GRID_COORD_SIGNED_MASK;
+        if (0 != (gx & GRID_SIGN_FLAG))
+        {
+            gx &= GRID_COORD_MASK;
+            gx *= -1;
+        }
 
-        int x = (tileKey >> SHIFT_TILE_X) & 0xFF;
-        int y = (tileKey >> SHIFT_TILE_Y) & 0xFF;
-        int z = (tileKey >> SHIFT_TILE_Z) & 0xFF;
+        int gy = (gKey >> SHIFT_GRID_Y) & GRID_COORD_SIGNED_MASK;
+        if (0 != (gx & GRID_SIGN_FLAG))
+        {
+            gy &= GRID_COORD_MASK;
+            gy *= -1;
+        }
 
-        // tile key 에서 scale을 가져올 수 있잖아?
-        int small_mask = (tileKey >> SHIFT_TILE_SMALL) & 1;
-        float scale = small_mask != 0 ? 0.5f : 1f;
+        int gz = (gKey >> SHIFT_GRID_Z) & GRID_COORD_SIGNED_MASK;
+        if (0 != (gz & GRID_SIGN_FLAG))
+        {
+            gz &= GRID_COORD_MASK;
+            gz *= -1;
+        }
 
-        return gridPivot + scale * new Vector3(x, y, z);
+        return new int3(gx, gy, gz);
     }
-    public static Vector3 GetGridPivot(int key)
+    public static int3 GetTilePosition(int gKey, int tKey)
     {
-        //int sceneIndex = (key >> SHIFT_SCENE_INDEX) & 0xFF;
+        int3 grid_pivot = GetGridPosition(gKey);
 
-        int x = (key >> SHIFT_GRID_X) & GRID_COORD_MASK;
-        int y = (key >> SHIFT_GRID_Y) & GRID_COORD_MASK;
-        int z = (key >> SHIFT_GRID_Z) & GRID_COORD_MASK;
+        int tx = (tKey >> SHIFT_TILE_X) & TILE_COORD_MASK;
+        int ty = (tKey >> SHIFT_TILE_Y) & TILE_COORD_MASK;
+        int tz = (tKey >> SHIFT_TILE_Z) & TILE_COORD_MASK;
 
-        if ((key & (1 << SHIFT_GRID_X_SIGN)) != 0)
-        {
-            x *= -1;
-            x -= 1;
-        }
-        if ((key & (1 << SHIFT_GRID_Y_SIGN)) != 0)
-        {
-            y *= -1;
-            y -= 1;
-        }
-        if ((key & (1 << SHIFT_GRID_Z_SIGN)) != 0)
-        {
-            z *= -1;
-            z -= 1;
-        }
+        return grid_pivot + new int3(tx, ty, tz);
+    }
 
-        return SIZE_GRID_AXIS * new Vector3(x, y, z);
+    public static int PositionIntToGridKey(int3 positionInt)
+    {
+        int x = 0;
+        if (positionInt.x < 0)
+        {
+            x |= 1 << SHIFT_GRID_X_SIGN;
+            positionInt.x *= -1;
+        }
+        x |= (positionInt.x / 64) << SHIFT_GRID_X;
+
+        int y = 0;
+        if (positionInt.y < 0)
+        {
+            y |= 1 << SHIFT_GRID_Y_SIGN;
+            positionInt.y *= -1;
+        }
+        y |= (positionInt.y / 64) << SHIFT_GRID_Y;
+
+        int z = 0;
+        if (positionInt.z < 0)
+        {
+            z |= 1 << SHIFT_GRID_Z_SIGN;
+            positionInt.z *= -1;
+        }
+        z |= (positionInt.z / 64) << SHIFT_GRID_Z;
+
+
+        return x | y | z;
+    }
+    public static int PositionIntToTileKey(int3 positionInt)
+    {
+        int x = (positionInt.x % 64) << SHIFT_TILE_X;
+        int y = (positionInt.y % 64) << SHIFT_TILE_Y;
+        int z = (positionInt.z % 64) << SHIFT_TILE_Z;
+
+        return x | y | z;
     }
 }
 #endif

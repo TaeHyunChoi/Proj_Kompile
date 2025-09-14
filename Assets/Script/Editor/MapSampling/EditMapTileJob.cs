@@ -1,5 +1,7 @@
 namespace Script.Data
 {
+    using Script.Data;
+    using Script.Util;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
@@ -122,13 +124,9 @@ namespace Script.Data
         [ReadOnly] public int TileKey;
         [ReadOnly] public long NavMask;
 
-        public float3 Pivot
+        public int3 GetTilePivotInt()
         {
-            get
-            {
-
-                return new float3(0, 0, 0);
-            }
-        }
+            return EditMapUtil.GetTilePosition(GridKey, TileKey);
+        } 
     }
 }

@@ -31,6 +31,7 @@ namespace Script.Index
 
         // for on grid
         public static int SIZE_GRID_AXIS = 64;
+        public static int SIZE_TILE = 8;
 
         public static readonly Vector3[] RELATIVE_COORD_BY_QUARANT = new Vector3[]
         {
@@ -42,14 +43,16 @@ namespace Script.Index
 
         // _SIGN은 '부호(+/-) 플래그'
         public const int SHIFT_GRID_Z = 0;
-        public const int SHIFT_GRID_Z_SIGN = 7;
-        public const int SHIFT_GRID_Y = 8;
-        public const int SHIFT_GRID_Y_SIGN = 15;
-        public const int SHIFT_GRID_X = 16;
-        public const int SHIFT_GRID_X_SIGN = 23;
-        public const int SHIFT_SCENE_INDEX = 24;
+        public const int SHIFT_GRID_Z_SIGN = 6;
+        public const int SHIFT_GRID_Y = 7;
+        public const int SHIFT_GRID_Y_SIGN = 13;
+        public const int SHIFT_GRID_X = 14;
+        public const int SHIFT_GRID_X_SIGN = 20;
+        public const int SHIFT_SCENE_INDEX = 21;
 
-        public const int GRID_COORD_MASK = 0b_0011_1111;
+        public const int GRID_COORD_SIGNED_MASK = 0b_0111_1111;
+        public const int GRID_SIGN_FLAG         = 0b_0100_0000;
+        public const int GRID_COORD_MASK        = 0b_0011_1111;
 
         public const int SHIFT_TILE_Z     =  0;
         public const int SHIFT_TILE_Y     =  8;
