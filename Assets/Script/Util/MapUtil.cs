@@ -21,9 +21,9 @@ namespace Script.Util
 
         private static Vector3Int GetGridPivotPosition(Vector3 position)
         {
-            int x = Mathf.FloorToInt(position.x / GRID_MAX_VALUE) * GRID_MAX_VALUE;
-            int y = Mathf.FloorToInt(position.y / GRID_MAX_VALUE) * GRID_MAX_VALUE;
-            int z = Mathf.FloorToInt(position.z / GRID_MAX_VALUE) * GRID_MAX_VALUE;
+            int x = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
+            int y = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
+            int z = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
 
             return new Vector3Int(x, y, z);
         }

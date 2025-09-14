@@ -30,7 +30,7 @@ namespace Script.Index
         };
 
         // for on grid
-        public static int SIZE_GRID_AXIS => GRID_MAX_VALUE;
+        public static int SIZE_GRID_AXIS = 64;
 
         public static readonly Vector3[] RELATIVE_COORD_BY_QUARANT = new Vector3[]
         {
@@ -48,7 +48,7 @@ namespace Script.Index
         public const int SHIFT_GRID_X = 16;
         public const int SHIFT_GRID_X_SIGN = 23;
         public const int SHIFT_SCENE_INDEX = 24;
-        public const int GRID_MAX_VALUE = 64;
+
         public const int GRID_COORD_MASK = 0b_0011_1111;
 
         public const int SHIFT_TILE_Z     =  0;

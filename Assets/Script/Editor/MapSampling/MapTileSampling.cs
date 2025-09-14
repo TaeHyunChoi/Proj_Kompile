@@ -3,13 +3,14 @@ namespace MapSampling
 {
     using Script.Data;
     using Script.Manager;
-    using Script.Util;
     using System.Collections.Generic;
-    using System.Threading.Tasks;
+    using Unity.Jobs;
+    using Unity.Mathematics;
+    using Unity.Collections;
+    using UnityEngine;
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
-    using UnityEngine;
 
     public class MapTileSampling : MonoBehaviour
     {
@@ -21,10 +22,9 @@ namespace MapSampling
         [SerializeField] private Transform instanceTransform;
         [SerializeField] int sceneIndex = 0;
 
-        private ConcurrentDictionary<int, MapGridData> map;
         private bool nowLoading = false;
 
-        public async void Save()
+        public void Save()
         {
             // set data
             EditMapData[] tiles = instanceTransform.GetComponentsInChildren<EditMapData>();
@@ -34,70 +34,105 @@ namespace MapSampling
                 return;
             }
 
-            // sync : render data (unity api 사용하므로 async 불가)
-            //StartCoroutine(IESaveMesh(tiles));
-            map = new ConcurrentDictionary<int, MapGridData>();
+            // JobSystem -> EditMapData 일괄 생성
+            int length                   = tiles.Length;
+            var native_array_scene_index = new NativeArray<int>(length, Allocator.TempJob);
+            var native_array_nav_layer   = new NativeArray<int>(length, Allocator.TempJob);
+            var native_array_position    = new NativeArray<float3>(length, Allocator.TempJob);
+            var native_array_rotateY     = new NativeArray<float>(length, Allocator.TempJob);
+            var native_array_heights     = new NativeArray<ulong>(length, Allocator.TempJob);
+            var native_array_result      = new NativeArray<EditMapTileData>(tiles.Length, Allocator.TempJob);
 
-            // async : nav data
-            Task taskSaveNavData = SaveMapNavDataAsync(tiles);
-            await Task.WhenAll(taskSaveNavData);
-            taskSaveNavData.Dispose();
+            EditMapData tileData;
+            for (int i = 0; i < tiles.Length; i++)
+            {
+                tileData = tiles[i];
 
-            IESaveMesh(tiles);
-            AssetDatabase.Refresh();
-            Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
-
-            // for test
-            Vector3 grid_pivot;
-            Vector3 tile_pivot;
-            foreach (var grid in map.Values)
-            { 
-                foreach(var kvp in grid.MapNavDataDictionary)
-                {
-                    // grid pivot
-                    grid_pivot = EditMapUtil.GetGridPivot(grid.gridKey);
-
-                    // tile pivot
-                    int tileKey = kvp.Key;
-                    tile_pivot = EditMapUtil.GetTilePivot(grid.gridKey, kvp.Key);
-
-                    Debug.Log($"Grid_Pivot:{grid_pivot}, Tile_Pivot:{tile_pivot}");
-                }
+                native_array_scene_index[i] = sceneIndex;
+                native_array_nav_layer[i]   = tileData.NaviLayer;
+                native_array_position[i]    = new float3(tileData.transform.position.x, tileData.transform.position.y, tileData.transform.position.z);
+                native_array_rotateY[i]     = tileData.transform.rotation.y;
+                native_array_heights[i]     = tileData.HeightMask;
             }
+
+            EditMapTileJob job = new EditMapTileJob
+            {
+                SceneIndex = native_array_scene_index,
+                NavLayer   = native_array_nav_layer,
+                Position   = native_array_position,
+                RotY       = native_array_rotateY,
+                Height     = native_array_heights,
+                Data       = native_array_result
+            };
+            JobHandle jobHandle = job.Schedule(tiles.Length, 64);
+            jobHandle.Complete();
+
+            // Map 등록
+            var map = new ConcurrentDictionary<int, MapGridData>();
+            int gridKey, tileKey;
+            long naviMask;
+            for (int i = 0; i < native_array_result.Length; ++i)
+            {
+                gridKey = native_array_result[i].GridKey;
+                tileKey = native_array_result[i].TileKey;
+                naviMask = native_array_result[i].NavMask;
+
+                if (false == map.ContainsKey(gridKey))
+                {
+                    map.TryAdd(gridKey, new MapGridData(gridKey));
+                }
+
+                map[gridKey].TryAdd(tileKey, new MapTileData(naviMask));
+            }
+
+            // BFS 알고리즘 -> EditMaplinkMask 생성
+            EditMapTileData start_data = native_array_result[0];
+            LinkTiles(map, start_data);
+
+            // 이왕 하는 김에 Coroutine으로 만들어서 프리징 막읍시다.
+            // ...
+
+
+            //SaveTileMeshes(map, tiles);
+            //AssetDatabase.Refresh();
+            //Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
+
+            //// for test
+            //Vector3 grid_pivot;
+            //Vector3 tile_pivot;
+            //foreach (var grid in map.Values)
+            //{ 
+            //    foreach(var kvp in grid.MapNavDataDictionary)
+            //    {
+            //        // grid pivot
+            //        grid_pivot = EditMapUtil.GetGridPivot(grid.gridKey);
+
+            //        // tile pivot
+            //        tileKey = kvp.Key;
+            //        tile_pivot = EditMapUtil.GetTilePivot(grid.gridKey, kvp.Key);
+
+            //        Debug.Log($"Grid_Pivot:{grid_pivot}, Tile_Pivot:{tile_pivot}");
+            //    }
+            //}
+
+
+            native_array_scene_index.Dispose();
+            native_array_nav_layer.Dispose();
+            native_array_position.Dispose();
+            native_array_rotateY.Dispose();
+            native_array_heights.Dispose();
+            native_array_result.Dispose();
 
             System.GC.Collect();
         }
-        public async Task SaveMapNavDataAsync(EditMapData[] tiles)
+
+
+        private void LinkTiles(ConcurrentDictionary<int, MapGridData> map, EditMapTileData start_data)
         {
-            //map = new ConcurrentDictionary<int, MapGridData>();
-            int length = tiles.Length;
-            int i, t;
 
-            // bake + dispose
-            Task[] initTasks = new Task[length];
-            for (i = 0; i < length; i++)
-            {
-                t = i;
-                initTasks[t] = tiles[t].Bake(sceneIndex, map);
-            }
-            await Task.WhenAll(initTasks);
-            for (i = 0; i < length; i++)
-            {
-                t = i;
-                initTasks[t].Dispose();
-            }
-
-            //// save data
-            //foreach (var grid in map)
-            //{
-            //    AssetManager.WriteBinaryFile<MapGridData>(data: grid.Value,
-            //                                             dataPath: MAP_NAVI_DATA_PATH,
-            //                                             fileName: $"MapNavi_{grid.Key}",
-            //                                             addressableGroup: "MapNavi");
-            //}
         }
 
-        private void IESaveMesh(EditMapData[] tiles)
+        private void SaveTileMeshes(ConcurrentDictionary<int, MapGridData>  map, EditMapData[] tiles)
         {
             Dictionary<long, TempData> tempDataDict = new Dictionary<long, TempData>();
             EditMapData tile;
@@ -131,7 +166,7 @@ namespace MapSampling
                     combinedMesh.uv = tempData.combinedUVs.ToArray();
 
                     // VERTEX 꽉 채워졌으면 중도에 하나 생성하고
-                    SaveMesh(combinedMesh, sceneIndex, tile.GridKey, tile.NaviLayer, tempData.index, true, false);
+                    SaveMesh(map, combinedMesh, sceneIndex, tile.GridKey, tile.NaviLayer, tempData.index, true, false);
 
                     tempData.combineInstances.Clear();
                     tempData.combinedUVs.Clear();
@@ -166,13 +201,13 @@ namespace MapSampling
                     // long key = tile.RenderLayer << 32 | sceneIndex << 24 | tile.GridKey;
                     int gridKey   = (int)(kvp.Key & 0x00FF_FFFF);
                     int layerMask = (int)(kvp.Key >> 32);
-                    SaveMesh(combinedMesh, sceneIndex, gridKey, layerMask, tempData.index, true, false);
+                    SaveMesh(map, combinedMesh, sceneIndex, gridKey, layerMask, tempData.index, true, false);
                 }
             }
 
             EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
         }
-        private void SaveMesh(Mesh mesh, int sceneIndex, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
+        private void SaveMesh(ConcurrentDictionary<int, MapGridData>  map, Mesh mesh, int sceneIndex, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
         {
             if (false == map.ContainsKey(gridKey))
             {
@@ -299,7 +334,7 @@ namespace MapSampling
                 var y = (key >> shiftTileY) & 0x0F;
                 var z = (key >> shiftTileZ) & 0xFF;
 
-                Debug.Log($"[layer:{layer}][scale:{scale}][{x},{y},{z}]  [navi:{data.MapNavDataDictionary[key].naviMask}], [info:{data.MapNavDataDictionary[key].infoMask}]");
+                Debug.Log($"[layer:{layer}][scale:{scale}][{x},{y},{z}]  [navi:{data.MapNavDataDictionary[key].navi}]");
             }
 
             nowLoading = false;

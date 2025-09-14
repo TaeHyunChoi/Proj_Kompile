@@ -2,12 +2,10 @@
 namespace Script.Data
 {
     using Script.Index;
-    using Script.Util;
-    using static Script.Index.MapTileIndex;
     using System;
-    using System.Threading.Tasks;
     using UnityEditor;
     using UnityEngine;
+    using static Script.Index.MapTileIndex;
 
     [Serializable]       // 에셋으로 저장하기 위함
     [ExecuteInEditMode]  // 에디터에서 텍스쳐 곧장 적용하기 위함
@@ -39,10 +37,7 @@ namespace Script.Data
         [Header("Data")]
         [SerializeField] private int naviLayer;
         [SerializeField] private ulong heightMask;
-
-        //private int gridKey;
-        [SerializeField] private uint infoMask;
-
+        
         private bool isSmall;
 
         public int GridKey { get; private set; }
@@ -50,6 +45,7 @@ namespace Script.Data
         public int RenderLayer => renderLayer;
         public int NaviLayer => naviLayer;
         public int TextureIndex => (int)textureType;
+        public ulong HeightMask => heightMask;
 
         private void Awake()
         {
@@ -80,34 +76,34 @@ namespace Script.Data
 
 
 
-        public async Task Bake(int sceneIndex, ConcurrentDictionary<int, MapGridData> map)
-        {
-            if (true == isOnlyRender)
-            {
-                return;
-            }
+        //public async Task Bake(int sceneIndex, ConcurrentDictionary<int, MapGridData> map)
+        //{
+        //    if (true == isOnlyRender)
+        //    {
+        //        return;
+        //    }
 
-            Vector3 position = transform.position;
-            float rotY = transform.eulerAngles.y;
-            await Task.Yield();
+        //    Vector3 position = transform.position;
+        //    float rotY = transform.eulerAngles.y;
+        //    await Task.Yield();
 
-            // 모든 타일이 1*1 또는 0.5f*0.5f 격자에 맞춰서 배치되어 있음
-            // 즉, 현재 타일에 회전값을 적용하면 tile_pivot 값이 나온다.
-            // tile_pivot을 기준으로 grid_pivot값을 구한다.
+        //    // 모든 타일이 1*1 또는 0.5f*0.5f 격자에 맞춰서 배치되어 있음
+        //    // 즉, 현재 타일에 회전값을 적용하면 tile_pivot 값이 나온다.
+        //    // tile_pivot을 기준으로 grid_pivot값을 구한다.
 
-            Vector3 gridPivot = EditMapUtil.GetGridPivot(position, rotY);
-            int gridKey = EditMapUtil.GetGridKeyMask(sceneIndex, gridPivot);
-            GridKey = gridKey;
+        //    Vector3 gridPivot = EditMapUtil.GetGridPivot(position, rotY);
+        //    int gridKey = EditMapUtil.GetGridKeyMask(sceneIndex, gridPivot);
+        //    GridKey = gridKey;
 
-            Vector3 tilePivot = EditMapUtil.GetTilePivot(position, rotY, isSmall);
-            int tileKey = EditMapUtil.GetTileKeyMask(gridPivot, tilePivot, isSmall);
+        //    Vector3 tilePivot = EditMapUtil.GetTilePivot(position, rotY, isSmall);
+        //    int tileKey = EditMapUtil.GetTileKeyMask(gridPivot, tilePivot, isSmall);
 
-            long naviMask = GetRotatedHeightMask(rotY);
-            //infoMask = GetInfoMask();
+        //    long naviMask = GetRotatedHeightMask(rotY);
+        //    //infoMask = GetInfoMask();
 
-            map.TryAdd(gridKey, new MapGridData(gridKey));
-            map[gridKey].TryAdd(tileKey, new MapTileData(naviMask, infoMask));
-        }
+        //    map.TryAdd(gridKey, new MapGridData(gridKey));
+        //    map[gridKey].TryAdd(tileKey, new MapTileData(naviMask));
+        //}
 
 
         private long GetRotatedHeightMask(float rotY)

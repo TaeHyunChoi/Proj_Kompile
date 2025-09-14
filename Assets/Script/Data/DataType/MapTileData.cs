@@ -8,15 +8,15 @@ namespace Script.Data
     public struct MapTileData
     {
         [Key(0)]
-        public long naviMask; // [layer:3bits], [heights:52bits(4*13)]
+        public long navi; // [layer:3bits], [heights:52bits(4*13)]
 
         [Key(1)]
-        public uint infoMask;
+        public int link; // [layer:3bits], [heights:52bits(4*13)]
 
-        public MapTileData(long nav, uint info)
+        public MapTileData(long nav)
         {
-            naviMask = nav;
-            infoMask = info;
+            navi = nav;
+            link = 0;
         }
     }
 
@@ -25,21 +25,12 @@ namespace Script.Data
         public readonly int GridKey;
         public readonly int TileKey;
         public readonly long NaviMask;
-        public readonly uint InfoMask;
 
-        public IngameMapTileData(int g, int t)
-        {
-            GridKey = g;
-            TileKey = t;
-            NaviMask = 0;
-            InfoMask = 0;
-        }
         public IngameMapTileData(int g, int t, MapTileData data)
         {
             GridKey = g;
             TileKey = t;
-            NaviMask = data.naviMask;
-            InfoMask = data.infoMask;
+            NaviMask = data.navi;
         }
 
         public Vector3 TilePosition

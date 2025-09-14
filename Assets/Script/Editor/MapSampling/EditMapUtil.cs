@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 
+using Unity.Mathematics;
 using UnityEngine;
 using static Script.Index.MapTileIndex;
 
@@ -9,6 +10,23 @@ using static Script.Index.MapTileIndex;
 /// </summary>
 public static class EditMapUtil
 {
+    public const int SPRITE_WIDTH = 256;
+    public const int SPRITE_HEIGHT = 256;
+
+    public const int TOTAL_BITS = 13;
+    public const int BITS_PER_CELL = 4;
+    public const int MATRIX_SIZE = 5;
+
+    public static readonly Vector2Int[] INDEX_MAP = new Vector2Int[]
+    {
+            new Vector2Int(0, 4), new Vector2Int(2, 4), new Vector2Int(4, 4),
+            new Vector2Int(1, 3), new Vector2Int(3, 3),
+            new Vector2Int(0, 2), new Vector2Int(2, 2), new Vector2Int(4, 2),
+            new Vector2Int(1, 1), new Vector2Int(3, 1),
+            new Vector2Int(0, 0), new Vector2Int(2, 0), new Vector2Int(4, 0)
+    };
+
+
     public static Vector3 GetGridPivot(Vector3 position, float rotY)
     {
         // get: (rotated) pivot
@@ -31,9 +49,9 @@ public static class EditMapUtil
         }
 
         position += rotated;
-        float gx = Mathf.FloorToInt(position.x / GRID_MAX_VALUE) * GRID_MAX_VALUE;
-        float gy = Mathf.FloorToInt(position.y / GRID_MAX_VALUE) * GRID_MAX_VALUE;
-        float gz = Mathf.FloorToInt(position.z / GRID_MAX_VALUE) * GRID_MAX_VALUE;
+        float gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
+        float gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
+        float gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
         return new Vector3(gx, gy, gz);
     }
     /// <summary> 
@@ -73,6 +91,60 @@ public static class EditMapUtil
 
         return sceneIndexMask | gridPivotMask;
     }
+    public static int GetGridKeyMask(int sceneIndex, float3 position, float rotY)
+    {
+        // get: (rotated) pivot
+        int rotInt = Mathf.RoundToInt(rotY);
+        rotInt = (rotInt + 360) % 360;
+        if (rotInt % 90 != 0)
+        {
+            Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
+            return default;
+        }
+
+        // tile pivot : pivot 기준으로 회전을 시키면 pivot 좌표가 아래처럼 바뀐다는 뜻.
+        float3 rotated;
+        switch (rotInt)
+        {
+            case 90:    rotated = new float3( 0f, 0f, -1f); break;
+            case 180:   rotated = new float3(-1f, 0f, -1f); break;
+            case 270:   rotated = new float3(-1f, 0f,  0f); break;
+            default:    rotated = new float3( 0f, 0f,  0f); break;
+        }
+
+        position += rotated;
+        int gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
+        int gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
+        int gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
+
+        int sceneIndexMask = sceneIndex << SHIFT_SCENE_INDEX;
+        int gridPivotMask = 0;
+
+        if (gx < 0)
+        {
+            gridPivotMask |= 1 << SHIFT_GRID_X_SIGN;
+            gx *= -1;
+        }
+        gridPivotMask |= gx << SHIFT_GRID_X;
+
+        if (gy < 0)
+        {
+            gridPivotMask |= 1 << SHIFT_GRID_Y_SIGN;
+            gy *= -1;
+        }
+        gridPivotMask |= gy << SHIFT_GRID_Y;
+
+        if (gz < 0)
+        {
+            gridPivotMask |= 1 << SHIFT_GRID_Z_SIGN;
+            gz *= -1;
+        }
+        gridPivotMask |= gz << SHIFT_GRID_Z;
+
+        return sceneIndexMask | gridPivotMask;
+    }
+
+
     public static Vector3 GetTilePivot(Vector3 position, float rotY, bool isSmall)
     {
         // get: (rotated) pivot
@@ -124,6 +196,19 @@ public static class EditMapUtil
 
         return mask;
     }
+    public static int GetTileKeyMask(float3 position)
+    {
+        int x = Mathf.RoundToInt(position.x % SIZE_GRID_AXIS);
+        int y = Mathf.RoundToInt(position.y % SIZE_GRID_AXIS);
+        int z = Mathf.RoundToInt(position.z % SIZE_GRID_AXIS);
+
+        int tileKeyMask = 0;
+        tileKeyMask |= x << SHIFT_TILE_X;
+        tileKeyMask |= y << SHIFT_TILE_Y;
+        tileKeyMask |= z << SHIFT_TILE_Z;
+
+        return tileKeyMask;
+    }
     public static Vector3 GetTilePivot(int gridKey, int tileKey)
     {
         Vector3 gridPivot = GetGridPivot(gridKey);
@@ -162,8 +247,7 @@ public static class EditMapUtil
             z -= 1;
         }
 
-        return GRID_MAX_VALUE * new Vector3(x, y, z);
+        return SIZE_GRID_AXIS * new Vector3(x, y, z);
     }
 }
-
 #endif
