@@ -106,6 +106,10 @@ namespace MapSampling
                     NavMask = naviMask
                 };
                 map[gridKey].TryAdd(tileKey, tile_data);
+                if (true == map[gridKey].TryGetTileData(tileKey, out var data))
+                {
+                    Debug.Log(data.GetTilePivot());
+                }
             }
 
             EditMapTileData start_data = native_array_result[0];

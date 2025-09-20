@@ -29,31 +29,10 @@ public static class EditMapUtil
         new Vector2Int(0, 0), new Vector2Int(2, 0), new Vector2Int(4, 0)
     };
 
-    public static int GetRotatedGridKeyMask(int sceneIndex, float3 position, float rotY)
+    public static int GetGridKeyMask(int sceneIndex, float3 rotated_position)
     {
-        // get: (rotated) pivot
-        int rotInt = Mathf.RoundToInt(rotY);
-        rotInt = (rotInt + 360) % 360;
-        if (rotInt % 90 != 0)
-        {
-            Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
-            return default;
-        }
-
-        // tile pivot : pivot 기준으로 회전을 시키면 pivot 좌표가 아래처럼 바뀐다는 뜻.
-        float3 rotated;
-        switch (rotInt)
-        {
-            case 90:    rotated = new float3( 0f, 0f, -1f); break;
-            case 180:   rotated = new float3(-1f, 0f, -1f); break;
-            case 270:   rotated = new float3(-1f, 0f,  0f); break;
-            default:    rotated = new float3( 0f, 0f,  0f); break;
-        }
-
-        position += rotated;
-
         int sceneIndexMask = sceneIndex << SHIFT_SCENE_INDEX;
-        int gridPivotMask = GetGridKeyMask(position);
+        int gridPivotMask  = GetGridKeyMask(rotated_position);
 
         return sceneIndexMask | gridPivotMask;
     }

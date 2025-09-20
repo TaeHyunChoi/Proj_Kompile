@@ -1,6 +1,5 @@
 namespace Script.Data
 {
-    using NUnit.Framework.Internal;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
@@ -22,12 +21,12 @@ namespace Script.Data
             int sceneIndex = SceneIndex[index];
             int layer = NavLayer[index];
             float rot = RotY[index]; //어차피 Mathf.Int 쓰는 듯;
-            float3 position = GetRotatedPivot(Position[index], rot);
+            float3 rotated_position = GetRotatedPivot(Position[index], rot);
             ulong height = Height[index];
             Data[index] = new EditMapTileData()
             {
-                GridKey = EditMapUtil.GetRotatedGridKeyMask(sceneIndex, position, rot),
-                TileKey = EditMapUtil.GetTileKeyMask(position),
+                GridKey = EditMapUtil.GetGridKeyMask(sceneIndex, rotated_position),
+                TileKey = EditMapUtil.GetTileKeyMask(rotated_position),
                 NavMask = GetRotatedHeightMask(height, layer, rot)
             };
         }

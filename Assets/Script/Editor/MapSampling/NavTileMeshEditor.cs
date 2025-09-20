@@ -1,20 +1,20 @@
 #if UNITY_EDITOR
 using Script.Data;
-using Script.Util;
 using static Script.Index.MapTileIndex;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using Unity.Mathematics;
 
 public static class NavTileMeshEditor
 {
-    private static readonly Vector3[] VerticeVerticePoint = new Vector3[]
+    private static readonly float3[] VerticeVerticePoint = new float3[]
 {
-        new Vector3(0f,    0f,    0f   ),   new Vector3(0.5f,  0f,    0f   ),   new Vector3(1f,    0f,    0f),
-        new Vector3(0.25f, 0f,    0.25f),   new Vector3(0.75f, 0f,    0.25f),   new Vector3(0f,    0f,    0.5f),
-        new Vector3(0.5f,  0f,    0.5f ),   new Vector3(1f,    0f,    0.5f ),   new Vector3(0.25f, 0f,    0.75f),
-        new Vector3(0.75f, 0f,    0.75f),   new Vector3(0f,    0f,    1f   ),   new Vector3(0.5f,  0f,    1f),
-        new Vector3(1f,    0f,    1f   )
+        new float3(0f,    0f,    0f   ),   new float3(0.5f,  0f,    0f   ),   new float3(1f,    0f,    0f),
+        new float3(0.25f, 0f,    0.25f),   new float3(0.75f, 0f,    0.25f),   new float3(0f,    0f,    0.5f),
+        new float3(0.5f,  0f,    0.5f ),   new float3(1f,    0f,    0.5f ),   new float3(0.25f, 0f,    0.75f),
+        new float3(0.75f, 0f,    0.75f),   new float3(0f,    0f,    1f   ),   new float3(0.5f,  0f,    1f),
+        new float3(1f,    0f,    1f   )
 };
     private static readonly int[] ExceptTriangleMask = new int[]
 {
@@ -32,10 +32,6 @@ public static class NavTileMeshEditor
         TRIANGLE_FULL_MASK & ~(1 <<  9 | 1 << 10 | 1 << 14 | 1 << 15),
         TRIANGLE_FULL_MASK & ~(1 << 13 | 1 << 14)
 };
-
-    private static Vector3[] _vertice;
-    private static Vector2[] _uv;
-    private static int[]     _triangle;
 
     private const float HEIGHT_UNIT_VALUE  = 0.125f;    // 높이값의 단위. (height * 0.125f). 0 ~ 1의 값을 가진다.
     private const int   TRIANGLE_FULL_MASK = 0x_FFFF;   // 하나의 mesh 안에 4*4, 16개의 triangle로 이뤄졌다.
@@ -124,53 +120,58 @@ public static class NavTileMeshEditor
     public static Mesh InstantiateMesh(int[] inputHeights)
     {
         int length        = inputHeights.Length;
-        int triangleMask  = TRIANGLE_FULL_MASK;
-        int verticeIndex  = 0;
-        int triangleIndex = 0;
+
 
         // reset(clear) vertice, uv
-        _vertice   = _vertice.Reset(length); 
-        _uv        = _uv.Reset(length);
+        Vector3[] vertices = new Vector3[length];
+        Vector2[] uv = new Vector2[length];
 
         // set: vertice, uv
         // virtualIndex: NavTileMesh를 만들기 위해 개념적으로 사용하는 가상 순서 (입력 순서와 동일)
+
+        Vector3 vertice;
+        int height;
+
+        int triangleMask = TRIANGLE_FULL_MASK;
+        int verticeIndex = 0;
+
+
         for (int virtualIndex = 0; virtualIndex < length; ++virtualIndex)
         {
-            int h = inputHeights[virtualIndex];
+            height = inputHeights[virtualIndex];
 
-            if (h >= 0)
+            vertice = VerticeVerticePoint[virtualIndex];
+
+            if (height >= 0)
             {
-                Vector3 vertex = VerticeVerticePoint[virtualIndex] + HEIGHT_UNIT_VALUE * h * Vector3.up;
-                _vertice[verticeIndex] = vertex;
-                _uv[verticeIndex]      = new Vector2(vertex.x, vertex.z);
-
-                ++verticeIndex;
+                vertice += HEIGHT_UNIT_VALUE * height * Vector3.up;
             }
             else
             {
                 // 삼각형 대상에서 제외
                 triangleMask &= ExceptTriangleMask[virtualIndex];
             }
+
+            vertices[verticeIndex] = vertice;
+            uv[verticeIndex] = new Vector2(vertice.x, vertice.z);
+            ++verticeIndex;
         }
 
-        // reset(clear) triangle
-        length = GetTriangleCount(triangleMask) * 3;
-        _triangle = _triangle.Reset(length);
-
         // set: triangle
-        verticeIndex = 0;
         int flag = 1;
-
-        while (flag < triangleMask)
+        length = GetTriangleCount(triangleMask) * 3;
+        int[] triangle = new int[length];
+        int triangleIndex = 0;
+        int t_index = 0;
+        while (flag <= triangleMask)
         {
             if (0 != (flag & triangleMask))
             {
                 int index = triangleIndex * 3;
-                _triangle[verticeIndex]     = TriangleVertex[index + 0];
-                _triangle[verticeIndex + 1] = TriangleVertex[index + 1];
-                _triangle[verticeIndex + 2] = TriangleVertex[index + 2];
-
-                verticeIndex += 3;
+                triangle[t_index    ] = TriangleVertex[index + 0];
+                triangle[t_index + 1] = TriangleVertex[index + 1];
+                triangle[t_index + 2] = TriangleVertex[index + 2];
+                t_index += 3;
             }
 
             flag <<= 1;
@@ -180,9 +181,9 @@ public static class NavTileMeshEditor
         // instantiate: mesh
         Mesh mesh = new Mesh()
         {
-            vertices  = _vertice,
-            triangles = _triangle,
-            uv        = _uv
+            vertices  = vertices,
+            triangles = triangle,
+            uv = uv
         };
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
@@ -192,9 +193,8 @@ public static class NavTileMeshEditor
     private static int GetTriangleCount(int mask)
     {
         int count = 0;
-        int shift = 0;
-
         int flag  = 1;
+
         while (flag < mask)
         {
             if (0 != (flag & mask))
@@ -202,7 +202,6 @@ public static class NavTileMeshEditor
                 count += 1;
             }
 
-            ++shift;
             flag <<= 1;
         }
 
