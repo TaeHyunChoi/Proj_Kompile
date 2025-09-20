@@ -23,7 +23,8 @@ namespace  MapSampling
             {
                 if (null != _sampler)
                 {
-                    _sampler.StartCoroutine(_sampler.Save());
+                    _sampler.Save();
+                    //_sampler.StartCoroutine(_sampler.Save());
                 }
             }
             if (GUILayout.Button("Load"))

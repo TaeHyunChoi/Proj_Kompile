@@ -3,7 +3,6 @@ namespace MapSampling
 {
     using Script.Data;
     using Script.Manager;
-    using System.Collections;
     using System.Collections.Generic;
     using Unity.Collections;
     using Unity.Jobs;
@@ -12,33 +11,40 @@ namespace MapSampling
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
     using UnityEngine;
+    using UnityEngine.Assertions;
 
-    public class MapTileSampling : MonoBehaviour
+    public partial class MapTileSampling : MonoBehaviour
     {
         private const int VERTEX_LIMIT              = 65535;
         private readonly string assetGroupName      = "MapRender";
         private readonly string MAP_NAVI_DATA_PATH  = "Rcs\\Bin\\MapNavRawData";
-
-        private readonly int3[] neighbor_position = new int3[]
-            {
-                new int3(-1, 0,-1), new int3(0, 0, -1), new int3( 1, 0, -1), new int3( 1, 0, 0),
-                new int3( 1, 0, 1), new int3(0, 0,  1), new int3(-1, 0,  1), new int3(-1, 0, 0)
-            };
+        private readonly float2[] dir = new float2[]
+        {
+            new float2( 0, -1),
+            new float2( 1,  0),
+            new float2( 1, -1),
+            new float2( 0,  1),
+            new float2( 1,  1),
+            new float2(-1,  0),
+            new float2(-1,  1),
+            new float2(-1, -1)
+        };
+        private readonly float[] ny = new float[] { 0, 1, -1 };
 
         [SerializeField] private Transform instanceTransform;
         [SerializeField] int sceneIndex = 0;
 
         private bool nowLoading = false;
 
-        public IEnumerator Save()
+        public void Save()
         {
+            Debug.Log($"--- Start to save ---");
+
             // set data
             EditMapData[] tiles = instanceTransform.GetComponentsInChildren<EditMapData>();
-            if (0 == tiles.Length)
-            {
-                Debug.LogWarning("NavTileMesh.Length = 0;");
-                yield break;
-            }
+#if UNITY_EDITOR
+            Assert.IsTrue(0 != tiles.Length, $"NavTileMesh.Length = {tiles.Length};");
+#endif
 
             // JobSystem -> EditMapData 일괄 생성
             int length                   = tiles.Length;
@@ -57,7 +63,7 @@ namespace MapSampling
                 native_array_scene_index[i] = sceneIndex;
                 native_array_nav_layer[i]   = tileData.NaviLayer;
                 native_array_position[i]    = new float3(tileData.transform.position.x, tileData.transform.position.y, tileData.transform.position.z);
-                native_array_rotateY[i]     = tileData.transform.rotation.y;
+                native_array_rotateY[i]     = tileData.transform.eulerAngles.y;
                 native_array_heights[i]     = tileData.HeightMask;
             }
 
@@ -71,14 +77,15 @@ namespace MapSampling
                 Data       = native_array_result
             };
             JobHandle jobHandle = job.Schedule(tiles.Length, 64);
+            jobHandle.Complete();
 
-            while (false == jobHandle.IsCompleted)
-            {
-                yield return null;
-            }
+            //while (false == jobHandle.IsCompleted)
+            //{
+            //    yield return null;
+            //}
 
             // Map 등록
-            var map = new ConcurrentDictionary<int, MapGridData>();
+            var map = new ConcurrentDictionary<int, EditMapGridData>();
             int gridKey, tileKey;
             long naviMask;
             for (int i = 0; i < native_array_result.Length; ++i)
@@ -89,15 +96,31 @@ namespace MapSampling
 
                 if (false == map.ContainsKey(gridKey))
                 {
-                    map.TryAdd(gridKey, new MapGridData(gridKey));
+                    map.TryAdd(gridKey, new EditMapGridData(gridKey));
                 }
 
-                map[gridKey].TryAdd(tileKey, new MapTileData(naviMask));
+                EditMapTileData tile_data = new EditMapTileData()
+                {
+                    GridKey = gridKey,
+                    TileKey = tileKey,
+                    NavMask = naviMask
+                };
+                map[gridKey].TryAdd(tileKey, tile_data);
             }
 
-            // BFS 알고리즘 -> EditMaplinkMask 생성
             EditMapTileData start_data = native_array_result[0];
-            yield return StartCoroutine(LinkTiles(map, start_data));
+            native_array_scene_index.Dispose();
+            native_array_nav_layer.Dispose();
+            native_array_position.Dispose();
+            native_array_rotateY.Dispose();
+            native_array_heights.Dispose();
+            native_array_result.Dispose();
+
+
+
+            // BFS 알고리즘 -> EditMaplinkMask 생성
+            LinkTiles(map, start_data);
+            //yield return StartCoroutine(LinkTiles(map, start_data));
 
 
             //SaveTileMeshes(map, tiles);
@@ -122,67 +145,59 @@ namespace MapSampling
             //    }
             //}
 
-            native_array_scene_index.Dispose();
-            native_array_nav_layer.Dispose();
-            native_array_position.Dispose();
-            native_array_rotateY.Dispose();
-            native_array_heights.Dispose();
-            native_array_result.Dispose();
-
+            Debug.Log($"--- End (length: {tiles.Length}) ---");
             System.GC.Collect();
         }
-
-
-        private IEnumerator LinkTiles(ConcurrentDictionary<int, MapGridData> map, EditMapTileData start_data)
+        private void LinkTiles(ConcurrentDictionary<int, EditMapGridData> map, EditMapTileData start_data)
         {
-            HashSet<int3> visited = new HashSet<int3>(); // gridKey, tileKey
+            Stack<EditMapTileData> stack = new Stack<EditMapTileData>();
+            HashSet<float3> visited = new HashSet<float3>();
 
-            Queue<EditMapTileData> queue = new Queue<EditMapTileData>();
-            queue.Enqueue(start_data);
+            stack.Push(start_data);
 
-            EditMapTileData tile;
-            int3 tile_pivot_int;
+            EditMapTileData visit_tile;
+            float3 target_pivot, neighbor_pivot;
 
-            int3 tile_target_int;
-            int grid_target_key;
-            int tile_target_key;
-
-            while (queue.Count > 0)
+            while (stack.Count > 0)
             {
-                tile           = queue.Dequeue();
-                tile_pivot_int = tile.GetTilePivotInt();
+                visit_tile = stack.Pop(); 
+                target_pivot = visit_tile.GetTilePivot();
 
-                for (int i = 0; i < neighbor_position.Length; ++i)
+                if (true == visited.Contains(target_pivot))
                 {
-                    tile_target_int = tile_pivot_int + neighbor_position[i];
-
-                    grid_target_key = EditMapUtil.PositionIntToGridKey(tile_target_int);
-                    if (false == map.ContainsKey(grid_target_key))
-                    {
-                        continue;
-                    }
-
-                    tile_target_key = EditMapUtil.PositionIntToTileKey(tile_target_int);
-                    if (false == map[grid_target_key].TryGetTileData(tile_target_key, out MapTileData tile_data))
-                    {
-                        continue;
-                    }
-
-                    Debug.Log($"{tile_pivot_int}.link({i}) => {tile_target_key}");
-
-                    // 주변에 타일이 존재하는지 확인하고(8방향)
-                    // 각 방향에서 연결된 타일이 있는지 확인하고(3방향)
-                    // 둘 다 만족하면 link에 맞춰서 추가 - 인덱스가 필요하네.
-                    // (주변) visited에 등록된 타일인지 확인 후 queue에 추가
+                    continue;
                 }
 
-                // (본인)확인이 완료된 타일이므로 visited로 체크
-                visited.Add(tile_pivot_int);
-                yield return null;
+                visited.Add(target_pivot);
+                Debug.Log($"visited: {target_pivot}");
+
+                for (int i = dir.Length - 1; i >= 0; --i)
+                {
+                    for (int y = 0; y < ny.Length; ++y)
+                    {
+                        neighbor_pivot = target_pivot + new float3(dir[i].x, ny[y], dir[i].y);
+
+                        // 타일 정보가 없으면 이어서 탐색한다.
+                        if (false == EditMapUtil.TryGetTileData(map, neighbor_pivot, out EditMapTileData neighbor_tile))
+                        {
+                            continue;
+                        }
+                        // 이미 방문한 곳도 넘어간다.
+                        if (true == visited.Contains(neighbor_pivot))
+                        {
+                            continue;
+                        }
+
+                        stack.Push(neighbor_tile);
+                        break;
+                    }
+                }
             }
         }
-
-        private void SaveTileMeshes(ConcurrentDictionary<int, MapGridData>  map, EditMapData[] tiles)
+    }
+    public partial class MapTileSampling
+    {
+        private void SaveTileMeshes(ConcurrentDictionary<int, MapGridData> map, EditMapData[] tiles)
         {
             Dictionary<long, TempData> tempDataDict = new Dictionary<long, TempData>();
             EditMapData tile;
@@ -249,7 +264,7 @@ namespace MapSampling
                     combinedMesh.uv = tempData.combinedUVs.ToArray();
 
                     // long key = tile.RenderLayer << 32 | sceneIndex << 24 | tile.GridKey;
-                    int gridKey   = (int)(kvp.Key & 0x00FF_FFFF);
+                    int gridKey = (int)(kvp.Key & 0x00FF_FFFF);
                     int layerMask = (int)(kvp.Key >> 32);
                     SaveMesh(map, combinedMesh, sceneIndex, gridKey, layerMask, tempData.index, true, false);
                 }
@@ -257,7 +272,7 @@ namespace MapSampling
 
             EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
         }
-        private void SaveMesh(ConcurrentDictionary<int, MapGridData>  map, Mesh mesh, int sceneIndex, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
+        private void SaveMesh(ConcurrentDictionary<int, MapGridData> map, Mesh mesh, int sceneIndex, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
         {
             if (false == map.ContainsKey(gridKey))
             {
@@ -314,8 +329,8 @@ namespace MapSampling
         {
             // for test? 이거 맞겠지?
             float spriteSize = 256f;
-            int altasWidth   = 2048;
-            int altasHeight  = 2048;
+            int altasWidth = 2048;
+            int altasHeight = 2048;
 
             // atlas 내 몇 칸으로 배치되었는지 계산 (좌측 하단 기준)
             int atlasCols = (int)(altasWidth / spriteSize);
@@ -348,11 +363,11 @@ namespace MapSampling
         public async void Load()
         {
             // scale ,x[sign,small_buffer,6], y[sign,small_buffer,4], z[sign,small_buffer,6]
-            const byte shiftTileLayer   = 23;
+            const byte shiftTileLayer = 23;
             const byte shiftIsHalfScale = 22;
-            const byte shiftTileX       = 14;
-            const byte shiftTileY       = 8;
-            const byte shiftTileZ       = 0;
+            const byte shiftTileX = 14;
+            const byte shiftTileY = 8;
+            const byte shiftTileZ = 0;
 
             if (true == nowLoading)
             {
@@ -377,8 +392,8 @@ namespace MapSampling
 
             foreach (var key in data.MapNavDataDictionary.Keys)
             {
-                var layer   = (key >> shiftTileLayer) & 1;
-                var scale   = (key >> shiftIsHalfScale) & 1;
+                var layer = (key >> shiftTileLayer) & 1;
+                var scale = (key >> shiftIsHalfScale) & 1;
 
                 var x = (key >> shiftTileX) & 0xFF;
                 var y = (key >> shiftTileY) & 0x0F;
@@ -389,7 +404,6 @@ namespace MapSampling
 
             nowLoading = false;
         }
-
         private class TempData
         {
             public List<CombineInstance> combineInstances;

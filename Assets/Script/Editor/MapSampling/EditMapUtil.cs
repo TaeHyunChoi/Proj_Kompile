@@ -1,7 +1,9 @@
 #if UNITY_EDITOR
 
+using Script.Data;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static Script.Index.MapTileIndex;
 
 /// <summary> 맵타일 관련하여 '에디터'에서만 사용하는 함수.
@@ -17,21 +19,17 @@ public static class EditMapUtil
     public const int BITS_PER_CELL = 4;
     public const int MATRIX_SIZE = 5;
 
+    // (주의) map_tile_pivot != matrix.Origin(원점)
     public static readonly Vector2Int[] INDEX_MAP = new Vector2Int[]
     {
-            new Vector2Int(0, 4), new Vector2Int(2, 4), new Vector2Int(4, 4),
-            new Vector2Int(1, 3), new Vector2Int(3, 3),
-            new Vector2Int(0, 2), new Vector2Int(2, 2), new Vector2Int(4, 2),
-            new Vector2Int(1, 1), new Vector2Int(3, 1),
-            new Vector2Int(0, 0), new Vector2Int(2, 0), new Vector2Int(4, 0)
+        new Vector2Int(0, 4), new Vector2Int(2, 4), new Vector2Int(4, 4),
+        new Vector2Int(1, 3), new Vector2Int(3, 3),
+        new Vector2Int(0, 2), new Vector2Int(2, 2), new Vector2Int(4, 2),
+        new Vector2Int(1, 1), new Vector2Int(3, 1),
+        new Vector2Int(0, 0), new Vector2Int(2, 0), new Vector2Int(4, 0)
     };
 
-    /// <summary> 
-    /// grid의 좌표는 각 축마다 [-127,127] 사이의 값을 가진다. <br/>
-    /// scene_index를 부여하여 여러 씬을 사용할 수 있도록 하였다. <br/>
-    /// scene[value_8], x[sign_1, value_7], y[sign_1, value_7], z[sign_1, value_7]
-    /// </summary>
-    public static int GetGridKeyMask(int sceneIndex, float3 position, float rotY)
+    public static int GetRotatedGridKeyMask(int sceneIndex, float3 position, float rotY)
     {
         // get: (rotated) pivot
         int rotInt = Mathf.RoundToInt(rotY);
@@ -53,35 +51,42 @@ public static class EditMapUtil
         }
 
         position += rotated;
+
+        int sceneIndexMask = sceneIndex << SHIFT_SCENE_INDEX;
+        int gridPivotMask = GetGridKeyMask(position);
+
+        return sceneIndexMask | gridPivotMask;
+    }
+
+    public static int GetGridKeyMask(float3 position)
+    {
+        int mask = 0;
         int gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS);
         int gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS);
         int gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS);
 
-        int sceneIndexMask = sceneIndex << SHIFT_SCENE_INDEX;
-        int gridPivotMask = 0;
-
         if (gx < 0)
         {
-            gridPivotMask |= 1 << SHIFT_GRID_X_SIGN;
+            mask |= 1 << SHIFT_GRID_X_SIGN;
             gx *= -1;
         }
-        gridPivotMask |= gx << SHIFT_GRID_X;
+        mask |= gx << SHIFT_GRID_X;
 
         if (gy < 0)
         {
-            gridPivotMask |= 1 << SHIFT_GRID_Y_SIGN;
+            mask |= 1 << SHIFT_GRID_Y_SIGN;
             gy *= -1;
         }
-        gridPivotMask |= gy << SHIFT_GRID_Y;
+        mask |= gy << SHIFT_GRID_Y;
 
         if (gz < 0)
         {
-            gridPivotMask |= 1 << SHIFT_GRID_Z_SIGN;
+            mask |= 1 << SHIFT_GRID_Z_SIGN;
             gz *= -1;
         }
-        gridPivotMask |= gz << SHIFT_GRID_Z;
+        mask |= gz << SHIFT_GRID_Z;
 
-        return sceneIndexMask | gridPivotMask;
+        return mask;
     }
     public static int GetTileKeyMask(float3 position)
     {
@@ -108,82 +113,58 @@ public static class EditMapUtil
         tileKeyMask |= y << SHIFT_TILE_Y;
         tileKeyMask |= z << SHIFT_TILE_Z;
 
-        Debug.Log($"[Tile Key Mask]{System.Convert.ToString(tileKeyMask, 2)}");
         return tileKeyMask;
     }
 
-    public static int3 GetGridPosition(int gKey)
+    public static float3 GetGridPosition(int gKey)
     {
         int gx = (gKey >> SHIFT_GRID_X) & GRID_COORD_SIGNED_MASK;
         if (0 != (gx & GRID_SIGN_FLAG))
         {
-            gx &= GRID_COORD_MASK;
+            gx &= ~GRID_SIGN_FLAG;
             gx *= -1;
         }
 
         int gy = (gKey >> SHIFT_GRID_Y) & GRID_COORD_SIGNED_MASK;
-        if (0 != (gx & GRID_SIGN_FLAG))
+        if (0 != (gy & GRID_SIGN_FLAG))
         {
-            gy &= GRID_COORD_MASK;
+            gy &= ~GRID_SIGN_FLAG;
             gy *= -1;
         }
 
         int gz = (gKey >> SHIFT_GRID_Z) & GRID_COORD_SIGNED_MASK;
         if (0 != (gz & GRID_SIGN_FLAG))
         {
-            gz &= GRID_COORD_MASK;
+            gz &= ~GRID_SIGN_FLAG;
             gz *= -1;
         }
 
-        return new int3(gx, gy, gz);
+        return new float3(gx, gy, gz) * SIZE_GRID_AXIS;
     }
-    public static int3 GetTilePosition(int gKey, int tKey)
+    public static float3 GetTilePosition(int gKey, int tKey)
     {
-        int3 grid_pivot = GetGridPosition(gKey);
+        float3 grid_pivot = GetGridPosition(gKey);
 
-        int tx = (tKey >> SHIFT_TILE_X) & TILE_COORD_MASK;
-        int ty = (tKey >> SHIFT_TILE_Y) & TILE_COORD_MASK;
-        int tz = (tKey >> SHIFT_TILE_Z) & TILE_COORD_MASK;
+        float tx = (tKey >> SHIFT_TILE_X) & TILE_COORD_MASK;
+        float ty = (tKey >> SHIFT_TILE_Y) & TILE_COORD_MASK;
+        float tz = (tKey >> SHIFT_TILE_Z) & TILE_COORD_MASK;
 
-        return grid_pivot + new int3(tx, ty, tz);
+        return grid_pivot + new float3(tx, ty, tz);
     }
 
-    public static int PositionIntToGridKey(int3 positionInt)
+    public static bool TryGetTileData(ConcurrentDictionary<int, EditMapGridData> map, float3 position, out EditMapTileData tile_data)
     {
-        int x = 0;
-        if (positionInt.x < 0)
+        int grid_key = GetGridKeyMask(position);
+        int tile_key = GetTileKeyMask(position);
+
+        if (false == map.ContainsKey(grid_key)
+            || false == map[grid_key].TryGetTileData(tile_key, out tile_data))
         {
-            x |= 1 << SHIFT_GRID_X_SIGN;
-            positionInt.x *= -1;
+            tile_data = default;
+            return false;
         }
-        x |= (positionInt.x / 64) << SHIFT_GRID_X;
 
-        int y = 0;
-        if (positionInt.y < 0)
-        {
-            y |= 1 << SHIFT_GRID_Y_SIGN;
-            positionInt.y *= -1;
-        }
-        y |= (positionInt.y / 64) << SHIFT_GRID_Y;
-
-        int z = 0;
-        if (positionInt.z < 0)
-        {
-            z |= 1 << SHIFT_GRID_Z_SIGN;
-            positionInt.z *= -1;
-        }
-        z |= (positionInt.z / 64) << SHIFT_GRID_Z;
-
-
-        return x | y | z;
-    }
-    public static int PositionIntToTileKey(int3 positionInt)
-    {
-        int x = (positionInt.x % 64) << SHIFT_TILE_X;
-        int y = (positionInt.y % 64) << SHIFT_TILE_Y;
-        int z = (positionInt.z % 64) << SHIFT_TILE_Z;
-
-        return x | y | z;
+        return true;
     }
 }
 #endif

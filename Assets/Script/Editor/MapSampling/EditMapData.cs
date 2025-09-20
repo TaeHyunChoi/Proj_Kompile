@@ -14,19 +14,6 @@ namespace Script.Data
         private const int SPRITE_WIDTH  = 256;
         private const int SPRITE_HEIGHT = 256;
 
-        private const int TOTAL_BITS = 13;
-        private const int BITS_PER_CELL = 4;
-        private const int MATRIX_SIZE = 5;
-
-        private static readonly Vector2Int[] INDEX_MAP = new Vector2Int[]
-            {
-                new Vector2Int(0, 4), new Vector2Int(2, 4), new Vector2Int(4, 4),
-                new Vector2Int(1, 3), new Vector2Int(3, 3),
-                new Vector2Int(0, 2), new Vector2Int(2, 2), new Vector2Int(4, 2),
-                new Vector2Int(1, 1), new Vector2Int(3, 1),
-                new Vector2Int(0, 0), new Vector2Int(2, 0), new Vector2Int(4, 0)
-            };
-
         [Header("Render")]
         [SerializeField] private MeshFilter meshFilter;
         [SerializeField] private MeshRenderer meshRenderer;
@@ -69,125 +56,9 @@ namespace Script.Data
                 heightMask |= heightFlag << i * HEIGHT_BITS;
             }
 
-            this.isSmall = isSmall;
-
+            //this.isSmall = isSmall;
             EditorUtility.SetDirty(this);
         }
-
-
-
-        //public async Task Bake(int sceneIndex, ConcurrentDictionary<int, MapGridData> map)
-        //{
-        //    if (true == isOnlyRender)
-        //    {
-        //        return;
-        //    }
-
-        //    Vector3 position = transform.position;
-        //    float rotY = transform.eulerAngles.y;
-        //    await Task.Yield();
-
-        //    // 모든 타일이 1*1 또는 0.5f*0.5f 격자에 맞춰서 배치되어 있음
-        //    // 즉, 현재 타일에 회전값을 적용하면 tile_pivot 값이 나온다.
-        //    // tile_pivot을 기준으로 grid_pivot값을 구한다.
-
-        //    Vector3 gridPivot = EditMapUtil.GetGridPivot(position, rotY);
-        //    int gridKey = EditMapUtil.GetGridKeyMask(sceneIndex, gridPivot);
-        //    GridKey = gridKey;
-
-        //    Vector3 tilePivot = EditMapUtil.GetTilePivot(position, rotY, isSmall);
-        //    int tileKey = EditMapUtil.GetTileKeyMask(gridPivot, tilePivot, isSmall);
-
-        //    long naviMask = GetRotatedHeightMask(rotY);
-        //    //infoMask = GetInfoMask();
-
-        //    map.TryAdd(gridKey, new MapGridData(gridKey));
-        //    map[gridKey].TryAdd(tileKey, new MapTileData(naviMask));
-        //}
-
-
-        private long GetRotatedHeightMask(float rotY)
-        {
-            int rotInt = Mathf.RoundToInt(rotY);
-            rotInt = (rotInt + 360) % 360;
-            if (rotInt % 90 != 0)
-            {
-                Debug.LogError($"Tile has Wrong Rotation; ({rotInt})");
-                return 0;
-            }
-
-            ulong[,] heightMatrix  = BitmaskToMatrix(heightMask);
-            ulong[,] rotatedMatrix = RotateMatrix(heightMatrix, rotInt);
-            ulong    rotatedHeightMask   = MatrixToBitmask(rotatedMatrix);
-
-            ulong layerMask = (ulong)naviLayer << (TOTAL_BITS * BITS_PER_CELL);
-
-            return (long)(layerMask | rotatedHeightMask);
-        }
-        private ulong[,] BitmaskToMatrix(ulong mask)
-        {
-            ulong[,] matrix = new ulong[MATRIX_SIZE, MATRIX_SIZE];
-            ulong cellValue;
-            int row, col;
-
-            for (int i = 0; i < TOTAL_BITS; ++i)
-            {
-                cellValue = mask & HEIGHT_MASK;
-                row = INDEX_MAP[i].x;
-                col = INDEX_MAP[i].y;
-
-                matrix[row, col] = cellValue;
-                mask >>= BITS_PER_CELL;
-            }
-
-            return matrix;
-        }
-        private ulong[,] RotateMatrix(ulong[,] matrix, int rot)
-        {
-            if (0 == rot)
-            {
-                return matrix;
-            }
-
-            ulong[,] rotated = new ulong[MATRIX_SIZE, MATRIX_SIZE];
-            for (int i = 0; i < MATRIX_SIZE; i++)
-            {
-                for (int j = 0; j < MATRIX_SIZE; j++)
-                {
-                    switch (rot)
-                    {
-                        case 90:
-                            rotated[j, MATRIX_SIZE - 1 - i] = matrix[i, j];
-                            break;
-                        case 180:
-                            rotated[MATRIX_SIZE - 1 - i, MATRIX_SIZE - 1 - j] = matrix[i, j];
-                            break;
-                        case 270:
-                            rotated[MATRIX_SIZE - 1 - j, i] = matrix[i, j];
-                            break;
-                    }
-                }
-            }
-            return rotated;
-        }
-        private ulong MatrixToBitmask(ulong[,] matrix)
-        {
-            ulong newMask = 0ul;
-            ulong mask;
-
-            int row, col;
-            for (int i = 0; i < TOTAL_BITS; ++i)
-            {
-                row = INDEX_MAP[i].x;
-                col = INDEX_MAP[i].y;
-                mask = matrix[row, col];
-
-                newMask |= mask << i * BITS_PER_CELL;
-            }
-
-            return newMask;
-        }
-
 
         private void OnValidate()
         {
