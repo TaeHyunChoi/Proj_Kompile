@@ -3,14 +3,13 @@
 using Script.Data;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UIElements;
 using static Script.Index.MapTileIndex;
 
 /// <summary> 맵타일 관련하여 '에디터'에서만 사용하는 함수.
 /// 비슷한 기능으로 함수가 많아지니까 헷갈려서 분리;
 /// 개발하면서 함수 기능은 다시 정리하던가 그럽시다.
 /// </summary>
-public static class EditMapUtil
+public static partial class EditMapUtil
 {
     public const int SPRITE_WIDTH = 256;
     public const int SPRITE_HEIGHT = 256;

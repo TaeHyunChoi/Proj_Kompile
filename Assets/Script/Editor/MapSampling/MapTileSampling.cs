@@ -106,10 +106,6 @@ namespace MapSampling
                     NavMask = naviMask
                 };
                 map[gridKey].TryAdd(tileKey, tile_data);
-                if (true == map[gridKey].TryGetTileData(tileKey, out var data))
-                {
-                    Debug.Log(data.GetTilePivot());
-                }
             }
 
             EditMapTileData start_data = native_array_result[0];
@@ -192,8 +188,16 @@ namespace MapSampling
                             continue;
                         }
 
-                        stack.Push(neighbor_tile);
-                        break;
+                        // 서로 연결되었다면 다음 방문을 예약한다.
+                        if (true == visit_tile.IsLinkedTo(neighbor_tile, dir[i]))
+                        {
+                            // 서로의 link 데이터를 여기서 만들고.. 
+                            // map data에 갱신까지..
+                            // 1. 어떻게 만들까요?
+
+                            stack.Push(neighbor_tile);
+                            break;
+                        }
                     }
                 }
             }

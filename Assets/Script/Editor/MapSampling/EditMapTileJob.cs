@@ -152,6 +152,7 @@ namespace Script.Data
             return newMask;
         }
     }
+
     public struct EditMapTileData
     {
         [ReadOnly] public int GridKey;
@@ -161,6 +162,25 @@ namespace Script.Data
         public readonly float3 GetTilePivot()
         {
             return EditMapUtil.GetTilePosition(GridKey, TileKey);
-        } 
+        }
+        public readonly int GetHeightFlag(int vertice)
+        {
+            long mask = NavMask >> Index.MapTileIndex.HEIGHT_BITS * vertice;
+            return (int)mask & Index.MapTileIndex.HEIGHT_MASK;
+        }
+        public readonly bool TryGetVerticeHeight(int vertice, out int heightx1000)
+        {
+            long mask = NavMask >> (Index.MapTileIndex.HEIGHT_BITS * vertice);
+            int maskInt = (int)mask & Index.MapTileIndex.HEIGHT_MASK;
+            if (0b1111 == maskInt)
+            {
+                heightx1000 = default;
+                return false;
+            }
+
+            float pivotY = GetTilePivot().y;
+            heightx1000 = Mathf.RoundToInt((pivotY + maskInt * 0.125f) * 1000);
+            return true;
+        }
     }
 }
