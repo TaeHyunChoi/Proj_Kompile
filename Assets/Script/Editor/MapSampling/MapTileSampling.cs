@@ -12,6 +12,7 @@ namespace MapSampling
     using UnityEditor.AddressableAssets.Settings;
     using UnityEngine;
     using UnityEngine.Assertions;
+    using static EditMapUtil;
 
     public partial class MapTileSampling : MonoBehaviour
     {
@@ -108,7 +109,7 @@ namespace MapSampling
                 map[gridKey].TryAdd(tileKey, tile_data);
             }
 
-            EditMapTileData start_data = native_array_result[0];
+            float3 start_tile_pivot = native_array_result[0].GetTilePivot();
             native_array_scene_index.Dispose();
             native_array_nav_layer.Dispose();
             native_array_position.Dispose();
@@ -116,10 +117,15 @@ namespace MapSampling
             native_array_heights.Dispose();
             native_array_result.Dispose();
 
-
-
-            // BFS 알고리즘 -> EditMaplinkMask 생성
-            LinkTiles(map, start_data);
+            // DFS 알고리즘 -> EditMaplinkMask 생성
+            LinkTiles(map, start_tile_pivot);
+            foreach (var m in map.Values)
+            {
+                foreach (var t in m.Data.Values)
+                {
+                    Debug.Log($"[{t.GetTilePivot()}] link = {System.Convert.ToString(t.LinkMask, 2)}");
+                }
+            }
             //yield return StartCoroutine(LinkTiles(map, start_data));
 
 
@@ -148,34 +154,35 @@ namespace MapSampling
             Debug.Log($"--- End (length: {tiles.Length}) ---");
             System.GC.Collect();
         }
-        private void LinkTiles(ConcurrentDictionary<int, EditMapGridData> map, EditMapTileData start_data)
+        private void LinkTiles(ConcurrentDictionary<int, EditMapGridData> map, float3 start_position)
         {
-            Stack<EditMapTileData> stack = new Stack<EditMapTileData>();
+            Stack<float3> stack     = new Stack<float3>();
             HashSet<float3> visited = new HashSet<float3>();
 
-            stack.Push(start_data);
+            // 구조체를 struct 곧장 넣으면 안되는구나? map에서 그 때마다 참조할 수 있도록 해야 한다...
+            stack.Push(start_position);
 
-            EditMapTileData visit_tile;
             float3 target_pivot, neighbor_pivot;
 
             while (stack.Count > 0)
             {
-                visit_tile = stack.Pop(); 
-                target_pivot = visit_tile.GetTilePivot();
-
+                target_pivot = stack.Pop();
                 if (true == visited.Contains(target_pivot))
                 {
                     continue;
                 }
-
+                if (false == EditMapUtil.TryGetTileData(map, target_pivot, out EditMapTileData visit_tile))
+                {
+                    continue;
+                }
                 visited.Add(target_pivot);
-                Debug.Log($"visited: {target_pivot}");
 
                 for (int i = dir.Length - 1; i >= 0; --i)
                 {
                     for (int y = 0; y < ny.Length; ++y)
                     {
-                        neighbor_pivot = target_pivot + new float3(dir[i].x, ny[y], dir[i].y);
+                        float3 dir = new float3(this.dir[i].x, ny[y], this.dir[i].y);
+                        neighbor_pivot = target_pivot + dir;
 
                         // 타일 정보가 없으면 이어서 탐색한다.
                         if (false == EditMapUtil.TryGetTileData(map, neighbor_pivot, out EditMapTileData neighbor_tile))
@@ -188,14 +195,20 @@ namespace MapSampling
                             continue;
                         }
 
-                        // 서로 연결되었다면 다음 방문을 예약한다.
-                        if (true == visit_tile.IsLinkedTo(neighbor_tile, dir[i]))
+                        // 서로 연결되었다면 서로 연결 정보 추가하고 + 다음 방문을 예약한다.
+                        if (true == visit_tile.TryGetLinkMask(neighbor_tile, dir, out int my_link_mask, out int neighbor_link_mask))
                         {
-                            // 서로의 link 데이터를 여기서 만들고.. 
-                            // map data에 갱신까지..
-                            // 1. 어떻게 만들까요?
+                            if (true == EditMapUtil.TryGetTileData(map, target_pivot, out EditMapTileData current_visit_tile))
+                            {
+                                map[current_visit_tile.GridKey].Data[current_visit_tile.TileKey] = new EditMapTileData(current_visit_tile, my_link_mask);
+                            }
 
-                            stack.Push(neighbor_tile);
+                            if (true == EditMapUtil.TryGetTileData(map, neighbor_pivot, out EditMapTileData current_neighbor_tile))
+                            {
+                                map[current_neighbor_tile.GridKey].Data[current_neighbor_tile.TileKey] = new EditMapTileData(current_neighbor_tile, neighbor_link_mask);
+                            }
+
+                            stack.Push(neighbor_pivot);
                             break;
                         }
                     }

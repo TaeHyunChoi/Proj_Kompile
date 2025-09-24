@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-using static Script.Index.MapTileIndex;
 
 public static partial class EditMapUtil
 {
@@ -18,6 +17,12 @@ public static partial class EditMapUtil
         LEFT    = 1 << 2,
         RIGHT   = 1 << 3
     }
+
+    private static readonly int LINK_ZERO = 0b_01;
+    private static readonly int LINK_UP   = 0b_10;
+    private static readonly int LINK_DOWN = 0b_11;
+    private static readonly int LINK_NULL = 0b_00;
+
     private readonly struct VertexIndexInfo
     {
         public readonly int center;
@@ -46,29 +51,38 @@ public static partial class EditMapUtil
         { DirFlag.RIGHT, new VertexIndexInfo(5, 0, 10)}
     };
 
-    public static bool IsLinkedTo(this EditMapTileData my_tile, EditMapTileData neighbor_tile, float2 dir)
+    private static DirFlag GetDirectionFlag(float x, float z)
     {
-        // 경우를 일반화 하려면?
         DirFlag flagMask = DirFlag.NONE;
+
+        if      (x > 0) { flagMask |= DirFlag.RIGHT; }
+        else if (x < 0) { flagMask |= DirFlag.LEFT; }
+
+        if      (z > 0) { flagMask |= DirFlag.UP; }
+        else if (z < 0) { flagMask |= DirFlag.DOWN; }
+
+        return flagMask;
+    }
+
+    public static bool TryGetLinkMask(this EditMapTileData my_tile, EditMapTileData neighbor_tile, float3 dir, out int my_link_mask, out int neighbor_link_mask)
+    {
+        DirFlag direction_flag = GetDirectionFlag(dir.x, dir.z);
         bool compare = false;
 
-        if      (dir.x > 0) { flagMask |= DirFlag.RIGHT; }
-        else if (dir.x < 0) { flagMask |= DirFlag.LEFT;  }
+        my_link_mask = LINK_NULL;
+        neighbor_link_mask = LINK_NULL;
 
-        if      (dir.y > 0) { flagMask |= DirFlag.UP;    }
-        else if (dir.y < 0) { flagMask |= DirFlag.DOWN;  }
-
-        switch (flagMask)
+        switch (direction_flag)
         {
-            case DirFlag.LEFT:
-            case DirFlag.DOWN: // ( 0,-1)
+            case DirFlag.LEFT:  // (-1, 0)
+            case DirFlag.DOWN:  // ( 0,-1)
             case DirFlag.RIGHT: // ( 0, 1)
-            case DirFlag.UP: // ( 1, 0)
+            case DirFlag.UP:    // ( 1, 0)
 
-                VertexIndexInfo my_vertex_info = my_vertex[flagMask];
-                VertexIndexInfo neighbor_vertex_info = neighbor_vertex[flagMask];
+                VertexIndexInfo my_vertex_info = my_vertex[direction_flag];
+                VertexIndexInfo neighbor_vertex_info = neighbor_vertex[direction_flag];
 
-                             // 중앙점 비교
+                // 중앙점 비교
                 if (false == my_tile.TryGetVerticeHeight(my_vertex_info.center, out int my_height_1000x)
                     || false == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.center, out int neighbor_height_1000x))
                 {
@@ -80,7 +94,6 @@ public static partial class EditMapUtil
                 }
 
                 // 양옆의 점 높이 비교
-
                 if (true == my_tile.TryGetVerticeHeight(my_vertex_info.side_0, out my_height_1000x)
                     && true == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.side_0, out neighbor_height_1000x))
                 {
@@ -91,8 +104,6 @@ public static partial class EditMapUtil
                 {
                     compare |= my_height_1000x == neighbor_height_1000x;
                 }
-
-
                 break;
 
             case DirFlag.LEFT | DirFlag.DOWN:  // (-1,-1)
@@ -106,7 +117,93 @@ public static partial class EditMapUtil
                 return false;
         }
 
+        if (true == compare)
+        {
+            switch (Mathf.RoundToInt(dir.y))
+            {
+                case 0:
+                    my_link_mask = LINK_ZERO;
+                    neighbor_link_mask = LINK_ZERO;
+                    break;
+                case 1:
+                    my_link_mask = LINK_UP;
+                    neighbor_link_mask = LINK_DOWN;
+                    break;
+                case -1:
+                    my_link_mask = LINK_DOWN;
+                    neighbor_link_mask = LINK_UP;
+                    break;
+                default:
+                    return false;
+            }
+
+            // my, neighbor shift가 다르구나..
+            // 일단 구현은 다 하고 코드 수정하는 것으로...
+            int my_shift = GetLinkMaskShift(direction_flag);
+            int neighbor_shift;
+            switch (direction_flag)
+            {
+                case DirFlag.DOWN:
+                    neighbor_shift = GetLinkMaskShift(DirFlag.UP);
+                    break;
+                case DirFlag.RIGHT:
+                    neighbor_shift = GetLinkMaskShift(DirFlag.LEFT);
+                    break;
+                case DirFlag.UP:
+                    neighbor_shift = GetLinkMaskShift(DirFlag.DOWN);
+                    break;
+                case DirFlag.LEFT:
+                    neighbor_shift = GetLinkMaskShift(DirFlag.RIGHT);
+                    break;
+
+                case DirFlag.LEFT | DirFlag.DOWN:
+                case DirFlag.RIGHT | DirFlag.DOWN:
+                case DirFlag.RIGHT | DirFlag.UP:
+                case DirFlag.LEFT | DirFlag.UP:
+                    // 잠시 대기...
+                default:
+                    return false;
+            }
+
+            my_link_mask        <<= my_shift;
+            neighbor_link_mask  <<= neighbor_shift;
+        }
+
         return compare;
+    }
+
+    private static int GetLinkMaskShift(DirFlag direction_flag)
+    {
+        int shift = 0;
+        switch (direction_flag)
+        {
+            case DirFlag.LEFT | DirFlag.DOWN:
+                shift = 0 * 2;
+                break;
+            case DirFlag.DOWN:
+                shift = 1 * 2;
+                break;
+            case DirFlag.RIGHT | DirFlag.DOWN:
+                shift = 2 * 2;
+                break;
+            case DirFlag.RIGHT:
+                shift = 2 * 3;
+                break;
+            case DirFlag.RIGHT | DirFlag.UP:
+                shift = 2 * 4;
+                break;
+            case DirFlag.UP:
+                shift = 2 * 5;
+                break;
+            case DirFlag.LEFT | DirFlag.UP:
+                shift = 2 * 6;
+                break;
+            case DirFlag.LEFT:
+                shift = 2 * 7;
+                break;
+        }
+
+        return shift;
     }
 }
 #endif
