@@ -159,7 +159,6 @@ namespace MapSampling
             Stack<float3> stack     = new Stack<float3>();
             HashSet<float3> visited = new HashSet<float3>();
 
-            // 구조체를 struct 곧장 넣으면 안되는구나? map에서 그 때마다 참조할 수 있도록 해야 한다...
             stack.Push(start_position);
 
             float3 target_pivot, neighbor_pivot;
@@ -198,15 +197,11 @@ namespace MapSampling
                         // 서로 연결되었다면 서로 연결 정보 추가하고 + 다음 방문을 예약한다.
                         if (true == visit_tile.TryGetLinkMask(neighbor_tile, dir, out int my_link_mask, out int neighbor_link_mask))
                         {
-                            if (true == EditMapUtil.TryGetTileData(map, target_pivot, out EditMapTileData current_visit_tile))
-                            {
-                                map[current_visit_tile.GridKey].Data[current_visit_tile.TileKey] = new EditMapTileData(current_visit_tile, my_link_mask);
-                            }
+                            visit_tile = new EditMapTileData(visit_tile, my_link_mask);
+                            map[visit_tile.GridKey].Data[visit_tile.TileKey] = visit_tile;
 
-                            if (true == EditMapUtil.TryGetTileData(map, neighbor_pivot, out EditMapTileData current_neighbor_tile))
-                            {
-                                map[current_neighbor_tile.GridKey].Data[current_neighbor_tile.TileKey] = new EditMapTileData(current_neighbor_tile, neighbor_link_mask);
-                            }
+                            neighbor_tile = new EditMapTileData(neighbor_tile, neighbor_link_mask);
+                            map[neighbor_tile.GridKey].Data[neighbor_tile.TileKey] = neighbor_tile;
 
                             stack.Push(neighbor_pivot);
                             break;
