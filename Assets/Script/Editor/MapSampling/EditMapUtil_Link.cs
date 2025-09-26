@@ -50,74 +50,122 @@ public static partial class EditMapUtil
         { DirFlag.UP,    new VertexIndexInfo(1, 0, 2)},
         { DirFlag.RIGHT, new VertexIndexInfo(5, 0, 10)}
     };
-
-    private static DirFlag GetDirectionFlag(float x, float z)
+    private static readonly Dictionary<DirFlag, float3> DIRECTION = new Dictionary<DirFlag, float3>()
     {
-        DirFlag flagMask = DirFlag.NONE;
+        { DirFlag.LEFT,  new float3(-1f, 0f, 0f) },
+        { DirFlag.RIGHT, new float3( 1f, 0f, 0f) },
+        { DirFlag.UP,    new float3( 0f, 0f, 1f) },
+        { DirFlag.DOWN,  new float3( 0f, 0f,-1f) },
+    };
 
-        if      (x > 0) { flagMask |= DirFlag.RIGHT; }
-        else if (x < 0) { flagMask |= DirFlag.LEFT; }
+    private static (DirFlag, DirFlag) GetDirectionFlag(float x, float z)
+    {
+        DirFlag flag_x = DirFlag.NONE;
+        DirFlag flag_z = DirFlag.NONE;
 
-        if      (z > 0) { flagMask |= DirFlag.UP; }
-        else if (z < 0) { flagMask |= DirFlag.DOWN; }
+        if      (x > 0) { flag_x = DirFlag.RIGHT; }
+        else if (x < 0) { flag_x = DirFlag.LEFT; }
 
-        return flagMask;
+        if      (z > 0) { flag_z = DirFlag.UP; }
+        else if (z < 0) { flag_z = DirFlag.DOWN; }
+
+        return (flag_x, flag_z);
     }
 
-    public static bool TryGetLinkMask(this EditMapTileData my_tile, EditMapTileData neighbor_tile, float3 dir, out int my_link_mask, out int neighbor_link_mask)
+    private static bool IsLinked(DirFlag direction_flag, EditMapTileData my_tile, EditMapTileData neighbor_tile)
     {
-        DirFlag direction_flag = GetDirectionFlag(dir.x, dir.z);
+        VertexIndexInfo my_vertex_info = my_vertex[direction_flag];
+        VertexIndexInfo neighbor_vertex_info = neighbor_vertex[direction_flag];
+
+        // 중앙점 비교
+        if (false == my_tile.TryGetVerticeHeight(my_vertex_info.center, out int my_height_1000x)
+            || false == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.center, out int neighbor_height_1000x))
+        {
+            return false;
+        }
+        if (my_height_1000x != neighbor_height_1000x)
+        {
+            return false;
+        }
+
+        // 양옆의 점 높이 비교
         bool compare = false;
+        if (true == my_tile.TryGetVerticeHeight(my_vertex_info.side_0, out my_height_1000x)
+            && true == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.side_0, out neighbor_height_1000x))
+        {
+            compare |= my_height_1000x == neighbor_height_1000x;
+        }
+        if (true == my_tile.TryGetVerticeHeight(my_vertex_info.side_1, out my_height_1000x)
+            && true == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.side_1, out neighbor_height_1000x))
+        {
+            compare |= my_height_1000x == neighbor_height_1000x;
+        }
 
-        my_link_mask = LINK_NULL;
-        neighbor_link_mask = LINK_NULL;
+        return compare;
+    }
+    private static bool IsChainLinked(ConcurrentDictionary<int, EditMapGridData> map,
+                                      EditMapTileData start_tile, EditMapTileData target_tile, 
+                                      DirFlag dir_first, DirFlag dir_second)
+    {
+        float3 mid_pivot = start_tile.GetTilePivot() + DIRECTION[dir_first];
+        if (false == EditMapUtil.TryGetTileData(map, mid_pivot, out EditMapTileData mid_tile))
+        {
+            return false;
+        }
+        if (false == IsLinked(dir_first, start_tile, mid_tile))
+        {
+            return false;
+        }
 
-        switch (direction_flag)
+        //mid_pivot += DIRECTION[dir_second];
+        if (false == EditMapUtil.TryGetTileData(map, mid_pivot, out mid_tile))
+        {
+            return false;
+        }
+        if (false == IsLinked(dir_second, mid_tile, target_tile))
+        {
+            return false;
+        }
+
+        return true;
+    }
+    public static bool TryGetLinkMask(this EditMapTileData my_tile,
+                                      ConcurrentDictionary<int, EditMapGridData> map,
+                                      EditMapTileData neighbor_tile,
+                                      float3 dir,
+                                      out int my_link_mask,
+                                      out int neighbor_link_mask)
+    {
+        bool isLinked;
+        // 이걸 따로 받는게 나을 듯
+        (DirFlag dir_x, DirFlag dir_z) = GetDirectionFlag(dir.x, dir.z);
+
+        my_link_mask        = LINK_NULL;
+        neighbor_link_mask  = LINK_NULL;
+
+        DirFlag dir_mask = dir_x | dir_z;
+        switch (dir_mask)
         {
             case DirFlag.LEFT:  // (-1, 0)
             case DirFlag.DOWN:  // ( 0,-1)
             case DirFlag.RIGHT: // ( 0, 1)
             case DirFlag.UP:    // ( 1, 0)
-
-                VertexIndexInfo my_vertex_info = my_vertex[direction_flag];
-                VertexIndexInfo neighbor_vertex_info = neighbor_vertex[direction_flag];
-
-                // 중앙점 비교
-                if (false == my_tile.TryGetVerticeHeight(my_vertex_info.center, out int my_height_1000x)
-                    || false == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.center, out int neighbor_height_1000x))
-                {
-                    return false;
-                }
-                if (my_height_1000x != neighbor_height_1000x)
-                {
-                    return false;
-                }
-
-                // 양옆의 점 높이 비교
-                if (true == my_tile.TryGetVerticeHeight(my_vertex_info.side_0, out my_height_1000x)
-                    && true == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.side_0, out neighbor_height_1000x))
-                {
-                    compare |= my_height_1000x == neighbor_height_1000x;
-                }
-                if (true == my_tile.TryGetVerticeHeight(my_vertex_info.side_1, out my_height_1000x)
-                    && true == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.side_1, out neighbor_height_1000x))
-                {
-                    compare |= my_height_1000x == neighbor_height_1000x;
-                }
+                isLinked = IsLinked(dir_x | dir_z, my_tile, neighbor_tile);
                 break;
 
             case DirFlag.LEFT | DirFlag.DOWN:  // (-1,-1)
             case DirFlag.LEFT | DirFlag.RIGHT: // (-1, 1)
             case DirFlag.RIGHT | DirFlag.UP:   // ( 1, 1)
             case DirFlag.RIGHT | DirFlag.DOWN: // ( 1,-1)
-                // 추후에 다른 로직을 사용
-                return false;
+                isLinked = IsChainLinked(map, my_tile, neighbor_tile, dir_x, dir_z)
+                          || IsChainLinked(map, my_tile, neighbor_tile, dir_z, dir_x);
+                break;
 
             default:
                 return false;
         }
 
-        if (true == compare)
+        if (true == isLinked)
         {
             switch (Mathf.RoundToInt(dir.y))
             {
@@ -139,9 +187,9 @@ public static partial class EditMapUtil
 
             // my, neighbor shift가 다르구나..
             // 일단 구현은 다 하고 코드 수정하는 것으로...
-            int my_shift = GetLinkMaskShift(direction_flag);
+            int my_shift = GetLinkMaskShift(dir_mask);
             int neighbor_shift;
-            switch (direction_flag)
+            switch (dir_mask)
             {
                 case DirFlag.DOWN:
                     neighbor_shift = GetLinkMaskShift(DirFlag.UP);
@@ -157,10 +205,17 @@ public static partial class EditMapUtil
                     break;
 
                 case DirFlag.LEFT | DirFlag.DOWN:
+                    neighbor_shift = GetLinkMaskShift(DirFlag.RIGHT | DirFlag.UP);
+                    break;
                 case DirFlag.RIGHT | DirFlag.DOWN:
+                    neighbor_shift = GetLinkMaskShift(DirFlag.LEFT | DirFlag.UP);
+                    break;
                 case DirFlag.RIGHT | DirFlag.UP:
+                    neighbor_shift = GetLinkMaskShift(DirFlag.LEFT | DirFlag.DOWN);
+                    break;
                 case DirFlag.LEFT | DirFlag.UP:
-                    // 잠시 대기...
+                    neighbor_shift = GetLinkMaskShift(DirFlag.RIGHT | DirFlag.DOWN);
+                    break;
                 default:
                     return false;
             }
@@ -169,7 +224,7 @@ public static partial class EditMapUtil
             neighbor_link_mask  <<= neighbor_shift;
         }
 
-        return compare;
+        return isLinked;
     }
 
     private static int GetLinkMaskShift(DirFlag direction_flag)
