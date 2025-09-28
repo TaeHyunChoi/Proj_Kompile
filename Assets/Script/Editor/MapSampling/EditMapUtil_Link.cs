@@ -185,8 +185,6 @@ public static partial class EditMapUtil
                     return false;
             }
 
-            // my, neighbor shift가 다르구나..
-            // 일단 구현은 다 하고 코드 수정하는 것으로...
             int my_shift = GetLinkMaskShift(dir_mask);
             int neighbor_shift;
             switch (dir_mask)

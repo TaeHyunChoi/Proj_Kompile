@@ -127,7 +127,7 @@ namespace Script.Manager
             // 다음 이동할 목표 좌표에 대하여 타일값이 유효하게 존재하는지 확이
             // 만약 존재하지 않는다면 탐색 종료
             (int grid_key, int tile_key) = MapUtil.GetCoordKey(next_move_position, false);
-            if (false == TryGetMapTileData(grid_key, tile_key, out MapTileData mapTileData))
+            if (false == TryGetMapTileData(grid_key, tile_key, out EditMapTileData mapTileData))
             {
                 return 0;
             }
@@ -159,7 +159,7 @@ namespace Script.Manager
             return index;
         }
 
-        private static bool TryGetMapTileData(int gKey, int tKey, out MapTileData mapTileData)
+        private static bool TryGetMapTileData(int gKey, int tKey, out EditMapTileData mapTileData)
         {
             if (false == currentMapGrid.ContainsKey(gKey))
             {

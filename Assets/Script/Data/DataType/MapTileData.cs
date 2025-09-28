@@ -1,36 +1,21 @@
 namespace Script.Data
 {
-    using MessagePack;
     using UnityEngine;
     using static Index.MapTileIndex;
-
-    [MessagePackObject]
-    public struct MapTileData
-    {
-        [Key(0)]
-        public long navi; // [layer:3bits], [heights:52bits(4*13)]
-
-        [Key(1)]
-        public int link; // [layer:3bits], [heights:52bits(4*13)]
-
-        public MapTileData(long nav)
-        {
-            navi = nav;
-            link = 0;
-        }
-    }
-
+ 
     public readonly struct IngameMapTileData
     {
         public readonly int GridKey;
         public readonly int TileKey;
         public readonly long NaviMask;
+        public readonly int LinkMask;
 
-        public IngameMapTileData(int g, int t, MapTileData data)
+        public IngameMapTileData(int g, int t, EditMapTileData data)
         {
             GridKey = g;
             TileKey = t;
-            NaviMask = data.navi;
+            NaviMask = data.NavMask;
+            LinkMask = data.LinkMask;
         }
 
         public Vector3 TilePosition

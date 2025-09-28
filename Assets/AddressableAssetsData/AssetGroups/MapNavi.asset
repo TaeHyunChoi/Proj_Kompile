@@ -14,7 +14,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: MapNavi
   m_GUID: 745b2625ea6a44146bbf6c3fc2cf7ad7
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 49cc9be3e213197478d8fcb0033c9f96
+    m_Address: MapNavi_0
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - MapNavi_0
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9a4428cbe7330c241a630f410af5788f
+    m_Address: MapNavi_65
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - MapNavi_65
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c43ed34675bd8694e8f7baf897448479
+    m_Address: MapNavi_1073345
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - MapNavi_1073345
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e5108957c6cf8f94fa1994d85cc8fc82
+    m_Address: MapNavi_1064960
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - MapNavi_1064960
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e679d50c74d2a3f44b707617f4167a76
+    m_Address: MapNavi_1065025
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - MapNavi_1065025
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

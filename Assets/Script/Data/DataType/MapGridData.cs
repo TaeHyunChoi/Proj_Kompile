@@ -12,7 +12,7 @@ namespace Script.Data
         public int gridKey;
 
         [Key(1)]
-        public ConcurrentDictionary<int, MapTileData> MapNavDataDictionary;
+        public ConcurrentDictionary<int, EditMapTileData> MapNavDataDictionary;
 
         [Key(2)]
         public List<string> assetFiles;
@@ -29,7 +29,7 @@ namespace Script.Data
         {
             return MapNavDataDictionary.ContainsKey(tKey);
         }
-        public bool TryGetTileData(int tileIntKey, out MapTileData tileData)
+        public bool TryGetTileData(int tileIntKey, out EditMapTileData tileData)
         {
             return MapNavDataDictionary.TryGetValue(tileIntKey, out tileData);
         }
@@ -56,14 +56,14 @@ namespace Script.Data
         public MapGridData(int targetGridKey)
         {
             gridKey = targetGridKey;
-            MapNavDataDictionary = new ConcurrentDictionary<int, MapTileData>();
+            MapNavDataDictionary = new ConcurrentDictionary<int, EditMapTileData>();
             assetFiles = new List<string>();
         }
         public void AddAssetFile(string fileName)
         {
             assetFiles.Add(fileName);
         }
-        public bool TryAdd(int key, MapTileData navData)
+        public bool TryAdd(int key, EditMapTileData navData)
         {
             return MapNavDataDictionary.TryAdd(key, navData);
         }
@@ -72,12 +72,18 @@ namespace Script.Data
 
 
 #if UNITY_EDITOR
+    [MessagePackObject]
     public class EditMapGridData
     {
+        [Key(0)]
         public int gridKey;
+        [Key(1)]
         public ConcurrentDictionary<int, EditMapTileData> Data;
+        [Key(2)]
         public List<string> assetFiles;
+        [IgnoreMember]
         public int[] mesh_asset_instanceIDs;
+        [IgnoreMember]
         public UnityEngine.GameObject gameObject;
 
         public bool TryGetTileData(int tileIntKey, out EditMapTileData tileData)

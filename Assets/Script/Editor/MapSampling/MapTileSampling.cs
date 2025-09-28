@@ -80,11 +80,6 @@ namespace MapSampling
             JobHandle jobHandle = job.Schedule(tiles.Length, 64);
             jobHandle.Complete();
 
-            //while (false == jobHandle.IsCompleted)
-            //{
-            //    yield return null;
-            //}
-
             // Map 등록
             var map = new ConcurrentDictionary<int, EditMapGridData>();
             int gridKey, tileKey;
@@ -126,30 +121,10 @@ namespace MapSampling
                     Debug.Log($"[{t.GetTilePivot()}] link = {System.Convert.ToString(t.LinkMask, 2)}");
                 }
             }
-            //yield return StartCoroutine(LinkTiles(map, start_data));
 
-
-            //SaveTileMeshes(map, tiles);
-            //AssetDatabase.Refresh();
-            //Debug.Log("모든 Temp 오브젝트의 Init 호출이 병렬로 완료되었습니다.");
-
-            //// for test
-            //Vector3 grid_pivot;
-            //Vector3 tile_pivot;
-            //foreach (var grid in map.Values)
-            //{ 
-            //    foreach(var kvp in grid.MapNavDataDictionary)
-            //    {
-            //        // grid pivot
-            //        grid_pivot = EditMapUtil.GetGridPivot(grid.gridKey);
-
-            //        // tile pivot
-            //        tileKey = kvp.Key;
-            //        tile_pivot = EditMapUtil.GetTilePivot(grid.gridKey, kvp.Key);
-
-            //        Debug.Log($"Grid_Pivot:{grid_pivot}, Tile_Pivot:{tile_pivot}");
-            //    }
-            //}
+            //EditData에서 Data로 전환하려면?
+            SaveTileMeshes(map, tiles);
+            AssetDatabase.Refresh();
 
             Debug.Log($"--- End (length: {tiles.Length}) ---");
             System.GC.Collect();
@@ -213,7 +188,7 @@ namespace MapSampling
     }
     public partial class MapTileSampling
     {
-        private void SaveTileMeshes(ConcurrentDictionary<int, MapGridData> map, EditMapData[] tiles)
+        private void SaveTileMeshes(ConcurrentDictionary<int, EditMapGridData> map, EditMapData[] tiles)
         {
             Dictionary<long, TempData> tempDataDict = new Dictionary<long, TempData>();
             EditMapData tile;
@@ -237,8 +212,22 @@ namespace MapSampling
 
                 tempData = tempDataDict[key];
 
+                // 🚨 핵심 수정: MeshFilter와 sharedMesh의 유효성 검사 및 정점 개수 확인
+                if (tile.MeshFilter == null || tile.MeshFilter.sharedMesh == null)
+                {
+                    Debug.LogWarning($"Tile at index {i} has a null MeshFilter or sharedMesh. Skipping.");
+                    continue; // 빈 메쉬는 처리하지 않고 건너뜁니다.
+                }
+
                 int currentVertexCount = tempData.vertexCount;
                 int tileVertexCount = tile.MeshFilter.sharedMesh.vertexCount;
+
+                // 정점 수가 0인 메쉬도 결합 대상에서 제외해야 UV 누적 오류를 막을 수 있습니다.
+                if (tileVertexCount == 0)
+                {
+                    Debug.LogWarning($"Tile at index {i} has 0 vertices. Skipping.");
+                    continue; // 정점 0개인 메쉬는 건너뜁니다.
+                }
 
                 if (currentVertexCount + tileVertexCount > VERTEX_LIMIT)
                 {
@@ -246,7 +235,13 @@ namespace MapSampling
                     combinedMesh.CombineMeshes(tempData.combineInstances.ToArray(), true, true);
                     combinedMesh.uv = tempData.combinedUVs.ToArray();
 
-                    // VERTEX 꽉 채워졌으면 중도에 하나 생성하고
+                    if (combinedMesh.vertexCount != tempData.combinedUVs.Count)
+                    {
+                        // 🔴 여기서 로그를 찍어 불일치 원인을 파악해야 합니다.
+                        Debug.LogError($"[227] UV/Vertex Count Mismatch! Vertices: {combinedMesh.vertexCount}, UVs: {tempData.combinedUVs.Count}");
+                        // 이 오류가 나면 아래 코드는 실행되지 않거나, 실행되어도 오류 로그를 남길 것입니다.
+                    }
+
                     SaveMesh(map, combinedMesh, sceneIndex, tile.GridKey, tile.NaviLayer, tempData.index, true, false);
 
                     tempData.combineInstances.Clear();
@@ -262,6 +257,15 @@ namespace MapSampling
                 };
 
                 Vector2[] uvs = GetUVs(combInstance, tile.TextureIndex);
+
+                // 🚨 디버깅: uvs 개수와 정점 개수가 다른지 다시 한번 확인
+                if (uvs.Length != tileVertexCount)
+                {
+                    // 이 로그가 찍히면 GetUVs 함수나 원본 메쉬 자체에 문제가 있는 것입니다.
+                    Debug.LogError($"Tile {i} - Inconsistent UV/Vertex count. Mesh Vertices: {tileVertexCount}, GetUVs returned: {uvs.Length}");
+                }
+
+
                 tempData.combineInstances.Add(combInstance);
                 tempData.combinedUVs.AddRange(uvs);
                 tempData.vertexCount += tileVertexCount;
@@ -279,6 +283,13 @@ namespace MapSampling
                     combinedMesh.CombineMeshes(tempData.combineInstances.ToArray(), true, true);
                     combinedMesh.uv = tempData.combinedUVs.ToArray();
 
+                    if (combinedMesh.vertexCount != tempData.combinedUVs.Count)
+                    {
+                        // 🔴 여기서 로그를 찍어 불일치 원인을 파악해야 합니다.
+                        Debug.LogError($"[266] UV/Vertex Count Mismatch! Vertices: {combinedMesh.vertexCount}, UVs: {tempData.combinedUVs.Count}");
+                        // 이 오류가 나면 아래 코드는 실행되지 않거나, 실행되어도 오류 로그를 남길 것입니다.
+                    }
+
                     // long key = tile.RenderLayer << 32 | sceneIndex << 24 | tile.GridKey;
                     int gridKey = (int)(kvp.Key & 0x00FF_FFFF);
                     int layerMask = (int)(kvp.Key >> 32);
@@ -288,11 +299,12 @@ namespace MapSampling
 
             EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
         }
-        private void SaveMesh(ConcurrentDictionary<int, MapGridData> map, Mesh mesh, int sceneIndex, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
+
+        private void SaveMesh(ConcurrentDictionary<int, EditMapGridData> map, Mesh mesh, int sceneIndex, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
         {
             if (false == map.ContainsKey(gridKey))
             {
-                map.TryAdd(gridKey, new MapGridData(gridKey));
+                map.TryAdd(gridKey, new EditMapGridData(gridKey));
             }
 
             string assetName = $"MapRender_{sceneIndex}_G{gridKey}_L{layer}_{index}";
@@ -311,9 +323,10 @@ namespace MapSampling
             }
 
             // save data
+            // 얘를 따로 뺴고 + EditMapGridData에 Mesh 정보까지 함께 저장하는게 나으려나?... 
             foreach (var grid in map)
             {
-                AssetManager.WriteBinaryFile<MapGridData>(data: grid.Value,
+                AssetManager.WriteBinaryFile<EditMapGridData>(data: grid.Value,
                                                          dataPath: MAP_NAVI_DATA_PATH,
                                                          fileName: $"MapNavi_{grid.Key}",
                                                          addressableGroup: "MapNavi");
@@ -357,7 +370,6 @@ namespace MapSampling
             float uvWidth = (float)spriteSize / altasWidth;
             float uvHeight = (float)spriteSize / altasHeight;
 
-            // 해당 스프라이트의 atlas 내 시작 UV (좌측 하단 좌표) // 이거 좌측 상단 기준이어야 하는거 아닌가?
             float uvX = col * uvWidth;
             float uvY = 1 - row * uvHeight;
 
@@ -415,7 +427,7 @@ namespace MapSampling
                 var y = (key >> shiftTileY) & 0x0F;
                 var z = (key >> shiftTileZ) & 0xFF;
 
-                Debug.Log($"[layer:{layer}][scale:{scale}][{x},{y},{z}]  [navi:{data.MapNavDataDictionary[key].navi}]");
+                Debug.Log($"[layer:{layer}][scale:{scale}][{x},{y},{z}]  [navi:{data.MapNavDataDictionary[key].NavMask}]");
             }
 
             nowLoading = false;

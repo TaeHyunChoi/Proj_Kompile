@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: MapRender
   m_GUID: d20cb78037ea68b4c9806d32461477c7
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: b1e065c5ac93a824f9b3bec3b0b363bb
+    m_Address: MapRender_0_G0_L0_0
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

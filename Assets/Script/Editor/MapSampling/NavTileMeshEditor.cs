@@ -5,22 +5,23 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 using Unity.Mathematics;
+using System.Collections.Generic; // List를 사용하기 위해 추가
 
 public static class NavTileMeshEditor
 {
     private static readonly float3[] VerticeVerticePoint = new float3[]
-{
-        new float3(0f,    0f,    0f   ),   new float3(0.5f,  0f,    0f   ),   new float3(1f,    0f,    0f),
-        new float3(0.25f, 0f,    0.25f),   new float3(0.75f, 0f,    0.25f),   new float3(0f,    0f,    0.5f),
-        new float3(0.5f,  0f,    0.5f ),   new float3(1f,    0f,    0.5f ),   new float3(0.25f, 0f,    0.75f),
-        new float3(0.75f, 0f,    0.75f),   new float3(0f,    0f,    1f   ),   new float3(0.5f,  0f,    1f),
-        new float3(1f,    0f,    1f   )
-};
+    {
+        new float3(0f,    0f,    0f    ),  new float3(0.5f,  0f,    0f    ),  new float3(1f,    0f,    0f),
+        new float3(0.25f, 0f,    0.25f),  new float3(0.75f, 0f,    0.25f),  new float3(0f,    0f,    0.5f),
+        new float3(0.5f,  0f,    0.5f ),  new float3(1f,    0f,    0.5f ),  new float3(0.25f, 0f,    0.75f),
+        new float3(0.75f, 0f,    0.75f),  new float3(0f,    0f,    1f    ),  new float3(0.5f,  0f,    1f),
+        new float3(1f,    0f,    1f    )
+    };
     private static readonly int[] ExceptTriangleMask = new int[]
-{
+    {
         TRIANGLE_FULL_MASK & ~(1 <<  0 | 1 <<  3),
         TRIANGLE_FULL_MASK & ~(1 <<  0 | 1 <<  1 | 1 <<  4 | 1 <<  7),
-        TRIANGLE_FULL_MASK & ~(1 <<  4 | 1 <<  5),                 
+        TRIANGLE_FULL_MASK & ~(1 <<  4 | 1 <<  5),
         TRIANGLE_FULL_MASK & ~(1 <<  0 | 1 <<  1 | 1 <<  2 | 1 <<  3),
         TRIANGLE_FULL_MASK & ~(1 <<  4 | 1 <<  5 | 1 <<  6 | 1 <<  7),
         TRIANGLE_FULL_MASK & ~(1 <<  2 | 1 <<  3 | 1 <<  8 | 1 << 11),
@@ -31,10 +32,10 @@ public static class NavTileMeshEditor
         TRIANGLE_FULL_MASK & ~(1 << 10 | 1 << 11),
         TRIANGLE_FULL_MASK & ~(1 <<  9 | 1 << 10 | 1 << 14 | 1 << 15),
         TRIANGLE_FULL_MASK & ~(1 << 13 | 1 << 14)
-};
+    };
 
-    private const float HEIGHT_UNIT_VALUE  = 0.125f;    // 높이값의 단위. (height * 0.125f). 0 ~ 1의 값을 가진다.
-    private const int   TRIANGLE_FULL_MASK = 0x_FFFF;   // 하나의 mesh 안에 4*4, 16개의 triangle로 이뤄졌다.
+    private const float HEIGHT_UNIT_VALUE = 0.125f;    // 높이값의 단위. (height * 0.125f). 0 ~ 1의 값을 가진다.
+    private const int TRIANGLE_FULL_MASK = 0x_FFFF;    // 하나의 mesh 안에 4*4, 16개의 triangle로 이뤄졌다.
 
     private static StringBuilder stringBuilder = new StringBuilder();
 
@@ -88,8 +89,8 @@ public static class NavTileMeshEditor
         bool isSuccess;
         GameObject prefabObject = new GameObject(fileName);
         {
-            var filter   = prefabObject.AddComponent<MeshFilter>();
-            filter.mesh  = mesh;
+            var filter = prefabObject.AddComponent<MeshFilter>();
+            filter.mesh = mesh;
             var renderer = prefabObject.AddComponent<MeshRenderer>();
             var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Editor/Texture/mat_NavTile_00.mat"); //임의로 생성한 매터리얼
             renderer.sharedMaterial = material;
@@ -119,22 +120,25 @@ public static class NavTileMeshEditor
     /// <summary> 입력받은 높이값[13]을 Mesh 정보로 변환하여 저장 </summary>
     public static Mesh InstantiateMesh(int[] inputHeights)
     {
-        int length        = inputHeights.Length;
+        int length = inputHeights.Length;
 
+        // 🚨 수정: 사용될 정점과 UV만 담을 리스트를 준비합니다.
+        List<Vector3> finalVertices = new List<Vector3>(length);
+        List<Vector2> finalUVs = new List<Vector2>(length);
 
-        // reset(clear) vertice, uv
-        Vector3[] vertices = new Vector3[length];
-        Vector2[] uv = new Vector2[length];
+        // 🚨 수정: 기존 Vertice 순서(0~12)와 최종 Mesh의 정점 순서(0~N)를 매핑하는 배열
+        int[] virtualToActualIndex = new int[length];
 
-        // set: vertice, uv
-        // virtualIndex: NavTileMesh를 만들기 위해 개념적으로 사용하는 가상 순서 (입력 순서와 동일)
+        // 초기화: -1은 정점이 메쉬에 포함되지 않았음을 의미합니다.
+        for (int i = 0; i < length; i++)
+        {
+            virtualToActualIndex[i] = -1;
+        }
 
         Vector3 vertice;
         int height;
-
         int triangleMask = TRIANGLE_FULL_MASK;
-        int verticeIndex = 0;
-
+        int actualIndex = 0; // 실제 Mesh에 할당될 정점의 최종 인덱스
 
         for (int virtualIndex = 0; virtualIndex < length; ++virtualIndex)
         {
@@ -145,32 +149,53 @@ public static class NavTileMeshEditor
             if (height >= 0)
             {
                 vertice += HEIGHT_UNIT_VALUE * height * Vector3.up;
+
+                // 🚨 height >= 0 인 경우에만 정점과 UV를 추가하고 인덱스 매핑을 기록합니다.
+                finalVertices.Add(vertice);
+                finalUVs.Add(new Vector2(vertice.x, vertice.z));
+                virtualToActualIndex[virtualIndex] = actualIndex;
+                actualIndex++;
             }
             else
             {
                 // 삼각형 대상에서 제외
                 triangleMask &= ExceptTriangleMask[virtualIndex];
+                // height < 0 인 경우 정점은 리스트에 추가되지 않습니다.
             }
-
-            vertices[verticeIndex] = vertice;
-            uv[verticeIndex] = new Vector2(vertice.x, vertice.z);
-            ++verticeIndex;
         }
 
         // set: triangle
         int flag = 1;
-        length = GetTriangleCount(triangleMask) * 3;
-        int[] triangle = new int[length];
+
+        // GetTriangleCount 함수 호출
+        int expectedTriangleCount = GetTriangleCount(triangleMask);
+        // TriangleVertex는 외부 클래스(Script.Index.MapTileIndex 또는 EditMapUtil)에 정의된 것으로 가정
+        int[] triangle = new int[expectedTriangleCount * 3];
         int triangleIndex = 0;
         int t_index = 0;
+
         while (flag <= triangleMask)
         {
             if (0 != (flag & triangleMask))
             {
                 int index = triangleIndex * 3;
-                triangle[t_index    ] = TriangleVertex[index + 0];
-                triangle[t_index + 1] = TriangleVertex[index + 1];
-                triangle[t_index + 2] = TriangleVertex[index + 2];
+
+                // TriangleVertex 배열은 외부 정적 필드로 가정합니다.
+                int v0_virtual = TriangleVertex[index + 0];
+                int v1_virtual = TriangleVertex[index + 1];
+                int v2_virtual = TriangleVertex[index + 2];
+
+                // 🚨 수정: 가상 인덱스를 실제 메쉬의 정점 인덱스로 변환
+                int v0 = virtualToActualIndex[v0_virtual];
+                int v1 = virtualToActualIndex[v1_virtual];
+                int v2 = virtualToActualIndex[v2_virtual];
+
+                // 유효성 검사 (height < 0 인 정점은 v0, v1, v2 중 하나라도 -1이 됨)
+                // 하지만 ExceptTriangleMask가 유효하므로 마스크된 삼각형은 이미 이 if 블록에 들어오지 않습니다.
+                // 따라서 단순하게 인덱스를 할당합니다.
+                triangle[t_index] = v0;
+                triangle[t_index + 1] = v1;
+                triangle[t_index + 2] = v2;
                 t_index += 3;
             }
 
@@ -178,12 +203,18 @@ public static class NavTileMeshEditor
             ++triangleIndex;
         }
 
+        // 🚨 최종 삼각형 배열 크기를 t_index와 일치시킵니다.
+        if (t_index != triangle.Length)
+        {
+            System.Array.Resize(ref triangle, t_index);
+        }
+
         // instantiate: mesh
         Mesh mesh = new Mesh()
         {
-            vertices  = vertices,
+            vertices = finalVertices.ToArray(), // 🚨 정점 개수 == 최종 UV 개수
             triangles = triangle,
-            uv = uv
+            uv = finalUVs.ToArray()             // 🚨 UV 개수 == 최종 정점 개수
         };
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
@@ -193,9 +224,9 @@ public static class NavTileMeshEditor
     private static int GetTriangleCount(int mask)
     {
         int count = 0;
-        int flag  = 1;
+        int flag = 1;
 
-        while (flag < mask)
+        while (flag <= mask)
         {
             if (0 != (flag & mask))
             {

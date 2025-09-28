@@ -5,6 +5,7 @@ namespace Script.Data
     using Unity.Mathematics;
     using UnityEngine;
     using UnityEngine.Assertions;
+    using MessagePack;
 
     public partial struct EditMapTileJob : IJobParallelFor
     {
@@ -154,11 +155,18 @@ namespace Script.Data
         }
     }
 
+    // 이러면 곧장 EditMapTileData 구조체로 곧장 저장할 수 있나?
+    [MessagePackObject]
     public struct EditMapTileData
     {
+        [IgnoreMember]
         [ReadOnly] public int GridKey;
+        [IgnoreMember]
         [ReadOnly] public int TileKey;
+
+        [Key(0)]
         [ReadOnly] public long NavMask;
+        [Key(1)]
         [ReadOnly] public int LinkMask;
 
         public EditMapTileData(EditMapTileData visit_tile, int add_link_mask)
