@@ -114,13 +114,13 @@ namespace MapSampling
 
             // DFS 알고리즘 -> EditMaplinkMask 생성
             LinkTiles(map, start_tile_pivot);
-            foreach (var m in map.Values)
-            {
-                foreach (var t in m.Data.Values)
-                {
-                    Debug.Log($"[{t.GetTilePivot()}] link = {System.Convert.ToString(t.LinkMask, 2)}");
-                }
-            }
+            //foreach (var m in map.Values)
+            //{
+            //    foreach (var t in m.Data.Values)
+            //    {
+            //        Debug.Log($"[{t.GetTilePivot()}] link = {System.Convert.ToString(t.LinkMask, 2)}");
+            //    }
+            //}
 
             //EditData에서 Data로 전환하려면?
             SaveTileMeshes(map, tiles);

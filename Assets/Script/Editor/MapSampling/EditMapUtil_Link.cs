@@ -112,22 +112,14 @@ public static partial class EditMapUtil
         {
             return false;
         }
-        if (false == IsLinked(dir_first, start_tile, mid_tile))
-        {
-            return false;
-        }
-
+        
         //mid_pivot += DIRECTION[dir_second];
         if (false == EditMapUtil.TryGetTileData(map, mid_pivot, out mid_tile))
         {
             return false;
         }
-        if (false == IsLinked(dir_second, mid_tile, target_tile))
-        {
-            return false;
-        }
 
-        return true;
+        return IsLinked(dir_first, start_tile, mid_tile) && IsLinked(dir_second, mid_tile, target_tile);
     }
     public static bool TryGetLinkMask(this EditMapTileData my_tile,
                                       ConcurrentDictionary<int, EditMapGridData> map,
