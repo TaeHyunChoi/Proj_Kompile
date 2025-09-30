@@ -10,7 +10,7 @@ namespace Script.Data
         public readonly long NaviMask;
         public readonly int LinkMask;
 
-        public IngameMapTileData(int g, int t, EditMapTileData data)
+        public IngameMapTileData(int g, int t, MapTileData data)
         {
             GridKey = g;
             TileKey = t;

@@ -130,7 +130,7 @@ public static partial class EditMapUtil
         return grid_pivot + new float3(tx, ty, tz);
     }
 
-    public static bool TryGetTileData(ConcurrentDictionary<int, EditMapGridData> map, float3 position, out EditMapTileData tile_data)
+    public static bool TryGetTileData(ConcurrentDictionary<int, EditMapGridData> map, float3 position, out MapTileData tile_data)
     {
         int grid_key = GetGridKeyMask(position);
         int tile_key = GetTileKeyMask(position);

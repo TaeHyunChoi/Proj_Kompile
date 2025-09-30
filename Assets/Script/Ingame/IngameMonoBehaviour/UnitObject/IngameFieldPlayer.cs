@@ -5,24 +5,30 @@ using UnityEngine;
 using Script.Interface;
 using Script.Index;
 using static Script.Index.IDxInput;
+using Unity.Mathematics;
+using Script.Data;
 
 public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpdater
 {
     private Animator animator;
     private int index;
 
-    private Vector3 direction;
+    private float3 direction;
 
     public async Task<bool> Init(int index)
     {
         this.index = index;
-    
         asset_hash_codes = new List<int>();
 
         animator = transform.GetComponent<Animator>();
         var (hashCode, value) = await AssetManager.LoadAssetAsync<RuntimeAnimatorController>("AnimCtrl_Ataho");
         asset_hash_codes.Add(hashCode);
         animator.runtimeAnimatorController = value;
+
+#if UNITY_EDITOR
+        transform.position = new Vector3(1f, 0f, 5f);
+        UnityEngine.Debug.Log($"Set position for test play; {transform.position}");
+#endif
 
         SetAnime("Anim_Ataho_Idle_Front");
         return true;
@@ -50,15 +56,15 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
     }
     public IngameUpdateState FixedUpdateState()
     {
-        //Vector3 nextPosition = transform.position + base.moveSpeed * Time.fixedDeltaTime * direction;
-        //if (true == FieldManager.TryMovePlayer(nextPosition, out float y))
-        if(true == FieldManager.TryMovePlayer(transform.position,direction, moveSpeed * Time.fixedDeltaTime, out float y))
+        float3 position = transform.position;
+        float3 target_position = position  + (moveSpeed * Time.fixedDeltaTime) * direction;
+
+        if (true == FieldManager.TryPlayerMove(target_position, out float y))
         {
-            Vector3 nextPosition = transform.position + base.moveSpeed * Time.fixedDeltaTime * direction;
-            transform.position = new Vector3(nextPosition.x, y, nextPosition.z);
+            transform.position = new Vector3(target_position.x, y, target_position.z);
         }
 
-        direction = default;
+        direction = new float3(0, 0, 0);
         return IngameUpdateState.RUNNING;
     }
 

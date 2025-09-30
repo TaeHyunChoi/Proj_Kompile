@@ -15,7 +15,7 @@ namespace Script.Data
         [ReadOnly] public NativeArray<float> RotY;      // 타일 회전값 (y축 회전)
         [ReadOnly] public NativeArray<ulong> Height;    // height mask
 
-        public NativeArray<EditMapTileData> Data;       // result data
+        public NativeArray<MapTileData> Data;       // result data
 
         public void Execute(int index)
         {
@@ -24,7 +24,7 @@ namespace Script.Data
             float rot = RotY[index]; //어차피 Mathf.Int 쓰는 듯;
             float3 rotated_position = GetRotatedPivot(Position[index], rot);
             ulong height = Height[index];
-            Data[index] = new EditMapTileData()
+            Data[index] = new MapTileData()
             {
                 GridKey = EditMapUtil.GetGridKeyMask(sceneIndex, rotated_position),
                 TileKey = EditMapUtil.GetTileKeyMask(rotated_position),
@@ -155,28 +155,33 @@ namespace Script.Data
         }
     }
 
-    // 이러면 곧장 EditMapTileData 구조체로 곧장 저장할 수 있나?
     [MessagePackObject]
-    public struct EditMapTileData
+    public struct MapTileData
     {
         [IgnoreMember]
         [ReadOnly] public int GridKey;
         [IgnoreMember]
         [ReadOnly] public int TileKey;
 
+        [IgnoreMember]
+        public int PositionKey; // = (GridKey << 32) | (TileKey << 0);
+
         [Key(0)]
         [ReadOnly] public long NavMask;
         [Key(1)]
         [ReadOnly] public int LinkMask;
 
-        public EditMapTileData(EditMapTileData visit_tile, int add_link_mask)
+
+        // EditMapTile 만들어서 함수를 숨기는게 더 좋을 것 같긴 함...
+#if UNITY_EDITOR
+        public MapTileData(MapTileData visit_tile, int add_link_mask)
         {
             GridKey  = visit_tile.GridKey;
             TileKey  = visit_tile.TileKey;
             NavMask  = visit_tile.NavMask;
             LinkMask = visit_tile.LinkMask | add_link_mask;
+            PositionKey = 0;
         }
-
         public readonly float3 GetTilePivot()
         {
             return EditMapUtil.GetTilePosition(GridKey, TileKey);
@@ -195,5 +200,6 @@ namespace Script.Data
             heightx1000 = Mathf.RoundToInt((pivotY + maskInt * 0.125f) * 1000);
             return true;
         }
+#endif
     }
 }

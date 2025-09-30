@@ -7,6 +7,127 @@ namespace Script.Util
 
     public static partial class MapUtil
     {
+        public static (int, int) GetKeyMask(float3 position)
+        {
+            return (GetGridKeyMask(position), GetTileKeyMask(position));
+        }
+        public static int GetGridKeyMask(float3 position)
+        {
+            int mask = 0;
+            int gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS);
+            int gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS);
+            int gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS);
+
+            if (gx < 0)
+            {
+                mask |= 1 << SHIFT_GRID_X_SIGN;
+                gx *= -1;
+            }
+            mask |= gx << SHIFT_GRID_X;
+
+            if (gy < 0)
+            {
+                mask |= 1 << SHIFT_GRID_Y_SIGN;
+                gy *= -1;
+            }
+            mask |= gy << SHIFT_GRID_Y;
+
+            if (gz < 0)
+            {
+                mask |= 1 << SHIFT_GRID_Z_SIGN;
+                gz *= -1;
+            }
+            mask |= gz << SHIFT_GRID_Z;
+
+            return mask;
+        }
+        public static int GetTileKeyMask(float3 position)
+        {
+            int x = Mathf.RoundToInt(position.x % SIZE_GRID_AXIS);
+            if (x < 0)
+            {
+                x += SIZE_GRID_AXIS;
+            }
+
+            int y = Mathf.RoundToInt(position.y % SIZE_GRID_AXIS);
+            if (y < 0)
+            {
+                y += SIZE_GRID_AXIS;
+            }
+
+            int z = Mathf.RoundToInt(position.z % SIZE_GRID_AXIS);
+            if (z < 0)
+            {
+                z += SIZE_GRID_AXIS;
+            }
+
+            int tileKeyMask = 0;
+            tileKeyMask |= x << SHIFT_TILE_X;
+            tileKeyMask |= y << SHIFT_TILE_Y;
+            tileKeyMask |= z << SHIFT_TILE_Z;
+
+            return tileKeyMask;
+        }
+
+        public static bool ContainTile(this ConcurrentDictionary<int, MapGridData> map, float3 target_position)
+        {
+            if (null == map)
+            {
+                return false;
+            }
+
+            int grid_Key = MapUtil.GetGridKeyMask(target_position);
+            int tile_Key = MapUtil.GetTileKeyMask(target_position);
+
+            if (false == map.ContainsKey(grid_Key))
+            {
+                return false;
+            }
+
+            return map[grid_Key].ContainTile(tile_Key);
+        }
+
+        public static bool TryGetNeighborLinkValue(int quarant, int index, int link_mask, out int y)
+        {
+            y = int.MinValue;
+            int shift;
+            switch (10 * quarant + index)
+            {
+                case 0_0: shift = 3; break;
+                case 0_1: shift = 4; break;
+                case 0_2: shift = 5; break;
+                case 1_0: shift = 5; break;
+                case 1_1: shift = 6; break;
+                case 1_2: shift = 7; break;
+                case 2_0: shift = 7; break;
+                case 2_1: shift = 0; break;
+                case 2_2: shift = 1; break;
+                case 3_0: shift = 1; break;
+                case 3_1: shift = 2; break;
+                case 3_2: shift = 3; break;
+                default:
+                    return false;
+
+            }
+
+            int mask = (link_mask >> (shift * 2)) & 0b_11;
+            switch (mask)
+            {
+                case 0b_01: y =  0; break;
+                case 0b_10: y =  1; break;
+                case 0b_11: y = -1; break;
+                default:
+                    return false;
+            }
+
+            return true;
+        }
+    }
+
+
+    // 잠시 킵...
+    public static partial class MapUtil
+    {
         public static (int, int) GetCoordKey(Vector3 position, bool isSmall)
         {
             Vector3Int grid_pivot_int = GetGridPivotPosition(position);
@@ -112,7 +233,7 @@ namespace Script.Util
             }
             else
             {
-                if (diff.z >= halfTileSize) { return 3; }
+                if (diff.x >= halfTileSize) { return 3; }
                 else { return 2; }
             }
         }
@@ -172,9 +293,9 @@ namespace Script.Util
             bool zEx = z >= x;
             bool zEnx = z >= -x + 0.5f;
 
-            if      (!zEx &  zEnx) { index += 1; }
-            else if ( zEx &  zEnx) { index += 2; }
-            else if ( zEx & !zEnx) { index += 3; }
+            if (!zEx & zEnx) { index += 1; }
+            else if (zEx & zEnx) { index += 2; }
+            else if (zEx & !zEnx) { index += 3; }
 
             return index;
         }

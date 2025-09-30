@@ -12,7 +12,7 @@ namespace Script.Data
         public int gridKey;
 
         [Key(1)]
-        public ConcurrentDictionary<int, EditMapTileData> MapNavDataDictionary;
+        public ConcurrentDictionary<int, MapTileData> MapNavDataDictionary;
 
         [Key(2)]
         public List<string> assetFiles;
@@ -29,7 +29,7 @@ namespace Script.Data
         {
             return MapNavDataDictionary.ContainsKey(tKey);
         }
-        public bool TryGetTileData(int tileIntKey, out EditMapTileData tileData)
+        public bool TryGetTileData(int tileIntKey, out MapTileData tileData)
         {
             return MapNavDataDictionary.TryGetValue(tileIntKey, out tileData);
         }
@@ -56,14 +56,14 @@ namespace Script.Data
         public MapGridData(int targetGridKey)
         {
             gridKey = targetGridKey;
-            MapNavDataDictionary = new ConcurrentDictionary<int, EditMapTileData>();
+            MapNavDataDictionary = new ConcurrentDictionary<int, MapTileData>();
             assetFiles = new List<string>();
         }
         public void AddAssetFile(string fileName)
         {
             assetFiles.Add(fileName);
         }
-        public bool TryAdd(int key, EditMapTileData navData)
+        public bool TryAdd(int key, MapTileData navData)
         {
             return MapNavDataDictionary.TryAdd(key, navData);
         }
@@ -78,7 +78,7 @@ namespace Script.Data
         [Key(0)]
         public int gridKey;
         [Key(1)]
-        public ConcurrentDictionary<int, EditMapTileData> Data;
+        public ConcurrentDictionary<int, MapTileData> Data;
         [Key(2)]
         public List<string> assetFiles;
         [IgnoreMember]
@@ -86,7 +86,7 @@ namespace Script.Data
         [IgnoreMember]
         public UnityEngine.GameObject gameObject;
 
-        public bool TryGetTileData(int tileIntKey, out EditMapTileData tileData)
+        public bool TryGetTileData(int tileIntKey, out MapTileData tileData)
         {
             return Data.TryGetValue(tileIntKey, out tileData);
         }
@@ -112,14 +112,14 @@ namespace Script.Data
         public EditMapGridData(int targetGridKey)
         {
             gridKey = targetGridKey;
-            Data = new ConcurrentDictionary<int, EditMapTileData>();
+            Data = new ConcurrentDictionary<int, MapTileData>();
             assetFiles = new List<string>();
         }
         public void AddAssetFile(string fileName)
         {
             assetFiles.Add(fileName);
         }
-        public bool TryAdd(int key, EditMapTileData navData)
+        public bool TryAdd(int key, MapTileData navData)
         {
             return Data.TryAdd(key, navData);
         }

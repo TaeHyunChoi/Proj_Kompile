@@ -21,29 +21,11 @@ MonoBehaviour:
     m_SerializedLabels:
     - MapNavi_0
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 80c5b38047d9a0442b9b40e0f2736c94
-    m_Address: MapNavi_8385
+  - m_GUID: fe09ff42f037c0949b24630c51820324
+    m_Address: MapNavi_8320
     m_ReadOnly: 1
     m_SerializedLabels:
-    - MapNavi_8385
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 9a4428cbe7330c241a630f410af5788f
-    m_Address: MapNavi_65
-    m_ReadOnly: 1
-    m_SerializedLabels:
-    - MapNavi_65
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c43ed34675bd8694e8f7baf897448479
-    m_Address: MapNavi_1073345
-    m_ReadOnly: 1
-    m_SerializedLabels:
-    - MapNavi_1073345
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e5108957c6cf8f94fa1994d85cc8fc82
-    m_Address: MapNavi_1064960
-    m_ReadOnly: 1
-    m_SerializedLabels:
-    - MapNavi_1064960
+    - MapNavi_8320
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}

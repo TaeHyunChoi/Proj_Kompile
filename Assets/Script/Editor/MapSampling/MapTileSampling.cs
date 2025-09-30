@@ -54,7 +54,7 @@ namespace MapSampling
             var native_array_position    = new NativeArray<float3>(length, Allocator.TempJob);
             var native_array_rotateY     = new NativeArray<float>(length, Allocator.TempJob);
             var native_array_heights     = new NativeArray<ulong>(length, Allocator.TempJob);
-            var native_array_result      = new NativeArray<EditMapTileData>(tiles.Length, Allocator.TempJob);
+            var native_array_result      = new NativeArray<MapTileData>(tiles.Length, Allocator.TempJob);
 
             EditMapData tileData;
             for (int i = 0; i < tiles.Length; i++)
@@ -95,7 +95,7 @@ namespace MapSampling
                     map.TryAdd(gridKey, new EditMapGridData(gridKey));
                 }
 
-                EditMapTileData tile_data = new EditMapTileData()
+                MapTileData tile_data = new MapTileData()
                 {
                     GridKey = gridKey,
                     TileKey = tileKey,
@@ -114,15 +114,7 @@ namespace MapSampling
 
             // DFS 알고리즘 -> EditMaplinkMask 생성
             LinkTiles(map, start_tile_pivot);
-            //foreach (var m in map.Values)
-            //{
-            //    foreach (var t in m.Data.Values)
-            //    {
-            //        Debug.Log($"[{t.GetTilePivot()}] link = {System.Convert.ToString(t.LinkMask, 2)}");
-            //    }
-            //}
 
-            //EditData에서 Data로 전환하려면?
             SaveTileMeshes(map, tiles);
             AssetDatabase.Refresh();
 
@@ -145,7 +137,7 @@ namespace MapSampling
                 {
                     continue;
                 }
-                if (false == EditMapUtil.TryGetTileData(map, target_pivot, out EditMapTileData visit_tile))
+                if (false == EditMapUtil.TryGetTileData(map, target_pivot, out MapTileData visit_tile))
                 {
                     continue;
                 }
@@ -159,7 +151,7 @@ namespace MapSampling
                         neighbor_pivot = target_pivot + dir;
 
                         // 타일 정보가 없으면 이어서 탐색한다.
-                        if (false == EditMapUtil.TryGetTileData(map, neighbor_pivot, out EditMapTileData neighbor_tile))
+                        if (false == EditMapUtil.TryGetTileData(map, neighbor_pivot, out MapTileData neighbor_tile))
                         {
                             continue;
                         }
@@ -172,10 +164,10 @@ namespace MapSampling
                         // 서로 연결되었다면 서로 연결 정보 추가하고 + 다음 방문을 예약한다.
                         if (true == visit_tile.TryGetLinkMask(map, neighbor_tile, dir, out int my_link_mask, out int neighbor_link_mask))
                         {
-                            visit_tile = new EditMapTileData(visit_tile, my_link_mask);
+                            visit_tile = new MapTileData(visit_tile, my_link_mask);
                             map[visit_tile.GridKey].Data[visit_tile.TileKey] = visit_tile;
 
-                            neighbor_tile = new EditMapTileData(neighbor_tile, neighbor_link_mask);
+                            neighbor_tile = new MapTileData(neighbor_tile, neighbor_link_mask);
                             map[neighbor_tile.GridKey].Data[neighbor_tile.TileKey] = neighbor_tile;
 
                             stack.Push(neighbor_pivot);
