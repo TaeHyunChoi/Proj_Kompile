@@ -234,6 +234,7 @@ namespace MapSampling
                         // 이 오류가 나면 아래 코드는 실행되지 않거나, 실행되어도 오류 로그를 남길 것입니다.
                     }
 
+                    // 저장 타이밍이 이상하다?.. 예전에는 잘 됐던 것 같은데..?
                     SaveMesh(map, combinedMesh, sceneIndex, tile.GridKey, tile.NaviLayer, tempData.index, true, false);
 
                     tempData.combineInstances.Clear();

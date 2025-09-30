@@ -33,8 +33,17 @@ namespace Script.Manager
 
             // instantiage map
             currentMapGrid = new ConcurrentDictionary<int, MapGridData>();
-            var grid = await AssetManager.InstaniateMapGrid(playData.Grid);
+
+
+#if UNITY_EDITOR
+            // test: grid_0
+            MapGridData grid = await AssetManager.InstaniateMapGrid(0);
             currentMapGrid.TryAdd(grid.gridKey, grid);
+            
+            // test: gird_8320
+            grid = await AssetManager.InstaniateMapGrid(8320);
+            currentMapGrid.TryAdd(grid.gridKey, grid);
+#endif
 
             // instantiage player unit
             GameObject obj = await AssetManager.GetOrNewInstanceAsync(AssetCode.UnitBase, AssetParentType.UNIT_ROOT);
@@ -125,28 +134,25 @@ namespace Script.Manager
             Vector3 tPivot = MapUtil.GetTilePivotPosition(target_position, isSmall);
             Vector3 neighbor_tile_pivot;
 
+            for (int i = 0; i < 3; ++i)
+            {
+                neighbor_tile_pivot = tPivot + TileScale * MapTileIndex.RELATIVE_COORD_BY_QUARANT[quarant * 3 + i];
+                if (true == MapUtil.TryGetNeighborLinkValue(quarant, i, target_link_mask, out int y))
+                {
+                    neighbor_tile_pivot += y * Vector3.up;
+                }
 
 
-
-            //for (int i = 0; i < 3; ++i)
-            //{
-            //    neighbor_tile_pivot = tPivot + TileScale * MapTileIndex.RELATIVE_COORD_BY_QUARANT[quarant * 3 + i];
-            //    if (true == MapUtil.TryGetNeighborLinkValue(quarant, i, target_link_mask, out int y))
-            //    {
-            //        neighbor_tile_pivot += y * Vector3.up;
-            //    }
-
-
-            //    if (true == TryGetMapTileData(neighbor_tile_pivot, out mapTileData))
-            //    {
-            //        target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
-            //    }
-            //    // 해당 타일의 데이터가 없는데 좌표는 겹친다 => 이동 불가하도록 처리 (ex. 맵 끝에 도달)
-            //    else if(true == MapUtil.IsOverlaped(neighbor_tile_pivot, TileScale, target_position))
-            //    {
-            //        return 0;
-            //    }
-            //}
+                if (true == TryGetMapTileData(neighbor_tile_pivot, out mapTileData))
+                {
+                    target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
+                }
+                // 해당 타일의 데이터가 없는데 좌표는 겹친다 => 이동 불가하도록 처리 (ex. 맵 끝에 도달)
+                else if (true == MapUtil.IsOverlaped(neighbor_tile_pivot, TileScale, target_position))
+                {
+                    return 0;
+                }
+            }
 
             return index;
         }

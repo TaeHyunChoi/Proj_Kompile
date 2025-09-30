@@ -6,7 +6,6 @@ using Script.Interface;
 using Script.Index;
 using static Script.Index.IDxInput;
 using Unity.Mathematics;
-using Script.Data;
 
 public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpdater
 {
@@ -56,6 +55,11 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
     }
     public IngameUpdateState FixedUpdateState()
     {
+        if (true == direction.Equals(default))
+        {
+            return IngameUpdateState.RUNNING;
+        }
+
         float3 position = transform.position;
         float3 target_position = position  + (moveSpeed * Time.fixedDeltaTime) * direction;
 

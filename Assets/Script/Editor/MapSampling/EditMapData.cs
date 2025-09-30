@@ -2,6 +2,7 @@
 namespace Script.Data
 {
     using Script.Index;
+    using Script.Util;
     using System;
     using UnityEditor;
     using UnityEngine;
@@ -27,7 +28,7 @@ namespace Script.Data
         
         private bool isSmall;
 
-        public int GridKey { get; private set; }
+        public int GridKey => EditMapUtil.GetGridKeyMask(transform.position);
         public MeshFilter MeshFilter => meshFilter;
         public int RenderLayer => renderLayer;
         public int NaviLayer => naviLayer;
@@ -59,7 +60,6 @@ namespace Script.Data
             //this.isSmall = isSmall;
             EditorUtility.SetDirty(this);
         }
-
         private void OnValidate()
         {
             // ApplyTexture();
