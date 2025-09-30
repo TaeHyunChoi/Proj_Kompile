@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 namespace Script.Data
 {
     using Unity.Collections;
@@ -15,7 +16,7 @@ namespace Script.Data
         [ReadOnly] public NativeArray<float> RotY;      // 타일 회전값 (y축 회전)
         [ReadOnly] public NativeArray<ulong> Height;    // height mask
 
-        public NativeArray<MapTileData> Data;       // result data
+        public NativeArray<EditMapTileData> Data;       // result data
 
         public void Execute(int index)
         {
@@ -24,7 +25,7 @@ namespace Script.Data
             float rot = RotY[index]; //어차피 Mathf.Int 쓰는 듯;
             float3 rotated_position = GetRotatedPivot(Position[index], rot);
             ulong height = Height[index];
-            Data[index] = new MapTileData()
+            Data[index] = new EditMapTileData()
             {
                 GridKey = EditMapUtil.GetGridKeyMask(sceneIndex, rotated_position),
                 TileKey = EditMapUtil.GetTileKeyMask(rotated_position),
@@ -53,9 +54,7 @@ namespace Script.Data
             int rotInt = Mathf.RoundToInt(rotY);
             rotInt = (rotInt + 360) % 360;
 
-#if UNITY_EDITOR
             Assert.IsTrue(rotInt % 90 == 0, $"Tile has Wrong Rotation; ({rotInt})");
-#endif
 
             // 여기 값이 작아서 굳이 NativeArray<> 사용하지 않아도 될 것 같은데?
             ulong[,] matrix;
@@ -154,33 +153,19 @@ namespace Script.Data
             return newMask;
         }
     }
-
-    [MessagePackObject]
-    public struct MapTileData
+    public struct EditMapTileData
     {
-        [IgnoreMember]
-        [ReadOnly] public int GridKey;
-        [IgnoreMember]
-        [ReadOnly] public int TileKey;
+        public int  GridKey;
+        public int  TileKey;
+        public long NavMask;
+        public int  LinkMask;
 
-        [IgnoreMember]
-        public int PositionKey; // = (GridKey << 32) | (TileKey << 0);
-
-        [Key(0)]
-        [ReadOnly] public long NavMask;
-        [Key(1)]
-        [ReadOnly] public int LinkMask;
-
-
-        // EditMapTile 만들어서 함수를 숨기는게 더 좋을 것 같긴 함...
-#if UNITY_EDITOR
-        public MapTileData(MapTileData visit_tile, int add_link_mask)
+        public EditMapTileData(EditMapTileData visit_tile, int add_link_mask)
         {
             GridKey  = visit_tile.GridKey;
             TileKey  = visit_tile.TileKey;
             NavMask  = visit_tile.NavMask;
             LinkMask = visit_tile.LinkMask | add_link_mask;
-            PositionKey = 0;
         }
         public readonly float3 GetTilePivot()
         {
@@ -200,6 +185,6 @@ namespace Script.Data
             heightx1000 = Mathf.RoundToInt((pivotY + maskInt * 0.125f) * 1000);
             return true;
         }
-#endif
     }
 }
+#endif

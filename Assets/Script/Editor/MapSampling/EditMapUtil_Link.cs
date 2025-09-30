@@ -72,7 +72,7 @@ public static partial class EditMapUtil
         return (flag_x, flag_z);
     }
 
-    private static bool IsLinked(DirFlag direction_flag, MapTileData my_tile, MapTileData neighbor_tile)
+    private static bool IsLinked(DirFlag direction_flag, EditMapTileData my_tile, EditMapTileData neighbor_tile)
     {
         VertexIndexInfo my_vertex_info = my_vertex[direction_flag];
         VertexIndexInfo neighbor_vertex_info = neighbor_vertex[direction_flag];
@@ -104,11 +104,11 @@ public static partial class EditMapUtil
         return compare;
     }
     private static bool IsChainLinked(ConcurrentDictionary<int, EditMapGridData> map,
-                                      MapTileData start_tile, MapTileData target_tile, 
+                                      EditMapTileData start_tile, EditMapTileData target_tile, 
                                       DirFlag dir_first, DirFlag dir_second)
     {
         float3 mid_pivot = start_tile.GetTilePivot() + DIRECTION[dir_first];
-        if (false == EditMapUtil.TryGetTileData(map, mid_pivot, out MapTileData mid_tile))
+        if (false == EditMapUtil.TryGetTileData(map, mid_pivot, out EditMapTileData mid_tile))
         {
             return false;
         }
@@ -121,9 +121,9 @@ public static partial class EditMapUtil
 
         return IsLinked(dir_first, start_tile, mid_tile) && IsLinked(dir_second, mid_tile, target_tile);
     }
-    public static bool TryGetLinkMask(this MapTileData my_tile,
+    public static bool TryGetLinkMask(this EditMapTileData my_tile,
                                       ConcurrentDictionary<int, EditMapGridData> map,
-                                      MapTileData neighbor_tile,
+                                      EditMapTileData neighbor_tile,
                                       float3 dir,
                                       out int my_link_mask,
                                       out int neighbor_link_mask)

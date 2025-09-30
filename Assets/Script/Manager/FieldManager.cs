@@ -151,17 +151,6 @@ namespace Script.Manager
             return index;
         }
 
-        private static bool TryGetMapTileData(int gKey, int tKey, out MapTileData mapTileData)
-        {
-            if (false == currentMapGrid.ContainsKey(gKey))
-            {
-                mapTileData = default;
-                return false;
-            }
-
-            return currentMapGrid[gKey].TryGetTileData(tKey, out mapTileData);
-        }
-
         public static bool TryGetMapTileData(float3 position, out MapTileData tile)
         {
             int gKey = MapUtil.GetGridKeyMask(position);
