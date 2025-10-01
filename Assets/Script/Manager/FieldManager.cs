@@ -7,7 +7,6 @@ namespace Script.Manager
     using System.Threading.Tasks;
     using Unity.Mathematics;
     using UnityEngine;
-    using System.Diagnostics;
 
     public class FieldManager
     {
@@ -15,15 +14,6 @@ namespace Script.Manager
         private static IngameFieldPlayer[] player_character = new IngameFieldPlayer[3];
 
         private static IngameMapTileData[] target_tiles;
-
-        private static bool isSmall;
-        private static float TileScale
-        {
-            get
-            {
-                return (true == isSmall) ? 0.5f : 1f;
-            }
-        }
 
         public async Task<bool> Initialize(PlayData playData)
         {
@@ -56,7 +46,7 @@ namespace Script.Manager
 
             if (true == await player.Init(0))
             {
-                player.transform.position = new Vector3(1, 0, 1);
+                player.transform.position = new Vector3(1.5f, -1f, 1f);
                 IngameManager.InitFollowingCamera(player);
             }
             else
@@ -69,20 +59,18 @@ namespace Script.Manager
             return true;
         }
 
-        private static readonly Stopwatch stopwatch = new Stopwatch();
-
         public static bool TryPlayerMove(float3 target_position, out float y)
         {
             y = target_position.y;
 
             // 충돌을 확인할 주변 타일 탐색
-            if (0 >= SearchNeighborTiles(target_position)) 
+            if (false == TryGetCollidedTiles(target_position, ref target_tiles)) 
             {
                 return false;
             }
 
             float radius = 0.5f;
-            bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, target_tiles);
+            bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, false, radius, target_tiles);
             if (false == isMovable)
             {
                 return false;
@@ -92,7 +80,7 @@ namespace Script.Manager
             IngameMapTileData targetTile = target_tiles[0];
 
             // 현재 위치가 i번 삼각형 안에 있다
-            int i = MapUtil.GetTriangleIndex(target_position, isSmall);
+            int i = MapUtil.GetTriangleIndex(target_position, false);
 
             // 삼각형 꼭지점 좌표 구하고..
             MapUtil.TryGetTrianglePoint(targetTile, i, 0, out float3 a);
@@ -101,60 +89,71 @@ namespace Script.Manager
 
             y = MapUtil.CalculateYOnPlane(a, b, c, target_position.x, target_position.z);
 
-            // 6. Job 실행 시간 측정 종료
-            //stopwatch.Stop();
-            //UnityEngine.Debug.Log($"[TEST] {a:F3},{b:F3},{c:F3} => ({next_position.x:F3}, {y:F3},{next_position.z:F3}), {stopwatch.Elapsed.TotalMilliseconds:F3} ms");
-
             return isMovable;
         }
 
         /// <summary> </summary>
         /// <returns>체크할 타일 개수</returns>
-        private static int SearchNeighborTiles(Vector3 target_position)
+        private static bool TryGetCollidedTiles(Vector3 target_position, ref IngameMapTileData[] targets)
         {
-            // 생각할수록 이상하네.. 게임 연산은 되도록 tile을 쓰는게 좋지 않나?
-
-            // 다음 이동할 목표 좌표에 대하여 타일값이 유효하게 존재하는지 확이
-            // 만약 존재하지 않는다면 탐색 종료
-            if (false == TryGetMapTileData(target_position, out MapTileData mapTileData))
+            // 다음 이동할 목표 좌표에 대하여 타일이 존재? 없으면 탐색 종료
+            if (false == TryGetMapTileData(target_position, out MapTileData candidate_tile))
             {
-                return 0;
+                return false;
             }
 
+            int index = 0;
             int grid_key = MapUtil.GetGridKeyMask(target_position);
             int tile_key = MapUtil.GetTileKeyMask(target_position);
-            int index = 0;
-            int target_link_mask = mapTileData.LinkMask;
-
-            target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
+            targets[index++] = new IngameMapTileData(grid_key, tile_key, candidate_tile);
 
 
             // next_target_position을 기준으로 이웃한 타일이 어디인지 확인
-            int quarant = MapUtil.GetQuarantInTile(target_position, isSmall);
-            Vector3 tPivot = MapUtil.GetTilePivotPosition(target_position, isSmall);
-            Vector3 neighbor_tile_pivot;
+            Vector3 target_pivot = MapUtil.GetTilePivotPosition(target_position, false);
+            int quarant = MapUtil.GetQuarantInTile(target_position, false);
+            int3 target_link = MapTileIndex.TILE_LINK_INDEX_BY_QUARANT[quarant];
 
             for (int i = 0; i < 3; ++i)
             {
-                neighbor_tile_pivot = tPivot + TileScale * MapTileIndex.RELATIVE_COORD_BY_QUARANT[quarant * 3 + i];
-                if (true == MapUtil.TryGetNeighborLinkValue(quarant, i, target_link_mask, out int y))
+                int link_mask;
+                switch (i)
                 {
-                    neighbor_tile_pivot += y * Vector3.up;
+                    case 0:
+                        link_mask = (candidate_tile.LinkMask >> (target_link.x * 2)) & 0b11;
+                        break;
+                    case 1:
+                        link_mask = (candidate_tile.LinkMask >> (target_link.y * 2)) & 0b11;
+                        break;
+                    case 2:
+                        link_mask = (candidate_tile.LinkMask >> (target_link.z * 2)) & 0b11;
+                        break;
+                    default:
+                        continue;
+                };
+
+                float y;
+                switch (link_mask)
+                {
+                    case 0b01: y = 0f; break;
+                    case 0b10: y = 1f; break;
+                    case 0b11: y = -1f; break;
+                    default:
+                        continue;
                 }
 
-
-                if (true == TryGetMapTileData(neighbor_tile_pivot, out mapTileData))
+                Vector3 neighbor_tile_pivot = target_pivot + MapTileIndex.RELATIVE_COORD_BY_QUARANT[quarant * 3 + i] + (y * Vector3.up);
+                if (true == TryGetMapTileData(neighbor_tile_pivot, out candidate_tile))
                 {
-                    target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
+                    targets[index++] = new IngameMapTileData(grid_key, tile_key, candidate_tile);
                 }
                 // 해당 타일의 데이터가 없는데 좌표는 겹친다 => 이동 불가하도록 처리 (ex. 맵 끝에 도달)
-                else if (true == MapUtil.IsOverlaped(neighbor_tile_pivot, TileScale, target_position))
+                else if (true == MapUtil.IsOverlaped(neighbor_tile_pivot, 1f, target_position))
                 {
-                    return 0;
+                    continue;
                 }
             }
 
-            return index;
+            return true;
         }
 
         public static bool TryGetMapTileData(float3 position, out MapTileData tile)
