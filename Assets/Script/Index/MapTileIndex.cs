@@ -1,6 +1,7 @@
 
 namespace Script.Index
 {
+    using Unity.Mathematics;
     using UnityEngine;
 
     public static class MapTileIndex
@@ -34,12 +35,20 @@ namespace Script.Index
         public static int SIZE_TILE = 8;
 
         public static readonly Vector3[] RELATIVE_COORD_BY_QUARANT = new Vector3[]
-        {
-            new Vector3( 1f, 0f, 0f), new Vector3(0f, 0f,  1f),  new Vector3( 1f,0,  1f),  // 1사분면
-            new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f,  1f),  new Vector3(-1f,0,  1f),  // 2사분면
-            new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, -1f),  new Vector3(-1f,0, -1f),  // 3사분면
-            new Vector3( 1f, 0f, 0f), new Vector3(0f, 0f, -1f),  new Vector3( 1f,0, -1f),  // 4사분면
-        };
+            {
+                new Vector3( 1f, 0f, 0f), new Vector3(0f, 0f,  1f),  new Vector3( 1f, 0,  1f),  // 1사분면
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f,  1f),  new Vector3(-1f, 0,  1f),  // 2사분면
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, -1f),  new Vector3(-1f, 0, -1f),  // 3사분면
+                new Vector3( 1f, 0f, 0f), new Vector3(0f, 0f, -1f),  new Vector3( 1f, 0, -1f),  // 4사분면
+            };
+
+        public static readonly int3[] TILE_LINK_INDEX_BY_QUARANT = new int3[]
+            {
+                new int3(3, 4, 5), // 1사분면
+                new int3(5, 6, 7), // 2사분면
+                new int3(7, 0, 1), // 3사분면
+                new int3(1, 2, 3)  // 4사분면
+            };
 
         // _SIGN은 '부호(+/-) 플래그'
         public const int SHIFT_GRID_Z = 0;

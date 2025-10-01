@@ -110,8 +110,8 @@ namespace Script.Util
 
             }
 
-            int mask = (link_mask >> (shift * 2)) & 0b_11;
-            switch (mask)
+            //int mask = (link_mask >> (shift * 2)) & 0b_11;
+            switch (link_mask)
             {
                 case 0b_01: y =  0; break;
                 case 0b_10: y =  1; break;

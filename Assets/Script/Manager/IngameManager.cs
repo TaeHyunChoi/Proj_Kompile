@@ -5,7 +5,6 @@ namespace Script.Manager
     using Script.Index;
     using Script.Content;
     using Script.Data;
-    using NUnit.Framework.Constraints;
 
     public partial class IngameManager : MonoBehaviour
     {
@@ -22,20 +21,6 @@ namespace Script.Manager
         private static IngameCamera     ingameCam;
 
         private static List<IngameProcedureBase> ingameProcedures;
-
-        // play data
-        public static void AddNewPlayData()
-        {
-
-
-#if UNITY_EDITOR
-            Debug.Log("NEWGAME_PLAYER_DATA");
-#endif
-        }
-        public static PlayData GetPlayData()
-        {
-            return playData;
-        }
 
         // manager
         public static async void EnterField(PlayData data)
