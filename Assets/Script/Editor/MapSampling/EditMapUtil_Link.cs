@@ -72,7 +72,7 @@ public static partial class EditMapUtil
         return (flag_x, flag_z);
     }
 
-    private static bool IsLinked(DirFlag direction_flag, EditMapTileData my_tile, EditMapTileData neighbor_tile)
+    private static bool IsNeighbor(DirFlag direction_flag, EditMapTileData my_tile, EditMapTileData neighbor_tile)
     {
         VertexIndexInfo my_vertex_info = my_vertex[direction_flag];
         VertexIndexInfo neighbor_vertex_info = neighbor_vertex[direction_flag];
@@ -103,7 +103,7 @@ public static partial class EditMapUtil
 
         return compare;
     }
-    private static bool IsChainLinked(ConcurrentDictionary<int, EditMapGridData> map,
+    private static bool IsChainNeighbor(ConcurrentDictionary<int, EditMapGridData> map,
                                       EditMapTileData start_tile, EditMapTileData target_tile, 
                                       DirFlag dir_first, DirFlag dir_second)
     {
@@ -119,7 +119,7 @@ public static partial class EditMapUtil
             return false;
         }
 
-        return IsLinked(dir_first, start_tile, mid_tile) && IsLinked(dir_second, mid_tile, target_tile);
+        return IsNeighbor(dir_first, start_tile, mid_tile) || IsNeighbor(dir_second, mid_tile, target_tile);
     }
     public static bool TryGetLinkMask(this EditMapTileData my_tile,
                                       ConcurrentDictionary<int, EditMapGridData> map,
@@ -142,15 +142,15 @@ public static partial class EditMapUtil
             case DirFlag.DOWN:  // ( 0,-1)
             case DirFlag.RIGHT: // ( 0, 1)
             case DirFlag.UP:    // ( 1, 0)
-                isLinked = IsLinked(dir_x | dir_z, my_tile, neighbor_tile);
+                isLinked = IsNeighbor(dir_x | dir_z, my_tile, neighbor_tile);
                 break;
 
             case DirFlag.LEFT | DirFlag.DOWN:  // (-1,-1)
             case DirFlag.LEFT | DirFlag.RIGHT: // (-1, 1)
             case DirFlag.RIGHT | DirFlag.UP:   // ( 1, 1)
             case DirFlag.RIGHT | DirFlag.DOWN: // ( 1,-1)
-                isLinked = IsChainLinked(map, my_tile, neighbor_tile, dir_x, dir_z)
-                          || IsChainLinked(map, my_tile, neighbor_tile, dir_z, dir_x);
+                isLinked = IsChainNeighbor(map, my_tile, neighbor_tile, dir_x, dir_z)
+                          || IsChainNeighbor(map, my_tile, neighbor_tile, dir_z, dir_x);
                 break;
 
             default:
