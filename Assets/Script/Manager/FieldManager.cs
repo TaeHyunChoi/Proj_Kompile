@@ -87,8 +87,7 @@ namespace Script.Manager
             MapUtil.TryGetTrianglePoint(targetTile, i, 1, out float3 b);
             MapUtil.TryGetTrianglePoint(targetTile, i, 2, out float3 c);
 
-            y = MapUtil.CalculateYOnPlane(a, b, c, target_position.x, target_position.z);
-
+            y = target_tiles[0].TilePosition.y + MapUtil.CalculateYOnPlane(a, b, c, target_position.x, target_position.z);
             return isMovable;
         }
 
@@ -106,6 +105,7 @@ namespace Script.Manager
             int grid_key = MapUtil.GetGridKeyMask(target_position);
             int tile_key = MapUtil.GetTileKeyMask(target_position);
             targets[index++] = new IngameMapTileData(grid_key, tile_key, candidate_tile);
+            Debug.Log($"Target[{index - 1}], pos:{targets[index - 1].TilePosition}");
 
             // next_target_position을 기준으로 이웃한 타일이 어디인지 확인
             Vector3 target_pivot = MapUtil.GetTilePivotPosition(target_position, false);

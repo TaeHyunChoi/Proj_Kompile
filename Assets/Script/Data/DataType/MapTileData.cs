@@ -52,7 +52,7 @@ namespace Script.Data
         }
         public bool IsValid()
         {
-            return NAVI_NULL == NaviMask;
+            return NAVI_NULL != NaviMask;
         }
     }
 }
