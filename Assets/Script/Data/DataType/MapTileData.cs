@@ -27,15 +27,15 @@ namespace Script.Data
                 int gx, gy, gz;
 
                 sign = ((GridKey >> SHIFT_GRID_X_SIGN) & 1) == 0 ? 1 : -1;
-                gx = sign * (GridKey >> SHIFT_GRID_X) & GRID_COORD_MASK;
+                gx = sign * ((GridKey >> SHIFT_GRID_X) & GRID_COORD_MASK);
 
                 sign = ((GridKey >> SHIFT_GRID_Y_SIGN) & 1) == 0 ? 1 : -1;
-                gy = sign * (GridKey >> SHIFT_GRID_Y) & GRID_COORD_MASK;
+                gy = sign * ((GridKey >> SHIFT_GRID_Y) & GRID_COORD_MASK);
 
                 sign = ((GridKey >> SHIFT_GRID_Z_SIGN) & 1) == 0 ? 1 : -1;
-                gz = sign * (GridKey >> SHIFT_GRID_Z) & GRID_COORD_MASK;
+                gz = sign * ((GridKey >> SHIFT_GRID_Z) & GRID_COORD_MASK);
 
-                Vector3 gird_pivot = new Vector3(gx, gy, gz);
+                Vector3 grid_pivot = SIZE_GRID_AXIS * new Vector3(gx, gy, gz);
 
                 // tile_key to tile_child_position
                 int tx, ty, tz;
@@ -47,8 +47,12 @@ namespace Script.Data
 
                 Vector3 tile_pivot = scale * new Vector3(tx, ty, tz);
 
-                return gird_pivot + tile_pivot;
+                return grid_pivot + tile_pivot;
             }
+        }
+        public bool IsValid()
+        {
+            return NAVI_NULL == NaviMask;
         }
     }
 }

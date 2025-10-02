@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using static Script.Index.MapTileIndex;
 
 public static partial class EditMapUtil
 {
@@ -17,11 +18,6 @@ public static partial class EditMapUtil
         LEFT    = 1 << 2,
         RIGHT   = 1 << 3
     }
-
-    private static readonly int LINK_ZERO = 0b_01;
-    private static readonly int LINK_UP   = 0b_10;
-    private static readonly int LINK_DOWN = 0b_11;
-    private static readonly int LINK_NULL = 0b_00;
 
     private readonly struct VertexIndexInfo
     {
@@ -72,7 +68,7 @@ public static partial class EditMapUtil
         return (flag_x, flag_z);
     }
 
-    private static bool IsNeighbor(DirFlag direction_flag, EditMapTileData my_tile, EditMapTileData neighbor_tile)
+    private static bool IsAdjacent(DirFlag direction_flag, EditMapTileData my_tile, EditMapTileData neighbor_tile)
     {
         VertexIndexInfo my_vertex_info = my_vertex[direction_flag];
         VertexIndexInfo neighbor_vertex_info = neighbor_vertex[direction_flag];
@@ -103,7 +99,7 @@ public static partial class EditMapUtil
 
         return compare;
     }
-    private static bool IsChainNeighbor(ConcurrentDictionary<int, EditMapGridData> map,
+    private static bool IsChainAdjacent(ConcurrentDictionary<int, EditMapGridData> map,
                                       EditMapTileData start_tile, EditMapTileData target_tile, 
                                       DirFlag dir_first, DirFlag dir_second)
     {
@@ -119,9 +115,9 @@ public static partial class EditMapUtil
             return false;
         }
 
-        return IsNeighbor(dir_first, start_tile, mid_tile) || IsNeighbor(dir_second, mid_tile, target_tile);
+        return IsAdjacent(dir_first, start_tile, mid_tile) || IsAdjacent(dir_second, mid_tile, target_tile);
     }
-    public static bool TryGetLinkMask(this EditMapTileData my_tile,
+    public static bool TryGetAdjacentMask(this EditMapTileData my_tile,
                                       ConcurrentDictionary<int, EditMapGridData> map,
                                       EditMapTileData neighbor_tile,
                                       float3 dir,
@@ -142,15 +138,15 @@ public static partial class EditMapUtil
             case DirFlag.DOWN:  // ( 0,-1)
             case DirFlag.RIGHT: // ( 0, 1)
             case DirFlag.UP:    // ( 1, 0)
-                isLinked = IsNeighbor(dir_x | dir_z, my_tile, neighbor_tile);
+                isLinked = IsAdjacent(dir_x | dir_z, my_tile, neighbor_tile);
                 break;
 
             case DirFlag.LEFT | DirFlag.DOWN:  // (-1,-1)
             case DirFlag.LEFT | DirFlag.RIGHT: // (-1, 1)
             case DirFlag.RIGHT | DirFlag.UP:   // ( 1, 1)
             case DirFlag.RIGHT | DirFlag.DOWN: // ( 1,-1)
-                isLinked = IsChainNeighbor(map, my_tile, neighbor_tile, dir_x, dir_z)
-                          || IsChainNeighbor(map, my_tile, neighbor_tile, dir_z, dir_x);
+                isLinked = IsChainAdjacent(map, my_tile, neighbor_tile, dir_x, dir_z)
+                          || IsChainAdjacent(map, my_tile, neighbor_tile, dir_z, dir_x);
                 break;
 
             default:
@@ -162,49 +158,49 @@ public static partial class EditMapUtil
             switch (Mathf.RoundToInt(dir.y))
             {
                 case 0:
-                    my_link_mask = LINK_ZERO;
-                    neighbor_link_mask = LINK_ZERO;
+                    my_link_mask = ADJACENT_ZERO;
+                    neighbor_link_mask = ADJACENT_ZERO;
                     break;
                 case 1:
-                    my_link_mask = LINK_UP;
-                    neighbor_link_mask = LINK_DOWN;
+                    my_link_mask = ADJACENT_UP;
+                    neighbor_link_mask = ADJACENT_DOWN;
                     break;
                 case -1:
-                    my_link_mask = LINK_DOWN;
-                    neighbor_link_mask = LINK_UP;
+                    my_link_mask = ADJACENT_DOWN;
+                    neighbor_link_mask = ADJACENT_UP;
                     break;
                 default:
                     return false;
             }
 
-            int my_shift = GetLinkMaskShift(dir_mask);
+            int my_shift = GetAdjacentMaskShift(dir_mask);
             int neighbor_shift;
             switch (dir_mask)
             {
                 case DirFlag.DOWN:
-                    neighbor_shift = GetLinkMaskShift(DirFlag.UP);
+                    neighbor_shift = GetAdjacentMaskShift(DirFlag.UP);
                     break;
                 case DirFlag.RIGHT:
-                    neighbor_shift = GetLinkMaskShift(DirFlag.LEFT);
+                    neighbor_shift = GetAdjacentMaskShift(DirFlag.LEFT);
                     break;
                 case DirFlag.UP:
-                    neighbor_shift = GetLinkMaskShift(DirFlag.DOWN);
+                    neighbor_shift = GetAdjacentMaskShift(DirFlag.DOWN);
                     break;
                 case DirFlag.LEFT:
-                    neighbor_shift = GetLinkMaskShift(DirFlag.RIGHT);
+                    neighbor_shift = GetAdjacentMaskShift(DirFlag.RIGHT);
                     break;
 
                 case DirFlag.LEFT | DirFlag.DOWN:
-                    neighbor_shift = GetLinkMaskShift(DirFlag.RIGHT | DirFlag.UP);
+                    neighbor_shift = GetAdjacentMaskShift(DirFlag.RIGHT | DirFlag.UP);
                     break;
                 case DirFlag.RIGHT | DirFlag.DOWN:
-                    neighbor_shift = GetLinkMaskShift(DirFlag.LEFT | DirFlag.UP);
+                    neighbor_shift = GetAdjacentMaskShift(DirFlag.LEFT | DirFlag.UP);
                     break;
                 case DirFlag.RIGHT | DirFlag.UP:
-                    neighbor_shift = GetLinkMaskShift(DirFlag.LEFT | DirFlag.DOWN);
+                    neighbor_shift = GetAdjacentMaskShift(DirFlag.LEFT | DirFlag.DOWN);
                     break;
                 case DirFlag.LEFT | DirFlag.UP:
-                    neighbor_shift = GetLinkMaskShift(DirFlag.RIGHT | DirFlag.DOWN);
+                    neighbor_shift = GetAdjacentMaskShift(DirFlag.RIGHT | DirFlag.DOWN);
                     break;
                 default:
                     return false;
@@ -217,7 +213,7 @@ public static partial class EditMapUtil
         return isLinked;
     }
 
-    private static int GetLinkMaskShift(DirFlag direction_flag)
+    private static int GetAdjacentMaskShift(DirFlag direction_flag)
     {
         int shift = 0;
         switch (direction_flag)

@@ -64,12 +64,12 @@ namespace Script.Manager
             y = target_position.y;
 
             // 충돌을 확인할 주변 타일 탐색
-            if (false == TryGetCollidedTiles(target_position, ref target_tiles)) 
+            if (false == TryGetAdjacentTiles(target_position, ref target_tiles)) 
             {
                 return false;
             }
 
-            float radius = 0.5f;
+            float radius = 0.5f - float.Epsilon;
             bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, false, radius, target_tiles);
             if (false == isMovable)
             {
@@ -94,7 +94,7 @@ namespace Script.Manager
 
         /// <summary> </summary>
         /// <returns>체크할 타일 개수</returns>
-        private static bool TryGetCollidedTiles(Vector3 target_position, ref IngameMapTileData[] targets)
+        private static bool TryGetAdjacentTiles(Vector3 target_position, ref IngameMapTileData[] targets)
         {
             // 다음 이동할 목표 좌표에 대하여 타일이 존재? 없으면 탐색 종료
             if (false == TryGetMapTileData(target_position, out MapTileData candidate_tile))
@@ -107,7 +107,6 @@ namespace Script.Manager
             int tile_key = MapUtil.GetTileKeyMask(target_position);
             targets[index++] = new IngameMapTileData(grid_key, tile_key, candidate_tile);
 
-
             // next_target_position을 기준으로 이웃한 타일이 어디인지 확인
             Vector3 target_pivot = MapUtil.GetTilePivotPosition(target_position, false);
             int quarant = MapUtil.GetQuarantInTile(target_position, false);
@@ -115,7 +114,7 @@ namespace Script.Manager
 
             for (int i = 0; i < 3; ++i)
             {
-                int link_mask;
+                int link_mask = 0;
                 switch (i)
                 {
                     case 0:
@@ -128,29 +127,44 @@ namespace Script.Manager
                         link_mask = (candidate_tile.LinkMask >> (target_link.z * 2)) & 0b11;
                         break;
                     default:
-                        continue;
+                        break;
                 };
 
+                Vector3 neighbor_tile_pivot = target_pivot + MapTileIndex.RELATIVE_COORD_BY_QUARANT[quarant * 3 + i];
                 float y;
                 switch (link_mask)
                 {
-                    case 0b01: y = 0f; break;
-                    case 0b10: y = 1f; break;
-                    case 0b11: y = -1f; break;
-                    default:
+                    case MapTileIndex.ADJACENT_ZERO: y =  0f; break;
+                    case MapTileIndex.ADJACENT_UP:   y =  1f; break;
+                    case MapTileIndex.ADJACENT_DOWN: y = -1f; break;
+                    default: //adjacent == null
+
+                        grid_key = MapUtil.GetGridKeyMask(neighbor_tile_pivot);
+                        tile_key = MapUtil.GetTileKeyMask(neighbor_tile_pivot);
+                        targets[index++] = new IngameMapTileData(grid_key, tile_key, new MapTileData(MapTileIndex.NAVI_NULL));
+                        Debug.Log($"ADJ[{index - 1}].IsValid? ({targets[index - 1].IsValid()}), pos:{targets[index - 1].TilePosition}");
                         continue;
                 }
 
-                Vector3 neighbor_tile_pivot = target_pivot + MapTileIndex.RELATIVE_COORD_BY_QUARANT[quarant * 3 + i] + (y * Vector3.up);
+                neighbor_tile_pivot += y * Vector3.up;
+                grid_key = MapUtil.GetGridKeyMask(neighbor_tile_pivot);
+                tile_key = MapUtil.GetTileKeyMask(neighbor_tile_pivot);
+
                 if (true == TryGetMapTileData(neighbor_tile_pivot, out candidate_tile))
                 {
                     targets[index++] = new IngameMapTileData(grid_key, tile_key, candidate_tile);
                 }
-                // 해당 타일의 데이터가 없는데 좌표는 겹친다 => 이동 불가하도록 처리 (ex. 맵 끝에 도달)
-                else if (true == MapUtil.IsOverlaped(neighbor_tile_pivot, 1f, target_position))
+                else
                 {
-                    continue;
+                    targets[index++] = new IngameMapTileData(grid_key, tile_key, new MapTileData(MapTileIndex.NAVI_NULL));
                 }
+
+                Debug.Log($"ADJ[{index - 1}].IsValid? ({targets[index - 1].IsValid()}) pos:{targets[index - 1].TilePosition}");
+                //// 해당 타일의 데이터가 없는데 좌표는 겹친다 => 이동 불가하도록 처리 (ex. 맵 끝에 도달)
+                //else if (true == MapUtil.IsOverlaped(neighbor_tile_pivot, 1f, target_position))
+                //{
+                //    continue;
+                //}
             }
 
             return true;

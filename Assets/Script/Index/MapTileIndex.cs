@@ -72,6 +72,14 @@ namespace Script.Index
 
         public const int HEIGHT_MASK = 0b_1111;
         public const int HEIGHT_BITS = 4;
+
+        public const int NONE_MASK_INT = 0xFFFF;
+
+        public const int ADJACENT_ZERO = 0b_01;
+        public const int ADJACENT_UP = 0b_10;
+        public const int ADJACENT_DOWN = 0b_11;
+        public const int LINK_NULL = 0b_00;
+        public const long NAVI_NULL = 0xFFFF_FFFF;
     }
 }
 

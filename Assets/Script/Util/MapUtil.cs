@@ -7,10 +7,6 @@ namespace Script.Util
 
     public static partial class MapUtil
     {
-        public static (int, int) GetKeyMask(float3 position)
-        {
-            return (GetGridKeyMask(position), GetTileKeyMask(position));
-        }
         public static int GetGridKeyMask(float3 position)
         {
             int mask = 0;
@@ -43,19 +39,19 @@ namespace Script.Util
         }
         public static int GetTileKeyMask(float3 position)
         {
-            int x = Mathf.RoundToInt(position.x % SIZE_GRID_AXIS);
+            int x = Mathf.FloorToInt(position.x % SIZE_GRID_AXIS);
             if (x < 0)
             {
                 x += SIZE_GRID_AXIS;
             }
 
-            int y = Mathf.RoundToInt(position.y % SIZE_GRID_AXIS);
+            int y = Mathf.FloorToInt(position.y % SIZE_GRID_AXIS);
             if (y < 0)
             {
                 y += SIZE_GRID_AXIS;
             }
 
-            int z = Mathf.RoundToInt(position.z % SIZE_GRID_AXIS);
+            int z = Mathf.FloorToInt(position.z % SIZE_GRID_AXIS);
             if (z < 0)
             {
                 z += SIZE_GRID_AXIS;
@@ -68,78 +64,6 @@ namespace Script.Util
 
             return tileKeyMask;
         }
-
-        public static bool ContainTile(this ConcurrentDictionary<int, MapGridData> map, float3 target_position)
-        {
-            if (null == map)
-            {
-                return false;
-            }
-
-            int grid_Key = MapUtil.GetGridKeyMask(target_position);
-            int tile_Key = MapUtil.GetTileKeyMask(target_position);
-
-            if (false == map.ContainsKey(grid_Key))
-            {
-                return false;
-            }
-
-            return map[grid_Key].ContainTile(tile_Key);
-        }
-
-        public static bool TryGetNeighborLinkValue(int quarant, int index, int link_mask, out int y)
-        {
-            y = int.MinValue;
-            int shift;
-            switch (10 * quarant + index)
-            {
-                case 0_0: shift = 3; break;
-                case 0_1: shift = 4; break;
-                case 0_2: shift = 5; break;
-                case 1_0: shift = 5; break;
-                case 1_1: shift = 6; break;
-                case 1_2: shift = 7; break;
-                case 2_0: shift = 7; break;
-                case 2_1: shift = 0; break;
-                case 2_2: shift = 1; break;
-                case 3_0: shift = 1; break;
-                case 3_1: shift = 2; break;
-                case 3_2: shift = 3; break;
-                default:
-                    return false;
-
-            }
-
-            //int mask = (link_mask >> (shift * 2)) & 0b_11;
-            switch (link_mask)
-            {
-                case 0b_01: y =  0; break;
-                case 0b_10: y =  1; break;
-                case 0b_11: y = -1; break;
-                default:
-                    return false;
-            }
-
-            return true;
-        }
-    }
-
-
-    // 잠시 킵...
-    public static partial class MapUtil
-    {
-        public static (int, int) GetCoordKey(Vector3 position, bool isSmall)
-        {
-            Vector3Int grid_pivot_int = GetGridPivotPosition(position);
-            int gridKey = PositionToGridMask(grid_pivot_int);
-
-            // memo: small은 트리거로 바꾼다 치고, FieldManager.SmallScale; 식으로 들고 있어야할 듯
-            Vector3 tile_pivot = GetTilePivotPosition(position, isSmall);
-            int tileKey = PositionToTileMask(tile_pivot - grid_pivot_int, isSmall);
-
-            return (gridKey, tileKey);
-        }
-
         private static Vector3Int GetGridPivotPosition(Vector3 position)
         {
             int x = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS) * SIZE_GRID_AXIS;
@@ -175,7 +99,6 @@ namespace Script.Util
 
             return gridKeyMask;
         }
-
         public static Vector3 GetTilePivotPosition(Vector3 position, bool isSmall)
         {
             float x, y, z;
@@ -196,7 +119,6 @@ namespace Script.Util
 
             return new Vector3(x, y, z);
         }
-
         private static int PositionToTileMask(Vector3 diff, bool isSmall)
         {
             int x = Mathf.RoundToInt(diff.x);
@@ -217,7 +139,6 @@ namespace Script.Util
 
             return mask;
         }
-
         public static int GetQuarantInTile(Vector3 position, bool isSmall)
         {
             Vector3 tilePivot = GetTilePivotPosition(position, isSmall);
@@ -237,8 +158,7 @@ namespace Script.Util
                 else { return 2; }
             }
         }
-
-        public static bool TryGetTrianglePoint(IngameMapTileData data, int tri_index, int vertice, out Unity.Mathematics.float3 point)
+        public static bool TryGetTrianglePoint(IngameMapTileData data, int tri_index, int vertice, out float3 point)
         {
             int pt_virtual_index = TriangleVertex[tri_index * 3 + vertice];
             int pt_height_mask = (int)((data.NaviMask >> pt_virtual_index * 4) & 0b_1111);
@@ -274,7 +194,6 @@ namespace Script.Util
             point = data.TilePosition + new Vector3(x, y, z);
             return true;
         }
-
         public static int GetTriangleIndex(Vector3 position, bool isSmall)
         {
             Vector3 tilePivot = MapUtil.GetTilePivotPosition(position, isSmall);
@@ -298,28 +217,6 @@ namespace Script.Util
             else if (zEx & !zEnx) { index += 3; }
 
             return index;
-        }
-
-        public static bool IsOverlaped(Vector3 pivot, float scale, Vector3 center)
-        {
-            float radius = scale * 0.25f;
-
-            // 1. 원의 중심을 사각형에 가장 가까운 점으로 제한합니다.
-            // 이 계산은 XZ 평면에서 이루어집니다.
-            float closestX = Mathf.Clamp(center.x, pivot.x, pivot.x + scale);
-            float closestZ = Mathf.Clamp(center.z, pivot.z, pivot.z + scale);
-
-            // 2. 사각형의 가장 가까운 점을 기준으로 Vector3를 생성합니다.
-            Vector3 closestPoint = new Vector3(closestX, pivot.y, closestZ);
-
-            // 3. 가장 가까운 점과 원의 중심 사이의 거리를 계산합니다.
-            // Vector3.Distance는 제곱근 연산을 포함하므로,
-            // 성능을 위해 SqrMagnitude를 사용하여 제곱 거리로 비교하는 것이 더 효율적입니다.
-            float distanceSquared = (closestPoint - center).sqrMagnitude;
-            float radiusSquared = radius * radius;
-
-            // 4. 거리가 반지름보다 작거나 같으면 겹치는 것입니다.
-            return distanceSquared <= radiusSquared;
         }
         public static float CalculateYOnPlane(float3 a, float3 b, float3 c, float tx, float tz)
         {
@@ -352,6 +249,100 @@ namespace Script.Util
 
             float ty = a.y + (-A * (tx - a.x) - C * (tz - a.z)) / B;
             return Mathf.Clamp01(ty);
+        }
+    }
+
+
+    // 잠시 킵...
+    public static partial class MapUtil
+    {
+        public static (int, int) GetCoordKey(Vector3 position, bool isSmall)
+        {
+            Vector3Int grid_pivot_int = GetGridPivotPosition(position);
+            int gridKey = PositionToGridMask(grid_pivot_int);
+
+            // memo: small은 트리거로 바꾼다 치고, FieldManager.SmallScale; 식으로 들고 있어야할 듯
+            Vector3 tile_pivot = GetTilePivotPosition(position, isSmall);
+            int tileKey = PositionToTileMask(tile_pivot - grid_pivot_int, isSmall);
+
+            return (gridKey, tileKey);
+        }
+        public static (int, int) GetKeyMask(float3 position)
+        {
+            return (GetGridKeyMask(position), GetTileKeyMask(position));
+        }
+        public static bool ContainTile(this ConcurrentDictionary<int, MapGridData> map, float3 target_position)
+        {
+            if (null == map)
+            {
+                return false;
+            }
+
+            int grid_Key = MapUtil.GetGridKeyMask(target_position);
+            int tile_Key = MapUtil.GetTileKeyMask(target_position);
+
+            if (false == map.ContainsKey(grid_Key))
+            {
+                return false;
+            }
+
+            return map[grid_Key].ContainTile(tile_Key);
+        }
+        public static bool TryGetNeighborLinkValue(int quarant, int index, int link_mask, out int y)
+        {
+            y = int.MinValue;
+            int shift;
+            switch (10 * quarant + index)
+            {
+                case 0_0: shift = 3; break;
+                case 0_1: shift = 4; break;
+                case 0_2: shift = 5; break;
+                case 1_0: shift = 5; break;
+                case 1_1: shift = 6; break;
+                case 1_2: shift = 7; break;
+                case 2_0: shift = 7; break;
+                case 2_1: shift = 0; break;
+                case 2_2: shift = 1; break;
+                case 3_0: shift = 1; break;
+                case 3_1: shift = 2; break;
+                case 3_2: shift = 3; break;
+                default:
+                    return false;
+
+            }
+
+            //int mask = (link_mask >> (shift * 2)) & 0b_11;
+            switch (link_mask)
+            {
+                case 0b_01: y = 0; break;
+                case 0b_10: y = 1; break;
+                case 0b_11: y = -1; break;
+                default:
+                    return false;
+            }
+
+            return true;
+        }
+        public static bool IsOverlaped(Vector3 pivot, float scale, Vector3 center)
+        {
+            float radius = scale * 0.25f;
+
+            // 1. 원의 중심을 사각형에 가장 가까운 점으로 제한합니다.
+            // 이 계산은 XZ 평면에서 이루어집니다.
+            float closestX = Mathf.Clamp(center.x, pivot.x, pivot.x + scale);
+            float closestZ = Mathf.Clamp(center.z, pivot.z, pivot.z + scale);
+
+            // 2. 사각형의 가장 가까운 점을 기준으로 Vector3를 생성합니다.
+            Vector3 closestPoint = new Vector3(closestX, pivot.y, closestZ);
+
+            // 3. 가장 가까운 점과 원의 중심 사이의 거리를 계산합니다.
+            // Vector3.Distance는 제곱근 연산을 포함하므로,
+            // 성능을 위해 SqrMagnitude를 사용하여 제곱 거리로 비교하는 것이 더 효율적입니다.
+            float distanceSquared = (closestPoint - center).sqrMagnitude;
+            float radiusSquared = radius * radius;
+
+            // 4. 거리가 반지름보다 작거나 같으면 겹치는 것입니다.
+            return distanceSquared <= radiusSquared;
         }
     }
 }
