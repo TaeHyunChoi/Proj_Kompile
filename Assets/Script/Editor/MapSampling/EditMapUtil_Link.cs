@@ -112,12 +112,6 @@ public static partial class EditMapUtil
         {
             return false;
         }
-        
-        //mid_pivot += DIRECTION[dir_second];
-        if (false == EditMapUtil.TryGetTileData(map, mid_pivot, out mid_tile))
-        {
-            return false;
-        }
 
         return IsLinked(dir_first, start_tile, mid_tile) && IsLinked(dir_second, mid_tile, target_tile);
     }
@@ -150,7 +144,7 @@ public static partial class EditMapUtil
             case DirFlag.RIGHT | DirFlag.UP:   // ( 1, 1)
             case DirFlag.RIGHT | DirFlag.DOWN: // ( 1,-1)
                 isLinked = IsChainLinked(map, my_tile, neighbor_tile, dir_x, dir_z)
-                          || IsChainLinked(map, my_tile, neighbor_tile, dir_z, dir_x);
+                          && IsChainLinked(map, my_tile, neighbor_tile, dir_z, dir_x);
                 break;
 
             default:
