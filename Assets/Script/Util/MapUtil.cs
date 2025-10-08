@@ -152,7 +152,7 @@ namespace Script.Util
             int pt_height_mask = (int)((data.NaviMask >> pt_virtual_index * 4) & 0b_1111);
 
             // 유효하지 않은 point
-            if (0x1000 < pt_height_mask)
+            if (0b_1000 < pt_height_mask)
             {
                 point = default;
                 return false;
