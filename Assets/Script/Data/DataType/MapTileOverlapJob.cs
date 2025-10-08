@@ -23,11 +23,11 @@ namespace Script.Data
             for (int i = 0; i < Index.MapTileIndex.TRIANGLES_COUNT; ++i)
             {
                 bool setTriangle = true;
-                setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 0, out float3 a);
-                setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 1, out float3 b);
-                setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 2, out float3 c);
+                setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 0, false, out float3 a);
+                setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 1, false, out float3 b);
+                setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 2, false, out float3 c);
 
-                closestPoint = ClosestPointOnTriangle(SphereCenter, a, b, c); // 쓰읍.. 이거 문제될 것 같은데...
+                closestPoint = ClosestPointOnTriangle(SphereCenter, a, b, c); // 쓰읍.. 이거 문제될 것 같은데... 2차원스럽게 계산하고 있는데 3차원 들고 나오니까 sqrt 계산 전제가 안 맞음;
                 distSq = math.distancesq(closestPoint, SphereCenter);
 
                 // 영역이 겹치지 않는다면? 고려 대상 아님

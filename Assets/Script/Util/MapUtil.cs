@@ -147,7 +147,7 @@ namespace Script.Util
             }
         }
 
-        public static bool TryGetTrianglePoint(IngameMapTileData data, int tri_index, int vertice, out float3 point)
+        public static bool TryGetTrianglePoint(IngameMapTileData data, int tri_index, int vertice, bool getY, out float3 point)
         {
             int pt_virtual_index = TriangleVertex[tri_index * 3 + vertice];
             int pt_height_mask = (int)((data.NaviMask >> pt_virtual_index * 4) & 0b_1111);
@@ -156,7 +156,13 @@ namespace Script.Util
             bool set_triangle = pt_height_mask <= 0b_1000;
 
             // 삼각형을 만들 수 없다면 추가로 더할 높이값을 0으로 처리
-            float y = (true == set_triangle) ? pt_height_mask * 0.125f : 0f;
+            float y = 0f;
+            if (true == getY
+                && true == set_triangle)
+            {
+                y = pt_height_mask * 0.125f;
+
+            }
 
             float x, z;
             switch (pt_virtual_index)

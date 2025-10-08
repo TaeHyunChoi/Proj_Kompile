@@ -15,13 +15,7 @@ MonoBehaviour:
   m_GroupName: MapNavi
   m_GUID: 745b2625ea6a44146bbf6c3fc2cf7ad7
   m_SerializeEntries:
-  - m_GUID: 49cc9be3e213197478d8fcb0033c9f96
-    m_Address: MapNavi_0
-    m_ReadOnly: 1
-    m_SerializedLabels:
-    - MapNavi_0
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: fe09ff42f037c0949b24630c51820324
+  - m_GUID: 28f1b615936851b48af02b9b91baab97
     m_Address: MapNavi_8320
     m_ReadOnly: 1
     m_SerializedLabels:

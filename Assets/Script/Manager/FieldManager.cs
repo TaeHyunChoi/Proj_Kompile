@@ -76,7 +76,7 @@ namespace Script.Manager
 
             if (false == TryGetLinkedTiles(target_position))
             {
-                UnityEngine.Debug.LogError($"[MoveOnTile] Fail to TryGetLinkedTiles({target_position})");
+                //UnityEngine.Debug.LogError($"[MoveOnTile] Fail to TryGetLinkedTiles({target_position})");
                 return false;
             }
 
@@ -84,7 +84,7 @@ namespace Script.Manager
             bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, target_tiles);
             if (false == isMovable)
             {
-                UnityEngine.Debug.LogError($"[MoveOnTile] Fail to CheckMapTileMovable({target_position}, false, {radius}, ...)");
+                //UnityEngine.Debug.LogError($"[MoveOnTile] Fail to CheckMapTileMovable({target_position}, false, {radius}, ...)");
                 return false;
             }
 
@@ -94,9 +94,9 @@ namespace Script.Manager
             int i = MapUtil.GetTriangleIndex(target_position, false);
 
             // 삼각형 꼭지점 좌표 구하고..
-            MapUtil.TryGetTrianglePoint(targetTile, i, 0, out float3 a);
-            MapUtil.TryGetTrianglePoint(targetTile, i, 1, out float3 b);
-            MapUtil.TryGetTrianglePoint(targetTile, i, 2, out float3 c);
+            MapUtil.TryGetTrianglePoint(targetTile, i, 0, true, out float3 a);
+            MapUtil.TryGetTrianglePoint(targetTile, i, 1, true, out float3 b);
+            MapUtil.TryGetTrianglePoint(targetTile, i, 2, true, out float3 c);
 
             y = MapUtil.CalculateYOnPlane(a, b, c, target_position.x, target_position.z);
 
