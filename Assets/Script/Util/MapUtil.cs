@@ -1,6 +1,7 @@
 namespace Script.Util
 {
     using Script.Data;
+    using System.Net.NetworkInformation;
     using Unity.Mathematics;
     using UnityEngine;
     using static Index.MapTileIndex;
@@ -151,16 +152,13 @@ namespace Script.Util
             int pt_virtual_index = TriangleVertex[tri_index * 3 + vertice];
             int pt_height_mask = (int)((data.NaviMask >> pt_virtual_index * 4) & 0b_1111);
 
-            // 유효하지 않은 point
-            if (0b_1000 < pt_height_mask)
-            {
-                point = default;
-                return false;
-            }
+            // 삼각형을 만들 수 있는지 여부는 따로 확인
+            bool set_triangle = pt_height_mask <= 0b_1000;
+
+            // 삼각형을 만들 수 없다면 추가로 더할 높이값을 0으로 처리
+            float y = (true == set_triangle) ? pt_height_mask * 0.125f : 0f;
 
             float x, z;
-            float y = pt_height_mask * 0.125f;
-
             switch (pt_virtual_index)
             {
                 case 0: x = 0.00f; z = 0.00f; break;
@@ -181,8 +179,10 @@ namespace Script.Util
                     return false;
             }
 
+            // 해당 삼각형 구역이 겹치는지 여부를 확인하고자 point는 넘긴다.
             point = data.TilePosition + new Vector3(x, y, z);
-            return true;
+
+            return set_triangle;
         }
 
         public static int GetTriangleIndex(Vector3 position, bool isSmall)

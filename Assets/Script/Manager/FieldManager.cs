@@ -76,6 +76,7 @@ namespace Script.Manager
 
             if (false == TryGetLinkedTiles(target_position))
             {
+                UnityEngine.Debug.LogError($"[MoveOnTile] Fail to TryGetLinkedTiles({target_position})");
                 return false;
             }
 
@@ -83,14 +84,13 @@ namespace Script.Manager
             bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, target_tiles);
             if (false == isMovable)
             {
+                UnityEngine.Debug.LogError($"[MoveOnTile] Fail to CheckMapTileMovable({target_position}, false, {radius}, ...)");
                 return false;
             }
 
             // 다음 위치의 타일 정보 : IngameMapTileData target_tiles[0]; => GetTargetTiles(Vector3)에서 그렇게 정했음~!!
-            // 잠깐만.. 이거 뭐냐?
             IngameMapTileData targetTile = target_tiles[0];
 
-            // 현재 위치가 i번 삼각형 안에 있다 => 여기가 이상한데?
             int i = MapUtil.GetTriangleIndex(target_position, false);
 
             // 삼각형 꼭지점 좌표 구하고..

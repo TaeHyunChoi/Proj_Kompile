@@ -27,7 +27,7 @@ namespace Script.Data
                 setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 1, out float3 b);
                 setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 2, out float3 c);
 
-                closestPoint = ClosestPointOnTriangle(SphereCenter, a, b, c);
+                closestPoint = ClosestPointOnTriangle(SphereCenter, a, b, c); // 쓰읍.. 이거 문제될 것 같은데...
                 distSq = math.distancesq(closestPoint, SphereCenter);
 
                 // 영역이 겹치지 않는다면? 고려 대상 아님
