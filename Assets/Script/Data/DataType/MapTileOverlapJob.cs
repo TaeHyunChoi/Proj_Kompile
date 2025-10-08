@@ -30,9 +30,14 @@ namespace Script.Data
                 closestPoint = ClosestPointOnTriangle(SphereCenter, a, b, c);
                 distSq = math.distancesq(closestPoint, SphereCenter);
 
-                // 영역이 겹쳤는데 & 해당 삼각형이 존재하지 않는다면? 이동 불가.
-                if (distSq <= radiusSq 
-                    && false == setTriangle)
+                // 영역이 겹치지 않는다면? 고려 대상 아님
+                if(distSq > radiusSq)
+                {
+                    continue;
+                }
+
+                // (겹치는 영역이지만) 삼각형을 구현할 수 없다면 이동 불가
+                if (false == setTriangle)
                 {
                     return false;
                 }

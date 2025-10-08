@@ -29,7 +29,7 @@ namespace Script.Data
             {
                 GridKey = EditMapUtil.GetGridKeyMask(sceneIndex, rotated_position),
                 TileKey = EditMapUtil.GetTileKeyMask(rotated_position),
-                NavMask = GetRotatedHeightMask(height, layer, rot),
+                NaviMask = GetRotatedHeightMask(height, layer, rot),
                 LinkMask = 0
             };
         }
@@ -157,14 +157,14 @@ namespace Script.Data
     {
         public int  GridKey;
         public int  TileKey;
-        public long NavMask;
+        public long NaviMask;
         public int  LinkMask;
 
         public EditMapTileData(EditMapTileData visit_tile, int add_link_mask)
         {
             GridKey  = visit_tile.GridKey;
             TileKey  = visit_tile.TileKey;
-            NavMask  = visit_tile.NavMask;
+            NaviMask  = visit_tile.NaviMask;
             LinkMask = visit_tile.LinkMask | add_link_mask;
         }
         public readonly float3 GetTilePivot()
@@ -173,7 +173,7 @@ namespace Script.Data
         }
         public readonly bool TryGetVerticeHeight(int vertice, out int heightx1000)
         {
-            long mask = NavMask >> (Index.MapTileIndex.HEIGHT_BITS * vertice);
+            long mask = NaviMask >> (Index.MapTileIndex.HEIGHT_BITS * vertice);
             int maskInt = (int)mask & Index.MapTileIndex.HEIGHT_MASK;
             if (0b1111 == maskInt)
             {

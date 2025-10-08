@@ -96,28 +96,25 @@ public static partial class EditMapUtil
 
     public static float3 GetGridPosition(int gKey)
     {
-        int gx = (gKey >> SHIFT_GRID_X) & GRID_COORD_SIGNED_MASK;
-        if (0 != (gx & GRID_SIGN_FLAG))
+        int gx = (gKey >> SHIFT_GRID_X) & GRID_COORD_MASK;
+        if (0 != (gKey >> SHIFT_GRID_X_SIGN))
         {
-            gx &= ~GRID_SIGN_FLAG;
             gx *= -1;
         }
 
-        int gy = (gKey >> SHIFT_GRID_Y) & GRID_COORD_SIGNED_MASK;
-        if (0 != (gy & GRID_SIGN_FLAG))
+        int gy = (gKey >> SHIFT_GRID_Y) & GRID_COORD_MASK;
+        if (0 != (gy & SHIFT_GRID_Y_SIGN))
         {
-            gy &= ~GRID_SIGN_FLAG;
             gy *= -1;
         }
 
-        int gz = (gKey >> SHIFT_GRID_Z) & GRID_COORD_SIGNED_MASK;
-        if (0 != (gz & GRID_SIGN_FLAG))
+        int gz = (gKey >> SHIFT_GRID_Z) & GRID_COORD_MASK;
+        if (0 != (gz & SHIFT_GRID_Z_SIGN))
         {
-            gz &= ~GRID_SIGN_FLAG;
             gz *= -1;
         }
 
-        return new float3(gx, gy, gz) * SIZE_GRID_AXIS;
+        return SIZE_GRID_AXIS * new float3(gx, gy, gz);
     }
     public static float3 GetTilePosition(int gKey, int tKey)
     {

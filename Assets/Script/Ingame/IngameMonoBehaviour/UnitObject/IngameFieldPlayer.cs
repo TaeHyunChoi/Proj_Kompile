@@ -63,6 +63,7 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
         float3 position = transform.position;
         float3 target_position = position  + (moveSpeed * Time.fixedDeltaTime) * direction;
 
+        UnityEngine.Debug.Log($"[MoveOnTile] before: {transform.position}");
         if (true == FieldManager.TryPlayerMove(target_position, out float y))
         {
             transform.position = new Vector3(target_position.x, y, target_position.z);

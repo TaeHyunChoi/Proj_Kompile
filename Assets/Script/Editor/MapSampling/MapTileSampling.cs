@@ -88,7 +88,7 @@ namespace MapSampling
             {
                 gridKey = native_array_result[i].GridKey;
                 tileKey = native_array_result[i].TileKey;
-                naviMask = native_array_result[i].NavMask;
+                naviMask = native_array_result[i].NaviMask;
 
                 if (false == map.ContainsKey(gridKey))
                 {
@@ -99,7 +99,7 @@ namespace MapSampling
                 {
                     GridKey = gridKey,
                     TileKey = tileKey,
-                    NavMask = naviMask
+                    NaviMask = naviMask
                 };
                 map[gridKey].TryAdd(tileKey, tile_data);
             }
@@ -117,6 +117,15 @@ namespace MapSampling
 
             SaveTileMeshes(map, tiles);
             AssetDatabase.Refresh();
+
+            foreach (var grid in map.Values)
+            {
+                foreach (var tile in grid.Data.Values)
+                {
+                    Debug.Log($"grid:{grid.gridKey} => {EditMapUtil.GetGridPosition(grid.gridKey)}\ntile:{tile.GetTilePivot()}.navi = {System.Convert.ToString(tile.NaviMask, 2)}");
+                    //Debug.Log($"{tile.GetTilePivot()}.link = {System.Convert.ToString(tile.LinkMask, 2)}");
+                }
+            }
 
             Debug.Log($"--- End (length: {tiles.Length}) ---");
             System.GC.Collect();

@@ -14,7 +14,7 @@ namespace Script.Data
 
         public MapTileData(EditMapTileData edited)
         {
-            NavMask = edited.NavMask;
+            NavMask = edited.NaviMask;
             LinkMask = edited.LinkMask;
         }
     }

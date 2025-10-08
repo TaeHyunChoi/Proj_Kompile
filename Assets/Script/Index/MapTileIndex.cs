@@ -35,10 +35,9 @@ namespace Script.Index
 
         public static readonly Vector3[] RELATIVE_COORD_BY_QUARANT = new Vector3[]
         {
-            new Vector3( 1f, 0f, 0f), new Vector3(0f, 0f,  1f),  new Vector3( 1f,0,  1f),  // 1사분면
-            new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f,  1f),  new Vector3(-1f,0,  1f),  // 2사분면
-            new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, -1f),  new Vector3(-1f,0, -1f),  // 3사분면
-            new Vector3( 1f, 0f, 0f), new Vector3(0f, 0f, -1f),  new Vector3( 1f,0, -1f),  // 4사분면
+            new Vector3(-1f, 0f, -1f), new Vector3( 0f, 0f, -1f), new Vector3( 1f, 0f, -1f),
+            new Vector3( 1f, 0f,  0f), new Vector3( 1f, 0f,  1f), new Vector3( 0f, 0f,  1f),
+            new Vector3(-1f, 0f,  1f), new Vector3(-1f, 0f,  0f),
         };
 
         // _SIGN은 '부호(+/-) 플래그'

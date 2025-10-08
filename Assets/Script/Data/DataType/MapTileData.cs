@@ -17,25 +17,41 @@ namespace Script.Data
             NaviMask = data.NavMask;
             LinkMask = data.LinkMask;
         }
+        public IngameMapTileData(int g, int t)
+        {
+            GridKey = g;
+            TileKey = t;
+            NaviMask = 0xFFFF_FFFF; // == null
+            LinkMask = 0xFFFF;      // == null
+        }
 
         public Vector3 TilePosition
         {
             get
             {
                 // grid_key to grid_parent_position
-                int sign;
-                int gx, gy, gz;
+                int gx = (GridKey >> SHIFT_GRID_X) & GRID_COORD_MASK;
+                int sign_x = (GridKey >> SHIFT_GRID_X_SIGN) & 1;
+                if (0 != sign_x)
+                {
+                    gx *= -1;
+                }
 
-                sign = ((GridKey >> SHIFT_GRID_X_SIGN) & 1) == 0 ? 1 : -1;
-                gx = sign * (GridKey >> SHIFT_GRID_X) & GRID_COORD_MASK;
+                int gy = (GridKey >> SHIFT_GRID_Y) & GRID_COORD_MASK;
+                int sign_y = (GridKey >> SHIFT_GRID_Y_SIGN) & 1;
+                if (0 != sign_y)
+                {
+                    gy *= -1;
+                }
 
-                sign = ((GridKey >> SHIFT_GRID_Y_SIGN) & 1) == 0 ? 1 : -1;
-                gy = sign * (GridKey >> SHIFT_GRID_Y) & GRID_COORD_MASK;
+                int gz = (GridKey >> SHIFT_GRID_Z) & GRID_COORD_MASK;
+                int sign_z = (GridKey >> SHIFT_GRID_Z_SIGN) & 1;
+                if (0 != sign_z)
+                {
+                    gz *= -1;
+                }
+                Vector3 gird_pivot = SIZE_GRID_AXIS * new Vector3(gx, gy, gz);
 
-                sign = ((GridKey >> SHIFT_GRID_Z_SIGN) & 1) == 0 ? 1 : -1;
-                gz = sign * (GridKey >> SHIFT_GRID_Z) & GRID_COORD_MASK;
-
-                Vector3 gird_pivot = new Vector3(gx, gy, gz);
 
                 // tile_key to tile_child_position
                 int tx, ty, tz;

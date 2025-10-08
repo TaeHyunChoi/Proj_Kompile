@@ -36,10 +36,11 @@ namespace Script.Manager
 
 
 #if UNITY_EDITOR
+            MapGridData grid;
             // test: grid_0
-            MapGridData grid = await AssetManager.InstaniateMapGrid(0);
-            currentMapGrid.TryAdd(grid.gridKey, grid);
-            
+            //MapGridData grid = await AssetManager.InstaniateMapGrid(0);
+            //currentMapGrid.TryAdd(grid.gridKey, grid);
+
             // test: gird_8320
             grid = await AssetManager.InstaniateMapGrid(8320);
             currentMapGrid.TryAdd(grid.gridKey, grid);
@@ -56,7 +57,7 @@ namespace Script.Manager
 
             if (true == await player.Init(0))
             {
-                player.transform.position = new Vector3(1, 0, 1);
+                player.transform.position = new Vector3(2f, -1f, 0.5f);
                 IngameManager.InitFollowingCamera(player);
             }
             else
@@ -69,19 +70,16 @@ namespace Script.Manager
             return true;
         }
 
-        private static readonly Stopwatch stopwatch = new Stopwatch();
-
         public static bool TryPlayerMove(float3 target_position, out float y)
         {
             y = target_position.y;
 
-            // 충돌을 확인할 주변 타일 탐색
-            if (0 >= SearchNeighborTiles(target_position)) 
+            if (false == TryGetLinkedTiles(target_position))
             {
                 return false;
             }
 
-            float radius = 0.5f;
+            float radius = 0.353553f;
             bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, target_tiles);
             if (false == isMovable)
             {
@@ -89,10 +87,11 @@ namespace Script.Manager
             }
 
             // 다음 위치의 타일 정보 : IngameMapTileData target_tiles[0]; => GetTargetTiles(Vector3)에서 그렇게 정했음~!!
+            // 잠깐만.. 이거 뭐냐?
             IngameMapTileData targetTile = target_tiles[0];
 
-            // 현재 위치가 i번 삼각형 안에 있다
-            int i = MapUtil.GetTriangleIndex(target_position, isSmall);
+            // 현재 위치가 i번 삼각형 안에 있다 => 여기가 이상한데?
+            int i = MapUtil.GetTriangleIndex(target_position, false);
 
             // 삼각형 꼭지점 좌표 구하고..
             MapUtil.TryGetTrianglePoint(targetTile, i, 0, out float3 a);
@@ -101,24 +100,17 @@ namespace Script.Manager
 
             y = MapUtil.CalculateYOnPlane(a, b, c, target_position.x, target_position.z);
 
-            // 6. Job 실행 시간 측정 종료
-            //stopwatch.Stop();
-            //UnityEngine.Debug.Log($"[TEST] {a:F3},{b:F3},{c:F3} => ({next_position.x:F3}, {y:F3},{next_position.z:F3}), {stopwatch.Elapsed.TotalMilliseconds:F3} ms");
+            UnityEngine.Debug.Log($"[MoveOnTile] {target_position} => {targetTile.TilePosition}({i})\n => {a},{b},{c} => {y}");
 
             return isMovable;
         }
 
-        /// <summary> </summary>
-        /// <returns>체크할 타일 개수</returns>
-        private static int SearchNeighborTiles(Vector3 target_position)
+        private static bool TryGetLinkedTiles(Vector3 target_position)
         {
-            // 생각할수록 이상하네.. 게임 연산은 되도록 tile을 쓰는게 좋지 않나?
-
-            // 다음 이동할 목표 좌표에 대하여 타일값이 유효하게 존재하는지 확이
-            // 만약 존재하지 않는다면 탐색 종료
+            // 다음 이동할 목표 좌표에 대하여 타일값이 유효하게 존재하는가?
             if (false == TryGetMapTileData(target_position, out MapTileData mapTileData))
             {
-                return 0;
+                return false;
             }
 
             int grid_key = MapUtil.GetGridKeyMask(target_position);
@@ -126,35 +118,50 @@ namespace Script.Manager
             int index = 0;
             int target_link_mask = mapTileData.LinkMask;
 
+            // 현재 위치한 타일++
             target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
-
 
             // next_target_position을 기준으로 이웃한 타일이 어디인지 확인
             int quarant = MapUtil.GetQuarantInTile(target_position, isSmall);
+            var link = quarant switch
+            {
+                0 => new int3(3, 4, 5),
+                1 => new int3(5, 6, 7),
+                2 => new int3(7, 0, 1),
+                _ => new int3(1, 2, 3),
+            };
             Vector3 tPivot = MapUtil.GetTilePivotPosition(target_position, isSmall);
             Vector3 neighbor_tile_pivot;
 
             for (int i = 0; i < 3; ++i)
             {
-                neighbor_tile_pivot = tPivot + TileScale * MapTileIndex.RELATIVE_COORD_BY_QUARANT[quarant * 3 + i];
+                int q = i switch
+                {
+                    0 => link.x,
+                    1 => link.y,
+                    _ => link.z
+                };
+
+                neighbor_tile_pivot = tPivot + TileScale * MapTileIndex.RELATIVE_COORD_BY_QUARANT[q];
                 if (true == MapUtil.TryGetNeighborLinkValue(quarant, i, target_link_mask, out int y))
                 {
                     neighbor_tile_pivot += y * Vector3.up;
                 }
 
+                grid_key = MapUtil.GetGridKeyMask(neighbor_tile_pivot);
+                tile_key = MapUtil.GetTileKeyMask(neighbor_tile_pivot);
 
                 if (true == TryGetMapTileData(neighbor_tile_pivot, out mapTileData))
                 {
                     target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
                 }
-                // 해당 타일의 데이터가 없는데 좌표는 겹친다 => 이동 불가하도록 처리 (ex. 맵 끝에 도달)
-                else if (true == MapUtil.IsOverlaped(neighbor_tile_pivot, TileScale, target_position))
+                else
                 {
-                    return 0;
+                    target_tiles[index++] = new IngameMapTileData(grid_key, tile_key);
                 }
             }
 
-            return index;
+            return true;
         }
 
         public static bool TryGetMapTileData(float3 position, out MapTileData tile)
@@ -167,7 +174,6 @@ namespace Script.Manager
             }
 
             int tKey = MapUtil.GetTileKeyMask(position);
-
             return currentMapGrid[gKey].TryGetTileData(tKey, out tile);
         }
 
