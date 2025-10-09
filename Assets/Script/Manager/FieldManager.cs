@@ -57,7 +57,7 @@ namespace Script.Manager
 
             if (true == await player.Init(0))
             {
-                player.transform.position = new Vector3(2f, -1f, 0.5f);
+                player.transform.position = new Vector3(1f, -1f, 0.5f);
                 IngameManager.InitFollowingCamera(player);
             }
             else
@@ -80,7 +80,7 @@ namespace Script.Manager
                 return false;
             }
 
-            float radius = 0.353553f;
+            float radius = 0.3f;
             bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, target_tiles);
             if (false == isMovable)
             {
@@ -143,20 +143,29 @@ namespace Script.Manager
                 };
 
                 neighbor_tile_pivot = tPivot + TileScale * MapTileIndex.RELATIVE_COORD_BY_QUARANT[q];
-                if (true == MapUtil.TryGetNeighborLinkValue(quarant, i, target_link_mask, out int y))
-                {
-                    neighbor_tile_pivot += y * Vector3.up;
-                }
-
                 grid_key = MapUtil.GetGridKeyMask(neighbor_tile_pivot);
                 tile_key = MapUtil.GetTileKeyMask(neighbor_tile_pivot);
 
+                // 연결 여부 확인
+                if (true == MapUtil.TryGetLinkValue(target_link_mask, q, out int y))
+                {
+                    neighbor_tile_pivot += y * Vector3.up;
+                }
+                else
+                {
+                    //연결 여부가 없다면? none_data 입력
+                    target_tiles[index++] = new IngameMapTileData(grid_key, tile_key);
+                    continue;
+                }
+
+                // 타일 존재 확인
                 if (true == TryGetMapTileData(neighbor_tile_pivot, out mapTileData))
                 {
                     target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
                 }
                 else
                 {
+                    // none_data
                     target_tiles[index++] = new IngameMapTileData(grid_key, tile_key);
                 }
             }

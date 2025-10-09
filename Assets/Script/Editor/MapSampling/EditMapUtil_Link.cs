@@ -107,13 +107,19 @@ public static partial class EditMapUtil
                                       EditMapTileData start_tile, EditMapTileData target_tile, 
                                       DirFlag dir_first, DirFlag dir_second)
     {
-        float3 mid_pivot = start_tile.GetTilePivot() + DIRECTION[dir_first];
+        float3 start_pivot = start_tile.GetTilePivot();
+        float3 mid_pivot = start_pivot + DIRECTION[dir_first];
+        float3 target_pivot = target_tile.GetTilePivot();
+
         if (false == EditMapUtil.TryGetTileData(map, mid_pivot, out EditMapTileData mid_tile))
         {
             return false;
         }
 
-        return IsLinked(dir_first, start_tile, mid_tile) && IsLinked(dir_second, mid_tile, target_tile);
+        bool start_to_mid = IsLinked(dir_first, start_tile, mid_tile);
+        bool mid_to_target = IsLinked(dir_second, mid_tile, target_tile);
+
+        return start_to_mid && mid_to_target; 
     }
     public static bool TryGetLinkMask(this EditMapTileData my_tile,
                                       ConcurrentDictionary<int, EditMapGridData> map,

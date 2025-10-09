@@ -19,16 +19,28 @@ namespace MapSampling
         private const int VERTEX_LIMIT              = 65535;
         private readonly string assetGroupName      = "MapRender";
         private readonly string MAP_NAVI_DATA_PATH  = "Rcs\\Bin\\MapNavRawData";
+        //private readonly float2[] dir = new float2[]
+        //{
+        //    new float2( 0, -1),
+        //    new float2( 1,  0),
+        //    new float2( 1, -1),
+        //    new float2( 0,  1),
+        //    new float2( 1,  1),
+        //    new float2(-1,  0),
+        //    new float2(-1,  1),
+        //    new float2(-1, -1)
+        //};
         private readonly float2[] dir = new float2[]
         {
-            new float2( 0, -1),
-            new float2( 1,  0),
             new float2( 1, -1),
-            new float2( 0,  1),
             new float2( 1,  1),
-            new float2(-1,  0),
             new float2(-1,  1),
-            new float2(-1, -1)
+            new float2(-1, -1),
+
+            new float2(-1,  0),
+            new float2( 0,  1),
+            new float2( 1,  0),
+            new float2( 0, -1),
         };
         private readonly float[] ny = new float[] { 0, 1, -1 };
 
@@ -122,14 +134,18 @@ namespace MapSampling
             {
                 foreach (var tile in grid.Data.Values)
                 {
-                    Debug.Log($"grid:{grid.gridKey} => {EditMapUtil.GetGridPosition(grid.gridKey)}\ntile:{tile.GetTilePivot()}.navi = {System.Convert.ToString(tile.NaviMask, 2)}");
-                    //Debug.Log($"{tile.GetTilePivot()}.link = {System.Convert.ToString(tile.LinkMask, 2)}");
+                    Debug.Log($"tile:{tile.GetTilePivot()}" +
+                                //Debug.Log($"grid:{grid.gridKey}({EditMapUtil.GetGridPosition(grid.gridKey)}), tile:{tile.GetTilePivot()}" +
+                                $"\nnavi = {System.Convert.ToString(tile.NaviMask, 2)}" +
+                                $", link = {System.Convert.ToString(tile.LinkMask, 2)}");
+                    //Debug.Log($"{tile.GetTilePivot()}.");
                 }
             }
 
             Debug.Log($"--- End (length: {tiles.Length}) ---");
             System.GC.Collect();
         }
+
         private void LinkTiles(ConcurrentDictionary<int, EditMapGridData> map, float3 start_position)
         {
             Stack<float3> stack     = new Stack<float3>();
@@ -164,11 +180,14 @@ namespace MapSampling
                         {
                             continue;
                         }
+
                         // 이미 방문한 곳도 넘어간다.
                         if (true == visited.Contains(neighbor_pivot))
                         {
                             continue;
                         }
+
+                        //stack.Push(neighbor_pivot);
 
                         // 서로 연결되었다면 서로 연결 정보 추가하고 + 다음 방문을 예약한다.
                         if (true == visit_tile.TryGetLinkMask(map, neighbor_tile, dir, out int my_link_mask, out int neighbor_link_mask))

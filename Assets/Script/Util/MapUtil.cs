@@ -65,36 +65,16 @@ namespace Script.Util
 
             return tileKeyMask;
         }
-        public static bool TryGetNeighborLinkValue(int quarant, int index, int link_mask, out int y)
+        public static bool TryGetLinkValue(int link_mask, int q, out int y)
         {
-            y = int.MinValue;
-            int shift;
-            switch (10 * quarant + index)
-            {
-                case 0_0: shift = 3; break;
-                case 0_1: shift = 4; break;
-                case 0_2: shift = 5; break;
-                case 1_0: shift = 5; break;
-                case 1_1: shift = 6; break;
-                case 1_2: shift = 7; break;
-                case 2_0: shift = 7; break;
-                case 2_1: shift = 0; break;
-                case 2_2: shift = 1; break;
-                case 3_0: shift = 1; break;
-                case 3_1: shift = 2; break;
-                case 3_2: shift = 3; break;
-                default:
-                    return false;
-
-            }
-
-            int mask = (link_mask >> (shift * 2)) & 0b_11;
+            int mask = (link_mask >> (q * 2)) & 0b_11;
             switch (mask)
             {
-                case 0b_01: y =  0; break;
-                case 0b_10: y =  1; break;
+                case 0b_01: y = 0; break;
+                case 0b_10: y = 1; break;
                 case 0b_11: y = -1; break;
                 default:
+                    y = default;
                     return false;
             }
 

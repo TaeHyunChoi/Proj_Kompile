@@ -25,7 +25,6 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
         animator.runtimeAnimatorController = value;
 
 #if UNITY_EDITOR
-        transform.position = new Vector3(1f, 0f, 5f);
         UnityEngine.Debug.Log($"Set position for test play; {transform.position}");
 #endif
 
