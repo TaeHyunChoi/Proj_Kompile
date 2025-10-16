@@ -96,20 +96,25 @@ public static partial class EditMapUtil
 
     public static float3 GetGridPosition(int gKey)
     {
+        int sign;
+
         int gx = (gKey >> SHIFT_GRID_X) & GRID_COORD_MASK;
-        if (0 != (gKey >> SHIFT_GRID_X_SIGN))
+        sign = (gKey >> SHIFT_GRID_X_SIGN) & 1;
+        if (0 != sign)
         {
             gx *= -1;
         }
 
         int gy = (gKey >> SHIFT_GRID_Y) & GRID_COORD_MASK;
-        if (0 != (gy & SHIFT_GRID_Y_SIGN))
+        sign = (gKey >> SHIFT_GRID_Y_SIGN) & 1;
+        if (0 != sign)
         {
             gy *= -1;
         }
 
         int gz = (gKey >> SHIFT_GRID_Z) & GRID_COORD_MASK;
-        if (0 != (gz & SHIFT_GRID_Z_SIGN))
+        sign = (gKey >> SHIFT_GRID_Z_SIGN) & 1;
+        if (0 != sign)
         {
             gz *= -1;
         }

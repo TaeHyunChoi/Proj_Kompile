@@ -6,7 +6,7 @@ namespace Script.Data
     using Unity.Mathematics;
     using UnityEngine;
     using UnityEngine.Assertions;
-    using MessagePack;
+    using static EditMapUtil;
 
     public partial struct EditMapTileJob : IJobParallelFor
     {
@@ -184,6 +184,16 @@ namespace Script.Data
             float pivotY = GetTilePivot().y;
             heightx1000 = Mathf.RoundToInt((pivotY + maskInt * 0.125f) * 1000);
             return true;
+        }
+        public readonly bool IsLinked(float2 dir)
+        {
+            if (false == TryGetAdjacentIndex(dir, out int shift))
+            {
+                return false;
+            }
+
+            int mask = (LinkMask >> shift * 2) & 0b11;
+            return LINK_NULL != mask;
         }
     }
 }

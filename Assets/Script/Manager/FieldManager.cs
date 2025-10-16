@@ -37,13 +37,13 @@ namespace Script.Manager
 
 #if UNITY_EDITOR
             MapGridData grid;
-            // test: grid_0
-            //MapGridData grid = await AssetManager.InstaniateMapGrid(0);
-            //currentMapGrid.TryAdd(grid.gridKey, grid);
+            int[] test_grid = new int[] { 0, 65, 8385 };
 
-            // test: gird_8320
-            grid = await AssetManager.InstaniateMapGrid(8320);
-            currentMapGrid.TryAdd(grid.gridKey, grid);
+            for (int i = 0; i < test_grid.Length; ++i)
+            {
+                grid = await AssetManager.InstaniateMapGrid(test_grid[i]);
+                currentMapGrid.TryAdd(grid.gridKey, grid);
+            }
 #endif
 
             // instantiage player unit

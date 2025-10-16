@@ -19,17 +19,8 @@ namespace MapSampling
         private const int VERTEX_LIMIT              = 65535;
         private readonly string assetGroupName      = "MapRender";
         private readonly string MAP_NAVI_DATA_PATH  = "Rcs\\Bin\\MapNavRawData";
-        //private readonly float2[] dir = new float2[]
-        //{
-        //    new float2( 0, -1),
-        //    new float2( 1,  0),
-        //    new float2( 1, -1),
-        //    new float2( 0,  1),
-        //    new float2( 1,  1),
-        //    new float2(-1,  0),
-        //    new float2(-1,  1),
-        //    new float2(-1, -1)
-        //};
+
+
         private readonly float2[] dir = new float2[]
         {
             new float2( 1, -1),
@@ -37,10 +28,10 @@ namespace MapSampling
             new float2(-1,  1),
             new float2(-1, -1),
 
-            new float2(-1,  0),
-            new float2( 0,  1),
-            new float2( 1,  0),
             new float2( 0, -1),
+            new float2( 1,  0),
+            new float2( 0,  1),
+            new float2(-1,  0),
         };
         private readonly float[] ny = new float[] { 0, 1, -1 };
 
@@ -154,7 +145,65 @@ namespace MapSampling
             stack.Push(start_position);
 
             float3 target_pivot, neighbor_pivot;
+            int length = dir.Length / 2;
 
+
+            while (stack.Count > 0)
+            {
+                target_pivot = stack.Pop();
+                if (false == EditMapUtil.TryGetTileData(map, target_pivot, out EditMapTileData visit_tile))
+                {
+                    continue;
+                }
+
+                float3 target_dir;
+                for (int i = dir.Length - 1; i >= 0; --i)
+                {
+                    // 이미 연결함
+                    if (true == visit_tile.IsLinked(dir[i]))
+                    {
+                        continue;
+                    }
+
+                    for (int y = 0; y < ny.Length; ++y)
+                    {
+                        target_dir = new float3(dir[i].x, ny[y], dir[i].y);
+                        neighbor_pivot = target_pivot + target_dir;
+
+                        // 이미 방문했다면 pass
+                        if (true == visited.Contains(neighbor_pivot))
+                        {
+                            break;
+                        }
+
+                        // 타일이 없다면? 다른 y값으로 탐색 이어서
+                        if (false == EditMapUtil.TryGetTileData(map, neighbor_pivot, out EditMapTileData neighbor_tile))
+                        {
+                            continue;
+                        }
+
+                        // 이번에 방문했습니다^^ 추가
+                        visited.Add(target_pivot);
+
+                        // 인접한 타일 -> 다음 탐색에 추가
+                        stack.Push(neighbor_pivot);
+
+                        // 인접한 타일과 연결되었다면 추가
+                        if (true == visit_tile.TryGetLinkMask(map, neighbor_tile, target_dir, out int my_link_mask, out int neighbor_link_mask))
+                        {
+                            visit_tile = new EditMapTileData(visit_tile, my_link_mask);
+                            map[visit_tile.GridKey].Data[visit_tile.TileKey] = visit_tile;
+
+                            neighbor_tile = new EditMapTileData(neighbor_tile, neighbor_link_mask);
+                            map[neighbor_tile.GridKey].Data[neighbor_tile.TileKey] = neighbor_tile;
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+#if !UNITY_EDITOR
             while (stack.Count > 0)
             {
                 target_pivot = stack.Pop();
@@ -168,7 +217,7 @@ namespace MapSampling
                 }
                 visited.Add(target_pivot);
 
-                for (int i = dir.Length - 1; i >= 0; --i)
+                for (int i = 0; i < length; ++i)
                 {
                     for (int y = 0; y < ny.Length; ++y)
                     {
@@ -187,7 +236,7 @@ namespace MapSampling
                             continue;
                         }
 
-                        //stack.Push(neighbor_pivot);
+                        stack.Push(neighbor_pivot);
 
                         // 서로 연결되었다면 서로 연결 정보 추가하고 + 다음 방문을 예약한다.
                         if (true == visit_tile.TryGetLinkMask(map, neighbor_tile, dir, out int my_link_mask, out int neighbor_link_mask))
@@ -198,12 +247,13 @@ namespace MapSampling
                             neighbor_tile = new EditMapTileData(neighbor_tile, neighbor_link_mask);
                             map[neighbor_tile.GridKey].Data[neighbor_tile.TileKey] = neighbor_tile;
 
-                            stack.Push(neighbor_pivot);
+                            //stack.Push(neighbor_pivot);
                             break;
                         }
                     }
                 }
             }
+#endif
         }
     }
     public partial class MapTileSampling
@@ -468,4 +518,4 @@ namespace MapSampling
         }
     }
 }
-#endif 
+#endif

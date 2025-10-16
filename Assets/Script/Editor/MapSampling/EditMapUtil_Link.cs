@@ -9,7 +9,7 @@ using UnityEngine;
 public static partial class EditMapUtil
 {
     [Flags]
-    private enum DirFlag
+    public enum DirFlag
     { 
         NONE    = 0,
         UP      = 1,
@@ -21,7 +21,7 @@ public static partial class EditMapUtil
     private static readonly int LINK_ZERO = 0b_01;
     private static readonly int LINK_UP   = 0b_10;
     private static readonly int LINK_DOWN = 0b_11;
-    private static readonly int LINK_NULL = 0b_00;
+    public static readonly int LINK_NULL = 0b_00;
 
     private readonly struct VertexIndexInfo
     {
@@ -58,7 +58,7 @@ public static partial class EditMapUtil
         { DirFlag.DOWN,  new float3( 0f, 0f,-1f) },
     };
 
-    private static (DirFlag, DirFlag) GetDirectionFlag(float x, float z)
+    public static (DirFlag, DirFlag) GetDirectionFlag(float x, float z)
     {
         DirFlag flag_x = DirFlag.NONE;
         DirFlag flag_z = DirFlag.NONE;
@@ -70,6 +70,36 @@ public static partial class EditMapUtil
         else if (z < 0) { flag_z = DirFlag.DOWN; }
 
         return (flag_x, flag_z);
+    }
+
+    public static bool TryGetAdjacentIndex(float2 dir, out int index)
+    {
+        DirFlag flag_x = DirFlag.NONE;
+        DirFlag flag_z = DirFlag.NONE;
+
+        if (dir.x > 0) { flag_x = DirFlag.RIGHT; }
+        else if (dir.x < 0) { flag_x = DirFlag.LEFT; }
+
+        // 사실은 z값
+        if (dir.y > 0) { flag_z = DirFlag.UP; }
+        else if (dir.y < 0) { flag_z = DirFlag.DOWN; }
+
+        index = -1;
+        switch (flag_x | flag_z)
+        {
+            case DirFlag.DOWN | DirFlag.LEFT:   index = 0; break;
+            case DirFlag.DOWN:                  index = 1; break;
+            case DirFlag.DOWN | DirFlag.RIGHT:  index = 2; break;
+            case DirFlag.RIGHT:                 index = 3; break;
+            case DirFlag.UP | DirFlag.RIGHT:    index = 4; break;
+            case DirFlag.UP:                    index = 5; break;
+            case DirFlag.UP | DirFlag.LEFT:     index = 6; break;
+            case DirFlag.LEFT:                  index = 7; break;
+            default:
+                return false;
+        }
+
+        return true;
     }
 
     private static bool IsLinked(DirFlag direction_flag, EditMapTileData my_tile, EditMapTileData neighbor_tile)
