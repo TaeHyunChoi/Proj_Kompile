@@ -21,11 +21,11 @@ namespace Script.Data
         {
             GridKey = g;
             TileKey = t;
-            NaviMask = 0xFFFF_FFFF; // == null
-            LinkMask = 0xFFFF;      // == null
+            NaviMask = NULL_TILE_NAVI;
+            LinkMask = NULL_TILE_LINK;
         }
 
-        public Vector3 TilePosition
+        public Vector3 Pivot
         {
             get
             {
@@ -65,6 +65,10 @@ namespace Script.Data
 
                 return gird_pivot + tile_pivot;
             }
+        }
+        public bool IsValid()
+        {
+            return NaviMask != NULL_TILE_NAVI;
         }
     }
 }

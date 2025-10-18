@@ -160,7 +160,8 @@ namespace MapSampling
                 }
 
                 float3 target_dir;
-                for (int i = dir.Length - 1; i >= 0; --i)
+                for(int i  = 0; i < dir.Length; ++i)
+                //for (int i = dir.Length - 1; i >= 0; --i)
                 {
                     // 이미 연결함
                     if (true == visit_tile.IsLinked(dir[i]))

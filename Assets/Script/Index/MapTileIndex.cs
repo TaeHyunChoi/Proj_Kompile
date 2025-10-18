@@ -62,6 +62,9 @@ namespace Script.Index
 
         public const int HEIGHT_MASK = 0b_1111;
         public const int HEIGHT_BITS = 4;
+
+        public const long NULL_TILE_NAVI = 0xFFFF_FFFF;
+        public const int NULL_TILE_LINK = 0xFFFF;
     }
 }
 

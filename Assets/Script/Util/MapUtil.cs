@@ -214,7 +214,7 @@ namespace Script.Util
             }
 
             // 해당 삼각형 구역이 겹치는지 여부를 확인하고자 point는 넘긴다.
-            point = data.TilePosition + new Vector3(x, y, z);
+            point = data.Pivot + new Vector3(x, y, z);
 
             return set_triangle;
         }

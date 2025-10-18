@@ -6,6 +6,7 @@ using Script.Interface;
 using Script.Index;
 using static Script.Index.IDxInput;
 using Unity.Mathematics;
+using Script.Util;
 
 public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpdater
 {
@@ -59,6 +60,7 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
         {
             return IngameUpdateState.RUNNING;
         }
+        direction = direction.Normalize();
 
         Vector3 currenet_position = transform.position;
         Vector3 move_delta = (moveSpeed * Time.fixedDeltaTime) * direction;

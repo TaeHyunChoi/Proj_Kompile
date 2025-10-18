@@ -37,7 +37,7 @@ namespace Script.Manager
                     return false;
                 }
 
-                // 여기서 개념이 좀 섞였구나.
+                // 여기서 개념이 좀 섞였구나. 분리 요망;
                 //target_position += new Vector3(0f, linked_y, 0f);
             }
 
@@ -61,8 +61,9 @@ namespace Script.Manager
             MapUtil.TryGetTrianglePoint(targetTile, i, 1, true, out float3 b);
             MapUtil.TryGetTrianglePoint(targetTile, i, 2, true, out float3 c);
 
+            float pivot_y = targetTile.Pivot.y;
             y = MapUtil.CalculateYOnPlane(a, b, c, target_position.x, target_position.z);
-            //y = Mathf.Clamp(y, targetTile.TilePosition.y, targetTile.TilePosition.y + 1);
+            y = Mathf.Clamp(y, pivot_y, pivot_y + 1);
             return isMovable;
         }
     }

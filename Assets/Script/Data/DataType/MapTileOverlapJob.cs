@@ -15,7 +15,6 @@ namespace Script.Data
         public bool Execute(int index)
         {
             IngameMapTileData data = IngameMapTileData[index];
-
             float3 closestPoint;
             float distSq;
             float radiusSq = SphereRadius * SphereRadius;
@@ -27,13 +26,20 @@ namespace Script.Data
                 setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 1, false, out float3 b);
                 setTriangle &= MapUtil.TryGetTrianglePoint(data, i, 2, false, out float3 c);
 
-                closestPoint = ClosestPointOnTriangle(SphereCenter, a, b, c); // 쓰읍.. 이거 문제될 것 같은데... 2차원스럽게 계산하고 있는데 3차원 들고 나오니까 sqrt 계산 전제가 안 맞음;
+                // 쓰읍.. 이거 문제될 것 같은데... 2차원스럽게 계산하고 있는데 3차원 들고 나오니까 sqrt 계산 전제가 안 맞음;
+                closestPoint = ClosestPointOnTriangle(SphereCenter, a, b, c); 
                 distSq = math.distancesq(closestPoint, SphereCenter);
 
                 // 영역이 겹치지 않는다면? 고려 대상 아님
                 if(distSq > radiusSq)
                 {
                     continue;
+                }
+
+                // 비교 대상이 존재하지 않음
+                if (false == data.IsValid())
+                {
+                    return false;
                 }
 
                 // (겹치는 영역이지만) 삼각형을 구현할 수 없다면 이동 불가
