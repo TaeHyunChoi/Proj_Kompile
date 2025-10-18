@@ -105,7 +105,7 @@ namespace MapSampling
                     NaviMask = naviMask
                 };
 
-                Debug.Log($"[TEST] {native_array_result[i].TilePosition}");
+                //Debug.Log($"[TEST] {native_array_result[i].TilePosition}");
 
                 map[gridKey].TryAdd(tileKey, tile_data);
             }
