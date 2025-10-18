@@ -17,5 +17,10 @@ namespace Script.Data
             NavMask = edited.NaviMask;
             LinkMask = edited.LinkMask;
         }
+        public MapTileData(long navMask)
+        {
+            NavMask  = navMask;
+            LinkMask = 0xFFFF;
+        }
     }
 }

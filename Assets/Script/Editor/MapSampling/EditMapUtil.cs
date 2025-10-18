@@ -68,6 +68,10 @@ public static partial class EditMapUtil
     }
     public static int GetTileKeyMask(float3 position)
     {
+        int gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS);
+        int gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS);
+        int gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS);
+
         int x = Mathf.RoundToInt(position.x % SIZE_GRID_AXIS);
         if (x < 0)
         {
@@ -86,8 +90,11 @@ public static partial class EditMapUtil
             z += SIZE_GRID_AXIS;
         }
 
+        //Debug.Log($"[TEST-TILE] ({position.x:F2}, {position.y:F2}, {position.z:F2}) => G({gx}, {gy}, {gz}) + T({x}, {y}, {z}) = P({gx * SIZE_GRID_AXIS + x}, {gy * SIZE_GRID_AXIS + y}, {gz * SIZE_GRID_AXIS + z})");
+
+
         int tileKeyMask = 0;
-        tileKeyMask |= x << SHIFT_TILE_X;
+        tileKeyMask |= x << SHIFT_TILE_X; 
         tileKeyMask |= y << SHIFT_TILE_Y;
         tileKeyMask |= z << SHIFT_TILE_Z;
 

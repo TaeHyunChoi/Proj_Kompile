@@ -104,6 +104,9 @@ namespace MapSampling
                     TileKey = tileKey,
                     NaviMask = naviMask
                 };
+
+                Debug.Log($"[TEST] {native_array_result[i].TilePosition}");
+
                 map[gridKey].TryAdd(tileKey, tile_data);
             }
 
@@ -239,7 +242,7 @@ namespace MapSampling
                         stack.Push(neighbor_pivot);
 
                         // 서로 연결되었다면 서로 연결 정보 추가하고 + 다음 방문을 예약한다.
-                        if (true == visit_tile.TryGetLinkMask(map, neighbor_tile, dir, out int my_link_mask, out int neighbor_link_mask))
+                        if (true == visit_tile.TryGetAdjacentMask(map, neighbor_tile, dir, out int my_link_mask, out int neighbor_link_mask))
                         {
                             visit_tile = new EditMapTileData(visit_tile, my_link_mask);
                             map[visit_tile.GridKey].Data[visit_tile.TileKey] = visit_tile;
