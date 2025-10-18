@@ -25,6 +25,7 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
         animator.runtimeAnimatorController = value;
 
 #if UNITY_EDITOR
+        transform.position = new Vector3(1f, 0f, 0f);
         UnityEngine.Debug.Log($"Set position for test play; {transform.position}");
 #endif
 
@@ -59,14 +60,22 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
             return IngameUpdateState.RUNNING;
         }
 
-        float3 position = transform.position;
-        float3 target_position = position  + (moveSpeed * Time.fixedDeltaTime) * direction;
+        Vector3 currenet_position = transform.position;
+        Vector3 move_delta = (moveSpeed * Time.fixedDeltaTime) * direction;
 
-        UnityEngine.Debug.Log($"[MoveOnTile] before: {transform.position}");
-        if (true == FieldManager.TryPlayerMove(target_position, out float y))
+        if (true == FieldManager.TryPlayerMove(currenet_position, move_delta, out float y))
         {
-            transform.position = new Vector3(target_position.x, y, target_position.z);
+            float x = currenet_position.x + move_delta.x;
+            float z = currenet_position.z + move_delta.z;
+            transform.position = new Vector3(x, y, z);
         }
+
+
+        //float3 target_position = position  + (moveSpeed * Time.fixedDeltaTime) * direction;
+        //if (true == FieldManager.TryPlayerMove(target_position, out float y))
+        //{
+        //    transform.position = new Vector3(target_position.x, y, target_position.z);
+        //}
 
         direction = new float3(0, 0, 0);
         return IngameUpdateState.RUNNING;

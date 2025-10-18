@@ -72,7 +72,7 @@ public static partial class EditMapUtil
         return (flag_x, flag_z);
     }
 
-    public static bool TryGetAdjacentIndex(float2 dir, out int index)
+    public static bool TryGetLinkTileIndex(float2 dir, out int index)
     {
         DirFlag flag_x = DirFlag.NONE;
         DirFlag flag_z = DirFlag.NONE;

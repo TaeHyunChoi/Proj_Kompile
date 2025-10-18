@@ -187,7 +187,7 @@ namespace Script.Data
         }
         public readonly bool IsLinked(float2 dir)
         {
-            if (false == TryGetAdjacentIndex(dir, out int shift))
+            if (false == TryGetLinkTileIndex(dir, out int shift))
             {
                 return false;
             }

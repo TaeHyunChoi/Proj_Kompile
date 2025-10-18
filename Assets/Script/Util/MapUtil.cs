@@ -1,9 +1,11 @@
 namespace Script.Util
 {
     using Script.Data;
+    using System;
     using System.Net.NetworkInformation;
     using Unity.Mathematics;
     using UnityEngine;
+    using static EditMapUtil;
     using static Index.MapTileIndex;
 
     public static partial class MapUtil
@@ -65,16 +67,62 @@ namespace Script.Util
 
             return tileKeyMask;
         }
-        public static bool TryGetLinkValue(int link_mask, int q, out int y)
+        public static bool TryGetLinkValue(int link_mask, int q, out float y)
         {
+            y = default;
             int mask = (link_mask >> (q * 2)) & 0b_11;
+
             switch (mask)
             {
-                case 0b_01: y = 0; break;
-                case 0b_10: y = 1; break;
+                case 0b_01: y =  0; break;
+                case 0b_10: y =  1; break;
                 case 0b_11: y = -1; break;
                 default:
-                    y = default;
+                    return false;
+            }
+
+            return true;
+        }
+
+        public static bool IsKeyMaskEquals(this Vector3 position, Vector3 compare)
+        {
+            // compare grid key
+            int my_grid_key      = GetGridKeyMask(position);
+            int compare_grid_key = GetGridKeyMask(compare);
+            if (my_grid_key != compare_grid_key)
+            {
+                return false;
+            }
+
+            // compare tile key
+            int my_tile_key      = GetTileKeyMask(position);
+            int compare_tile_key = GetTileKeyMask(compare);
+
+            return my_tile_key == compare_tile_key;
+        }
+        public static bool TryGetLinkTileIndex(Vector3 diff, out int index)
+        {
+            DirFlag flag_x = DirFlag.NONE;
+            DirFlag flag_z = DirFlag.NONE;
+
+            if      (diff.x > 0) { flag_x = DirFlag.RIGHT; }
+            else if (diff.x < 0) { flag_x = DirFlag.LEFT; }
+
+            if      (diff.z > 0) { flag_z = DirFlag.UP; }
+            else if (diff.z < 0) { flag_z = DirFlag.DOWN; }
+
+            index = -1;
+            switch (flag_x | flag_z)
+            {
+                case DirFlag.DOWN | DirFlag.LEFT:   index = 0; break;
+                case DirFlag.DOWN:                  index = 1; break;
+                case DirFlag.DOWN | DirFlag.RIGHT:  index = 2; break;
+                case DirFlag.RIGHT:                 index = 3; break;
+                case DirFlag.UP | DirFlag.RIGHT:    index = 4; break;
+                case DirFlag.UP:                    index = 5; break;
+                case DirFlag.UP | DirFlag.LEFT:     index = 6; break;
+                case DirFlag.LEFT:                  index = 7; break;
+                default:
                     return false;
             }
 

@@ -9,7 +9,65 @@ namespace Script.Manager
     using UnityEngine;
     using System.Diagnostics;
 
-    public class FieldManager
+    public partial class FieldManager
+    {
+        public static bool TryPlayerMove(Vector3 current_position, Vector3 move_delta, out float y)
+        {
+            y = 0f;
+            if (false == TryGetMapTileData(current_position, out MapTileData current_tile))
+            {
+                return false;
+            }
+
+            Vector3 target_position = current_position + move_delta;
+
+            // 목표 지점이 현재 지점과 같은 타일에 속하지 않는다면? 연결 지점의 타일을 찾아서 y값을 조정해야 한다
+            if (false == MapUtil.IsKeyMaskEquals(current_position, target_position))
+            {
+                Vector3 diff = target_position - current_position;
+
+                // 만약에 목표 지점으로 linked = false; 라면 이동 실패.
+                if (false == MapUtil.TryGetLinkTileIndex(diff, out int index))
+                {
+                    return false;
+                }
+
+                if (false == MapUtil.TryGetLinkValue(current_tile.LinkMask, index, out y))
+                {
+                    return false;
+                }
+
+                // 여기서 개념이 좀 섞였구나.
+                //target_position += new Vector3(0f, linked_y, 0f);
+            }
+
+            if (false == TryGetLinkedTiles(target_position + new Vector3(0f, y, 0f)))
+            {
+                return false;
+            }
+
+            float radius = 0.3f; //얘도 거의 뭐 임시값이었네?
+            bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, target_tiles);
+            if (false == isMovable)
+            {
+                return false;
+            }
+
+            // 다음 위치의 타일 정보 : IngameMapTileData target_tiles[0]; => GetTargetTiles(Vector3)에서 그렇게 정했음~!!
+            IngameMapTileData targetTile = target_tiles[0];
+
+            int i = MapUtil.GetTriangleIndex(target_position, false);
+            MapUtil.TryGetTrianglePoint(targetTile, i, 0, true, out float3 a);
+            MapUtil.TryGetTrianglePoint(targetTile, i, 1, true, out float3 b);
+            MapUtil.TryGetTrianglePoint(targetTile, i, 2, true, out float3 c);
+
+            y = MapUtil.CalculateYOnPlane(a, b, c, target_position.x, target_position.z);
+            //y = Mathf.Clamp(y, targetTile.TilePosition.y, targetTile.TilePosition.y + 1);
+            return isMovable;
+        }
+    }
+
+    public partial class FieldManager
     {
         private static ConcurrentDictionary<int, MapGridData> currentMapGrid; // 일단 하나만 올려보자.
         private static IngameFieldPlayer[] player_character = new IngameFieldPlayer[3];
@@ -57,7 +115,6 @@ namespace Script.Manager
 
             if (true == await player.Init(0))
             {
-                player.transform.position = new Vector3(1f, -1f, 0.5f);
                 IngameManager.InitFollowingCamera(player);
             }
             else
@@ -70,40 +127,33 @@ namespace Script.Manager
             return true;
         }
 
-        public static bool TryPlayerMove(float3 target_position, out float y)
-        {
-            y = target_position.y;
+        //public static bool TryPlayerMove(float3 target_position, out float y)
+        //{
+        //    y = target_position.y;
 
-            if (false == TryGetLinkedTiles(target_position))
-            {
-                //UnityEngine.Debug.LogError($"[MoveOnTile] Fail to TryGetLinkedTiles({target_position})");
-                return false;
-            }
+        //    if (false == TryGetLinkedTiles(target_position))
+        //    {
+        //        return false;
+        //    }
 
-            float radius = 0.3f;
-            bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, target_tiles);
-            if (false == isMovable)
-            {
-                //UnityEngine.Debug.LogError($"[MoveOnTile] Fail to CheckMapTileMovable({target_position}, false, {radius}, ...)");
-                return false;
-            }
+        //    float radius = 0.3f;
+        //    bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, target_tiles);
+        //    if (false == isMovable)
+        //    {
+        //        return false;
+        //    }
 
-            // 다음 위치의 타일 정보 : IngameMapTileData target_tiles[0]; => GetTargetTiles(Vector3)에서 그렇게 정했음~!!
-            IngameMapTileData targetTile = target_tiles[0];
+        //    // 다음 위치의 타일 정보 : IngameMapTileData target_tiles[0]; => GetTargetTiles(Vector3)에서 그렇게 정했음~!!
+        //    IngameMapTileData targetTile = target_tiles[0];
 
-            int i = MapUtil.GetTriangleIndex(target_position, false);
+        //    int i = MapUtil.GetTriangleIndex(target_position, false);
+        //    MapUtil.TryGetTrianglePoint(targetTile, i, 0, true, out float3 a);
+        //    MapUtil.TryGetTrianglePoint(targetTile, i, 1, true, out float3 b);
+        //    MapUtil.TryGetTrianglePoint(targetTile, i, 2, true, out float3 c);
 
-            // 삼각형 꼭지점 좌표 구하고..
-            MapUtil.TryGetTrianglePoint(targetTile, i, 0, true, out float3 a);
-            MapUtil.TryGetTrianglePoint(targetTile, i, 1, true, out float3 b);
-            MapUtil.TryGetTrianglePoint(targetTile, i, 2, true, out float3 c);
-
-            y = MapUtil.CalculateYOnPlane(a, b, c, target_position.x, target_position.z);
-
-            UnityEngine.Debug.Log($"[MoveOnTile] {target_position} => {targetTile.TilePosition}({i})\n => {a},{b},{c} => {y}");
-
-            return isMovable;
-        }
+        //    y = MapUtil.CalculateYOnPlane(a, b, c, target_position.x, target_position.z);
+        //    return isMovable;
+        //}
 
         private static bool TryGetLinkedTiles(Vector3 target_position)
         {
@@ -147,7 +197,7 @@ namespace Script.Manager
                 tile_key = MapUtil.GetTileKeyMask(neighbor_tile_pivot);
 
                 // 연결 여부 확인
-                if (true == MapUtil.TryGetLinkValue(target_link_mask, q, out int y))
+                if (true == MapUtil.TryGetLinkValue(target_link_mask, q, out float y))
                 {
                     neighbor_tile_pivot += y * Vector3.up;
                 }
