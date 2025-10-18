@@ -24,13 +24,18 @@ namespace Script.Manager
             // 목표 지점이 현재 지점과 같은 타일에 속하지 않는다면? 연결 지점의 타일을 찾아서 y값을 조정해야 한다
             if (false == MapUtil.IsKeyMaskEquals(current_position, target_position))
             {
-                Vector3 diff = target_position - current_position;
+                #region 여기서부터 계산이 이상한데?
+                Vector3 target_pivot = MapUtil.GetTilePivotPosition(target_position, false);
+                Vector3 current_pivot = MapUtil.GetTilePivotPosition(current_position, false);
+
+                Vector3 diff = target_pivot - current_pivot;
 
                 // 만약에 목표 지점으로 linked = false; 라면 이동 실패.
                 if (false == MapUtil.TryGetLinkTileIndex(diff, out int index))
                 {
                     return false;
                 }
+                #endregion
 
                 if (false == MapUtil.TryGetLinkValue(current_tile.LinkMask, index, out y))
                 {
