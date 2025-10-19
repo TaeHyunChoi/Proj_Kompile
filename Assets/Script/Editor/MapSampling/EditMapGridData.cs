@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
 namespace Script.Data
 {
-    using Script.Manager;
+    using MessagePack;
     using System.Collections.Generic;
 
-    public class EditMapGridData
+    public partial class EditMapGridData
     {
         public int gridKey;
         public ConcurrentDictionary<int, EditMapTileData> Data;
@@ -16,19 +16,6 @@ namespace Script.Data
         {
             return Data.TryGetValue(tileIntKey, out tileData);
         }
-
-        public void SetChildObjectMeshIDs(int[] ids)
-        {
-            mesh_asset_instanceIDs = ids;
-        }
-        public void Dispose()
-        {
-            for (int i = 0; i < mesh_asset_instanceIDs.Length; ++i)
-            {
-                AssetManager.Dispose(mesh_asset_instanceIDs[i]);
-            }
-        }
-
         public ConcurrentDictionary<int, MapTileData> ParseData()
         {
             ConcurrentDictionary<int, MapTileData> data = new ConcurrentDictionary<int, MapTileData>();
@@ -40,13 +27,6 @@ namespace Script.Data
 
             return data;
         }
-
-        // 이거 괜찮나?
-        ~EditMapGridData()
-        {
-            Dispose();
-        }
-
         public EditMapGridData(int targetGridKey)
         {
             gridKey = targetGridKey;
@@ -60,6 +40,46 @@ namespace Script.Data
         public bool TryAdd(int key, EditMapTileData navData)
         {
             return Data.TryAdd(key, navData);
+        }
+    }
+
+
+    // for test
+    [MessagePackObject]
+    public struct GridLayerData
+    {
+        [Key(0)]
+        [Unity.Collections.ReadOnly] public int layer;
+        [Key(1)]
+        [Unity.Collections.ReadOnly] public List<string> assets;
+
+        public GridLayerData(int _layer, string asset)
+        {
+            layer = _layer;
+            assets = new List<string>() { asset };
+        }
+        public void Add(string asset)
+        {
+            assets.Add(asset);
+        }
+    }
+
+    public partial class EditMapGridData
+    {
+        public List<GridLayerData> layer_mesh_assets = new List<GridLayerData>();
+
+        public void AddMeshAsset(int layer, string fileName)
+        {
+            for (int i = 0; i < layer_mesh_assets.Count; ++i)
+            {
+                if (layer == layer_mesh_assets[i].layer)
+                {
+                    layer_mesh_assets[i].Add(fileName);
+                    return;
+                }
+            }
+
+            layer_mesh_assets.Add(new GridLayerData(layer, fileName));
         }
     }
 }

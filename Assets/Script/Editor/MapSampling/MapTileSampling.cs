@@ -311,12 +311,9 @@ namespace MapSampling
 
                     if (combinedMesh.vertexCount != tempData.combinedUVs.Count)
                     {
-                        // 🔴 여기서 로그를 찍어 불일치 원인을 파악해야 합니다.
                         Debug.LogError($"[227] UV/Vertex Count Mismatch! Vertices: {combinedMesh.vertexCount}, UVs: {tempData.combinedUVs.Count}");
-                        // 이 오류가 나면 아래 코드는 실행되지 않거나, 실행되어도 오류 로그를 남길 것입니다.
                     }
 
-                    // 저장 타이밍이 이상하다?.. 예전에는 잘 됐던 것 같은데..?
                     SaveMesh(map, combinedMesh, sceneIndex, tile.GridKey, tile.NaviLayer, tempData.index, true, false);
 
                     tempData.combineInstances.Clear();
@@ -384,6 +381,7 @@ namespace MapSampling
 
             string assetName = $"MapRender_{sceneIndex}_G{gridKey}_L{layer}_{index}"; 
             map[gridKey].AddAssetFile(assetName);
+            map[gridKey].AddMeshAsset(layer, assetName);
 
             var path = "Assets/Rcs/MapRender/" + assetName + ".asset";
             if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path))
@@ -404,7 +402,8 @@ namespace MapSampling
                 {
                     gridKey = grid.Key,
                     MapNavDataDictionary = grid.Value.ParseData(),
-                    assetFiles = grid.Value.assetFiles
+                    assetFiles = grid.Value.assetFiles,
+                    mesh = grid.Value.layer_mesh_assets
                 };
 
                 AssetManager.WriteBinaryFile<MapGridData>(data: grid_data,

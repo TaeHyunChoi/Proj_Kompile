@@ -101,12 +101,17 @@ namespace Script.Manager
 
 #if UNITY_EDITOR
             MapGridData grid;
-            int[] test_grid = new int[] { 0, 65, 8385 };
+            int[] test_grid = new int[] { 0, 1, 2, 3 };
 
             for (int i = 0; i < test_grid.Length; ++i)
             {
                 grid = await AssetManager.InstaniateMapGrid(test_grid[i]);
                 currentMapGrid.TryAdd(grid.gridKey, grid);
+
+                //foreach (var tile in currentMapGrid[grid.gridKey].MapNavDataDictionary.Values)
+                //{ 
+                //    tile.LinkMask
+                //}
             }
 #endif
 

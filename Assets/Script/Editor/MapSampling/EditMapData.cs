@@ -2,7 +2,6 @@
 namespace Script.Data
 {
     using Script.Index;
-    using Script.Util;
     using System;
     using UnityEditor;
     using UnityEngine;
@@ -26,8 +25,6 @@ namespace Script.Data
         [SerializeField] private int naviLayer;
         [SerializeField] private ulong heightMask;
         
-        private bool isSmall;
-
         public int GridKey => EditMapUtil.GetGridKeyMask(transform.position);
         public MeshFilter MeshFilter => meshFilter;
         public int RenderLayer => renderLayer;
