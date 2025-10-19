@@ -11,7 +11,7 @@ namespace Script.Data
     public partial struct EditMapTileJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> SceneIndex;  // 씬 인덱스
-        [ReadOnly] public NativeArray<int> NavLayer;    // 레이어 인덱스
+        [ReadOnly] public NativeArray<int> RenderLayer;    // 레이어 인덱스
         [ReadOnly] public NativeArray<float3> Position; // 타일 좌표
         [ReadOnly] public NativeArray<float> RotY;      // 타일 회전값 (y축 회전)
         [ReadOnly] public NativeArray<ulong> Height;    // height mask
@@ -21,16 +21,17 @@ namespace Script.Data
         public void Execute(int index)
         {
             int sceneIndex = SceneIndex[index];
-            int layer = NavLayer[index];
+            int layer = RenderLayer[index];
             float rot = RotY[index]; //어차피 Mathf.Int 쓰는 듯;
             float3 rotated_position = GetRotatedPivot(Position[index], rot);
             ulong height = Height[index];
             Data[index] = new EditMapTileData()
             {
-                GridKey = EditMapUtil.GetGridKeyMask(sceneIndex, rotated_position),
-                TileKey = EditMapUtil.GetTileKeyMask(rotated_position),
-                NaviMask = GetRotatedHeightMask(height, layer, rot),
-                LinkMask = 0
+                GridKey  = EditMapUtil.GetGridKeyMask(sceneIndex, rotated_position),
+                TileKey  = EditMapUtil.GetTileKeyMask(rotated_position),
+                NaviMask  = GetRotatedHeightMask(height, layer, rot),
+                LinkMask  = default,
+                RenderMask = layer
             };
         }
         private readonly float3 GetRotatedPivot(float3 position, float rot)
@@ -159,13 +160,15 @@ namespace Script.Data
         public int  TileKey;
         public long NaviMask;
         public int  LinkMask;
+        public int  RenderMask;
 
         public EditMapTileData(EditMapTileData visit_tile, int add_link_mask)
         {
-            GridKey  = visit_tile.GridKey;
-            TileKey  = visit_tile.TileKey;
+            GridKey   = visit_tile.GridKey;
+            TileKey   = visit_tile.TileKey;
             NaviMask  = visit_tile.NaviMask;
-            LinkMask = visit_tile.LinkMask | add_link_mask;
+            LinkMask  = visit_tile.LinkMask | add_link_mask;
+            RenderMask = visit_tile.RenderMask;
         }
         public readonly float3 GetTilePivot()
         {

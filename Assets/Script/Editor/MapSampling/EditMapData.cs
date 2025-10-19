@@ -22,13 +22,11 @@ namespace Script.Data
         [SerializeField] private TextureIndex textureType;
 
         [Header("Data")]
-        [SerializeField] private int naviLayer;
         [SerializeField] private ulong heightMask;
         
         public int GridKey => EditMapUtil.GetGridKeyMask(transform.position);
         public MeshFilter MeshFilter => meshFilter;
         public int RenderLayer => renderLayer;
-        public int NaviLayer => naviLayer;
         public int TextureIndex => (int)textureType;
         public ulong HeightMask => heightMask;
 

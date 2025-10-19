@@ -101,7 +101,8 @@ namespace Script.Manager
 
 #if UNITY_EDITOR
             MapGridData grid;
-            int[] test_grid = new int[] { 0, 1, 2, 3 };
+            int[] test_grid = new int[] { 0, };
+            //int[] test_grid = new int[] { 0, 1, 2, 3 };
 
             for (int i = 0; i < test_grid.Length; ++i)
             {

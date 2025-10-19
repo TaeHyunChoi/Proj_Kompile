@@ -16,11 +16,10 @@ namespace MapSampling
 
     public partial class MapTileSampling : MonoBehaviour
     {
-        private const int VERTEX_LIMIT              = 65535;
+        private const int       VERTEX_LIMIT        = 65535;
+
         private readonly string assetGroupName      = "MapRender";
         private readonly string MAP_NAVI_DATA_PATH  = "Rcs\\Bin\\MapNavRawData";
-
-
         private readonly float2[] dir = new float2[]
         {
             new float2( 1, -1),
@@ -33,7 +32,7 @@ namespace MapSampling
             new float2( 0,  1),
             new float2(-1,  0),
         };
-        private readonly float[] ny = new float[] { 0, 1, -1 };
+        private readonly float[] ny   = new float[] { 0, 1, -1 };
 
         [SerializeField] private Transform instanceTransform;
         [SerializeField] int sceneIndex = 0;
@@ -51,47 +50,50 @@ namespace MapSampling
 #endif
 
             // JobSystem -> EditMapData 일괄 생성
-            int length                   = tiles.Length;
-            var native_array_scene_index = new NativeArray<int>(length, Allocator.TempJob);
-            var native_array_nav_layer   = new NativeArray<int>(length, Allocator.TempJob);
-            var native_array_position    = new NativeArray<float3>(length, Allocator.TempJob);
-            var native_array_rotateY     = new NativeArray<float>(length, Allocator.TempJob);
-            var native_array_heights     = new NativeArray<ulong>(length, Allocator.TempJob);
-            var native_array_result      = new NativeArray<EditMapTileData>(tiles.Length, Allocator.TempJob);
+            int length = tiles.Length;
+            Allocator allocation_type = Allocator.TempJob;
+
+            var native_array_scene_index    = new NativeArray<int>(length, allocation_type);
+            var native_array_render_layer   = new NativeArray<int>(length, allocation_type);
+            var native_array_position       = new NativeArray<float3>(length, allocation_type);
+            var native_array_rotateY        = new NativeArray<float>(length, allocation_type);
+            var native_array_heights        = new NativeArray<ulong>(length, allocation_type);
+            var native_array_result         = new NativeArray<EditMapTileData>(length, allocation_type);
 
             EditMapData tileData;
             for (int i = 0; i < tiles.Length; i++)
             {
                 tileData = tiles[i];
 
-                native_array_scene_index[i] = sceneIndex;
-                native_array_nav_layer[i]   = tileData.NaviLayer;
-                native_array_position[i]    = new float3(tileData.transform.position.x, tileData.transform.position.y, tileData.transform.position.z);
-                native_array_rotateY[i]     = tileData.transform.eulerAngles.y;
-                native_array_heights[i]     = tileData.HeightMask;
+                native_array_scene_index[i]     = sceneIndex;
+                native_array_render_layer[i]    = tileData.RenderLayer;
+                native_array_position[i]        = new float3(tileData.transform.position.x, tileData.transform.position.y, tileData.transform.position.z);
+                native_array_rotateY[i]         = tileData.transform.eulerAngles.y;
+                native_array_heights[i]         = tileData.HeightMask;
             }
 
             EditMapTileJob job = new EditMapTileJob
             {
-                SceneIndex = native_array_scene_index,
-                NavLayer   = native_array_nav_layer,
-                Position   = native_array_position,
-                RotY       = native_array_rotateY,
-                Height     = native_array_heights,
-                Data       = native_array_result
+                SceneIndex  = native_array_scene_index,
+                RenderLayer = native_array_render_layer,
+                Position    = native_array_position,
+                RotY        = native_array_rotateY,
+                Height      = native_array_heights,
+                Data        = native_array_result
             };
             JobHandle jobHandle = job.Schedule(tiles.Length, 64);
             jobHandle.Complete();
 
             // Map 등록
             var map = new ConcurrentDictionary<int, EditMapGridData>();
-            int gridKey, tileKey;
+            int gridKey, tileKey, renderIndex;
             long naviMask;
             for (int i = 0; i < native_array_result.Length; ++i)
             {
-                gridKey = native_array_result[i].GridKey;
-                tileKey = native_array_result[i].TileKey;
-                naviMask = native_array_result[i].NaviMask;
+                gridKey     = native_array_result[i].GridKey;
+                tileKey     = native_array_result[i].TileKey;
+                naviMask    = native_array_result[i].NaviMask;
+                renderIndex = native_array_result[i].RenderMask;
 
                 if (false == map.ContainsKey(gridKey))
                 {
@@ -102,17 +104,17 @@ namespace MapSampling
                 {
                     GridKey = gridKey,
                     TileKey = tileKey,
-                    NaviMask = naviMask
+                    NaviMask = naviMask,
+                    LinkMask = default, // 나중에 Link() 할 때에 데이터 입력
+                    RenderMask = renderIndex
                 };
-
-                //Debug.Log($"[TEST] {native_array_result[i].TilePosition}");
 
                 map[gridKey].TryAdd(tileKey, tile_data);
             }
 
             float3 start_tile_pivot = native_array_result[0].GetTilePivot();
             native_array_scene_index.Dispose();
-            native_array_nav_layer.Dispose();
+            native_array_render_layer.Dispose();
             native_array_position.Dispose();
             native_array_rotateY.Dispose();
             native_array_heights.Dispose();
@@ -122,24 +124,10 @@ namespace MapSampling
             LinkTiles(map, start_tile_pivot);
 
             SaveTileMeshes(map, tiles);
-            AssetDatabase.Refresh();
-
-            foreach (var grid in map.Values)
-            {
-                foreach (var tile in grid.Data.Values)
-                {
-                    Debug.Log($"tile:{tile.GetTilePivot()}" +
-                                //Debug.Log($"grid:{grid.gridKey}({EditMapUtil.GetGridPosition(grid.gridKey)}), tile:{tile.GetTilePivot()}" +
-                                $"\nnavi = {System.Convert.ToString(tile.NaviMask, 2)}" +
-                                $", link = {System.Convert.ToString(tile.LinkMask, 2)}");
-                    //Debug.Log($"{tile.GetTilePivot()}.");
-                }
-            }
 
             Debug.Log($"--- End (length: {tiles.Length}) ---");
             System.GC.Collect();
         }
-
         private void LinkTiles(ConcurrentDictionary<int, EditMapGridData> map, float3 start_position)
         {
             Stack<float3> stack     = new Stack<float3>();
@@ -271,11 +259,11 @@ namespace MapSampling
             for (int i = 0; i < tiles.Length; ++i)
             {
                 tile = tiles[i];
-                long key = tile.RenderLayer << 32 | sceneIndex << 24 | tile.GridKey;
-
-                if (false == tempDataDict.ContainsKey(key))
+                //https://www.youtube.com/watch?v=RAwRNE1SJC8 uint 값을 넘어가는 시프팅은 연산이 다르다고 함;
+                long temp_grid_key = ((long)tile.RenderLayer << 32) | ((long)sceneIndex << 24) | (long)tile.GridKey;
+                if (false == tempDataDict.ContainsKey(temp_grid_key))
                 {
-                    tempDataDict[key] = new TempData
+                    tempDataDict[temp_grid_key] = new TempData
                     {
                         combineInstances = new List<CombineInstance>(),
                         combinedUVs = new List<Vector2>(),
@@ -284,9 +272,8 @@ namespace MapSampling
                     };
                 }
 
-                tempData = tempDataDict[key];
+                tempData = tempDataDict[temp_grid_key];
 
-                // 🚨 핵심 수정: MeshFilter와 sharedMesh의 유효성 검사 및 정점 개수 확인
                 if (tile.MeshFilter == null || tile.MeshFilter.sharedMesh == null)
                 {
                     Debug.LogWarning($"Tile at index {i} has a null MeshFilter or sharedMesh. Skipping.");
@@ -296,11 +283,11 @@ namespace MapSampling
                 int currentVertexCount = tempData.vertexCount;
                 int tileVertexCount = tile.MeshFilter.sharedMesh.vertexCount;
 
-                // 정점 수가 0인 메쉬도 결합 대상에서 제외해야 UV 누적 오류를 막을 수 있습니다.
+                // 정점 0개인 메쉬는 건너뛴다.
                 if (tileVertexCount == 0)
                 {
                     Debug.LogWarning($"Tile at index {i} has 0 vertices. Skipping.");
-                    continue; // 정점 0개인 메쉬는 건너뜁니다.
+                    continue; 
                 }
 
                 if (currentVertexCount + tileVertexCount > VERTEX_LIMIT)
@@ -314,7 +301,7 @@ namespace MapSampling
                         Debug.LogError($"[227] UV/Vertex Count Mismatch! Vertices: {combinedMesh.vertexCount}, UVs: {tempData.combinedUVs.Count}");
                     }
 
-                    SaveMesh(map, combinedMesh, sceneIndex, tile.GridKey, tile.NaviLayer, tempData.index, true, false);
+                    SaveMesh(map, combinedMesh, sceneIndex, tile.GridKey, tile.RenderLayer, tempData.index, true, false);
 
                     tempData.combineInstances.Clear();
                     tempData.combinedUVs.Clear();
@@ -330,10 +317,8 @@ namespace MapSampling
 
                 Vector2[] uvs = GetUVs(combInstance, tile.TextureIndex);
 
-                // 🚨 디버깅: uvs 개수와 정점 개수가 다른지 다시 한번 확인
                 if (uvs.Length != tileVertexCount)
                 {
-                    // 이 로그가 찍히면 GetUVs 함수나 원본 메쉬 자체에 문제가 있는 것입니다.
                     Debug.LogError($"Tile {i} - Inconsistent UV/Vertex count. Mesh Vertices: {tileVertexCount}, GetUVs returned: {uvs.Length}");
                 }
 
@@ -342,7 +327,7 @@ namespace MapSampling
                 tempData.combinedUVs.AddRange(uvs);
                 tempData.vertexCount += tileVertexCount;
 
-                tempDataDict[key] = tempData;
+                tempDataDict[temp_grid_key] = tempData;
             }
 
             // 마지막까지 남은 데이터를 마저 생성하는거네
@@ -357,31 +342,30 @@ namespace MapSampling
 
                     if (combinedMesh.vertexCount != tempData.combinedUVs.Count)
                     {
-                        // 🔴 여기서 로그를 찍어 불일치 원인을 파악해야 합니다.
                         Debug.LogError($"[266] UV/Vertex Count Mismatch! Vertices: {combinedMesh.vertexCount}, UVs: {tempData.combinedUVs.Count}");
-                        // 이 오류가 나면 아래 코드는 실행되지 않거나, 실행되어도 오류 로그를 남길 것입니다.
                     }
 
                     // long key = tile.RenderLayer << 32 | sceneIndex << 24 | tile.GridKey;
-                    int gridKey = (int)(kvp.Key & 0x00FF_FFFF);
+                    int gridKey   = (int)(kvp.Key & 0xFFFF);
                     int layerMask = (int)(kvp.Key >> 32);
                     SaveMesh(map, combinedMesh, sceneIndex, gridKey, layerMask, tempData.index, true, false);
                 }
             }
 
             EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
+            AssetDatabase.Refresh();
         }
 
-        private void SaveMesh(ConcurrentDictionary<int, EditMapGridData> map, Mesh mesh, int sceneIndex, int gridKey, int layer, int index, bool makeNewInstance, bool optimizeMesh)
+        private void SaveMesh(ConcurrentDictionary<int, EditMapGridData> map, Mesh mesh, int sceneIndex, int gridKey, int render_layer, int index, bool makeNewInstance, bool optimizeMesh)
         {
             if (false == map.ContainsKey(gridKey))
             {
                 map.TryAdd(gridKey, new EditMapGridData(gridKey));
             }
 
-            string assetName = $"MapRender_{sceneIndex}_G{gridKey}_L{layer}_{index}"; 
+            string assetName = $"MapRender_{sceneIndex}_G{gridKey}_L{render_layer}_{index}"; 
             map[gridKey].AddAssetFile(assetName);
-            map[gridKey].AddMeshAsset(layer, assetName);
+            map[gridKey].AddMeshAsset(render_layer, assetName);
 
             var path = "Assets/Rcs/MapRender/" + assetName + ".asset";
             if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path))
@@ -396,11 +380,11 @@ namespace MapSampling
             }
 
             // save data
-            foreach (var grid in map)
+            foreach (KeyValuePair<int, EditMapGridData> grid in map)
             {
                 MapGridData grid_data = new MapGridData()
                 {
-                    gridKey = grid.Key,
+                    gridKey = gridKey,
                     MapNavDataDictionary = grid.Value.ParseData(),
                     assetFiles = grid.Value.assetFiles,
                     mesh = grid.Value.layer_mesh_assets
@@ -408,7 +392,7 @@ namespace MapSampling
 
                 AssetManager.WriteBinaryFile<MapGridData>(data: grid_data,
                                                          dataPath: MAP_NAVI_DATA_PATH,
-                                                         fileName: $"MapNavi_{grid.Key}",
+                                                         fileName: $"MapNavi_{gridKey}", //덮어 쓸까봐 걱정인데
                                                          addressableGroup: "MapNavi");
             }
 

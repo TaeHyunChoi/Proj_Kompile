@@ -15,13 +15,8 @@ MonoBehaviour:
   m_GroupName: MapRender
   m_GUID: d20cb78037ea68b4c9806d32461477c7
   m_SerializeEntries:
-  - m_GUID: 2e9fc02cb635cf7408e231337925b34d
-    m_Address: MapRender_0_G2_L0_0
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 303581b6cc333e2478815206af98466c
-    m_Address: MapRender_0_G1_L0_0
+  - m_GUID: 26168c1cc00071343afff93a80cca164
+    m_Address: MapRender_0_G0_L2_0
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -30,8 +25,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e966b132dc9004147b7c207157befa1d
-    m_Address: MapRender_0_G3_L0_0
+  - m_GUID: d337bd7c5fde75b4582bed37a2998585
+    m_Address: MapRender_0_G0_L1_0
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d5379fb107c7ebc479851333cc495f7e
+    m_Address: MapRender_0_G0_L3_0
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
