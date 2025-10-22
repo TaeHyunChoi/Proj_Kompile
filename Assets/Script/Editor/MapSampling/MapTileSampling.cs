@@ -386,8 +386,7 @@ namespace MapSampling
                 {
                     gridKey = gridKey,
                     MapNavDataDictionary = grid.Value.ParseData(),
-                    assetFiles = grid.Value.assetFiles,
-                    mesh = grid.Value.layer_mesh_assets
+                    layer_table = grid.Value.layer_mesh_assets
                 };
 
                 AssetManager.WriteBinaryFile<MapGridData>(data: grid_data,
@@ -476,9 +475,9 @@ namespace MapSampling
             Debug.Log($"END LOAD ({Time.time - time:F2} sec)");
 
             string asset_file = string.Empty;
-            for (int i = 0; i < data.assetFiles.Count; ++i)
+            for (int i = 0; i < data.layer_table.Count; ++i)
             {
-                asset_file += $"{data.assetFiles[i]}, ";
+                asset_file += $"{data.layer_table[i].layer}, ";
             }
             Debug.Log($"file: {asset_file}");
 

@@ -23,48 +23,69 @@ namespace Script.Manager
         {
             MapGridData data = await ReadBinaryFileAsync<MapGridData>($"MapNavi_{gridKey}");
 
-            int length = data.assetFiles.Count;
-            int[] mesh_instance_id = new int[length];
-            (int instanceID, Mesh mesh)[] mesh_data = await GetMapGridMeshesAsync(data.assetFiles);
+            List<int> mesh_instance_id = new List<int>();
+
+            // 하.. 여기서 Mesh 꺼내는 것도 좋은데.. instanceID가 필요한가 싶다. 
+            // layer_index가 필요한 것 같은데.
+
+            // 아래 2개를 합치는 게 맞을 것 같은데
+            // 이 부분 정리 필요
+            List<(int instanceID, Mesh mesh)> mesh_data = await GetMapGridMeshesAsync(data.layer_table);
 
             GameObject obj;
-            for (int i = 0; i < length; ++i)
+            for (int i = 0; i < mesh_data.Count; ++i)
             {
                 obj = await GetOrNewInstanceAsync(AssetCode.MapGridPrefab, AssetParentType.MAP_ROOT);
                 obj.transform.position = Vector3.zero;
                 obj.GetComponent<MeshFilter>().mesh = mesh_data[i].mesh;
 
-                mesh_instance_id[i] = mesh_data[i].instanceID;
+                // 생성 뭐시기에 (int layer, GameObject obj)를 묶어서 처리하던가 그래야 할 것 같은데요
+                // 그렇다면?... 
+
+                mesh_instance_id.Add(mesh_data[i].instanceID);
                 await Task.Yield();
             }
 
-            data.SetChildObjectMeshIDs(mesh_instance_id);
+            data.SetChildObjectMeshIDs(mesh_instance_id.ToArray());
             return data;
         }
-        private static async Task<(int, Mesh)[]> GetMapGridMeshesAsync(List<string> keys)
+        public static async Task<List<(int, Mesh)>> GetMapGridMeshesAsync(List<GridLayerData> layer_data)
         {
-            int length = keys.Count;
+            int length = layer_data.Count;
 
-            AsyncOperationHandle<Mesh>[] meshTasks = new AsyncOperationHandle<Mesh>[length];
-            Task[] tasks  = new Task[length];
-            (int instanceID, Mesh mesh)[] result = new (int, Mesh)[length];
+            List<AsyncOperationHandle<Mesh>> meshTasks = new List<AsyncOperationHandle<Mesh>>(length);
+            List<Task> tasks  = new List<Task>(length);
+            List<(int instanceID, Mesh mesh)> result = new List<(int, Mesh)>(length);
 
             for (int i = 0; i < length; ++i)
             {
-                meshTasks[i] = Addressables.LoadAssetAsync<Mesh>(keys[i]);
-                tasks[i]     = meshTasks[i].Task;
+                for (int j = 0; j < layer_data[i].assets.Count; ++j)
+                {
+                    AsyncOperationHandle<Mesh> handle = Addressables.LoadAssetAsync<Mesh>(layer_data[i].assets[j]);
+                    meshTasks.Add(handle);
+                    tasks.Add(handle.Task);
+                }
             }
             await Task.WhenAll(tasks);
 
-            for (int i = 0; i < length; ++i)
+            for (int i = 0; i < meshTasks.Count; ++i)
             {
-                result[i] = (meshTasks[i].Result.GetInstanceID(), meshTasks[i].Result);
+                result.Add((meshTasks[i].Result.GetInstanceID(), meshTasks[i].Result));
                 _nonGameObjectInstances.TryAdd(result[i].instanceID, meshTasks[i]);
             }
 
             return result;
         }
+        public static async Task<Mesh> GetMeshAssetAsync(string address)
+        {
+            AsyncOperationHandle<Mesh> handle = Addressables.LoadAssetAsync<Mesh>(address);
+            await handle.Task;
 
+            Mesh mesh = handle.Result;
+            _nonGameObjectInstances.TryAdd(mesh.GetInstanceID(), handle);
+
+            return mesh;
+        }
     }
 
     public static partial class AssetManager
@@ -165,6 +186,7 @@ namespace Script.Manager
             entry.AddReference();
             return instance;
         }
+
         private static Transform GetIngameObjectParent(AssetParentType parentType)
         {
             switch (parentType)
@@ -219,7 +241,7 @@ namespace Script.Manager
         // Non GameObject Assets (animation, mesh, ...)
         public static async Task<(int HashCode, T Value)> LoadAssetAsync<T>(string key) where T : class
         {
-            var handle = Addressables.LoadAssetAsync<T>(key);
+            AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(key);
             T value = await handle.Task;
 
             var hash_code = value.GetHashCode();

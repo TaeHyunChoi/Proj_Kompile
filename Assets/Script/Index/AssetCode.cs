@@ -19,6 +19,7 @@ namespace Script.Index
 
         DB_MAP_GRID,
         MapGridPrefab,
+        MapGridLayerPrefab,
 
         OP_TitleObject,
 

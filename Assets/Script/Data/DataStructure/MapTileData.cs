@@ -7,10 +7,11 @@ namespace Script.Data
     [MessagePackObject]
     public struct MapTileData
     {
-        [Key(0)]
-        [ReadOnly] public long NavMask;
-        [Key(1)]
-        [ReadOnly] public int LinkMask;
+        [ReadOnly, Key(0)]
+        public long NavMask;
+        
+        [ReadOnly, Key(1)]
+        public int LinkMask;
 
         public MapTileData(EditMapTileData edited)
         {

@@ -7,7 +7,6 @@ namespace Script.Manager
     using System.Threading.Tasks;
     using Unity.Mathematics;
     using UnityEngine;
-    using System.Diagnostics;
 
     public partial class FieldManager
     {
@@ -24,10 +23,8 @@ namespace Script.Manager
             // 목표 지점이 현재 지점과 같은 타일에 속하지 않는다면? 연결 지점의 타일을 찾아서 y값을 조정해야 한다
             if (false == MapUtil.IsKeyMaskEquals(current_position, target_position))
             {
-                #region 여기서부터 계산이 이상한데?
                 Vector3 target_pivot = MapUtil.GetTilePivotPosition(target_position, false);
                 Vector3 current_pivot = MapUtil.GetTilePivotPosition(current_position, false);
-
                 Vector3 diff = target_pivot - current_pivot;
 
                 // 만약에 목표 지점으로 linked = false; 라면 이동 실패.
@@ -35,7 +32,6 @@ namespace Script.Manager
                 {
                     return false;
                 }
-                #endregion
 
                 if (false == MapUtil.TryGetLinkValue(current_tile.LinkMask, index, out y))
                 {
@@ -100,27 +96,26 @@ namespace Script.Manager
 
 
 #if UNITY_EDITOR
-            MapGridData grid;
+            MapGridData grid_data;
             int[] test_grid = new int[] { 0, };
             //int[] test_grid = new int[] { 0, 1, 2, 3 };
 
+            int current_layer_index = 0;
             for (int i = 0; i < test_grid.Length; ++i)
             {
-                grid = await AssetManager.InstaniateMapGrid(test_grid[i]);
-                currentMapGrid.TryAdd(grid.gridKey, grid);
+                grid_data = await AssetManager.ReadBinaryFileAsync<MapGridData>($"MapNavi_{test_grid[i]}");
 
-                //foreach (var tile in currentMapGrid[grid.gridKey].MapNavDataDictionary.Values)
-                //{ 
-                //    tile.LinkMask
-                //}
+                GameObject grid_obj = await AssetManager.GetOrNewInstanceAsync(AssetCode.MapGridPrefab, AssetParentType.MAP_ROOT);
+                IngameMapGridObject root = grid_obj.GetComponent<IngameMapGridObject>();
+                root.Initialize(grid_data, current_layer_index);
+
+                currentMapGrid.TryAdd(grid_data.gridKey, grid_data);
             }
 #endif
 
             // instantiage player unit
-            GameObject obj = await AssetManager.GetOrNewInstanceAsync(AssetCode.UnitBase, AssetParentType.UNIT_ROOT);
-
-            // TODO: 테스트 목적이라서 나중에 다시 만들어야 함.
-            player_character[0] = obj.AddComponent<IngameFieldPlayer>();
+            GameObject obj           = await AssetManager.GetOrNewInstanceAsync(AssetCode.UnitBase, AssetParentType.UNIT_ROOT);
+            player_character[0]      = obj.AddComponent<IngameFieldPlayer>();  // TODO: 테스트 목적이라서 나중에 다시 만들어야 함.
             IngameFieldPlayer player = player_character[0];
 
             target_tiles = new IngameMapTileData[4];
@@ -131,7 +126,7 @@ namespace Script.Manager
             }
             else
             {
-                UnityEngine.Debug.Assert(false, "[TEST] Fail to initialize player_character");
+                Debug.Assert(false, "[TEST] Fail to initialize player_character");
                 return false;
             }
 

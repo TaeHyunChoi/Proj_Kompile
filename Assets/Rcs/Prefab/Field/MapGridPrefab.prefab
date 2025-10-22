@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5808103490622862981}
   - component: {fileID: 4775890496037225811}
   - component: {fileID: 3662117610210627665}
+  - component: {fileID: 4214781121071562138}
   m_Layer: 0
   m_Name: MapGridPrefab
   m_TagString: Untagged
@@ -86,3 +87,15 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &4214781121071562138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7971857014231476118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c69df4dff1527044dbf3688bcc7784d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
