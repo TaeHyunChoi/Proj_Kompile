@@ -43,27 +43,6 @@ namespace Script.Data
         }
     }
 
-
-    // for test
-    [MessagePackObject]
-    public struct GridLayerData
-    {
-        [Key(0)]
-        [Unity.Collections.ReadOnly] public int layer;
-        [Key(1)]
-        [Unity.Collections.ReadOnly] public List<string> assets;
-
-        public GridLayerData(int _layer, string asset)
-        {
-            layer = _layer;
-            assets = new List<string>() { asset };
-        }
-        public void Add(string asset)
-        {
-            assets.Add(asset);
-        }
-    }
-
     public partial class EditMapGridData
     {
         public List<GridLayerData> layer_mesh_assets = new List<GridLayerData>();

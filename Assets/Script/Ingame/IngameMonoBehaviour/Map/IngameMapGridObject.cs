@@ -1,4 +1,5 @@
 using Script.Data;
+using Script.Index;
 using Script.Manager;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,13 +7,21 @@ using UnityEngine;
 public class IngameMapGridObject :IngameMonoBehaviourBase
 {
     private MapGridData raw_data;
-    private List<(int, GameObject)> by_layer_objects;
+    private List<IngameMapGridLayerObject> by_layer_objects;
 
-    public async void Initialize(MapGridData data, int current_layer_index)
+    public MapGridData Data => raw_data;
+
+    // 잠깐만.. 애초에 이게 맞나 싶기도 합니다?...
+    // class 따로 만들어서 GameObject를 멤버로 받는게 맞지 않나?
+    // GameObect에 뭐 붙이려고 하니까 생성자 규칙에서 어긋나는 것 같은데요
+    // 데이터와 개체를 최대한 분리한다면...
+    public async void Initialize(MapGridData data)
     {
+        asset_code = AssetCode.MapGridPrefab;
+
         raw_data = data;
         transform.position = Vector3.zero;
-        by_layer_objects = new List<(int, GameObject)>();
+        by_layer_objects = new List<IngameMapGridLayerObject>();
 
         List<GridLayerData> layer_table = data.layer_table;
         for (int i = 0; i < layer_table.Count; ++i)
@@ -20,18 +29,22 @@ public class IngameMapGridObject :IngameMonoBehaviourBase
             int layer_index = layer_table[i].layer;
             for (int j = 0; j < layer_table[i].assets.Count; ++j)
             {
-                Mesh layer_mesh = await AssetManager.GetMeshAssetAsync(layer_table[i].assets[j]);
+                var layer_obj = await AssetManager.GetOrNewInstanceAsync<IngameMapGridLayerObject>(AssetCode.MapGridLayerPrefab, this.transform, usePooling: true);
+                layer_obj.Initialize(layer_index, layer_table[i].assets[j]);
 
-                // 잠시 테스트로 좀 해봅시다..
-                // 이렇게 하면 에셋 해제 관리를 할 수 없다. 확인 및 수정 요망
-                GameObject obj = new GameObject(layer_table[i].assets[j]);
-                obj.transform.parent = this.transform;
-                MeshFilter meshFilter = obj.AddComponent<MeshFilter>();
-                meshFilter.mesh = layer_mesh;
-
-                obj.SetActive(layer_index == current_layer_index);
-                by_layer_objects.Add((layer_index, obj));
+                by_layer_objects.Add(layer_obj);
             }
         }
+    }
+
+    public override void Release()
+    {
+        for (int i = 0; i < by_layer_objects.Count; ++i)
+        {
+            by_layer_objects[i].Release();
+            AssetManager.ReleaseInstance(AssetCode.MapGridLayerPrefab, by_layer_objects[i].gameObject, true);
+        }
+
+        AssetManager.ReleaseInstance(AssetCode.MapGridPrefab, this.gameObject);
     }
 }

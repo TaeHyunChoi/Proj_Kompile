@@ -12,8 +12,6 @@ namespace Script.Manager
 
 
         private static FieldManager fieldMgr;
-        private static MapTileOverlapJobManager overlapJobManager;
-
 
         private static PlayData         playData;
 
@@ -31,7 +29,6 @@ namespace Script.Manager
 
             playData = data;
 
-            overlapJobManager = new MapTileOverlapJobManager();
             fieldMgr = new FieldManager();
             await fieldMgr.Initialize(playData);
         }
@@ -118,6 +115,8 @@ namespace Script.Manager
                     ingameProcedures[i].Dispose();
                 }
             }
+
+            fieldMgr.Release();
         }
     }
 }

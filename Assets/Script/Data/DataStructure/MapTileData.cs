@@ -13,11 +13,14 @@ namespace Script.Data
         [ReadOnly, Key(1)]
         public int LinkMask;
 
+#if UNITY_EDITOR
         public MapTileData(EditMapTileData edited)
         {
             NavMask = edited.NaviMask;
             LinkMask = edited.LinkMask;
         }
+#endif
+
         public MapTileData(long navMask)
         {
             NavMask  = navMask;

@@ -4,12 +4,79 @@ namespace Script.Manager
     using Script.Index;
     using Script.IngameMessage;
     using Script.Util;
+    using System.Linq;
     using System.Threading.Tasks;
     using Unity.Mathematics;
     using UnityEngine;
 
-    public partial class FieldManager
+    public class FieldManager
     {
+        private static ConcurrentDictionary<int, IngameMapGridObject> currentMapGrid;
+        private static IngameFieldPlayer[] player_character = new IngameFieldPlayer[3];
+        private static IngameMapTileData[] check_collide_tiles; // 아.. 충돌 확인 대상이구나.
+
+        private static int current_layer_index = 0;
+        public static int CurrentLayerIndex => current_layer_index;
+
+
+        private static bool isSmall;
+        private static float TileScale
+        {
+            get
+            {
+                return (true == isSmall) ? 0.5f : 1f;
+            }
+        }
+
+        public async Task<bool> Initialize(PlayData playData)
+        {
+#if UNITY_EDITOR
+            UnityEngine.Debug.Log($"[FieldManager] Initialize(PlayerData)");
+#endif
+
+            // instantiage map
+            currentMapGrid = new ConcurrentDictionary<int, IngameMapGridObject>();
+
+
+#if UNITY_EDITOR
+            MapGridData grid_data;
+            int[] test_grid = new int[] { 0, };
+            //int[] test_grid = new int[] { 0, 1, 2, 3 };
+
+            current_layer_index = 0;
+            for (int i = 0; i < test_grid.Length; ++i)
+            {
+                grid_data = await AssetManager.ReadBinaryFileAsync<MapGridData>($"MapNavi_{test_grid[i]}");
+
+                GameObject grid_obj = await AssetManager.GetOrNewInstanceAsync(AssetCode.MapGridPrefab, AssetParentType.MAP_ROOT);
+                IngameMapGridObject root = grid_obj.GetComponent<IngameMapGridObject>();
+                root.Initialize(grid_data);
+
+                currentMapGrid.TryAdd(grid_data.gridKey, root);
+            }
+#endif
+
+            // instantiage player unit
+            GameObject obj           = await AssetManager.GetOrNewInstanceAsync(AssetCode.UnitBase, AssetParentType.UNIT_ROOT);
+            player_character[0]      = obj.AddComponent<IngameFieldPlayer>();  // TODO: 테스트 목적이라서 나중에 다시 만들어야 함.
+            IngameFieldPlayer player = player_character[0];
+
+            check_collide_tiles = new IngameMapTileData[4];
+
+            if (true == await player.Init(0))
+            {
+                IngameManager.InitFollowingCamera(player);
+            }
+            else
+            {
+                Debug.Assert(false, "[TEST] Fail to initialize player_character");
+                return false;
+            }
+
+            MessageManager.Publish(new OnEndEvent(IngameEventType.FIELD_INIT));
+            return true;
+        }
+
         public static bool TryPlayerMove(Vector3 current_position, Vector3 move_delta, out float y)
         {
             y = 0f;
@@ -48,14 +115,14 @@ namespace Script.Manager
             }
 
             float radius = 0.3f; //얘도 거의 뭐 임시값이었네?
-            bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, target_tiles);
+            bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, check_collide_tiles);
             if (false == isMovable)
             {
                 return false;
             }
 
             // 다음 위치의 타일 정보 : IngameMapTileData target_tiles[0]; => GetTargetTiles(Vector3)에서 그렇게 정했음~!!
-            IngameMapTileData targetTile = target_tiles[0];
+            IngameMapTileData targetTile = check_collide_tiles[0];
 
             int i = MapUtil.GetTriangleIndex(target_position, false);
             MapUtil.TryGetTrianglePoint(targetTile, i, 0, true, out float3 a);
@@ -67,101 +134,6 @@ namespace Script.Manager
             y = Mathf.Clamp(y, pivot_y, pivot_y + 1);
             return isMovable;
         }
-    }
-
-    public partial class FieldManager
-    {
-        private static ConcurrentDictionary<int, MapGridData> currentMapGrid; // 일단 하나만 올려보자.
-        private static IngameFieldPlayer[] player_character = new IngameFieldPlayer[3];
-
-        private static IngameMapTileData[] target_tiles;
-
-        private static bool isSmall;
-        private static float TileScale
-        {
-            get
-            {
-                return (true == isSmall) ? 0.5f : 1f;
-            }
-        }
-
-        public async Task<bool> Initialize(PlayData playData)
-        {
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"[FieldManager] Initialize(PlayerData)");
-#endif
-
-            // instantiage map
-            currentMapGrid = new ConcurrentDictionary<int, MapGridData>();
-
-
-#if UNITY_EDITOR
-            MapGridData grid_data;
-            int[] test_grid = new int[] { 0, };
-            //int[] test_grid = new int[] { 0, 1, 2, 3 };
-
-            int current_layer_index = 0;
-            for (int i = 0; i < test_grid.Length; ++i)
-            {
-                grid_data = await AssetManager.ReadBinaryFileAsync<MapGridData>($"MapNavi_{test_grid[i]}");
-
-                GameObject grid_obj = await AssetManager.GetOrNewInstanceAsync(AssetCode.MapGridPrefab, AssetParentType.MAP_ROOT);
-                IngameMapGridObject root = grid_obj.GetComponent<IngameMapGridObject>();
-                root.Initialize(grid_data, current_layer_index);
-
-                currentMapGrid.TryAdd(grid_data.gridKey, grid_data);
-            }
-#endif
-
-            // instantiage player unit
-            GameObject obj           = await AssetManager.GetOrNewInstanceAsync(AssetCode.UnitBase, AssetParentType.UNIT_ROOT);
-            player_character[0]      = obj.AddComponent<IngameFieldPlayer>();  // TODO: 테스트 목적이라서 나중에 다시 만들어야 함.
-            IngameFieldPlayer player = player_character[0];
-
-            target_tiles = new IngameMapTileData[4];
-
-            if (true == await player.Init(0))
-            {
-                IngameManager.InitFollowingCamera(player);
-            }
-            else
-            {
-                Debug.Assert(false, "[TEST] Fail to initialize player_character");
-                return false;
-            }
-
-            MessageManager.Publish(new OnEndEvent(IngameEventType.FIELD_INIT));
-            return true;
-        }
-
-        //public static bool TryPlayerMove(float3 target_position, out float y)
-        //{
-        //    y = target_position.y;
-
-        //    if (false == TryGetLinkedTiles(target_position))
-        //    {
-        //        return false;
-        //    }
-
-        //    float radius = 0.3f;
-        //    bool isMovable = MapTileOverlapJobManager.Instance.CheckMapTileMovable(target_position, isSmall, radius, target_tiles);
-        //    if (false == isMovable)
-        //    {
-        //        return false;
-        //    }
-
-        //    // 다음 위치의 타일 정보 : IngameMapTileData target_tiles[0]; => GetTargetTiles(Vector3)에서 그렇게 정했음~!!
-        //    IngameMapTileData targetTile = target_tiles[0];
-
-        //    int i = MapUtil.GetTriangleIndex(target_position, false);
-        //    MapUtil.TryGetTrianglePoint(targetTile, i, 0, true, out float3 a);
-        //    MapUtil.TryGetTrianglePoint(targetTile, i, 1, true, out float3 b);
-        //    MapUtil.TryGetTrianglePoint(targetTile, i, 2, true, out float3 c);
-
-        //    y = MapUtil.CalculateYOnPlane(a, b, c, target_position.x, target_position.z);
-        //    return isMovable;
-        //}
-
         private static bool TryGetLinkedTiles(Vector3 target_position)
         {
             // 다음 이동할 목표 좌표에 대하여 타일값이 유효하게 존재하는가?
@@ -176,7 +148,7 @@ namespace Script.Manager
             int target_link_mask = mapTileData.LinkMask;
 
             // 현재 위치한 타일++
-            target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
+            check_collide_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
 
             // next_target_position을 기준으로 이웃한 타일이 어디인지 확인
             int quarant = MapUtil.GetQuarantInTile(target_position, isSmall);
@@ -211,19 +183,19 @@ namespace Script.Manager
                 else
                 {
                     //연결 여부가 없다면? none_data 입력
-                    target_tiles[index++] = new IngameMapTileData(grid_key, tile_key);
+                    check_collide_tiles[index++] = new IngameMapTileData(grid_key, tile_key);
                     continue;
                 }
 
                 // 타일 존재 확인
                 if (true == TryGetMapTileData(neighbor_tile_pivot, out mapTileData))
                 {
-                    target_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
+                    check_collide_tiles[index++] = new IngameMapTileData(grid_key, tile_key, mapTileData);
                 }
                 else
                 {
                     // none_data
-                    target_tiles[index++] = new IngameMapTileData(grid_key, tile_key);
+                    check_collide_tiles[index++] = new IngameMapTileData(grid_key, tile_key);
                 }
             }
 
@@ -240,17 +212,15 @@ namespace Script.Manager
             }
 
             int tKey = MapUtil.GetTileKeyMask(position);
-            return currentMapGrid[gKey].TryGetTileData(tKey, out tile);
+            return currentMapGrid[gKey].Data.TryGetTileData(tKey, out tile);
         }
 
-        ~FieldManager()
+        public void Release()
         {
             foreach (var grid in currentMapGrid.Values)
             {
-                grid.Dispose();
+                grid.Release();
             }
-
-            player_character = null;
         }
     }
 }

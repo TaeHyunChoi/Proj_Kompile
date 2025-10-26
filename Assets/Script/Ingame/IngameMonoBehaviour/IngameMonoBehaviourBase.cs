@@ -1,11 +1,11 @@
-using System.Collections.Generic;
 using Script.Interface;
 using Script.Manager;
+using Script.Index;
 using UnityEngine;
 
-public class IngameMonoBehaviourBase : MonoBehaviour
+public abstract class IngameMonoBehaviourBase : MonoBehaviour
 {
-    protected List<int> asset_hash_codes;
+    protected AssetCode asset_code;
 
     protected virtual void OnEnable()
     {
@@ -49,15 +49,7 @@ public class IngameMonoBehaviourBase : MonoBehaviour
         {
             InputHandler.RemoveInputReceiver(inputReceiver);
         }
-
-        if (null != asset_hash_codes)
-        {
-            for (int i = 0; i < asset_hash_codes.Count; ++i)
-            {
-                AssetManager.Dispose(asset_hash_codes[i]);
-            }
-
-            asset_hash_codes = null;
-        }
     }
+
+    public abstract void Release();
 }

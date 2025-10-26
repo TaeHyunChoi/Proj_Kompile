@@ -14,77 +14,21 @@ namespace Script.Manager
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
+
 #endif
     
     public static partial class AssetManager
     {
         // Map?
-        public static async Task<MapGridData> InstaniateMapGrid(int gridKey)
+        public static async Task<T> GetAssetAsync<T>(string address) where T : Object
         {
-            MapGridData data = await ReadBinaryFileAsync<MapGridData>($"MapNavi_{gridKey}");
-
-            List<int> mesh_instance_id = new List<int>();
-
-            // 하.. 여기서 Mesh 꺼내는 것도 좋은데.. instanceID가 필요한가 싶다. 
-            // layer_index가 필요한 것 같은데.
-
-            // 아래 2개를 합치는 게 맞을 것 같은데
-            // 이 부분 정리 필요
-            List<(int instanceID, Mesh mesh)> mesh_data = await GetMapGridMeshesAsync(data.layer_table);
-
-            GameObject obj;
-            for (int i = 0; i < mesh_data.Count; ++i)
-            {
-                obj = await GetOrNewInstanceAsync(AssetCode.MapGridPrefab, AssetParentType.MAP_ROOT);
-                obj.transform.position = Vector3.zero;
-                obj.GetComponent<MeshFilter>().mesh = mesh_data[i].mesh;
-
-                // 생성 뭐시기에 (int layer, GameObject obj)를 묶어서 처리하던가 그래야 할 것 같은데요
-                // 그렇다면?... 
-
-                mesh_instance_id.Add(mesh_data[i].instanceID);
-                await Task.Yield();
-            }
-
-            data.SetChildObjectMeshIDs(mesh_instance_id.ToArray());
-            return data;
-        }
-        public static async Task<List<(int, Mesh)>> GetMapGridMeshesAsync(List<GridLayerData> layer_data)
-        {
-            int length = layer_data.Count;
-
-            List<AsyncOperationHandle<Mesh>> meshTasks = new List<AsyncOperationHandle<Mesh>>(length);
-            List<Task> tasks  = new List<Task>(length);
-            List<(int instanceID, Mesh mesh)> result = new List<(int, Mesh)>(length);
-
-            for (int i = 0; i < length; ++i)
-            {
-                for (int j = 0; j < layer_data[i].assets.Count; ++j)
-                {
-                    AsyncOperationHandle<Mesh> handle = Addressables.LoadAssetAsync<Mesh>(layer_data[i].assets[j]);
-                    meshTasks.Add(handle);
-                    tasks.Add(handle.Task);
-                }
-            }
-            await Task.WhenAll(tasks);
-
-            for (int i = 0; i < meshTasks.Count; ++i)
-            {
-                result.Add((meshTasks[i].Result.GetInstanceID(), meshTasks[i].Result));
-                _nonGameObjectInstances.TryAdd(result[i].instanceID, meshTasks[i]);
-            }
-
-            return result;
-        }
-        public static async Task<Mesh> GetMeshAssetAsync(string address)
-        {
-            AsyncOperationHandle<Mesh> handle = Addressables.LoadAssetAsync<Mesh>(address);
+            AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
             await handle.Task;
 
-            Mesh mesh = handle.Result;
-            _nonGameObjectInstances.TryAdd(mesh.GetInstanceID(), handle);
+            T asset = handle.Result;
+            _nonGameObjectInstances.TryAdd(asset.GetInstanceID(), handle);
 
-            return mesh;
+            return asset;
         }
     }
 
@@ -136,11 +80,6 @@ namespace Script.Manager
             handle.ReleaseHandleOnCompletion();
             return data;
         }
-        public static async Task<MapGridData> LoadMapGridBinaryData(int gridKey)
-        {
-            string assetKey = $"MapNavi_{gridKey}";
-            return await ReadBinaryFileAsync<MapGridData>(assetKey);
-        }
 
         // GameObject Instance
         public static async Task<GameObject> GetOrNewInstanceAsync(AssetCode assetCode, AssetParentType parentType, bool usePooling = false)
@@ -155,8 +94,8 @@ namespace Script.Manager
                 if (handle.Status == AsyncOperationStatus.Succeeded)
                 {
                     var obj = handle.Result;
-                    var hash_code = obj.GetHashCode();
-                    _nonGameObjectInstances.TryAdd(hash_code, handle);
+                    var instance_id = obj.GetInstanceID();
+                    _nonGameObjectInstances.TryAdd(instance_id, handle);
                     Debug.Log($"[AssetManager] Successfully loaded asset: {key}");
                 }
                 else
@@ -186,6 +125,48 @@ namespace Script.Manager
             entry.AddReference();
             return instance;
         }
+        public static async Task<T> GetOrNewInstanceAsync<T>(AssetCode assetCode, Transform parent, bool usePooling = false) where T:MonoBehaviour
+        {
+            string key = assetCode.ToString();
+
+            if (false == _gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
+            {
+                AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(key);
+                await handle.Task;
+
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    var obj = handle.Result;
+                    var hash_code = obj.GetHashCode();
+                    _nonGameObjectInstances.TryAdd(hash_code, handle);
+                    Debug.Log($"[AssetManager] Successfully loaded asset: {key}");
+                }
+                else
+                {
+                    Debug.LogError($"[AssetManager] Failed to load asset '{key}'. Status: {handle.Status}, Exception: {handle.OperationException}");
+                    throw new System.Exception($"Failed to load asset: {key}. Error: {handle.OperationException}");
+                }
+
+                entry = new InstanceEntry(handle, usePooling);
+                _gameObjectInstances.TryAdd(key, entry);
+            }
+
+            T instance;
+
+            if (true == entry.HasPooledInstance())
+            {
+                instance = entry.Pool.Dequeue() as T;
+                instance.gameObject.SetActive(true);
+            }
+            else
+            {
+                AsyncOperationHandle<GameObject> instHandle = Addressables.InstantiateAsync(key, parent);
+                instance = (await instHandle.Task).GetComponent<T>();
+            }
+
+            entry.AddReference();
+            return instance;
+        }
 
         private static Transform GetIngameObjectParent(AssetParentType parentType)
         {
@@ -205,40 +186,6 @@ namespace Script.Manager
 
             return null;
         }
-        public static void ReleaseInstance(AssetCode assetCode, GameObject instance)
-        {
-            string key = assetCode.ToString();
-            if (false == _gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
-            {
-                return;
-            }
-
-            if (true == entry.UsePooling)
-            //&& false == entry.Pool.Contains(instance))
-            {
-                instance.SetActive(false);
-                entry.Pool.Enqueue(instance);
-            }
-            else
-            {
-                Addressables.ReleaseInstance(instance);
-            }
-
-            entry.RemoveReference();
-
-            if (true == entry.ShouldRelease())
-            {
-                Addressables.Release(entry.Handle);
-                _gameObjectInstances.TryRemove(key);
-
-#if UNITY_EDITOR
-                Debug.Log($"[AssetManager] Release[{assetCode}]");
-#endif
-            }
-        }
-
-
-        // Non GameObject Assets (animation, mesh, ...)
         public static async Task<(int HashCode, T Value)> LoadAssetAsync<T>(string key) where T : class
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(key);
@@ -249,13 +196,57 @@ namespace Script.Manager
 
             return (hash_code, value);
         }
-        public static void Dispose(int instanceID)
+
+        public static void ReleaseInstance(AssetCode assetCode, GameObject instance, bool forced = false)
+        {
+            string key = assetCode.ToString();
+
+#if UNITY_EDITOR
+            int id = instance.GetInstanceID();
+#endif
+
+            if (false == _gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
+            {
+                return;
+            }
+
+            if (true == entry.UsePooling
+                && false == forced)
+            {
+                instance.SetActive(false);
+                entry.Pool.Enqueue(instance);
+            }
+            else
+            {
+                Addressables.ReleaseInstance(instance);
+#if UNITY_EDITOR
+                Debug.Log($"[AssetManager] Release Instance [{assetCode}] (id:{id})");
+#endif
+            }
+
+            entry.RemoveReference();
+
+            if (true == entry.ShouldRelease())
+            {
+                Addressables.Release(entry.Handle);
+                _gameObjectInstances.TryRemove(key);
+
+#if UNITY_EDITOR
+                Debug.Log($"[AssetManager] Release Asset Handler [{assetCode}]");
+#endif
+            }
+        }
+        public static void ReleaseInstance(int instanceID)
         {
             mainSyncContext.Post((state) =>
             {
                 if (_nonGameObjectInstances.TryGetValue(instanceID, out var handle))
                 {
-                    Addressables.ReleaseInstance(handle);
+#if UNITY_EDITOR
+                    Debug.Log($"[AssetManager] Release[{handle.Result}] (id: {instanceID})");
+#endif
+
+                    Addressables.Release(handle);
                     _nonGameObjectInstances.TryRemove(instanceID);
                 }
             },

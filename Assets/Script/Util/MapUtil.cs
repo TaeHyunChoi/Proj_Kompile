@@ -2,14 +2,22 @@ namespace Script.Util
 {
     using Script.Data;
     using System;
-    using System.Net.NetworkInformation;
     using Unity.Mathematics;
     using UnityEngine;
-    using static EditMapUtil;
     using static Index.MapTileIndex;
 
     public static partial class MapUtil
     {
+        [Flags]
+        public enum DirFlag
+        {
+            NONE = 0,
+            UP = 1,
+            DOWN = 1 << 1,
+            LEFT = 1 << 2,
+            RIGHT = 1 << 3
+        }
+
         public static int GetGridKeyMask(float3 position)
         {
             int mask = 0;

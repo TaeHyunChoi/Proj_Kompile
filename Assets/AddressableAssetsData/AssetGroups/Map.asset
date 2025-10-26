@@ -10,11 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: MapRender
+  m_Name: Map
   m_EditorClassIdentifier: 
-  m_GroupName: MapRender
+  m_GroupName: Map
   m_GUID: d20cb78037ea68b4c9806d32461477c7
   m_SerializeEntries:
+  - m_GUID: 0d388db74e59eba4f9f4e8a1de7d63c5
+    m_Address: MapGridPrefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ef49b064119d17419e9d9f44a13e214
+    m_Address: MapNavi_0
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - MapNavi_0
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 26168c1cc00071343afff93a80cca164
     m_Address: MapRender_0_G0_L2_0
     m_ReadOnly: 0
@@ -32,6 +43,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d5379fb107c7ebc479851333cc495f7e
     m_Address: MapRender_0_G0_L3_0
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df5219d63a5e2b548ba99f3184f490db
+    m_Address: MapGridLayerPrefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

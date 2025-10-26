@@ -21,12 +21,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - objectPrefab
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 0d388db74e59eba4f9f4e8a1de7d63c5
-    m_Address: MapGridPrefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - objectPrefab
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 65310418ef126ee49ba65e58ccdacfa2
     m_Address: UnitBase
     m_ReadOnly: 0

@@ -18,15 +18,13 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
     public async Task<bool> Init(int index)
     {
         this.index = index;
-        asset_hash_codes = new List<int>();
 
         animator = transform.GetComponent<Animator>();
         var (hashCode, value) = await AssetManager.LoadAssetAsync<RuntimeAnimatorController>("AnimCtrl_Ataho");
-        asset_hash_codes.Add(hashCode);
         animator.runtimeAnimatorController = value;
 
 #if UNITY_EDITOR
-        transform.position = new Vector3(1f, 0f, 0f);
+        transform.position = new Vector3(1f, 0f, 1f);
         UnityEngine.Debug.Log($"Set position for test play; {transform.position}");
 #endif
 
