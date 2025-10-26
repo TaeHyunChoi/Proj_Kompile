@@ -36,4 +36,9 @@ public class IngameCamera : IngameMonoBehaviourBase, IIngameLateUpdater
         transform.position = target.transform.position + OFFSET;
         return IngameUpdateState.RUNNING;
     }
+
+    public override void Release()
+    {
+        //throw new System.NotImplementedException();
+    }
 }

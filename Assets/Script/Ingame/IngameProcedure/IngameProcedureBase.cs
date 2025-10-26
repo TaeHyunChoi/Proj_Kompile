@@ -36,7 +36,7 @@ namespace Script.Content
             }
         }
 
-        protected async Task<T> GetIngameObjectAsync<T>(AssetCode assetCode, AssetParentType parentType) where T:IngameMonoBehaviourBase
+        protected async Task<T> GetIngameObjectAsync<T>(AssetCode assetCode, Transform parent) where T:IngameMonoBehaviourBase
         {
             for (int i = 0; i < ingameObjects.Count; ++i)
             {
@@ -46,7 +46,7 @@ namespace Script.Content
                 }
             }
 
-            GameObject obj = await AssetManager.GetOrNewInstanceAsync(assetCode, parentType);
+            GameObject obj = await AssetManager.GetOrNewInstanceAsync(assetCode, parent);
             if (null == obj)
             {
                 return null;

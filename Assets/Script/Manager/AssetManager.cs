@@ -17,6 +17,11 @@ namespace Script.Manager
 
 #endif
     
+    /// <summary>
+    /// 다시 보니까 AssetManager의 개념 정의도 애매모호한 것 같은데?
+    /// 'ingame 외부의 에셋을 관리/제어한다'로 정의하는게 맞지 않을까...
+    /// 우선 아닌 것부터 싹 다 날려야겠네.
+    /// </summary>
     public static partial class AssetManager
     {
         // Map?
@@ -37,28 +42,7 @@ namespace Script.Manager
         private static readonly ConcurrentDictionary<string, InstanceEntry>     _gameObjectInstances    = new ConcurrentDictionary<string, InstanceEntry>(); // 풀링까지 고려
         private static readonly ConcurrentDictionary<int, AsyncOperationHandle> _nonGameObjectInstances = new ConcurrentDictionary<int, AsyncOperationHandle>();
 
-        private static Transform[] canvasParents;
-        private static Transform mapRoot;
-        private static Transform unitRoot;
-
-        private static System.Threading.SynchronizationContext mainSyncContext;
-
-        // Initialize
-        public static void Initialize(Transform mainTransform)
-        {
-            canvasParents = new Transform[3];
-            Transform uiParent = mainTransform.Find("UI");
-            for (int i = 0; i < canvasParents.Length; ++i)
-            {
-                canvasParents[i] = uiParent.GetChild(i);
-            }
-
-            mapRoot = mainTransform.Find("Map").transform;
-            unitRoot = mainTransform.Find("Unit").transform;
-
-            mainSyncContext = System.Threading.SynchronizationContext.Current;
-        }
-
+        private static readonly System.Threading.SynchronizationContext mainSyncContext = System.Threading.SynchronizationContext.Current;
 
         // Table Data (Binary)
         public static async Task<T> ReadBinaryFileAsync<T>(string key)
@@ -82,7 +66,7 @@ namespace Script.Manager
         }
 
         // GameObject Instance
-        public static async Task<GameObject> GetOrNewInstanceAsync(AssetCode assetCode, AssetParentType parentType, bool usePooling = false)
+        public static async Task<GameObject> GetOrNewInstanceAsync(AssetCode assetCode, Transform parent, bool usePooling = false)
         {
             string key = assetCode.ToString();
 
@@ -117,7 +101,6 @@ namespace Script.Manager
             }
             else
             {
-                Transform parent = GetIngameObjectParent(parentType);
                 AsyncOperationHandle<GameObject> instHandle = Addressables.InstantiateAsync(key, parent);
                 instance = await instHandle.Task;
             }
@@ -167,25 +150,6 @@ namespace Script.Manager
             entry.AddReference();
             return instance;
         }
-
-        private static Transform GetIngameObjectParent(AssetParentType parentType)
-        {
-            switch (parentType)
-            {
-                case AssetParentType.UNIT_ROOT:
-                    return unitRoot;
-                case AssetParentType.MAP_ROOT:
-                    return mapRoot;
-                case AssetParentType.CANVAS_CAMERA:
-                    return canvasParents[(int)CanvasType.CAMERA];
-                case AssetParentType.CANVAS_OVERAY:
-                    return canvasParents[(int)CanvasType.OVERLAY];
-                default:
-                    break;
-            }
-
-            return null;
-        }
         public static async Task<(int HashCode, T Value)> LoadAssetAsync<T>(string key) where T : class
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(key);
@@ -197,6 +161,8 @@ namespace Script.Manager
             return (hash_code, value);
         }
 
+
+        // 얘네를 하나로 통합하는게 제일 베스트일 것 같습니다만...
         public static void ReleaseInstance(AssetCode assetCode, GameObject instance, bool forced = false)
         {
             string key = assetCode.ToString();

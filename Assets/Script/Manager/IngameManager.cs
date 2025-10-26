@@ -20,6 +20,17 @@ namespace Script.Manager
 
         private static List<IngameProcedureBase> ingameProcedures;
 
+
+        private static Transform[] canvasTransforms;
+        private static Transform maptRootTransform;
+        private static Transform unitRootTransform;
+
+        public static Transform UnitRootTransform => unitRootTransform;
+        public static Transform MapRootTransform => maptRootTransform;
+        public static Transform UICameraRootTransform => canvasTransforms[(int)CanvasType.CAMERA];
+        public static Transform UIOverayRootTransform => canvasTransforms[(int)CanvasType.OVERLAY];
+        
+
         // manager
         public static async void EnterField(PlayData data)
         {
@@ -81,8 +92,16 @@ namespace Script.Manager
             instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // init data table
-            AssetManager.Initialize(this.transform);
+
+            canvasTransforms = new Transform[3];
+            Transform uiParent = transform.Find("UI");
+            for (int i = 0; i < canvasTransforms.Length; ++i)
+            {
+                canvasTransforms[i] = uiParent.GetChild(i);
+            }
+
+            maptRootTransform = transform.Find("Map").transform;
+            unitRootTransform = transform.Find("Unit").transform;
 
             // init updater
             IngameUpdater updater = transform.GetComponent<IngameUpdater>();

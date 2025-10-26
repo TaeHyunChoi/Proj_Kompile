@@ -31,16 +31,4 @@ namespace Script.Index
         AnimCtrl_Linxhang,
         AnimeCtrl_Smashu,
     }
-
-    public enum AssetParentType
-    { 
-        None = 0,
-
-        UNIT_ROOT,
-
-        MAP_ROOT,
-
-        CANVAS_OVERAY,
-        CANVAS_CAMERA,
-    }
 }

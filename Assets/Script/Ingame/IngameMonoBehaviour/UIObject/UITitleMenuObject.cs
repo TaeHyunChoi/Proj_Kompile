@@ -130,4 +130,9 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater, IInput
 
         return true;
     }
+
+    public override void Release()
+    {
+        //throw new NotImplementedException();
+    }
 }

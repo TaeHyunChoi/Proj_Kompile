@@ -48,7 +48,7 @@ namespace Script.Manager
             {
                 grid_data = await AssetManager.ReadBinaryFileAsync<MapGridData>($"MapNavi_{test_grid[i]}");
 
-                GameObject grid_obj = await AssetManager.GetOrNewInstanceAsync(AssetCode.MapGridPrefab, AssetParentType.MAP_ROOT);
+                GameObject grid_obj = await AssetManager.GetOrNewInstanceAsync(AssetCode.MapGridPrefab, IngameManager.MapRootTransform);
                 IngameMapGridObject root = grid_obj.GetComponent<IngameMapGridObject>();
                 root.Initialize(grid_data);
 
@@ -57,7 +57,7 @@ namespace Script.Manager
 #endif
 
             // instantiage player unit
-            GameObject obj           = await AssetManager.GetOrNewInstanceAsync(AssetCode.UnitBase, AssetParentType.UNIT_ROOT);
+            GameObject obj           = await AssetManager.GetOrNewInstanceAsync(AssetCode.UnitBase, IngameManager.UnitRootTransform);
             player_character[0]      = obj.AddComponent<IngameFieldPlayer>();  // TODO: 테스트 목적이라서 나중에 다시 만들어야 함.
             IngameFieldPlayer player = player_character[0];
 

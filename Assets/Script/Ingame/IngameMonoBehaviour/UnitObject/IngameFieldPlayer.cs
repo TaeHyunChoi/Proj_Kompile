@@ -85,4 +85,9 @@ public class IngameFieldPlayer : IngameUnitBase, IInputReceiver, IIngameFixedUpd
     {
         animator.Play(key);
     }
+
+    public override void Release()
+    {
+        //throw new System.NotImplementedException();
+    }
 }

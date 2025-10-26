@@ -228,4 +228,9 @@ public partial class UITitleObject : IngameMonoBehaviourBase, IIngameUpdater, II
 
         return true;
     }
+
+    public override void Release()
+    {
+        //throw new System.NotImplementedException();
+    }
 }
