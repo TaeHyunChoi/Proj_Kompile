@@ -14,31 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: Prefab
   m_GUID: 1d65d67df1f29b84985014df8920ec2b
-  m_SerializeEntries:
-  - m_GUID: 06091f8160267704ca920385c19218fe
-    m_Address: UI_LoadingCurtain
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - objectPrefab
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 65310418ef126ee49ba65e58ccdacfa2
-    m_Address: UnitBase
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - objectPrefab
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 70fbb103688cbb6468c8786d84d31ff1
-    m_Address: UI_TitleMenuObject
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - objectPrefab
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 892a340a9aa1197448a637007b989c6b
-    m_Address: OP_TitleObject
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - objectPrefab
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

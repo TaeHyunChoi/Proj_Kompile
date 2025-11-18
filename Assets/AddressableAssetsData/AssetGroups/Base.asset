@@ -14,7 +14,47 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: Base
   m_GUID: f10f484705f0f0c42b21dd525f1ad5cb
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 06091f8160267704ca920385c19218fe
+    m_Address: Assets/Rcs/Prefab/UI/UI_LoadingCurtain.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0d388db74e59eba4f9f4e8a1de7d63c5
+    m_Address: Assets/Rcs/Prefab/Field/MapGridPrefab.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 521d1b4efc84af74f9a61607db6928ed
+    m_Address: Assets/Rcs/Prefab/UI/UI_Battle_MenuSlot.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65310418ef126ee49ba65e58ccdacfa2
+    m_Address: Assets/Rcs/Prefab/Unit/UnitBase.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70fbb103688cbb6468c8786d84d31ff1
+    m_Address: Assets/Rcs/Prefab/UI/UI_TitleMenuObject.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 892a340a9aa1197448a637007b989c6b
+    m_Address: Assets/Rcs/Prefab/AnimationEvent/OP_TitleObject.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ded9f80618747f2429f51a1cc4a829d9
+    m_Address: Assets/Rcs/Prefab/UI/UI_Battle.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df5219d63a5e2b548ba99f3184f490db
+    m_Address: Assets/Rcs/Prefab/Field/MapGridLayerPrefab.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

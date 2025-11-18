@@ -11,7 +11,7 @@ namespace AddressasbleAsset
         [SerializeField]
         private List<AddrAssetEntry<TEnum>> entry = new List<AddressasbleAsset.AddrAssetEntry<TEnum>>();
 
-        // 런타임에서만 쓰임 (메모리를 좀 더 쓰지만, 탐색이 O(1)으로 압도적으로 좋다.
+        // 런타임에서만 쓰임 - 메모리를 좀 더 쓰지만, 탐색이 O(1)으로 압도적으로 좋다.
         private Dictionary<TEnum, string> runtimeMap;
 
         public bool TryGetAddrKey(TEnum id, out string key)
