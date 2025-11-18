@@ -17,6 +17,7 @@ public class EntryToProcess
 public static class AssetMapGenerator
 {
     private const string ASSET_MAP_PATH = "Assets/Rcs/AddressableMap";
+    private const string ENTRIES = "entries";
     public static List<EntryToProcess> EntrieToProcess = new List<EntryToProcess>();
 
     public static void GenerateMap(string enumID, List<EntryToProcess> entries)
@@ -39,7 +40,7 @@ public static class AssetMapGenerator
 
         // 3. SerializedObject를 통하여 데이터 필드에 접근
         SerializedObject serializedObject = new SerializedObject(map);
-        SerializedProperty entriesProperty = serializedObject.FindProperty("entires");
+        SerializedProperty entriesProperty = serializedObject.FindProperty(ENTRIES);
 
         // 4. 데이터 순회 및 SerializedProperty에 값 할당
         int successCount = 0;
