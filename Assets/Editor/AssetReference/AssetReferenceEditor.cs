@@ -6,19 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Collections.Generic;
-
-[Serializable]
-internal struct MappingConfigData
-{
-    public string EnumID;
-    public string AssetDirectory;  // Assets/GameData/Prefabs/Items 등
-}
-
-[Serializable]
-internal class Wrapper<T>
-{
-    public List<T> configs;
-}
+using System.Text.RegularExpressions;
 
 public static class AssetReferenceEditor
 {
@@ -80,60 +68,9 @@ public static class AssetReferenceEditor
             Debug.Log("생성할 Asset Map이 없습니다.");
             SessionState.SetString(SessionStateKey, string.Empty);
         }
-
-        /*
-        string TargetEnumID;
-        string TargetAssetDirectory;
-
-        for (int i = 0; i < TargetEnumIDs.Length; ++i)
-        {
-            TargetEnumID = TargetEnumIDs[i];
-
-            // 1. 타겟 디렉토리 스캔하여 EntryToProcess 리스트 생성
-            TargetAssetDirectory = GetTargetAssetDirectory(TargetEnumID);
-            entries = GetEntriesFromAssets(TargetAssetDirectory);
-
-            if (true == entries.Any()) // 왜 entries.length가 아니라 .Any()를 사용했나?
-            {
-
-                // 2-1. 스크립트 파일 생성 (enum, AssetMap.cs)
-                string TargetTypeName = GetTargetTypeName(TargetEnumID);
-                GenerateEnumFile(TargetEnumID, entries);
-                GenerateAssetMapFile(TargetEnumID, TargetTypeName);
-
-                // 2-2. 매핑에 필요한 데이터 저장 (이후 delayCall에서 일괄 처리)
-                pendingMappings.Add(TargetEnumID, entries);
-            }
-            else
-            {
-                Debug.LogWarning($"Can`t find '{TargetEnumID}' ({TargetAssetDirectory})");
-            }
-        }
-
-        if (true == pendingMappings.Any())
-        {
-            // 3. (모든 파일을 생성한 후) 컴파일 강제하고 .delayCall 예약
-            AssetDatabase.Refresh();
-            Debug.Log($"모든 파일 생성 완료. 컴파일 및 매핑 시작을 위해 delayCall 예약.");
-            EditorApplication.delayCall += OnScriptsComplied;
-        }
-        else
-        {
-            Debug.LogWarning("There is No Asset Map;");
-        }
-        //*/
     }
 
 
-    private static string GetTargetTypeName(string enumID)
-    {
-        return enumID.Replace("ID", "");
-    }
-    private static string GetTargetAssetDirectory(string enumID)
-    {
-        string typeName = GetTargetTypeName(enumID);
-        return $"Assets/Rcs/{typeName}";
-    }
     private static List<EntryToProcess> GetEntriesFromAssets(string directoryPath)
     {
         List<EntryToProcess> entries = new List<EntryToProcess>();
@@ -148,7 +85,7 @@ public static class AssetReferenceEditor
         {
             string unityPath = filePath.Replace('\\', '/');
             string fileName = Path.GetFileNameWithoutExtension(unityPath);
-            string enumName = fileName.ToUpper();
+            string enumName = NormalizedFileName(fileName);
 
             entries.Add(new EntryToProcess()
             {
@@ -159,6 +96,59 @@ public static class AssetReferenceEditor
 
         return entries;
     }
+    public static Type GetAssetType(string name)
+    {
+        Type enumType = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(asset => asset.GetTypes())
+            .FirstOrDefault(type => type.Name == name);
+
+        return enumType;
+    }
+
+
+    private static string NormalizedFileName(string text)
+    {
+        if (true == string.IsNullOrEmpty(text))
+        {
+            return "EMPTY";
+        }
+
+        string normalized;
+
+        // 1. 카멜 케이스를 스네이크 케이스로 변환 (예: myAssetPrefab -> my_Asset_Prefab)
+        normalized = Regex.Replace(text, "(?<=[a-z])([A-Z])", "_$1");
+
+        // 2. 숫자 앞에 '_' 삽입 (예: Prefab1 -> Prefab_1)
+        normalized = Regex.Replace(normalized, "(?<=[A-Za-z])([0-9])", "_$1");
+
+        // 3. 텍스트를 대문자로 변환
+        normalized = normalized.ToUpperInvariant();
+
+        // 4. 허용되지 않는 문자(A-Z, 0-9, 밑줄을 제외한 모든 것)를 밑줄로 대체
+        normalized = Regex.Replace(normalized, @"[^A-Z0-9_]", "_");
+
+        // 5. 연속된 밑줄을 하나의 밑줄로 축소
+        normalized = Regex.Replace(normalized, @"_+", "_");
+
+        // 6. 이름의 시작/끝에 있는 밑줄 제거
+        normalized = normalized.Trim('_');
+
+        // 7. 숫자로 시작하는지 확인하고, 그렇다면 접두사 '_' 추가 (C# enum 규칙 준수)
+        if (char.IsDigit(normalized.FirstOrDefault()))
+        {
+            normalized = "_" + normalized;
+        }
+
+        // 정규화 후 텍스트가 비어 있으면 기본값 반환
+        if (string.IsNullOrEmpty(normalized))
+        {
+            return "INVALID_NAME";
+        }
+
+        return normalized;
+    }
+
+
     private static void GenerateEnumFile(string enumID, List<EntryToProcess> entries)
     {
         stringBuilder.Clear();
@@ -272,53 +262,20 @@ public static class AssetReferenceEditor
             // 컴파일이 완료되지 않았으므로 0.1초 뒤에 다시 시도 (재귀호출)
             EditorApplication.delayCall += OnScriptsCompiled;
         }
-
-        /*
-        bool allTypesLoaded = false;
-        int tryCount = 0;
-
-        List<string> enumIDs = pendingMappings.Keys.ToList();
-        string mapClassName;
-        Type mapType;
-        foreach (string enumID in enumIDs)
-        {
-            mapClassName = enumID.Replace("ID", "") + "AssetMap";
-
-            mapType = GetAssetType(mapClassName);
-            if (null == mapType)
-            {
-                break;
-            }
-        }
-
-        if (true == allTypesLoaded)
-        {
-            Debug.Log("모든 AssetMap 클래스가 성공적으로 컴파일되었습니다. 매핑을 시작합니다.");
-
-            foreach (var pair in pendingMappings)
-            {
-                AssetMapGenerator.GenerateMap(pair.Key, pair.Value);
-            }
-
-            pendingMappings.Clear();
-            Debug.Log("--- Assem Map 생성 완료 ---");
-        }
-        else if(++tryCount <= 10) // n회 시도 해보고 안되면 끝내야겠네
-        {
-            EditorApplication.delayCall += OnScriptsCompiled; // 재귀함수
-        }
-        //*/
     }
 
 
-    public static Type GetAssetType(string name)
-    {
-        Type enumType = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(asset => asset.GetTypes())
-            .FirstOrDefault(type => type.Name == name);
-
-        return enumType;
-    }
+    [Serializable]
+internal struct MappingConfigData
+{
+    public string EnumID;
+    public string AssetDirectory;  // Assets/GameData/Prefabs/Items 등
 }
 
+[Serializable]
+internal class Wrapper<T>
+{
+    public List<T> configs;
+}
+}
 #endif

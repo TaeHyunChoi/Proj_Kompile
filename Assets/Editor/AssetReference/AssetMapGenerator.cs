@@ -16,7 +16,7 @@ public class EntryToProcess
 
 public static class AssetMapGenerator
 {
-    private const string ASSET_MAP_PATH = "Assets/Rcs/AddressableMap";
+    private const string ASSET_MAP_PATH = "Assets/Rcs/AssetMap";
     private const string ENTRIES = "entries";
     public static List<EntryToProcess> EntrieToProcess = new List<EntryToProcess>();
 
