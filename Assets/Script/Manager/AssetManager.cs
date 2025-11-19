@@ -36,7 +36,6 @@ namespace Script.Manager
             return asset;
         }
     }
-
     public static partial class AssetManager
     {
         private static readonly ConcurrentDictionary<string, InstanceEntry>     _gameObjectInstances    = new ConcurrentDictionary<string, InstanceEntry>(); // 풀링까지 고려
