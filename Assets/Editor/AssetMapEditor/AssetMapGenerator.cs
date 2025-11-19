@@ -31,7 +31,7 @@ public static class AssetMapGenerator
         }
 
         // 2. Enum Type 로드 (데이터 파싱에 사용)
-        Type enumType = AssetReferenceEditor.GetAssetType(enumID);
+        Type enumType = GenerateAssetMapEditor.GetAssetType(enumID);
         if (null == enumType)
         {
             Debug.LogError($"Enum 타입 '{enumID}'를 찾을 수 없습니다.");
@@ -46,6 +46,22 @@ public static class AssetMapGenerator
         int successCount = 0;
         object enumValue;
 
+        // 빠른 탐색을 위하여 Dictionary 생성
+        SerializedProperty element;
+        int idValue;
+
+        Dictionary<int, int> existingMap = new Dictionary<int, int>();
+        for (int i = 0; i < entriesProperty.arraySize; ++i)
+        {
+            element = entriesProperty.GetArrayElementAtIndex(i);
+            idValue = element.FindPropertyRelative("Id").enumValueIndex;
+
+            if (false == existingMap.ContainsKey(idValue))
+            {
+                existingMap.Add(idValue, i);
+            }
+        }
+
         foreach (var entry in entries.OrderBy(e => e.EnumName))
         {
             // 4-1. Enum 파싱 (파일 이름 -> 실제 Enum 값)
@@ -59,6 +75,8 @@ public static class AssetMapGenerator
                 continue;
             }
 
+            int targetIdValue = (int)enumValue;
+
             // 4-2. Addressables 주소 조회
             if (false == TryGetAddress(entry.UnityAssetPath, out string addressKey))
             {
@@ -67,8 +85,17 @@ public static class AssetMapGenerator
             }
 
             // 4-3. SerializedProperty 배열에 데이터 추가
-            entriesProperty.InsertArrayElementAtIndex(entriesProperty.arraySize);
-            SerializedProperty element = entriesProperty.GetArrayElementAtIndex(entriesProperty.arraySize - 1);
+            if (true == existingMap.TryGetValue(targetIdValue, out int existingIndex))
+            {
+                // 중복 발견 -> 기존 항목을 덮어씀
+                element = entriesProperty.GetArrayElementAtIndex(existingIndex);
+            }
+            else
+            {
+                // 새로운 항목 -> 배열 끝에 추가
+                entriesProperty.InsertArrayElementAtIndex(entriesProperty.arraySize);
+                element = entriesProperty.GetArrayElementAtIndex(entriesProperty.arraySize - 1);
+            }
 
             // AssetEntry의 필드에 값을 할당
             element.FindPropertyRelative("Id").enumValueIndex = (int)enumValue;
@@ -91,7 +118,7 @@ public static class AssetMapGenerator
         string mapAssetPath = $"{ASSET_MAP_PATH}/{mapClassName}.asset";
 
 
-        Type mapType = AssetReferenceEditor.GetAssetType(mapClassName);
+        Type mapType = GenerateAssetMapEditor.GetAssetType(mapClassName);
         if (null == mapType)
         {
             Debug.LogError($"AssetMap 클래스 타입 '{mapClassName}'을 찾을 수 없습니다. 해당 스크립트가 컴파일되었는지 확인하세요.");

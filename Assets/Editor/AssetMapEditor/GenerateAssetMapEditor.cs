@@ -8,7 +8,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-public static class AssetReferenceEditor
+public static class GenerateAssetMapEditor
 {
     private static readonly string[] TargetEnumIDs = new string[]
     {
@@ -38,6 +38,12 @@ public static class AssetReferenceEditor
             List<EntryToProcess> entries = GetEntriesFromAssets(assetDirectory);
             if (true == entries.Any())
             {
+                // 같은 항목은 그룹화하여, 가장 첫 번째 항목만 선택 (중복으로 추가하지 않기 위함)
+                entries.GroupBy(entry => entry.EnumName)
+                        .Select(group => group.First())
+                        .OrderBy(entry => entry.EnumName)
+                        .ToList();
+
                 GenerateEnumFile(enumID, entries);
                 GenerateAssetMapFile(enumID, typeName);
 

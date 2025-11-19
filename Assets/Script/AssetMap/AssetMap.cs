@@ -5,11 +5,11 @@ namespace AddressasbleAsset
     using UnityEngine;
 
     [CreateAssetMenu(fileName = "Addressable Asset Map", menuName = "Tools/Asset/Create Addressable Asset Table")]
-    public class AddrAssetMap<TEnum> : ScriptableObject where TEnum : Enum
+    public class AssetMap<TEnum> : ScriptableObject where TEnum : Enum
     {
         // 저장에서만 쓰임
         [SerializeField]
-        private List<AddrAssetEntry<TEnum>> entry = new List<AddressasbleAsset.AddrAssetEntry<TEnum>>();
+        private List<AssetMapEntry<TEnum>> entry = new List<AssetMapEntry<TEnum>>();
 
         // 런타임에서만 쓰임 - 메모리를 좀 더 쓰지만, 탐색이 O(1)으로 압도적으로 좋다.
         private Dictionary<TEnum, string> runtimeMap;
