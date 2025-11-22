@@ -10,7 +10,6 @@ namespace Script.Manager
     {
         private static IngameManager    instance;
 
-
         private static FieldManager fieldMgr;
 
         private static PlayData         playData;
@@ -92,6 +91,8 @@ namespace Script.Manager
             instance = this;
             DontDestroyOnLoad(gameObject);
 
+            // get asset
+            AssetManagerV2.Initialize();
 
             canvasTransforms = new Transform[3];
             Transform uiParent = transform.Find("UI");
@@ -114,28 +115,30 @@ namespace Script.Manager
             // init procedures
             ingameProcedures = new List<IngameProcedureBase>();
         }
-        private void Start()
-        {
-            AddIngameProcedure(IngameProcedureType.OPENING);
-        }
 
-        private void OnEnable()
-        {
-            inputHandler.OnEnable();
-        }
-        private void OnDisable()
-        {
-            inputHandler?.OnDisable();
+        // 잠시 대기...
+        //private void Start()
+        //{
+        //    AddIngameProcedure(IngameProcedureType.OPENING);
+        //}
 
-            if (ingameProcedures != null)
-            {
-                for (int i = ingameProcedures.Count - 1; i >= 0; --i)
-                {
-                    ingameProcedures[i].Dispose();
-                }
-            }
+        //private void OnEnable()
+        //{
+        //    inputHandler.OnEnable();
+        //}
+        //private void OnDisable()
+        //{
+        //    inputHandler.OnDisable();
 
-            fieldMgr.Release();
-        }
+        //    if (ingameProcedures != null)
+        //    {
+        //        for (int i = ingameProcedures.Count - 1; i >= 0; --i)
+        //        {
+        //            ingameProcedures[i].Dispose();
+        //        }
+        //    }
+
+        //    fieldMgr.Release();
+        //}
     }
 }

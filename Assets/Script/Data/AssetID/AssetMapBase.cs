@@ -14,7 +14,7 @@ public class AssetEntry<TEnum>
     }
 }
 
-public class AssetMapBase<TEnum> : ScriptableObject where TEnum : Enum
+public class AssetMapBase<TEnum> : ScriptableObject, IInitializable where TEnum : Enum
 {
     // 에디터 스크립트가 SerializedObject를 통해 접근하는 필드
     // 필드 이름("entries")은 AssetMapGenerator의 FindProperty()와 일치해야 한다.
@@ -27,7 +27,7 @@ public class AssetMapBase<TEnum> : ScriptableObject where TEnum : Enum
     /// <summary>
     /// 런타임에 한 번만 호출하여 딕셔너리를 초기화
     /// </summary>
-    public void Initialize()
+    public virtual void Initialize()
     {
         if (null != runtimeMap)
         {
