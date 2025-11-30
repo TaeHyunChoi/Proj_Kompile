@@ -28,7 +28,10 @@ namespace Script.Manager
         public static Transform MapRootTransform => maptRootTransform;
         public static Transform UICameraRootTransform => canvasTransforms[(int)CanvasType.CAMERA];
         public static Transform UIOverayRootTransform => canvasTransforms[(int)CanvasType.OVERLAY];
-        
+
+
+        private static ContentStateMachine contentStateMachine;
+
 
         // manager
         public static async void EnterField(PlayData data)
@@ -44,22 +47,22 @@ namespace Script.Manager
         }
 
         // ingame procedure
-        public static void AddIngameProcedure(IngameProcedureType type)
-        {
-            InputHandler.Clear();
+        //public static void AddIngameProcedure(IngameProcedureType type)
+        //{
+        //    InputHandler.Clear();
 
-            IngameProcedureBase proc;
-            switch (type)
-            {
-                case IngameProcedureType.OPENING:   proc = new OpeningProcedure();      break;
-                case IngameProcedureType.NEW_GAME:  proc = new NewGameProcedure();      break;
-                default:
-                    return;
-            }
+        //    IngameProcedureBase proc;
+        //    switch (type)
+        //    {
+        //        case IngameProcedureType.OPENING:   proc = new OpeningProcedure();      break;
+        //        case IngameProcedureType.NEW_GAME:  proc = new NewGameProcedure();      break;
+        //        default:
+        //            return;
+        //    }
 
-            ingameProcedures.Add(proc);
-            proc.Start();
-        }
+        //    ingameProcedures.Add(proc);
+        //    proc.Start();
+        //}
         public static void RemoveIngameProcedure(IngameProcedureType type)
         {
             for (int i = ingameProcedures.Count - 1; i >= 0; --i)
@@ -91,6 +94,8 @@ namespace Script.Manager
             instance = this;
             DontDestroyOnLoad(gameObject);
 
+            contentStateMachine = new ContentStateMachine();
+
             // get asset
             AssetManagerV2.Initialize();
 
@@ -101,44 +106,51 @@ namespace Script.Manager
                 canvasTransforms[i] = uiParent.GetChild(i);
             }
 
-            maptRootTransform = transform.Find("Map").transform;
-            unitRootTransform = transform.Find("Unit").transform;
+            //maptRootTransform = transform.Find("Map").transform;
+            //unitRootTransform = transform.Find("Unit").transform;
 
-            // init updater
-            IngameUpdater updater = transform.GetComponent<IngameUpdater>();
-            updater.Initialize();
+            //// init updater
+            //IngameUpdater updater = transform.GetComponent<IngameUpdater>();
+            //updater.Initialize();
 
-            // init manager
-            inputHandler = new InputHandler();
-            ingameCam = transform.GetComponentInChildren<IngameCamera>(true);
+            //// init manager
+            //inputHandler = new InputHandler();
+            //ingameCam = transform.GetComponentInChildren<IngameCamera>(true);
 
-            // init procedures
-            ingameProcedures = new List<IngameProcedureBase>();
+            //// init procedures
+            //ingameProcedures = new List<IngameProcedureBase>();
         }
 
-        // 잠시 대기...
-        //private void Start()
-        //{
-        //    AddIngameProcedure(IngameProcedureType.OPENING);
-        //}
+        private void Start()
+        {
+            contentStateMachine.ChangeState(new OpeningContent());
 
-        //private void OnEnable()
-        //{
-        //    inputHandler.OnEnable();
-        //}
-        //private void OnDisable()
-        //{
-        //    inputHandler.OnDisable();
+            //AddIngameProcedure(IngameProcedureType.OPENING);
+        }
+        private void OnEnable()
+        {
+            //inputHandler.OnEnable();
+        }
+        private void OnDisable()
+        {
+            //inputHandler.OnDisable();
 
-        //    if (ingameProcedures != null)
-        //    {
-        //        for (int i = ingameProcedures.Count - 1; i >= 0; --i)
-        //        {
-        //            ingameProcedures[i].Dispose();
-        //        }
-        //    }
+            //if (ingameProcedures != null)
+            //{
+            //    for (int i = ingameProcedures.Count - 1; i >= 0; --i)
+            //    {
+            //        ingameProcedures[i].Dispose();
+            //    }
+            //}
 
-        //    fieldMgr.Release();
-        //}
+            //fieldMgr.Release();
+        }
+
+
+        public static void ChangeState(IContentState newState)
+        {
+            contentStateMachine.ChangeState(newState);
+        }
+
     }
 }

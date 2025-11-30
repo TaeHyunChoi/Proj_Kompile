@@ -9,7 +9,7 @@ public abstract class IngameMonoBehaviourBase : MonoBehaviour
 
     protected virtual void OnEnable()
     {
-        if (this is IIngameUpdater updater)
+        if (this is IContentUpdater updater)
         {
             IngameUpdater.AddUpdater(updater);
 #if UNITY_EDITOR
@@ -33,7 +33,7 @@ public abstract class IngameMonoBehaviourBase : MonoBehaviour
     {
         // 얘네도 비동기로 여차저차 처리하는 게 가능할 것 같기도 한데...
 
-        if (this is IIngameUpdater updater)
+        if (this is IContentUpdater updater)
         {
             IngameUpdater.RemoveUpdater(updater);
         }

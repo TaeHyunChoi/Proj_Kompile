@@ -7,18 +7,18 @@ namespace Script.Manager
 
     public class IngameUpdater : MonoBehaviour
     {
-        private static List<IIngameUpdater> updateList;
+        private static List<IContentUpdater> updateList;
         private static List<IIngameFixedUpdater> fixedUpdateList;
         private static List<IIngameLateUpdater> lateUpdateList;
 
         public void Initialize()
         {
-            updateList = new List<IIngameUpdater>();
+            updateList = new List<IContentUpdater>();
             fixedUpdateList = new List<IIngameFixedUpdater>();
             lateUpdateList = new List<IIngameLateUpdater>();
         }
 
-        public static void AddUpdater(IIngameUpdater updater)
+        public static void AddUpdater(IContentUpdater updater)
         {
             updateList.Add(updater);
         }
@@ -31,7 +31,7 @@ namespace Script.Manager
             lateUpdateList.Add(lateUpdater);
         }
 
-        public static void RemoveUpdater(IIngameUpdater updater)
+        public static void RemoveUpdater(IContentUpdater updater)
         {
             updateList.Remove(updater);
         }
@@ -50,7 +50,7 @@ namespace Script.Manager
             {
                 // update 다 돌린 후에 해당 updater.enabled = false;를 하면 알아서 updaterList에서 날린다.
 #if UNITY_EDITOR
-                Debug.Assert(IngameUpdateState.FAILURE != updateList[i].UpdateState());
+                //Debug.Assert(IngameUpdateState.FAILURE != updateList[i].UpdateState());
 #else
                 updateList[i].UpdateState();
 #endif

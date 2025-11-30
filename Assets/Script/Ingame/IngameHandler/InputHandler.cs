@@ -55,7 +55,7 @@ namespace Script.Manager
                 inputFlag &= ~InputFlag.ACTION;
             };
 
-            IngameUpdater.AddUpdater(this);
+            //IngameUpdater.AddUpdater(this);
         }
         private void OnMovePerformed(InputAction.CallbackContext context)
         {

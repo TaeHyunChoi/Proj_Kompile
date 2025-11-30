@@ -7,16 +7,8 @@ using Script.IngameMessage;
 using static Script.Index.IDxInput;
 using Script.Interface;
 
-public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater, IInputReceiver
-{
-    private enum State
-    { 
-        NONE,
-        UPDATE,
-        WAIT,
-        CLOSE
-    }
-    
+public class UITitleMenuObject : MonoBehaviour, IContentUpdater
+{   
     [SerializeField] private Transform menuParent;
     [SerializeField] private Image selectSlotImage;
 
@@ -32,8 +24,6 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater, IInput
     private float lastInputTime;
     private int   index;
 
-    private State state;
-
     private void Awake()
     {
         anchoredPositions = new Vector2[menuParent.childCount];
@@ -48,60 +38,31 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater, IInput
 
         index = 0;
         lastInputTime = 0;
-
-        state = State.NONE;
     }
 
-    public IngameUpdateState UpdateState()
+    public void OnUpdate()
     {
-        switch (state)
+        alpha += sign * Time.deltaTime * alphaDelta;
+
+        if (alpha >= maxAlpha)
         {
-            case State.NONE:
-                state = State.UPDATE;
-                break;
-            case State.UPDATE:
-                alpha += sign * Time.deltaTime * alphaDelta;
-
-                if (alpha >= maxAlpha)
-                {
-                    alpha = maxAlpha;
-                    sign = -1f;
-                }
-                else if (alpha <= minAlpha)
-                {
-                    alpha = minAlpha;
-                    sign = 1f;
-                }
-
-                selectSlotImage.color = new Color(0.2232704f, 0.5052339f, 1f, alpha);
-                break;
-            case State.WAIT:
-                //작동 일시중지
-                break;
-            case State.CLOSE:
-                return IngameUpdateState.SUCCESS;
+            alpha = maxAlpha;
+            sign = -1f;
         }
-        return IngameUpdateState.RUNNING;
+        else if (alpha <= minAlpha)
+        {
+            alpha = minAlpha;
+            sign = 1f;
+        }
+
+        selectSlotImage.color = new Color(0.2232704f, 0.5052339f, 1f, alpha);
     }
 
     public void WaitUpdate()
     {
         alpha = 1f;
         selectSlotImage.color = new Color(0.2232704f, 0.5052339f, 1f, alpha);
-
-        state = State.WAIT;
     }
-    public void ReplayUpdate()
-    {
-        state = State.UPDATE;
-    }
- 
-    protected override void OnDisable()
-    {
-        base.OnDisable();
-        anchoredPositions = null;
-    }
-
     public bool ReceiveInput(InputFlag inputFlag)
     {
         if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
@@ -131,8 +92,4 @@ public class UITitleMenuObject : IngameMonoBehaviourBase, IIngameUpdater, IInput
         return true;
     }
 
-    public override void Release()
-    {
-        //throw new NotImplementedException();
-    }
 }
