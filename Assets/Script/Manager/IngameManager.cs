@@ -63,6 +63,7 @@ namespace Script.Manager
         private void Start()
         {
             contentStateMachine.ChangeState(new OpeningContent());
+            inputHandler = new InputHandler();
         }
     }
 }

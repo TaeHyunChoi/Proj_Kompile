@@ -1,5 +1,6 @@
 using Script.Index;
 using Script.Interface;
+using Script.Manager;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -9,20 +10,6 @@ using static Script.Index.IDxInput;
 public class TitleObject : IngameMonoBehaviourBase, IInputReceiver
 {
     private float DeltaTime => Time.deltaTime;
-
-    private void Awake()
-    {
-        transform.GetChild(0).gameObject.SetActive(false);
-        transform.GetChild(2).gameObject.SetActive(false);
-
-        titleMenu.gameObject.SetActive(false);
-
-        Color initColor = new Color(1f, 1f, 1f, 0f);
-        images[(int)ImageType.COMPANY_LOGO].color = initColor;
-        images[(int)ImageType.TITLE_LOGO_LOWER].color = initColor;
-        images[(int)ImageType.TITLE_LOGO_UPPER].color = initColor;
-        images[(int)ImageType.TITLE_FLASH].color = initColor;
-    }
 
     [SerializeField] private UITitleMenuObject titleMenu;
     [SerializeField] private Image[] images;
@@ -42,7 +29,7 @@ public class TitleObject : IngameMonoBehaviourBase, IInputReceiver
     private float movingDist;
     private float passedTime;
 
-    private bool isMenuActivated;
+    private CancellationTokenSource skipToken;
 
     private enum ImageType
     {
@@ -53,30 +40,45 @@ public class TitleObject : IngameMonoBehaviourBase, IInputReceiver
         TITLE_FLASH
     }
 
+    private void Awake()
+    {
+        transform.GetChild(0).gameObject.SetActive(false);
+        transform.GetChild(2).gameObject.SetActive(false);
+
+        titleMenu.gameObject.SetActive(false);
+
+        Color initColor = new Color(1f, 1f, 1f, 0f);
+        images[(int)ImageType.COMPANY_LOGO].color = initColor;
+        images[(int)ImageType.TITLE_LOGO_LOWER].color = initColor;
+        images[(int)ImageType.TITLE_LOGO_UPPER].color = initColor;
+        images[(int)ImageType.TITLE_FLASH].color = initColor;
+    }
+
+    private void Start()
+    {
+        InputHandler.AddInputReceiver(this);
+    }
+
     public bool ReceiveInput(IDxInput.InputFlag flag)
     {
-        if (false == isMenuActivated)
-        {
-            return false;
-        }
-
         if (false == flag.Contains(IDxInput.InputFlag.ACTION | IDxInput.InputFlag.ENTER))
         {
             return false;
         }
+        if (null == skipToken)
+        {
+            return false;
+        }
 
-        alpha = 1f;
-        images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
-        waitTime *= 1.5f;
-
-        isMenuActivated = false;
+        skipToken.Cancel();
         return true;
     }
 
 
-    public async Awaitable PlayLogoSequence(CancellationToken token)
+    public async Awaitable PlayLogoSequence()
     {
-        token.ThrowIfCancellationRequested();
+        skipToken = new CancellationTokenSource();
+        //skipToken.Token.ThrowIfCancellationRequested();
 
         transform.GetChild(0).gameObject.SetActive(true);
 
@@ -85,7 +87,7 @@ public class TitleObject : IngameMonoBehaviourBase, IInputReceiver
         {
             alpha += DeltaTime * logoAlphaDelta;
             images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
-            await Awaitable.NextFrameAsync(token);
+            await Awaitable.NextFrameAsync(skipToken.Token);
         }
 
 
@@ -93,7 +95,7 @@ public class TitleObject : IngameMonoBehaviourBase, IInputReceiver
         while (waitTime < 1f)
         {
             waitTime += DeltaTime;
-            await Awaitable.NextFrameAsync(token);
+            await Awaitable.NextFrameAsync(skipToken.Token);
 
         }
 
@@ -102,14 +104,19 @@ public class TitleObject : IngameMonoBehaviourBase, IInputReceiver
         {
             alpha -= DeltaTime * logoAlphaDelta;
             images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
-            await Awaitable.NextFrameAsync(token);
+            await Awaitable.NextFrameAsync(skipToken.Token);
         }
         alpha = 0f;
+
+        skipToken.Dispose();
+        skipToken = null;
     }
     public async Awaitable ExitLogoSequence()
     {
-        alpha = 1f;
+        skipToken.Dispose();
+        skipToken = null;
 
+        alpha = 1f;
         while (0 > alpha)
         {
             alpha -= DeltaTime * logoAlphaDelta;
@@ -166,29 +173,27 @@ public class TitleObject : IngameMonoBehaviourBase, IInputReceiver
             alpha += DeltaTime * flashDelta;
             images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, alpha);
             await Awaitable.NextFrameAsync();
-        }
-        ;
+        };
         alpha = 1f;
 
         while (waitTime < 0.25f)
         {
             waitTime += DeltaTime;
             await Awaitable.NextFrameAsync();
-        }
-        ;
+        };
 
         while (alpha > 0f)
         {
             alpha -= DeltaTime * flashDelta * 1.125f;
             images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, alpha);
             await Awaitable.NextFrameAsync();
-        }
-        ;
+        };
     }
 
     public UITitleMenuObject SetActiveTitleMenu()
     {
-        isMenuActivated = true;
+        InputHandler.RemoveInputReceiver(this);
+
         titleMenu.gameObject.SetActive(true);
         return titleMenu;
     }

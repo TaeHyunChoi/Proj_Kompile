@@ -9,7 +9,6 @@ namespace Script.Content
     {
         protected List<IngameMonoBehaviourBase> child_instance = new List<IngameMonoBehaviourBase>();
         protected List<IContentUpdater>         child_updater  = new List<IContentUpdater>();
-        protected CancellationTokenSource       skipToken;
 
         public abstract Awaitable EnterAync();
         public abstract void Exit();
@@ -19,15 +18,6 @@ namespace Script.Content
             {
                 child_updater[i].OnUpdate();
             }
-        }
-        protected CancellationToken RefreshSkipToken()
-        {
-            if (null != skipToken)
-            {
-                skipToken?.Dispose();
-            }
-            skipToken = new CancellationTokenSource();
-            return skipToken.Token;
         }
 
         ~ContentBase()

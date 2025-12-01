@@ -10,7 +10,7 @@ namespace Script.Manager
 
         private readonly List<IContentUpdater> contentUpdates = new List<IContentUpdater>();
 
-        private void Awake()
+        public void Awake()
         {
             if (null != instance)
             {

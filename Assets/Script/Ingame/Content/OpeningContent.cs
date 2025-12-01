@@ -9,34 +9,23 @@ namespace Script.Content
     {
         public override async Awaitable EnterAync()
         {
-            CancellationToken token;
-
             // load assets
             GameObject titleObject = await AssetManagerV2.GetOrNewInstanceAsync(PrefabID.OP_TITLE_OBJECT, IngameManager.UIOverayRootTransform);
             var title = titleObject.GetComponent<TitleObject>();
             child_instance.Add(title);
 
-            // opening sequence: play logo
-            token = RefreshSkipToken();
             try
             {
-                await title.PlayLogoSequence(token);
+                await title.PlayLogoSequence();
             }
             catch (OperationCanceledException)
             {
                 await title.ExitLogoSequence();
             }
-            //token = RefreshSkipToken();
 
-            // opening sequence: play demo
-            //token = RefreshSkipToken();
-            { 
-                // ...
-            }
-
-            // opening sequence: play title
             await title.PlayTitleSequence();
 
+            // active: title menu
             UITitleMenuObject titleMenu = title.SetActiveTitleMenu();
             child_updater.Add(titleMenu);
         }
@@ -51,12 +40,6 @@ namespace Script.Content
             }
 
             child_updater = null;
-
-            if (null != skipToken)
-            {
-                skipToken.Dispose();
-                skipToken = null;
-            }
         }
     }
 }

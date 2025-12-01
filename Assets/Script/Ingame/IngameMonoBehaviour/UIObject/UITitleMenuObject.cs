@@ -38,8 +38,6 @@ public class UITitleMenuObject : MonoBehaviour, IContentUpdater
 
         index = 0;
         lastInputTime = 0;
-
-        InputHandler.AddInputReceiver(this);
     }
 
     public void OnUpdate()

@@ -1,13 +1,12 @@
 namespace Script.Manager
 {
+    using Script.Interface;
+    using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.InputSystem;
-    using Script.Index;
-    using Script.Interface;
     using static Script.Index.IDxInput;
-    using System.Collections.Generic;
 
-    public class InputHandler : IIngameUpdater
+    public class InputHandler : IContentUpdater
     {
         private readonly InputAction moveInput;
         private readonly InputAction enterInput;
@@ -55,7 +54,11 @@ namespace Script.Manager
                 inputFlag &= ~InputFlag.ACTION;
             };
 
-            //IngameUpdater.AddUpdater(this);
+            moveInput.Enable();
+            enterInput.Enable();
+            actionInput.Enable();
+
+            IngameUpdateManager.Register(this);
         }
         private void OnMovePerformed(InputAction.CallbackContext context)
         {
@@ -99,29 +102,28 @@ namespace Script.Manager
             inputReceivers.Remove(receiver);
         }
 
-        public IngameUpdateState UpdateState()
+        public static void Clear()
         {
-            if (InputFlag.NONE == inputFlag)
-            {
-                goto CLOSE;
-            }
+            inputFlag = InputFlag.NONE;
+            inputReceivers.Clear();
+        }
+
+        public void OnUpdate()
+        {
+            //if (InputFlag.NONE == inputFlag)
+            //{
+            //    return;
+            //}
+
+            Debug.Log($"inputFlag: " + inputFlag);
 
             for (int i = inputReceivers.Count - 1; i >= 0; --i)
             {
                 if (true == inputReceivers[i].ReceiveInput(inputFlag))
                 {
-                    goto CLOSE;
+                    break;
                 }
             }
-
-        CLOSE:
-            return IngameUpdateState.RUNNING;
-        }
-
-        public static void Clear()
-        {
-            inputFlag = InputFlag.NONE;
-            inputReceivers.Clear();
         }
     }
 }
