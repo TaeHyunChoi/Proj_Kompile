@@ -5,10 +5,10 @@ namespace Script.Content
 {
     public class ContentStateMachine
     {
-        private IContentState currentState;
+        private ContentBase currentState;
         private bool isTransitioning = false;
 
-        public async void ChangeState(IContentState newState)
+        public async void ChangeState(ContentBase newContent)
         {
             if (true == isTransitioning)
             {
@@ -23,13 +23,13 @@ namespace Script.Content
             }
 
             // enter new state async
-            currentState = newState;
+            currentState = newContent;
             if (null != currentState)
             {
                 await currentState.EnterAync();
             }
 
-            if (newState is IContentUpdater newUpdater)
+            if (newContent is IContentUpdater newUpdater)
             {
                 IngameUpdateManager.Register(newUpdater);
             }

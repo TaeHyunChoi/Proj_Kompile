@@ -17,7 +17,7 @@ public class IngameMapGridObject :IngameMonoBehaviourBase
     // 데이터와 개체를 최대한 분리한다면...
     public async void Initialize(MapGridData data)
     {
-        asset_code = AssetCode.MapGridPrefab;
+        //asset_code = AssetCode.MapGridPrefab;
 
         raw_data = data;
         transform.position = Vector3.zero;
@@ -37,14 +37,14 @@ public class IngameMapGridObject :IngameMonoBehaviourBase
         }
     }
 
-    public override void Release()
-    {
-        for (int i = 0; i < by_layer_objects.Count; ++i)
-        {
-            by_layer_objects[i].Release();
-            AssetManager.ReleaseInstance(AssetCode.MapGridLayerPrefab, by_layer_objects[i].gameObject, true);
-        }
+    //public override void Release()
+    //{
+    //    for (int i = 0; i < by_layer_objects.Count; ++i)
+    //    {
+    //        by_layer_objects[i].Release();
+    //        AssetManager.ReleaseInstance(AssetCode.MapGridLayerPrefab, by_layer_objects[i].gameObject, true);
+    //    }
 
-        AssetManager.ReleaseInstance(AssetCode.MapGridPrefab, this.gameObject);
-    }
+    //    AssetManager.ReleaseInstance(AssetCode.MapGridPrefab, this.gameObject);
+    //}
 }

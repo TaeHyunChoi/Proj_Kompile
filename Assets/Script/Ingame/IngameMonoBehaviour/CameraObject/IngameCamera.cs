@@ -37,8 +37,8 @@ public class IngameCamera : IngameMonoBehaviourBase, IIngameLateUpdater
         return IngameUpdateState.RUNNING;
     }
 
-    public override void Release()
-    {
-        //throw new System.NotImplementedException();
-    }
+    //public override void Release()
+    //{
+    //    //throw new System.NotImplementedException();
+    //}
 }

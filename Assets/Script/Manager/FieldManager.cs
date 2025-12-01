@@ -215,12 +215,12 @@ namespace Script.Manager
             return currentMapGrid[gKey].Data.TryGetTileData(tKey, out tile);
         }
 
-        public void Release()
-        {
-            foreach (var grid in currentMapGrid.Values)
-            {
-                grid.Release();
-            }
-        }
+        //public void Release()
+        //{
+        //    foreach (var grid in currentMapGrid.Values)
+        //    {
+        //        grid.Release();
+        //    }
+        //}
     }
 }

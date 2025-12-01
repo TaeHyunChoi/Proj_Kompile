@@ -1,29 +1,20 @@
 namespace Script.Content
 {
-    using Script.Content;
-    using Script.Index;
-    using Script.Interface;
     using Script.Manager;
     using System;
-    using System.Collections.Generic;
     using System.Threading;
-    using System.Threading.Tasks;
     using UnityEngine;
 
-    public class OpeningContent : IContentState
+    public class OpeningContent : ContentBase
     {
-        private CancellationTokenSource skipToken;
-
-        private TitleObject       title;
-        private UITitleMenuObject titleMenu;
-
-        public async Awaitable EnterAync()
+        public override async Awaitable EnterAync()
         {
             CancellationToken token;
 
             // load assets
             GameObject titleObject = await AssetManagerV2.GetOrNewInstanceAsync(PrefabID.OP_TITLE_OBJECT, IngameManager.UIOverayRootTransform);
-            title = titleObject.GetComponent<TitleObject>();
+            var title = titleObject.GetComponent<TitleObject>();
+            child_instance.Add(title);
 
             // opening sequence: play logo
             token = RefreshSkipToken();
@@ -46,41 +37,26 @@ namespace Script.Content
             // opening sequence: play title
             await title.PlayTitleSequence();
 
-            // title menu sequence
-            GameObject uiTitleMenuObject = await AssetManagerV2.GetOrNewInstanceAsync(PrefabID.UI_TITLE_MENU_OBJECT, IngameManager.UIOverayRootTransform);
-            titleMenu = uiTitleMenuObject.GetComponent<UITitleMenuObject>();
-
-            IngameUpdateManager.Register(this);
-
+            UITitleMenuObject titleMenu = title.SetActiveTitleMenu();
+            child_updater.Add(titleMenu);
         }
-
-        private CancellationToken RefreshSkipToken()
+        public override void Exit()
         {
-            if (null != skipToken)
-            {
-                skipToken?.Dispose();
-            }
-            skipToken = new CancellationTokenSource();
-            return skipToken.Token;
-        }
-
-        public void Exit()
-        {
-            AssetManagerV2.ReleaseInstance(PrefabID.OP_TITLE_OBJECT, title.gameObject);
-            AssetManagerV2.ReleaseInstance(PrefabID.UI_TITLE_MENU_OBJECT, titleMenu.gameObject);
-
             IngameUpdateManager.Unregister(this);
+            // 여기서 1프레임 기다렸다가 다음에 삭제하는 절차가 더 안전할까?
+
+            for (int i = child_instance.Count; i >= 0; --i)
+            {
+                AssetManagerV2.ReleaseInstance(child_instance[i]);
+            }
+
+            child_updater = null;
 
             if (null != skipToken)
             {
                 skipToken.Dispose();
                 skipToken = null;
             }
-        }
-
-        public void OnUpdate()
-        {
-            titleMenu.OnUpdate();
         }
     }
 }

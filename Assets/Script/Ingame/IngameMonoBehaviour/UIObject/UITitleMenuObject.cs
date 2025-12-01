@@ -38,6 +38,8 @@ public class UITitleMenuObject : MonoBehaviour, IContentUpdater
 
         index = 0;
         lastInputTime = 0;
+
+        InputHandler.AddInputReceiver(this);
     }
 
     public void OnUpdate()
@@ -58,16 +60,12 @@ public class UITitleMenuObject : MonoBehaviour, IContentUpdater
         selectSlotImage.color = new Color(0.2232704f, 0.5052339f, 1f, alpha);
     }
 
-    public void WaitUpdate()
-    {
-        alpha = 1f;
-        selectSlotImage.color = new Color(0.2232704f, 0.5052339f, 1f, alpha);
-    }
     public bool ReceiveInput(InputFlag inputFlag)
     {
         if (true == inputFlag.Contains(InputFlag.ENTER | InputFlag.ACTION))
         {
-            MessageManager.Publish(new OnSelect_UITitleMenu(index));
+            selectSlotImage.color = new Color(0.2232704f, 0.5052339f, 1f, 1f);
+            MessageManager.Publish(new OnSelect_UITitleMenu(index)); //이벤트 방식으로 처리했음
             return true;
         }
 

@@ -177,5 +177,46 @@ namespace Script.Manager
 #endif
             }
         }
+        public static void ReleaseInstance(IngameMonoBehaviourBase instance, bool forced = false)
+        {
+            PrefabID prefabID = instance.PrefabID;
+            GameObject obj = instance.gameObject;
+#if UNITY_EDITOR
+            int instanceID = obj.GetInstanceID();
+#endif
+
+            string assetAddress = GetAssetAddress(prefabID);
+            if (false == gameObjectInstances.TryGetValue(assetAddress, out InstanceEntry entry))
+            {
+                return;
+            }
+
+            if (true == entry.UsePooling
+                && false == forced)
+            {
+                obj.SetActive(false);
+                entry.Pool.Enqueue(obj);
+            }
+            else
+            {
+                Addressables.ReleaseInstance(obj);
+
+#if UNITY_EDITOR
+                Debug.Log($"[AssetManager] Release Instance ({prefabID}, {instanceID})");
+#endif
+            }
+
+            entry.RemoveReference();
+
+            if (true == entry.ShouldRelease())
+            {
+                Addressables.Release(entry.Handle);
+                gameObjectInstances.TryRemove(assetAddress);
+
+#if UNITY_EDITOR
+                Debug.Log($"[AssetManager] Release Asset Handler ({prefabID})");
+#endif
+            }
+        }
     }
 }
