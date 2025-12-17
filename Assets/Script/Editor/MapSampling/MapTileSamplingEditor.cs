@@ -4,14 +4,14 @@ namespace  MapSampling
     using UnityEditor;
     using UnityEngine;
 
-    [CustomEditor(typeof(MapTileSampling))]
-    public class MyScriptEditor : Editor
+    [CustomEditor(typeof(EditMapTileSampling))]
+    public class MapTileSamplingEditor : Editor
     {
-        private MapTileSampling _sampler;
+        private EditMapTileSampling _sampler;
         
         private void Awake()
         {
-            _sampler = target as MapTileSampling;
+            _sampler = target as EditMapTileSampling;
         }
         
         public override void OnInspectorGUI()

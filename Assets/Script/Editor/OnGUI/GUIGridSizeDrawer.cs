@@ -3,7 +3,7 @@
 using UnityEngine;
 using static Script.Index.MapTileIndex;
 
-public class GridSizeDrawer : MonoBehaviour
+public class GUIGridSizeDrawer : MonoBehaviour
 {
     private void OnDrawGizmos()
     {

@@ -14,7 +14,7 @@ namespace MapSampling
     using UnityEngine.Assertions;
     using static EditMapUtil;
 
-    public partial class MapTileSampling : MonoBehaviour
+    public partial class EditMapTileSampling : MonoBehaviour
     {
         private const int       VERTEX_LIMIT        = 65535;
 
@@ -248,7 +248,7 @@ namespace MapSampling
 #endif
         }
     }
-    public partial class MapTileSampling
+    public partial class EditMapTileSampling
     {
         private void SaveTileMeshes(ConcurrentDictionary<int, EditMapGridData> map, EditMapData[] tiles)
         {

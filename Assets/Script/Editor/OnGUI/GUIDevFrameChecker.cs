@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEngine;
 
-public class DevFrameChecker : MonoBehaviour
+public class GUIDevFrameChecker : MonoBehaviour
 {
     //TODO: FrameRate는 추후에 Config.cs 등에게 넘기기
     [SerializeField] private int mFrameRate = 144;
