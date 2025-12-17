@@ -1,12 +1,11 @@
 namespace Script.Util.PathFinding
 {
-    using System.Linq;
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
     using UnityEngine;
-    using static Script.Util.PathFindingUtil;
+    using static Script.Util.PathFinding.PathFindingUtil;
 
     [BurstCompile]
     public struct PathfindingJob : IJob

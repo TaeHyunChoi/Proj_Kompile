@@ -1,4 +1,4 @@
-namespace Script.Util
+namespace Script.Util.PathFinding
 {
     using System.Collections.Generic;
     using Unity.Collections;
