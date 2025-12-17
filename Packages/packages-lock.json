@@ -5,14 +5,14 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1f26956fafb7b45069eb16348b7d85a254a15de7"
+      "hash": "34432703a177c97631a4eb1d908f086037c67969"
     },
     "com.github.messagepack-csharp": {
       "version": "https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.UnityClient/Assets/Scripts/MessagePack",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8373710fb0ae4bb453737f773b930401d8500c31"
+      "hash": "39e4a792100d19e7da6ed42ff12b3bc21aac28e8"
     },
     "com.unity.2d.animation": {
       "version": "10.2.1",
