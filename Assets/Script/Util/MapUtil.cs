@@ -82,9 +82,9 @@ namespace Script.Util
 
             switch (mask)
             {
-                case 0b_01: y =  0; break;
-                case 0b_10: y =  1; break;
-                case 0b_11: y = -1; break;
+                case 0b_01: y =  0f; break;
+                case 0b_10: y =  1f; break;
+                case 0b_11: y = -1f; break;
                 default:
                     return false;
             }
@@ -136,6 +136,32 @@ namespace Script.Util
 
             return true;
         }
+
+        public static float3 GetNeighborPivotOffset(int index)
+        {
+            switch (index)
+            {
+                case 0: return new float3(-1f,  0f, -1f);
+                case 1: return new float3( 0f,  0f, -1f);
+                case 2: return new float3( 1f,  0f, -1f);
+                case 3: return new float3( 1f,  0f,  0f);
+                case 4: return new float3( 1f,  0f,  1f);
+                case 5: return new float3( 0f,  0f,  1f);
+                case 6: return new float3(-1f,  0f,  1f);
+                case 7: return new float3(-1f,  0f,  0f);
+                default:
+                    break;
+            }
+
+            return default;
+        }
+        public static long GetTileNodeKey(float3 position)
+        {
+            int adjGKey = GetGridKeyMask(position);
+            int adjTKey = GetTileKeyMask(position);
+            
+            return ((long)adjGKey << 32) | (uint)adjTKey;
+        }
     }
 
 
@@ -161,6 +187,10 @@ namespace Script.Util
             }
 
             return new Vector3(x, y, z);
+        }
+        public static float3 GetTilePivotPosition(int gKey, int tKey)
+        {
+            return default;
         }
 
         public static int GetQuarantInTile(Vector3 position, bool isSmall)

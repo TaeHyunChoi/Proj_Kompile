@@ -1,4 +1,3 @@
-
 namespace Script.Data
 {
     using MessagePack;
