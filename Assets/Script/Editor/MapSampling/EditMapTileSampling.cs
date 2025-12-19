@@ -39,6 +39,9 @@ namespace MapSampling
 
         private bool nowLoading = false;
 
+        private ConcurrentDictionary<int, EditMapGridData> map;
+        public ConcurrentDictionary<int, EditMapGridData> Map => map;
+
         public void Save()
         {
             Debug.Log($"--- Start to save ---");
@@ -85,7 +88,7 @@ namespace MapSampling
             jobHandle.Complete();
 
             // Map 등록
-            var map = new ConcurrentDictionary<int, EditMapGridData>();
+            map = new ConcurrentDictionary<int, EditMapGridData>();
             int gridKey, tileKey, renderIndex;
             long naviMask;
             for (int i = 0; i < native_array_result.Length; ++i)

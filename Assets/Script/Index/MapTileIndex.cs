@@ -53,6 +53,7 @@ namespace Script.Index
         public const int GRID_SIGN_FLAG         = 0b_0100_0000;
         public const int GRID_COORD_MASK        = 0b_0011_1111;
 
+        // 애초에 이게 좀 잘못이었네 ㅇㅋㅇㅋ
         public const int SHIFT_TILE_Z     =  0;
         public const int SHIFT_TILE_Y     =  8;
         public const int SHIFT_TILE_X     = 16;

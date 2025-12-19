@@ -159,7 +159,7 @@ namespace Script.Data
         public int  GridKey;
         public int  TileKey;
         public long NaviMask;
-        public int  LinkMask;
+        public ushort  LinkMask;
         public int  RenderMask;
 
         public EditMapTileData(EditMapTileData visit_tile, int add_link_mask)
@@ -167,7 +167,7 @@ namespace Script.Data
             GridKey   = visit_tile.GridKey;
             TileKey   = visit_tile.TileKey;
             NaviMask  = visit_tile.NaviMask;
-            LinkMask  = visit_tile.LinkMask | add_link_mask;
+            LinkMask  = (ushort)(visit_tile.LinkMask | add_link_mask);
             RenderMask = visit_tile.RenderMask;
         }
         public readonly float3 GetTilePivot()

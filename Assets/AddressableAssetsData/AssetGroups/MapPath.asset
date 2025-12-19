@@ -10,14 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Map
+  m_Name: MapPath
   m_EditorClassIdentifier: 
-  m_GroupName: Map
-  m_GUID: d20cb78037ea68b4c9806d32461477c7
-  m_SerializeEntries: []
+  m_GroupName: MapPath
+  m_GUID: 9e0e036fac7214e44a73ccf088b2accd
+  m_SerializeEntries:
+  - m_GUID: af88099363e7a1d429f2c6698f60cb89
+    m_Address: path_nodes_0
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - path_nodes_0
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:
-    m_Schemas:
-    - {fileID: 11400000, guid: 25705ec0357bf8f4da7845d42d6e09f5, type: 2}
-    - {fileID: 11400000, guid: a1b31cbe0bf07a64c94b360143aecc46, type: 2}
+    m_Schemas: []
