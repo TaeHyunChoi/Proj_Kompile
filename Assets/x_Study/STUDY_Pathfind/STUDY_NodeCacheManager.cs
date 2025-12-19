@@ -10,6 +10,20 @@ namespace Study.Pathfind
 
     public sealed class STUDY_NodeCacheManager
     {
+        private static STUDY_NodeCacheManager instance;
+        public static STUDY_NodeCacheManager Instance
+        {
+            get
+            {
+                if (null == instance)
+                {
+                    instance = new STUDY_NodeCacheManager();
+                }
+
+                return instance;
+            }
+        }
+
         private Dictionary<long, STUDY_NodeData> nodeMap;
         private Dictionary<int3, long> posToID;
 
@@ -65,6 +79,5 @@ namespace Study.Pathfind
             return posToID.TryGetValue(absPos, out id);
         }
     }
-
 }
 #endif

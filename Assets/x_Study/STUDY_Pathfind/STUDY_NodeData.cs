@@ -1,7 +1,8 @@
 namespace Study.Pathfind
 {
-    using MessagePack;
 #if UNITY_EDITOR
+    using MessagePack;
+    using UnityEngine;
     using Unity.Collections;
     using Unity.Mathematics;
 
@@ -12,8 +13,11 @@ namespace Study.Pathfind
         public long ID;         // computed from gKey, tKey
         [Key(1), ReadOnly]
         public ushort LinkMask; // 2 bits per direction
-
-        //public int3 AbsTile;    // optional cached absloute tile coordinates (filled by baker)
+    
+        public Vector3 ComputePosition()
+        { 
+            return STUDY_PositionKeyUtil.ComputeWorldPosition(ID);
+        }
         public int3 ComputeAbsPosition()
         { 
             return STUDY_PositionKeyUtil.ComputeAbsoluteWorldPosition(ID);
