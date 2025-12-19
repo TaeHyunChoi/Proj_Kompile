@@ -25,13 +25,14 @@ namespace Script.Data
             float rot = RotY[index]; //어차피 Mathf.Int 쓰는 듯;
             float3 rotated_position = GetRotatedPivot(Position[index], rot);
             ulong height = Height[index];
+
+            
             Data[index] = new EditMapTileData()
             {
-                GridKey  = EditMapUtil.GetGridKeyMask(sceneIndex, rotated_position),
-                TileKey  = EditMapUtil.GetTileKeyMask(rotated_position),
-                NaviMask  = GetRotatedHeightMask(height, layer, rot),
-                LinkMask  = default,
-                RenderMask = layer
+                ID          = EditMapUtil.ComputeID(rotated_position),
+                NaviMask    = GetRotatedHeightMask(height, layer, rot),
+                LinkMask    = default,
+                RenderMask  = layer
             };
         }
         private readonly float3 GetRotatedPivot(float3 position, float rot)
@@ -156,24 +157,23 @@ namespace Script.Data
     }
     public struct EditMapTileData
     {
-        public int  GridKey;
-        public int  TileKey;
+        // 얘도 그냥 ID로 박으면 되지 않아?
+        //public int  GridKey;
+        //public int  TileKey;
+        public long ID;
         public long NaviMask;
         public ushort  LinkMask;
         public int  RenderMask;
 
         public EditMapTileData(EditMapTileData visit_tile, int add_link_mask)
         {
-            GridKey   = visit_tile.GridKey;
-            TileKey   = visit_tile.TileKey;
-            NaviMask  = visit_tile.NaviMask;
-            LinkMask  = (ushort)(visit_tile.LinkMask | add_link_mask);
-            RenderMask = visit_tile.RenderMask;
+            ID          = visit_tile.ID;
+            NaviMask    = visit_tile.NaviMask;
+            LinkMask    = (ushort)(visit_tile.LinkMask | add_link_mask);
+            RenderMask  = visit_tile.RenderMask;
         }
-        public readonly float3 GetTilePivot()
-        {
-            return EditMapUtil.GetTilePosition(GridKey, TileKey);
-        }
+
+        public readonly float3 GetTilePivot() => ComputeWorldPosition(ID);
         public readonly bool TryGetVerticeHeight(int vertice, out int heightx1000)
         {
             long mask = NaviMask >> (Index.MapTileIndex.HEIGHT_BITS * vertice);
@@ -184,7 +184,7 @@ namespace Script.Data
                 return false;
             }
 
-            float pivotY = GetTilePivot().y;
+            float pivotY = ComputeWorldPosition(ID).y;
             heightx1000 = Mathf.RoundToInt((pivotY + maskInt * 0.125f) * 1000);
             return true;
         }

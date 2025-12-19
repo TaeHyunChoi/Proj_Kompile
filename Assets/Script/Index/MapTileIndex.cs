@@ -30,8 +30,11 @@ namespace Script.Index
         };
 
         // for on grid
-        public static int SIZE_GRID_AXIS = 64;
+        public static int GRID_SIZE = 64;
         public static int SIZE_TILE = 8;
+
+        public const int TILE_BITS = 6;
+        public const int TILE_MASK = (1 << TILE_BITS) - 1;
 
         public static readonly Vector3[] RELATIVE_COORD_BY_QUARANT = new Vector3[]
         {

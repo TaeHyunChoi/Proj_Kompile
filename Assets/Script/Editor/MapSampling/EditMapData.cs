@@ -24,7 +24,7 @@ namespace Script.Data
         [Header("Data")]
         [SerializeField] private ulong heightMask;
         
-        public int GridKey => EditMapUtil.GetGridKeyMask(transform.position);
+        public int GridKey => EditMapUtil.ComputeGridKey(transform.position);
         public MeshFilter MeshFilter => meshFilter;
         public int RenderLayer => renderLayer;
         public int TextureIndex => (int)textureType;

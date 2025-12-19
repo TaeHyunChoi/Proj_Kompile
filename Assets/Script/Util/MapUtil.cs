@@ -21,9 +21,9 @@ namespace Script.Util
         public static int GetGridKeyMask(float3 position)
         {
             int mask = 0;
-            int gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS);
-            int gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS);
-            int gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS);
+            int gx = Mathf.FloorToInt(position.x / GRID_SIZE);
+            int gy = Mathf.FloorToInt(position.y / GRID_SIZE);
+            int gz = Mathf.FloorToInt(position.z / GRID_SIZE);
 
             if (gx < 0)
             {
@@ -50,22 +50,22 @@ namespace Script.Util
         }
         public static int GetTileKeyMask(float3 position)
         {
-            int x = Mathf.FloorToInt(position.x % SIZE_GRID_AXIS);
+            int x = Mathf.FloorToInt(position.x % GRID_SIZE);
             if (x < 0)
             {
-                x += SIZE_GRID_AXIS;
+                x += GRID_SIZE;
             }
 
-            int y = Mathf.FloorToInt(position.y % SIZE_GRID_AXIS);
+            int y = Mathf.FloorToInt(position.y % GRID_SIZE);
             if (y < 0)
             {
-                y += SIZE_GRID_AXIS;
+                y += GRID_SIZE;
             }
 
-            int z = Mathf.FloorToInt(position.z % SIZE_GRID_AXIS);
+            int z = Mathf.FloorToInt(position.z % GRID_SIZE);
             if (z < 0)
             {
-                z += SIZE_GRID_AXIS;
+                z += GRID_SIZE;
             }
 
             int tileKeyMask = 0;

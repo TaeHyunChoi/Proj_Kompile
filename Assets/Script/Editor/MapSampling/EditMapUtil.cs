@@ -11,12 +11,12 @@ using static Script.Index.MapTileIndex;
 /// </summary>
 public static partial class EditMapUtil
 {
-    public const int SPRITE_WIDTH = 256;
-    public const int SPRITE_HEIGHT = 256;
+    public const int SPRITE_WIDTH   = 256;
+    public const int SPRITE_HEIGHT  = 256;
 
-    public const int TOTAL_BITS = 13;
-    public const int BITS_PER_CELL = 4;
-    public const int MATRIX_SIZE = 5;
+    public const int TOTAL_BITS     = 13;
+    public const int BITS_PER_CELL  = 4;
+    public const int MATRIX_SIZE    = 5;
 
     // (주의) map_tile_pivot != matrix.Origin(원점)
     public static readonly Vector2Int[] INDEX_MAP = new Vector2Int[]
@@ -28,122 +28,122 @@ public static partial class EditMapUtil
         new Vector2Int(0, 0), new Vector2Int(2, 0), new Vector2Int(4, 0)
     };
 
-    public static int GetGridKeyMask(int sceneIndex, float3 rotated_position)
+    public static long ComputeID(Vector3 worldPos)
     {
-        int sceneIndexMask = sceneIndex << SHIFT_SCENE_INDEX;
-        int gridPivotMask  = GetGridKeyMask(rotated_position);
+        int absTx = Mathf.FloorToInt(worldPos.x);
+        int absTy = Mathf.FloorToInt(worldPos.y);
+        int absTz = Mathf.FloorToInt(worldPos.z);
 
-        return sceneIndexMask | gridPivotMask;
+        int gX = Mathf.FloorToInt((float)absTx / GRID_SIZE);
+        int gY = Mathf.FloorToInt((float)absTy / GRID_SIZE);
+        int gZ = Mathf.FloorToInt((float)absTz / GRID_SIZE);
+
+        int tX = absTx - gX * GRID_SIZE;
+        int tY = absTy - gY * GRID_SIZE;
+        int tZ = absTz - gZ * GRID_SIZE;
+
+        if (tX < 0) { tX += GRID_SIZE; gX -= 1; }
+        if (tY < 0) { tY += GRID_SIZE; gY -= 1; }
+        if (tZ < 0) { tZ += GRID_SIZE; gZ -= 1; }
+
+        uint tKey =
+            (uint)((tX & TILE_MASK) << (TILE_BITS * 2)) |
+            (uint)((tY & TILE_MASK) << (TILE_BITS * 1)) |
+            (uint)((tZ & TILE_MASK) << (TILE_BITS * 0));
+
+        byte bX = (byte)(sbyte)gX;
+        byte bY = (byte)(sbyte)gY;
+        byte bZ = (byte)(sbyte)gZ;
+
+        uint gKey = (uint)((bX << 16) | (bY << 8) | bZ);
+        return (((long)gKey) << 32) | tKey;
+    }
+    public static long ComputeID(int gKey, int tKey)
+    {
+        return (((long)gKey) << 32) | (uint)tKey;
     }
 
-    public static int GetGridKeyMask(float3 position)
+
+    public static void ComputeKey(float3 worldPos, out int outGKey, out int outTKey)
     {
-        int mask = 0;
-        int gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS);
-        int gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS);
-        int gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS);
+        int absTx = Mathf.FloorToInt(worldPos.x);
+        int absTy = Mathf.FloorToInt(worldPos.y);
+        int absTz = Mathf.FloorToInt(worldPos.z);
 
-        if (gx < 0)
-        {
-            mask |= 1 << SHIFT_GRID_X_SIGN;
-            gx *= -1;
-        }
-        mask |= gx << SHIFT_GRID_X;
+        int gX = Mathf.FloorToInt((float)absTx / GRID_SIZE);
+        int gY = Mathf.FloorToInt((float)absTy / GRID_SIZE);
+        int gZ = Mathf.FloorToInt((float)absTz / GRID_SIZE);
 
-        if (gy < 0)
-        {
-            mask |= 1 << SHIFT_GRID_Y_SIGN;
-            gy *= -1;
-        }
-        mask |= gy << SHIFT_GRID_Y;
+        int tX = absTx - gX * GRID_SIZE;
+        int tY = absTy - gY * GRID_SIZE;
+        int tZ = absTz - gZ * GRID_SIZE;
 
-        if (gz < 0)
-        {
-            mask |= 1 << SHIFT_GRID_Z_SIGN;
-            gz *= -1;
-        }
-        mask |= gz << SHIFT_GRID_Z;
+        if (tX < 0) { tX += GRID_SIZE; gX -= 1; }
+        if (tY < 0) { tY += GRID_SIZE; gY -= 1; }
+        if (tZ < 0) { tZ += GRID_SIZE; gZ -= 1; }
 
-        return mask;
+        outTKey = ((tX & TILE_MASK) << (TILE_BITS * 2))
+                | ((tY & TILE_MASK) << (TILE_BITS * 1))
+                | ((tZ & TILE_MASK) << (TILE_BITS * 0));
+
+        byte bX = (byte)(sbyte)gX;
+        byte bY = (byte)(sbyte)gY;
+        byte bZ = (byte)(sbyte)gZ;
+
+        outGKey = ((bX << 16) | (bY << 8) | bZ);
     }
-    public static int GetTileKeyMask(float3 position)
+    public static void ComputeKey(long id, out int outGKey, out int outTKey)
     {
-        int gx = Mathf.FloorToInt(position.x / SIZE_GRID_AXIS);
-        int gy = Mathf.FloorToInt(position.y / SIZE_GRID_AXIS);
-        int gz = Mathf.FloorToInt(position.z / SIZE_GRID_AXIS);
+        float3 position = ComputeWorldPosition(id);
+        ComputeKey(position, out outGKey, out outTKey);
+    }
+    public static int ComputeGridKey(float3 worldPos)
+    {
+        int absTx = Mathf.FloorToInt(worldPos.x);
+        int absTy = Mathf.FloorToInt(worldPos.y);
+        int absTz = Mathf.FloorToInt(worldPos.z);
 
-        int x = Mathf.RoundToInt(position.x % SIZE_GRID_AXIS);
-        if (x < 0)
-        {
-            x += SIZE_GRID_AXIS;
-        }
+        int gX = Mathf.FloorToInt((float)absTx / GRID_SIZE);
+        int gY = Mathf.FloorToInt((float)absTy / GRID_SIZE);
+        int gZ = Mathf.FloorToInt((float)absTz / GRID_SIZE);
 
-        int y = Mathf.RoundToInt(position.y % SIZE_GRID_AXIS);
-        if (y < 0)
-        {
-            y += SIZE_GRID_AXIS;
-        }
+        byte bX = (byte)(sbyte)gX;
+        byte bY = (byte)(sbyte)gY;
+        byte bZ = (byte)(sbyte)gZ;
 
-        int z = Mathf.RoundToInt(position.z % SIZE_GRID_AXIS);
-        if (z < 0)
-        {
-            z += SIZE_GRID_AXIS;
-        }
-
-        //Debug.Log($"[TEST-TILE] ({position.x:F2}, {position.y:F2}, {position.z:F2}) => G({gx}, {gy}, {gz}) + T({x}, {y}, {z}) = P({gx * SIZE_GRID_AXIS + x}, {gy * SIZE_GRID_AXIS + y}, {gz * SIZE_GRID_AXIS + z})");
-
-
-        int tileKeyMask = 0;
-        tileKeyMask |= x << SHIFT_TILE_X; 
-        tileKeyMask |= y << SHIFT_TILE_Y;
-        tileKeyMask |= z << SHIFT_TILE_Z;
-
-        return tileKeyMask;
+        // use only 3 bytes;
+        return (bX << 16) | (bY << 8) | (bZ << 0);
     }
 
-    public static float3 GetGridPosition(int gKey)
+
+    public static float3 ComputeWorldPosition(long id)
     {
-        int sign;
-
-        int gx = (gKey >> SHIFT_GRID_X) & GRID_COORD_MASK;
-        sign = (gKey >> SHIFT_GRID_X_SIGN) & 1;
-        if (0 != sign)
-        {
-            gx *= -1;
-        }
-
-        int gy = (gKey >> SHIFT_GRID_Y) & GRID_COORD_MASK;
-        sign = (gKey >> SHIFT_GRID_Y_SIGN) & 1;
-        if (0 != sign)
-        {
-            gy *= -1;
-        }
-
-        int gz = (gKey >> SHIFT_GRID_Z) & GRID_COORD_MASK;
-        sign = (gKey >> SHIFT_GRID_Z_SIGN) & 1;
-        if (0 != sign)
-        {
-            gz *= -1;
-        }
-
-        return SIZE_GRID_AXIS * new float3(gx, gy, gz);
+        int3 absPos = ComputeAbsoluteWorldPosition(id);
+        return new Vector3(absPos.x, absPos.y, absPos.z);
     }
-    public static float3 GetTilePosition(int gKey, int tKey)
+    private static int3 ComputeAbsoluteWorldPosition(long id)
     {
-        float3 grid_pivot = GetGridPosition(gKey);
+        uint gKey = (uint)((ulong)id >> 32);
+        uint tKey = (uint)id;
 
-        float tx = (tKey >> SHIFT_TILE_X) & TILE_COORD_MASK;
-        float ty = (tKey >> SHIFT_TILE_Y) & TILE_COORD_MASK;
-        float tz = (tKey >> SHIFT_TILE_Z) & TILE_COORD_MASK;
+        int gx = (sbyte)(byte)((gKey >> 16) & 0xFF);
+        int gy = (sbyte)(byte)((gKey >> 8) & 0xFF);
+        int gz = (sbyte)(byte)((gKey >> 0) & 0xFF);
 
-        return grid_pivot + new float3(tx, ty, tz);
+        int tx = (int)((tKey >> (TILE_BITS * 2)) & TILE_MASK);
+        int ty = (int)((tKey >> (TILE_BITS * 1)) & TILE_MASK);
+        int tz = (int)((tKey >> (TILE_BITS * 0)) & TILE_MASK);
+
+        return new int3(
+            gx * GRID_SIZE + tx,
+            gy * GRID_SIZE + ty,
+            gz * GRID_SIZE + tz);
     }
+
 
     public static bool TryGetTileData(ConcurrentDictionary<int, EditMapGridData> map, float3 position, out EditMapTileData tile_data)
     {
-        int grid_key = GetGridKeyMask(position);
-        int tile_key = GetTileKeyMask(position);
-
+        EditMapUtil.ComputeKey(position, out int grid_key, out int tile_key);
         if (false == map.ContainsKey(grid_key)
             || false == map[grid_key].TryGetTileData(tile_key, out tile_data))
         {

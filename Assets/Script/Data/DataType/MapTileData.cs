@@ -50,7 +50,7 @@ namespace Script.Data
                 {
                     gz *= -1;
                 }
-                Vector3 gird_pivot = SIZE_GRID_AXIS * new Vector3(gx, gy, gz);
+                Vector3 gird_pivot = GRID_SIZE * new Vector3(gx, gy, gz);
 
 
                 // tile_key to tile_child_position

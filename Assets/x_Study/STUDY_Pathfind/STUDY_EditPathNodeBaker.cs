@@ -7,7 +7,6 @@ namespace Study.Pathfind
     using Script.Data;
     using Script.Manager;
     using System.Collections.Generic;
-    using System.IO;
     using Unity.Mathematics;
     using UnityEditor;
     using UnityEngine;
@@ -58,6 +57,19 @@ namespace Study.Pathfind
             }
 
             AssetDatabase.Refresh();
+        }
+
+        [MenuItem("Tools/Pathfinding/[TEST]Load Baked Path Nodes")]
+        public static async Awaitable TempLoad()
+        {
+            // for test
+            STUDY_NodeCacheManager cache = new STUDY_NodeCacheManager();
+            await cache.LoadFromAddressableAsync($"path_nodes_0");
+
+            foreach (var node in cache.NodeMap.Values)
+            {
+                Debug.Log($"PATH[{node.ID}], {node.ComputeAbsPosition()}, link:{System.Convert.ToString(node.LinkMask, 2)}");
+            }
         }
     }
 }

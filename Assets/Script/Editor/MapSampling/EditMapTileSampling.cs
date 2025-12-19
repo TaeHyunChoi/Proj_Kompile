@@ -93,8 +93,10 @@ namespace MapSampling
             long naviMask;
             for (int i = 0; i < native_array_result.Length; ++i)
             {
-                gridKey     = native_array_result[i].GridKey;
-                tileKey     = native_array_result[i].TileKey;
+                EditMapUtil.ComputeKey(native_array_result[i].ID, out int gKey, out int tKey);
+
+                gridKey = gKey;
+                tileKey = tKey;
                 naviMask    = native_array_result[i].NaviMask;
                 renderIndex = native_array_result[i].RenderMask;
 
@@ -105,23 +107,22 @@ namespace MapSampling
 
                 EditMapTileData tile_data = new EditMapTileData()
                 {
-                    GridKey = gridKey,
-                    TileKey = tileKey,
-                    NaviMask = naviMask,
-                    LinkMask = default, // 나중에 Link() 할 때에 데이터 입력
-                    RenderMask = renderIndex
+                    ID          = EditMapUtil.ComputeID(gridKey, tileKey),
+                    NaviMask    = naviMask,
+                    LinkMask    = default, // 나중에 Link() 할 때에 데이터 입력
+                    RenderMask  = renderIndex
                 };
 
                 map[gridKey].TryAdd(tileKey, tile_data);
             }
 
             float3 start_tile_pivot = native_array_result[0].GetTilePivot();
-            native_array_scene_index.Dispose();
+            native_array_scene_index .Dispose();
             native_array_render_layer.Dispose();
-            native_array_position.Dispose();
-            native_array_rotateY.Dispose();
-            native_array_heights.Dispose();
-            native_array_result.Dispose();
+            native_array_position    .Dispose();
+            native_array_rotateY     .Dispose();
+            native_array_heights     .Dispose();
+            native_array_result      .Dispose();
 
             // DFS 알고리즘 -> EditMaplinkMask 생성
             LinkTiles(map, start_tile_pivot);
@@ -186,11 +187,13 @@ namespace MapSampling
                         // 인접한 타일과 연결되었다면 추가
                         if (true == visit_tile.TryGetLinkMask(map, neighbor_tile, target_dir, out int my_link_mask, out int neighbor_link_mask))
                         {
+                            EditMapUtil.ComputeKey(visit_tile.ID, out int gKey, out int tKey);
                             visit_tile = new EditMapTileData(visit_tile, my_link_mask);
-                            map[visit_tile.GridKey].Data[visit_tile.TileKey] = visit_tile;
+                            map[gKey].Data[tKey] = visit_tile;
 
+                            EditMapUtil.ComputeKey(neighbor_tile.ID, out gKey, out tKey);
                             neighbor_tile = new EditMapTileData(neighbor_tile, neighbor_link_mask);
-                            map[neighbor_tile.GridKey].Data[neighbor_tile.TileKey] = neighbor_tile;
+                            map[gKey].Data[tKey] = neighbor_tile;
 
                             break;
                         }

@@ -7,7 +7,7 @@ public class GUIGridSizeDrawer : MonoBehaviour
 {
     private void OnDrawGizmos()
     {
-        Vector3 size = SIZE_GRID_AXIS * Vector3.one;
+        Vector3 size = GRID_SIZE * Vector3.one;
         Vector3 center = size * 0.5f;
 
         Gizmos.color = Color.green;
