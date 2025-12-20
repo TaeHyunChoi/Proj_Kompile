@@ -52,7 +52,7 @@ namespace Script.Manager
                 IngameMapGridObject root = grid_obj.GetComponent<IngameMapGridObject>();
                 root.Initialize(grid_data);
 
-                currentMapGrid.TryAdd(grid_data.gridKey, root);
+                currentMapGrid.TryAdd(grid_data.Key, root);
             }
 #endif
 

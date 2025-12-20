@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 namespace Script.Data
 {
-    using MessagePack;
     using System.Collections.Generic;
 
     public partial class EditMapGridData
@@ -9,8 +8,8 @@ namespace Script.Data
         public int gridKey;
         public ConcurrentDictionary<int, EditMapTileData> Data;
         public List<string> assetFiles;
-        public int[] mesh_asset_instanceIDs;
         public UnityEngine.GameObject gameObject;
+        public List<GridLayerData> LayerMeshAssets = new List<GridLayerData>();
 
         public bool TryGetTileData(int tileIntKey, out EditMapTileData tileData)
         {
@@ -41,25 +40,20 @@ namespace Script.Data
         {
             return Data.TryAdd(key, navData);
         }
-    }
-
-    public partial class EditMapGridData
-    {
-        public List<GridLayerData> layer_mesh_assets = new List<GridLayerData>();
-
         public void AddMeshAsset(int layer, string fileName)
         {
-            for (int i = 0; i < layer_mesh_assets.Count; ++i)
+            for (int i = 0; i < LayerMeshAssets.Count; ++i)
             {
-                if (layer == layer_mesh_assets[i].layer)
+                if (layer == LayerMeshAssets[i].layer)
                 {
-                    layer_mesh_assets[i].Add(fileName);
+                    LayerMeshAssets[i].Add(fileName);
                     return;
                 }
             }
 
-            layer_mesh_assets.Add(new GridLayerData(layer, fileName));
+            LayerMeshAssets.Add(new GridLayerData(layer, fileName));
         }
+
     }
 }
 #endif

@@ -8,17 +8,17 @@ namespace Script.Data
     public class MapGridData
     {
         [Key(0), ReadOnly] 
-        public int gridKey;
+        public int Key;
 
         [Key(1), ReadOnly] 
-        public ConcurrentDictionary<int, MapTileData> MapNavDataDictionary;
+        public ConcurrentDictionary<int, MapTileData> NaviTileDict;
 
         [Key(2), ReadOnly] 
-        public List<GridLayerData> layer_table;
+        public List<GridLayerData> layerMeshAssets;
 
         public bool TryGetTileData(int tileIntKey, out MapTileData tileData)
         {
-            return MapNavDataDictionary.TryGetValue(tileIntKey, out tileData);
+            return NaviTileDict.TryGetValue(tileIntKey, out tileData);
         }
     }
 }

@@ -18,7 +18,7 @@ namespace Script.Data
         [SerializeField] private MeshFilter meshFilter;
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private bool isOnlyRender;
-        [SerializeField] private int renderLayer;
+        [SerializeField] private ushort renderLayer;
         [SerializeField] private TextureIndex textureType;
 
         [Header("Data")]
@@ -26,7 +26,7 @@ namespace Script.Data
         
         public int GridKey => EditMapUtil.ComputeGridKey(transform.position);
         public MeshFilter MeshFilter => meshFilter;
-        public int RenderLayer => renderLayer;
+        public ushort RenderLayer => renderLayer;
         public int TextureIndex => (int)textureType;
         public ulong HeightMask => heightMask;
 

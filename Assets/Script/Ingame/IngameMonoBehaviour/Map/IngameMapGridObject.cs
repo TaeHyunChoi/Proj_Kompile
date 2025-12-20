@@ -23,7 +23,7 @@ public class IngameMapGridObject :IngameMonoBehaviourBase
         transform.position = Vector3.zero;
         by_layer_objects = new List<IngameMapGridLayerObject>();
 
-        List<GridLayerData> layer_table = data.layer_table;
+        List<GridLayerData> layer_table = data.layerMeshAssets;
         for (int i = 0; i < layer_table.Count; ++i)
         {
             int layer_index = layer_table[i].layer;

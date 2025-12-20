@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace  MapSampling
+namespace Script.Editor.MapSampling
 {
     using UnityEditor;
     using UnityEngine;
@@ -23,15 +23,7 @@ namespace  MapSampling
             {
                 if (null != _sampler)
                 {
-                    _sampler.Save();
-                    //_sampler.StartCoroutine(_sampler.Save());
-                }
-            }
-            if (GUILayout.Button("Load"))
-            {
-                if (null != _sampler)
-                {
-                    _sampler.Load();
+                    _sampler.Bake();
                 }
             }
         }

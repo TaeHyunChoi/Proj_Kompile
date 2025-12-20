@@ -42,7 +42,7 @@ namespace Script.Util.PathFinding
                     int gKey = gKV.Key;
                     MapGridData grid = gKV.Value;
 
-                    foreach (var tKV in grid.MapNavDataDictionary)
+                    foreach (var tKV in grid.NaviTileDict)
                     {
                         int tKey = tKV.Key;
                         MapTileData mt = tKV.Value;

@@ -3,6 +3,7 @@
 using Script.Data;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static Script.Index.MapTileIndex;
 
 /// <summary> 맵타일 관련하여 '에디터'에서만 사용하는 함수.
@@ -63,7 +64,6 @@ public static partial class EditMapUtil
         return (((long)gKey) << 32) | (uint)tKey;
     }
 
-
     public static void ComputeKey(float3 worldPos, out int outGKey, out int outTKey)
     {
         int absTx = Mathf.FloorToInt(worldPos.x);
@@ -115,7 +115,6 @@ public static partial class EditMapUtil
         return (bX << 16) | (bY << 8) | (bZ << 0);
     }
 
-
     public static float3 ComputeWorldPosition(long id)
     {
         int3 absPos = ComputeAbsoluteWorldPosition(id);
@@ -140,7 +139,18 @@ public static partial class EditMapUtil
             gz * GRID_SIZE + tz);
     }
 
+    public static bool TryGetTileData(ConcurrentDictionary<int, EditMapGridData> map, long targetID, out EditMapTileData tile_data)
+    {
+        EditMapUtil.ComputeKey(targetID, out int grid_key, out int tile_key);
+        if (false == map.ContainsKey(grid_key)
+            || false == map[grid_key].TryGetTileData(tile_key, out tile_data))
+        {
+            tile_data = default;
+            return false;
+        }
 
+        return true;
+    }
     public static bool TryGetTileData(ConcurrentDictionary<int, EditMapGridData> map, float3 position, out EditMapTileData tile_data)
     {
         EditMapUtil.ComputeKey(position, out int grid_key, out int tile_key);

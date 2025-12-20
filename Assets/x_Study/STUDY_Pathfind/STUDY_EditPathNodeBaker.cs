@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 namespace Study.Pathfind
 {
-    using MapSampling;
+    using Script.Editor.MapSampling;
     using MessagePack;
     using MessagePack.Resolvers;
     using Script.Data;
@@ -19,7 +19,7 @@ namespace Study.Pathfind
         public static void Bake()
         {
             EditMapTileSampling sampler = Object.FindFirstObjectByType<EditMapTileSampling>();
-            sampler.Save();
+            sampler.Bake();
 
             ConcurrentDictionary<int, EditMapGridData> map = sampler.Map;
 
