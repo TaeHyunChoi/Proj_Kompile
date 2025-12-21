@@ -20,25 +20,30 @@ namespace Study.MapSampling
         private const int ATLAS_HEIGHT = 2048;
         private const string SAVE_PATH_ROOT = "Assets/Rcs/MapRender";
 
-        // 매개변수를 줄이기 위한 컨텍스트 구조체
+        // --- Pooling Objects ---
+        private static BakeContext _cachedContext;
+        private static readonly Stack<GroupAccumulator> _accPool = new Stack<GroupAccumulator>();
+        private static readonly Stack<TileChunk> _chunkPool = new Stack<TileChunk>();
+
+        // 매개변수를 줄이고 재사용 가능한 컨텍스트 구조체
         private class BakeContext
         {
             public int SceneIndex;
             public ConcurrentDictionary<int, EditMapGridData> Map;
-            public List<(string path, string assetName)> CreatedAssets;
+            public List<(string path, string assetName)> CreatedAssets = new List<(string path, string assetName)>();
             public string AddressableGroupName;
 
-            public BakeContext(int sceneIndex, ConcurrentDictionary<int, EditMapGridData> map, string groupName)
+            public void Setup(int sceneIndex, ConcurrentDictionary<int, EditMapGridData> map, string groupName)
             {
                 SceneIndex = sceneIndex;
                 Map = map;
                 AddressableGroupName = groupName;
-                CreatedAssets = new List<(string path, string assetName)>();
+                CreatedAssets.Clear();
             }
         }
 
-        // 그룹 구분을 위한 키 구조체 (가독성 향상)
-        private struct GroupKey
+        // 박싱 방지를 위해 IEquatable 구현
+        private struct GroupKey : IEquatable<GroupKey>
         {
             public readonly int RenderLayer;
             public readonly int GridKey;
@@ -49,8 +54,15 @@ namespace Study.MapSampling
                 GridKey = grid;
             }
 
-            public override int GetHashCode() => (RenderLayer, GridKey).GetHashCode();
-            public override bool Equals(object obj) => obj is GroupKey other && other.RenderLayer == RenderLayer && other.GridKey == GridKey;
+            public bool Equals(GroupKey other) => RenderLayer == other.RenderLayer && GridKey == other.GridKey;
+            public override bool Equals(object obj) => obj is GroupKey other && Equals(other);
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return (RenderLayer * 397) ^ GridKey;
+                }
+            }
         }
 
         private class TileChunk
@@ -60,6 +72,12 @@ namespace Study.MapSampling
             public int VertexCount;
             public int GridKey;
             public int RenderLayer;
+
+            public void Clear()
+            {
+                Instance.mesh = null;
+                UVs = null;
+            }
         }
 
         private class GroupAccumulator
@@ -67,6 +85,13 @@ namespace Study.MapSampling
             public Queue<TileChunk> Tiles = new Queue<TileChunk>();
             public int VertexSum = 0;
             public int PartIndex = 0;
+
+            public void Reset()
+            {
+                Tiles.Clear();
+                VertexSum = 0;
+                PartIndex = 0;
+            }
         }
 
         public static void CombineAndRegister(ConcurrentDictionary<int, EditMapGridData> map, EditMapData[] tiles, int sceneIndex, string addressableGroupName)
@@ -82,7 +107,10 @@ namespace Study.MapSampling
                 System.IO.Directory.CreateDirectory(SAVE_PATH_ROOT);
             }
 
-            var context = new BakeContext(sceneIndex, map, addressableGroupName);
+            // Context 재사용
+            if (_cachedContext == null) _cachedContext = new BakeContext();
+            _cachedContext.Setup(sceneIndex, map, addressableGroupName);
+
             var accumulators = new Dictionary<GroupKey, GroupAccumulator>();
             int totalTiles = tiles.Length;
             bool userCancelled = false;
@@ -98,7 +126,6 @@ namespace Study.MapSampling
                         break;
                     }
 
-                    // 배치 윈도우 계산
                     int currentBatchVertex = 0;
                     var batchIndices = new List<int>();
                     int idx = start;
@@ -107,7 +134,6 @@ namespace Study.MapSampling
                     {
                         var t = tiles[idx];
                         int vc = (t?.MeshFilter?.sharedMesh != null) ? t.MeshFilter.sharedMesh.vertexCount : 0;
-
                         if (currentBatchVertex + vc > BATCH_VERTEX_TARGET && batchIndices.Count > 0) break;
 
                         batchIndices.Add(idx);
@@ -116,7 +142,7 @@ namespace Study.MapSampling
                     }
 
                     start += batchIndices.Count;
-                    ProcessBatch(context, tiles, batchIndices, accumulators);
+                    ProcessBatch(_cachedContext, tiles, batchIndices, accumulators);
                 }
             }
             finally
@@ -124,16 +150,20 @@ namespace Study.MapSampling
                 EditorUtility.ClearProgressBar();
             }
 
-            // 남은 데이터 Flush
+            // 잔여 데이터 Flush 및 풀 반환
             foreach (var kv in accumulators)
             {
                 while (kv.Value.Tiles.Count > 0)
                 {
-                    FlushAccumulatorPart(context, kv.Key, kv.Value);
+                    FlushAccumulatorPart(_cachedContext, kv.Key, kv.Value);
                 }
+                // Accumulator를 풀에 반환
+                kv.Value.Reset();
+                _accPool.Push(kv.Value);
             }
+            accumulators.Clear();
 
-            RegisterAddressables(context);
+            RegisterAddressables(_cachedContext);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
@@ -151,19 +181,19 @@ namespace Study.MapSampling
                 int vc = mesh.vertexCount;
                 if (vc == 0) continue;
 
-                var chunk = new TileChunk
-                {
-                    Instance = new CombineInstance { mesh = mesh, transform = tile.transform.localToWorldMatrix },
-                    UVs = CalculateAtlasUVs(mesh, tile.TextureIndex),
-                    VertexCount = vc,
-                    GridKey = tile.GridKey,
-                    RenderLayer = tile.RenderLayer
-                };
+                // Chunk 풀링 사용
+                TileChunk chunk = _chunkPool.Count > 0 ? _chunkPool.Pop() : new TileChunk();
+                chunk.Instance = new CombineInstance { mesh = mesh, transform = tile.transform.localToWorldMatrix };
+                chunk.UVs = CalculateAtlasUVs(mesh, tile.TextureIndex);
+                chunk.VertexCount = vc;
+                chunk.GridKey = tile.GridKey;
+                chunk.RenderLayer = tile.RenderLayer;
 
                 var key = new GroupKey(tile.RenderLayer, tile.GridKey);
                 if (!accums.TryGetValue(key, out var acc))
                 {
-                    acc = new GroupAccumulator();
+                    // Accumulator 풀링 사용
+                    acc = _accPool.Count > 0 ? _accPool.Pop() : new GroupAccumulator();
                     accums[key] = acc;
                 }
 
@@ -186,7 +216,6 @@ namespace Study.MapSampling
             int takenVerts = 0;
             int tilesConsumed = 0;
 
-            // 단일 타일이 제한을 넘는 경우 강제 1개 처리, 아니면 제한 내에서 최대한 수집
             foreach (var chunk in acc.Tiles)
             {
                 if (takenVerts > 0 && takenVerts + chunk.VertexCount > VERTEX_LIMIT) break;
@@ -196,7 +225,7 @@ namespace Study.MapSampling
                 takenVerts += chunk.VertexCount;
                 tilesConsumed++;
 
-                if (takenVerts > VERTEX_LIMIT) break; // 단일 거대 타일 대응
+                if (takenVerts > VERTEX_LIMIT) break;
             }
 
             SaveMeshAsset(ctx, key, acc.PartIndex, takeInstances.ToArray(), takeUVs.ToArray());
@@ -205,6 +234,10 @@ namespace Study.MapSampling
             {
                 var removed = acc.Tiles.Dequeue();
                 acc.VertexSum -= removed.VertexCount;
+
+                // Chunk를 풀에 반환
+                removed.Clear();
+                _chunkPool.Push(removed);
             }
             acc.PartIndex++;
         }
@@ -220,14 +253,13 @@ namespace Study.MapSampling
                 if (uvs.Length > 65535) combinedMesh.indexFormat = IndexFormat.UInt32;
 
                 combinedMesh.CombineMeshes(instances, true, true);
-                combinedMesh.uv = uvs; // CombineMeshes 이후에 UV를 덮어씌움
+                combinedMesh.uv = uvs;
 
                 MeshUtility.Optimize(combinedMesh);
 
                 if (AssetDatabase.LoadAssetAtPath<Mesh>(path) != null) AssetDatabase.DeleteAsset(path);
                 AssetDatabase.CreateAsset(combinedMesh, path);
 
-                // Map Grid Data 업데이트
                 if (ctx.Map != null)
                 {
                     var gridData = ctx.Map.GetOrAdd(key.GridKey, k => new EditMapGridData(k));
