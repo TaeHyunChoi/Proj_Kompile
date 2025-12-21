@@ -43,6 +43,9 @@ namespace Script.Editor.MapSampling
         [SerializeField] private Transform instanceTransform;
         [SerializeField] byte sceneIndex = 0;
 
+        public byte SceneIndex => sceneIndex;
+        public Transform MapRoot => instanceTransform;
+
         private ConcurrentDictionary<int, EditMapGridData> map;
         public ConcurrentDictionary<int, EditMapGridData> Map => map;
 

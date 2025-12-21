@@ -1,21 +1,16 @@
 #if UNITY_EDITOR
 namespace Study.MapSampling
 {
-    using Script.Editor.MapSampling;
     using Script.Data;
+    using Script.Editor.MapSampling;
     using Script.Manager;
-    using Study.Pathfind;
-    using System;
     using System.Collections.Generic;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
-    using UnityEditor;
-    using UnityEditor.AddressableAssets;
-    using UnityEditor.AddressableAssets.Settings;
     using UnityEngine;
     
-    public partial class STUDY_EditMapSampling : MonoBehaviour
+    public partial class STUDY_EditMapSampling
     {
         private class CombineMeshData
         {
@@ -24,8 +19,6 @@ namespace Study.MapSampling
             public int vertexCount;
             public int index;
         }
-
-        private const int VERTEX_LIMIT = 65535;
 
         private readonly string MAP_NAVI_DATA_PATH = "Rcs\\Bin\\MapNavRawData";
 
@@ -38,8 +31,9 @@ namespace Study.MapSampling
         };
 
 
-        [SerializeField] private Transform instanceTransform;
-        [SerializeField] private byte sceneIndex = 0;
+        //[SerializeField] private Transform instanceTransform;
+        //[SerializeField] private byte sceneIndex = 0;
+        private byte sceneIndex = 0;
 
         private ConcurrentDictionary<int, EditMapGridData> map;
         public ConcurrentDictionary<int, EditMapGridData> Map => map;
@@ -49,6 +43,10 @@ namespace Study.MapSampling
             Debug.Log($"Start Bake Map");
 
             // ## set data
+            var instance = Object.FindFirstObjectByType<EditMapTileSampling>();
+            var instanceTransform = instance.MapRoot;
+            sceneIndex = instance.SceneIndex;
+
             EditMapData[] tiles = instanceTransform.GetComponentsInChildren<EditMapData>(true);
             int length = tiles.Length;
             Allocator allocationType = Allocator.TempJob;
@@ -130,7 +128,7 @@ namespace Study.MapSampling
 
             // ## Set Grid Data
             LinkTiles(map, startID);
-            CombineMapMeshes(map, tiles);   // **Streaming, 부분 처리 방식으로
+            CombineAndRegister(map, tiles, sceneIndex, "MapRender");   // **Streaming, 부분 처리 방식으로
 
             // ## Save Data.bin
             foreach (KeyValuePair<int, EditMapGridData> grid in map)
@@ -158,6 +156,8 @@ namespace Study.MapSampling
         {
             Stack<long> stack = new Stack<long>();
             HashSet<long> visited = new HashSet<long>();
+
+            stack.Push(startID);
 
             while (stack.Count > 0)
             {
