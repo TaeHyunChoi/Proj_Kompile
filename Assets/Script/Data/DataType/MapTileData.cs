@@ -14,7 +14,7 @@ namespace Script.Data
         {
             GridKey = g;
             TileKey = t;
-            NaviMask = data.NavMask;
+            NaviMask = data.NaviMask;
             LinkMask = data.LinkMask;
         }
         public IngameMapTileData(int g, int t)

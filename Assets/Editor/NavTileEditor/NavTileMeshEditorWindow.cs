@@ -11,7 +11,7 @@ public partial class NavTileMeshEditorWindow : EditorWindow
     private bool   isSmall       = false;          // (실내 등) 타일맵을 작게 만들 때 체크
 
     // 커스텀 에디터 표기
-    [MenuItem("Tools/Custom Editor Window")]
+    [MenuItem("Tools/Asset/Map/Generate Map Tile Mesh", priority = 0)]
     public static void ShowWindow()
     {
         GetWindow<NavTileMeshEditorWindow>("Nav Tile Mesh Editor");

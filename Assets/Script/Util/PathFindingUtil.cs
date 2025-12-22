@@ -54,7 +54,7 @@ namespace Script.Util.PathFinding
                         nodeNatives.Add(new MapTileNative
                         {
                             Key      = nodeKey,
-                            NavMask  = mt.NavMask,
+                            NavMask  = mt.NaviMask,
                             LinkMask = mt.LinkMask,
                             Pivot    = pivot
                         });

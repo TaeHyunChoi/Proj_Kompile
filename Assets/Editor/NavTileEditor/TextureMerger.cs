@@ -6,7 +6,7 @@ using Script.Index;
 
 public class TextureMerger : MonoBehaviour
 {
-    [MenuItem("Tools/Merge Sprites into Texture2D")]
+    [MenuItem("Tools/Asset/Map/Merge Sprites into Texture2D", priority = 1)]
     public static void MergeSprites()
     {
         // 스프라이트 폴더 경로

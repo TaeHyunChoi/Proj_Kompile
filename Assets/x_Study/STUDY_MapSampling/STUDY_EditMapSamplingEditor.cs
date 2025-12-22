@@ -1,31 +1,37 @@
 #if UNITY_EDITOR
 namespace Study.MapSampling
 {
+    using System.Collections.Generic;
+    using Script.Data;
+    using Script.Map;
     using UnityEditor;
     using UnityEngine;
 
     public class STUDY_EditMapSamplingEditor
     {
-        [MenuItem("Tools/MapSampling/Bake Path Nodes to .bin")]
+        [MenuItem("Tools/MapSampling/Bake Path Tiles to .btyes")]
         public static void Bake()
         {
             STUDY_EditMapSampling sampler = new STUDY_EditMapSampling();
             sampler.Bake();
         }
 
-        [MenuItem("Tools/MapSampling/Load Baked Path Nodes")]
+        [MenuItem("Tools/MapSampling/Load Baked Map Tiles")]
         public static async Awaitable TempLoad()
         {
-            Debug.Log("Not yet developed");
+            string targetAssetName = "MapNavi_65280";
+            Debug.Log($"Load Baked Map({targetAssetName}) Tiles ");
 
-           //for test
-           //STUDY_NodeCacheManager cache = new STUDY_NodeCacheManager();
-           //await cache.LoadFromAddressableAsync($"MapNavi_0");
+            MapCacheManager cacheMgr = new MapCacheManager();
+            await cacheMgr.LoadFromAddressableAsync(targetAssetName);
+            foreach (KeyValuePair<long, MapTileData> tileKV in cacheMgr.TileDic)
+            {
+                var id = tileKV.Key;
+                var tile = tileKV.Value;
+                var pivot = MapPathUtil.ComputeWorldPosition(id);
 
-           // foreach (var node in cache.NodeMap.Values)
-           // {
-           //     Debug.Log($"PATH[{node.ID}], {node.ComputeAbsPosition()}, link:{System.Convert.ToString(node.LinkMask, 2)}");
-           // }
+                Debug.Log($"[{id}] {pivot}.navi = {System.Convert.ToString(tile.NaviMask, 16)},\nlink = {System.Convert.ToString(tile.LinkMask, 2)}");
+            }
         }
     }
 }

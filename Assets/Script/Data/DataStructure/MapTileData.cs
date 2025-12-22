@@ -7,7 +7,7 @@ namespace Script.Data
     public struct MapTileData
     {
         [ReadOnly, Key(0)]
-        public long NavMask;
+        public long NaviMask;
         
         [ReadOnly, Key(1)]
         public ushort LinkMask;
@@ -15,7 +15,7 @@ namespace Script.Data
 #if UNITY_EDITOR
         public MapTileData(EditMapTileData edited)
         {
-            NavMask  = edited.NaviMask;
+            NaviMask  = edited.NaviMask;
             LinkMask = edited.LinkMask;
         }
 #endif

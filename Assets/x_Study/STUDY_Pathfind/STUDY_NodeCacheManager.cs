@@ -27,18 +27,6 @@ namespace Study.Pathfind
         private Dictionary<long, STUDY_NodeData> nodeMap;
         private Dictionary<int3, long> posToID;
 
-        public void InitializeFromList(List<STUDY_NodeData> list)
-        {
-            int count = list.Count;
-            nodeMap = new Dictionary<long, STUDY_NodeData>(capacity: count);
-            posToID = new Dictionary<int3, long>(capacity: count);
-
-            foreach (var n in list)
-            {
-                nodeMap.Add(n.ID, n);
-                posToID.Add(n.ComputeAbsPosition(), n.ID);
-            }
-        }
         public async Awaitable LoadFromAddressableAsync(string addressOrLabel)
         {
             var handle = Addressables.LoadAssetAsync<TextAsset>(addressOrLabel);
@@ -55,6 +43,18 @@ namespace Study.Pathfind
 
             Addressables.Release(handle);
             Debug.Log($"NodeCacheManager: Load {list.Count} nodes from Addressable: {addressOrLabel}");
+        }
+        public void InitializeFromList(List<STUDY_NodeData> list)
+        {
+            int count = list.Count;
+            nodeMap = new Dictionary<long, STUDY_NodeData>(capacity: count);
+            posToID = new Dictionary<int3, long>(capacity: count);
+
+            foreach (var n in list)
+            {
+                nodeMap.Add(n.ID, n);
+                posToID.Add(n.ComputeAbsPosition(), n.ID);
+            }
         }
 
         public IReadOnlyDictionary<long, STUDY_NodeData> NodeMap => nodeMap; // "Add, Remove, Clear 같은 수정 메서드가 없습니다." - 엄청 좋은거네?

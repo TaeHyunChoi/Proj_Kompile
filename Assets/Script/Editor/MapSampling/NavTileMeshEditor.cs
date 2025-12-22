@@ -64,7 +64,7 @@ public static class NavTileMeshEditor
         Mesh mesh = InstantiateMesh(heights);
 
         // create | save mesh
-        var path = "Assets/Rcs/NavTile/Mesh/NavTileMesh_" + fileName + ".asset";
+        var path = "Assets/Rcs/Mesh/MapTileMesh/MAP_" + fileName + ".asset";
         if (AssetDatabase.LoadAssetAtPath<Mesh>(path) is not null)
         {
             AssetDatabase.DeleteAsset(path);
@@ -74,7 +74,7 @@ public static class NavTileMeshEditor
         Debug.Log("Mesh asset created: " + fileName);
 
         // create|save prefab for test
-        stringBuilder.Append("Assets/Editor/Prefab/");
+        stringBuilder.Append("Assets/Editor/Prefab/MapTilePrefab/");
         stringBuilder.Append($"{fileName}");
         stringBuilder.Append(".prefab");
 

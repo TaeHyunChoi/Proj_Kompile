@@ -23,7 +23,7 @@ public static class GenerateAssetMapEditor
     private static readonly StringBuilder stringBuilder = new StringBuilder();
 
 
-    [MenuItem("CustomTools/Generate All Asset Maps (Generate Code & Call Mapping)")]
+    [MenuItem("Tools/AssetMap/Generate All Asset Maps (Generate Code & Call Mapping)")]
     public static void GenerateAllMap()
     {
         pendingMappings.Clear();

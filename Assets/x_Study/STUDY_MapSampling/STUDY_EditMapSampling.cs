@@ -4,6 +4,7 @@ namespace Study.MapSampling
     using Script.Data;
     using Script.Editor.MapSampling;
     using Script.Manager;
+    using Script.Map;
     using System.Collections.Generic;
     using Unity.Collections;
     using Unity.Jobs;
@@ -24,7 +25,7 @@ namespace Study.MapSampling
             public int index;
         }
 
-        private readonly string MAP_NAVI_DATA_PATH = "Rcs\\Bin\\MapNavRawData";
+        private readonly string MAP_NAVI_DATA_PATH = "Rcs\\Bytes\\MapNavi";
 
         // tile link를 할 때에 탐색 순서가 지정되어 있음!
         private readonly float[] DIFF_Y = new float[] { 0, 1, -1 };
@@ -34,9 +35,6 @@ namespace Study.MapSampling
             new float2(0, -1), new float2(1, 0), new float2(0, 1),  new float2(-1, 0)
         };
 
-
-        //[SerializeField] private Transform instanceTransform;
-        //[SerializeField] private byte sceneIndex = 0;
         private byte sceneIndex = 0;
 
         private ConcurrentDictionary<int, EditMapGridData> map;
@@ -161,20 +159,22 @@ namespace Study.MapSampling
             HashSet<long> visited = new HashSet<long>();
 
             stack.Push(startID);
+            visited.Add(startID);
 
             while (stack.Count > 0)
             {
                 long targetID = stack.Pop();
 
-                // 타일을 찾을 수 없음;
+                // 타일을 찾을 수 없음
                 if (false == EditMapUtil.TryGetTileData(map, targetID, out EditMapTileData visitTile))
                 {
+                    Debug.LogWarning($"MapSampling: 타일을 찾을 수 없음({targetID}, {EditMapUtil.ComputeWorldPosition(targetID)})");
                     continue;
                 }
 
                 for (int i = 0; i < LINK_DIR.Length; ++i)
                 {
-                    // 이미 연결;
+                    // 이미 이 방향으로 링크가 되어 있다면 스킵
                     if (true == visitTile.IsLinked(LINK_DIR[i]))
                     {
                         continue;
@@ -184,35 +184,38 @@ namespace Study.MapSampling
                     {
                         float3 targetPivot = EditMapUtil.ComputeWorldPosition(targetID);
                         float3 targetDir = new float3(LINK_DIR[i].x, DIFF_Y[y], LINK_DIR[i].y);
+
                         long neighborID = EditMapUtil.ComputeID(targetPivot + targetDir);
+                        //방문한 타일이라도 링크 연결은 확인해야 한다.
 
-                        // 이미 방문; 견적 다 나왔으니 넘어간다.
-                        if (true == visited.Contains(neighborID))
-                        {
-                            break;
-                        }
-
-                        // 해당 위치에 타일이 없다? y값을 바꿔서 다시 탐색
+                        // 해당 위치에 타일이 없으면 다음 높이를 검색
                         if (false == EditMapUtil.TryGetTileData(map, neighborID, out EditMapTileData neighborTile))
                         {
                             continue;
                         }
 
-                        // 이웃을 찾았다면?
-                        visited.Add(neighborID); // 방문 목록에 추가
-                        stack.Push(neighborID);  // 다음 탐색 대상으로 추가
-
-                        // 이웃과 '연결' 되었는가? .LinkMask 갱신
-                        if (true == visitTile.TryGetLinkMask(map, neighborTile, targetDir, out int myLinkMask, out int neighborLintMask))
+                        // 이웃과 연결 가능한 상태인가?
+                        if (true == visitTile.TryGetLinkMask(map, neighborTile, targetDir, out int myLinkMask, out int neighborLinkMask))
                         {
-                            EditMapUtil.ComputeKey(visitTile.ID, out int gKey, out int tKey);
-                            visitTile = new EditMapTileData(visitTile, myLinkMask);
-                            map[gKey].Data[tKey] = visitTile;
+                            // 내 타일 데이터 갱신
+                            visitTile = new EditMapTileData(visitTile, myLinkMask); // 갱신 후
+                            EditMapUtil.ComputeKey(visitTile.ID, out int gKey, out int tKey); // gKey, tKey 찾아서
+                            map[gKey].Data[tKey] = visitTile; // 데이터 갱신
 
+                            // 이웃 타일 데이터 갱신
                             EditMapUtil.ComputeKey(neighborTile.ID, out gKey, out tKey);
-                            neighborTile = new EditMapTileData(neighborTile, neighborLintMask);
+                            neighborTile = new EditMapTileData(neighborTile, neighborLinkMask);
                             map[gKey].Data[tKey] = neighborTile;
 
+                            // 여기서 visited를 체크:
+                            // 이웃 타일이 아직 방문하지 않은 곳이라면 스택에 추가하여 나중에 그 타일 기준으로도 탐색
+                            if (false == visited.Contains(neighborID))
+                            {
+                                visited.Add(neighborID);
+                                stack.Push(neighborID);
+                            }
+
+                            // 연결을 성공했으므로 다음 높이를 볼 필요 없음 -> 다음 방향으로
                             break;
                         }
                     }

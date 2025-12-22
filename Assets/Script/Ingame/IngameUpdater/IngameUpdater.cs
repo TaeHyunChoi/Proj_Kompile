@@ -52,7 +52,7 @@ namespace Script.Manager
 #if UNITY_EDITOR
                 //Debug.Assert(IngameUpdateState.FAILURE != updateList[i].UpdateState());
 #else
-                updateList[i].UpdateState();
+                //updateList[i].UpdateState();
 #endif
             }
         }

@@ -24,7 +24,7 @@ public class AssetIDGenerator
     private const string ID_FILE_PATH = "Script/Data/AssetID/{0}.cs";
 
 
-    [MenuItem("Tools/Asset Management/Generate Enums From Folders")]
+    [MenuItem("Tools/AssetMap/Generate Enums From Folders")]
     public static void GenerateEnums()
     {
         string assetsPath = Application.dataPath;

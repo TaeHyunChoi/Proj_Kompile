@@ -225,38 +225,61 @@ namespace Script.Manager
     {
         public static void WriteBinaryFile<T>(T data, string dataPath, string fileName, string addressableGroup = null)
         {
-            // 저장할 파일 경로 생성
-            string filePath = Path.Combine(Application.dataPath, dataPath, fileName + ".bytes");
-            string directoryPath = Path.GetDirectoryName(filePath);
-            if (false == Directory.Exists(directoryPath))
+            // 1. 경로 설정 (Path.Combine 권장)
+            // dataPath는 "Data/Maps" 처럼 Assets 하위 경로라고 가정
+            string fullDirectoryPath = Path.Combine(Application.dataPath, dataPath);
+            string filePath = Path.Combine(fullDirectoryPath, fileName + ".bytes");
+            string assetPath = Path.Combine("Assets", dataPath, fileName + ".bytes");
+
+            if (!Directory.Exists(fullDirectoryPath))
             {
-                Directory.CreateDirectory(directoryPath);
+                Directory.CreateDirectory(fullDirectoryPath);
             }
 
-            // 데이터를 MessagePack 형식으로 직렬화하고 파일에 저장
-            byte[] serializedData = MessagePackSerializer.Serialize(data, MessagePackConfig<T>.Options);
-            File.WriteAllBytes(filePath, serializedData);
+            // 2. 직렬화 옵션 체크 (로드할 때와 반드시 동일해야 함)
+            // 이전 코드에서 ContractlessStandardResolver를 썼다면 여기서도 동일하게 설정
+            var options = MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
-            // 어드레서블 에셋으로 저장
-            if (null != addressableGroup)
+            try
             {
-                string assetPath = "Assets/" + dataPath + "/" + fileName + ".bytes";
+                byte[] serializedData = MessagePackSerializer.Serialize(data, options);
+                File.WriteAllBytes(filePath, serializedData);
+
+                // 파일이 물리적으로 생성된 후 에디터가 인식하도록 갱신
                 AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+            }
+            catch (System.Exception e)
+            {
+                UnityEngine.Debug.LogError($"Serialization Failed: {e.Message}");
+                return;
+            }
 
+            // 3. 어드레서블 설정
+            if (!string.IsNullOrEmpty(addressableGroup))
+            {
                 AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
-                AddressableAssetGroup group = settings.FindGroup(addressableGroup);
-                if (group == null)
-                {
-                    group = settings.CreateGroup(addressableGroup, false, false, false, null);
-                }
+                if (settings == null) return;
 
-                AddressableAssetEntry entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(assetPath), group, readOnly: true);
-                entry.SetAddress(fileName);
-                entry.SetLabel(fileName, true);
-                settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
-                AssetDatabase.SaveAssets();
+                AddressableAssetGroup group = settings.FindGroup(addressableGroup)
+                                             ?? settings.CreateGroup(addressableGroup, false, false, false, null);
+
+                string guid = AssetDatabase.AssetPathToGUID(assetPath);
+                AddressableAssetEntry entry = settings.CreateOrMoveEntry(guid, group);
+
+                if (entry != null)
+                {
+                    entry.SetAddress(fileName);
+                    
+                    // Label 설정이 꼭 필요한 경우가 아니라면 생략 가능하지만, 유지한다면 아래와 같이
+                    //entry.SetLabel(fileName, true);
+
+                    settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
+                    AssetDatabase.SaveAssets();
+                    Debug.Log($"[DataExporter] Saved and Addressable registered: {assetPath}");
+                }
             }
         }
     }
-#endif
 }
+#endif
+
