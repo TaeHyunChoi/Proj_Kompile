@@ -129,7 +129,7 @@ namespace Study.MapSampling
 
 
             // ## Set Grid Data
-            LinkTiles(map, startID);
+            LinkTiles(map);
             CombineAndRegister(map, tiles, sceneIndex, "MapRender");   // **Streaming, 부분 처리 방식으로
 
             // ## Save Data.bin
@@ -153,74 +153,69 @@ namespace Study.MapSampling
             Debug.Log($"End Bake (length: {tiles.Length})");
             System.GC.Collect();
         }
-        private void LinkTiles(ConcurrentDictionary<int, EditMapGridData> map, long startID)
+        private void LinkTiles(ConcurrentDictionary<int, EditMapGridData> map)
         {
-            Stack<long> stack = new Stack<long>();
-            HashSet<long> visited = new HashSet<long>();
-
-            stack.Push(startID);
-            visited.Add(startID);
-
-            while (stack.Count > 0)
+            List<EditMapTileData> allTiles = new List<EditMapTileData>();
+            foreach (var grid in map.Values)
             {
-                long targetID = stack.Pop();
-
-                // 타일을 찾을 수 없음
-                if (false == EditMapUtil.TryGetTileData(map, targetID, out EditMapTileData visitTile))
+                foreach (var tile in grid.Data.Values)
                 {
-                    Debug.LogWarning($"MapSampling: 타일을 찾을 수 없음({targetID}, {EditMapUtil.ComputeWorldPosition(targetID)})");
-                    continue;
-                }
-
-                for (int i = 0; i < LINK_DIR.Length; ++i)
-                {
-                    // 이미 이 방향으로 링크가 되어 있다면 스킵
-                    if (true == visitTile.IsLinked(LINK_DIR[i]))
-                    {
-                        continue;
-                    }
-
-                    for (int y = 0; y < DIFF_Y.Length; ++y)
-                    {
-                        float3 targetPivot = EditMapUtil.ComputeWorldPosition(targetID);
-                        float3 targetDir = new float3(LINK_DIR[i].x, DIFF_Y[y], LINK_DIR[i].y);
-
-                        long neighborID = EditMapUtil.ComputeID(targetPivot + targetDir);
-                        //방문한 타일이라도 링크 연결은 확인해야 한다.
-
-                        // 해당 위치에 타일이 없으면 다음 높이를 검색
-                        if (false == EditMapUtil.TryGetTileData(map, neighborID, out EditMapTileData neighborTile))
-                        {
-                            continue;
-                        }
-
-                        // 이웃과 연결 가능한 상태인가?
-                        if (true == visitTile.TryGetLinkMask(map, neighborTile, targetDir, out int myLinkMask, out int neighborLinkMask))
-                        {
-                            // 내 타일 데이터 갱신
-                            visitTile = new EditMapTileData(visitTile, myLinkMask); // 갱신 후
-                            EditMapUtil.ComputeKey(visitTile.ID, out int gKey, out int tKey); // gKey, tKey 찾아서
-                            map[gKey].Data[tKey] = visitTile; // 데이터 갱신
-
-                            // 이웃 타일 데이터 갱신
-                            EditMapUtil.ComputeKey(neighborTile.ID, out gKey, out tKey);
-                            neighborTile = new EditMapTileData(neighborTile, neighborLinkMask);
-                            map[gKey].Data[tKey] = neighborTile;
-
-                            // 여기서 visited를 체크:
-                            // 이웃 타일이 아직 방문하지 않은 곳이라면 스택에 추가하여 나중에 그 타일 기준으로도 탐색
-                            if (false == visited.Contains(neighborID))
-                            {
-                                visited.Add(neighborID);
-                                stack.Push(neighborID);
-                            }
-
-                            // 연결을 성공했으므로 다음 높이를 볼 필요 없음 -> 다음 방향으로
-                            break;
-                        }
-                    }
+                    allTiles.Add(tile);
                 }
             }
+
+            int count = allTiles.Count;
+            if (0 == count)
+            {
+                return;
+            }
+
+            var allocType   = Allocator.TempJob;
+            var keyArray    = new NativeArray<long>(count, allocType);
+            var tileMap     = new NativeHashMap<long, EditMapTileData>(count, allocType);
+            var linkDirs    = new NativeArray<float2>(LINK_DIR, allocType);
+            var diffYs      = new NativeArray<float>(DIFF_Y, allocType);
+            var jobResult   = new NativeArray<EditMapTileData>(count, allocType);
+
+            // init data
+            for (int i = 0; i < count; ++i)
+            {
+                keyArray[i] = allTiles[i].ID;
+                tileMap.TryAdd(allTiles[i].ID, allTiles[i]);
+            }
+
+            // schedule job
+            LinkTilesJob linkJob = new LinkTilesJob
+            {
+                KeyArray = keyArray,
+                Map = tileMap,
+                Results = jobResult,
+                LinkDirs = linkDirs,
+                DiffYs = diffYs
+            };
+            JobHandle handle = linkJob.Schedule(count, 64);
+            handle.Complete();
+
+            // save to result
+            for (int i = 0; i < count; ++i)
+            {
+                EditMapTileData resultTile = jobResult[i];
+                EditMapUtil.ComputeKey(resultTile.ID, out int gKey, out int tKey);
+
+                if (true == map.TryGetValue(gKey, out var gridData))
+                {
+                    gridData.Data[tKey] = resultTile;
+                }
+            }
+
+            // dispose native container
+            keyArray.Dispose();
+            tileMap.Dispose();
+            linkDirs.Dispose();
+            diffYs.Dispose();
+            jobResult.Dispose();
+
+            Debug.Log($"LinkTiles Job Completed: {count} tiles processed.");
         }
     }
 }

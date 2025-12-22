@@ -1,54 +1,31 @@
 #if UNITY_EDITOR
-
 using Script.Data;
-using System;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
+using UnityEditor.Hardware;
 using UnityEngine;
 
-public static partial class EditMapUtil
+public static partial class EditMapUtil //_LINK
 {
-    [Flags]
-    public enum DirFlag
-    { 
-        NONE    = 0,
-        UP      = 1,
-        DOWN    = 1 << 1,
-        LEFT    = 1 << 2,
-        RIGHT   = 1 << 3
-    }
-
     private static readonly int LINK_ZERO = 0b_01;
     private static readonly int LINK_UP   = 0b_10;
     private static readonly int LINK_DOWN = 0b_11;
-    public static readonly int LINK_NULL = 0b_00;
+    public  static readonly int LINK_NULL = 0b_00;
 
-    private readonly struct VertexIndexInfo
+    private static readonly Dictionary<DirFlag, EditVertexIndexInfo> vertexIndex = new Dictionary<DirFlag, EditVertexIndexInfo>()
     {
-        public readonly int center;
-        public readonly int side_0;
-        public readonly int side_1;
-
-        public VertexIndexInfo(int c, int s0, int s1)
-        {
-            center = c;
-            side_0 = s0;
-            side_1 = s1;
-        }
-    }
-    private static readonly Dictionary<DirFlag, VertexIndexInfo> my_vertex = new Dictionary<DirFlag, VertexIndexInfo>()
-    {
-        { DirFlag.LEFT,  new VertexIndexInfo(5, 0, 10) },
-        { DirFlag.DOWN,  new VertexIndexInfo(1, 0, 2) },
-        { DirFlag.UP,    new VertexIndexInfo(11, 10, 12) },
-        { DirFlag.RIGHT, new VertexIndexInfo(7, 2, 12)}
+        { DirFlag.LEFT,  new EditVertexIndexInfo(5, 0, 10) },
+        { DirFlag.RIGHT, new EditVertexIndexInfo(7, 2, 12)},
+        { DirFlag.UP,    new EditVertexIndexInfo(11, 10, 12) },
+        { DirFlag.DOWN,  new EditVertexIndexInfo(1, 0, 2) },
     };
-    private static readonly Dictionary<DirFlag, VertexIndexInfo> neighbor_vertex = new Dictionary<DirFlag, VertexIndexInfo>()
+    private static readonly Dictionary<DirFlag, EditVertexIndexInfo> neighbor_vertex = new Dictionary<DirFlag, EditVertexIndexInfo>()
     {
-        { DirFlag.LEFT,  new VertexIndexInfo(7, 2, 12) },
-        { DirFlag.DOWN,  new VertexIndexInfo(11, 10, 12) },
-        { DirFlag.UP,    new VertexIndexInfo(1, 0, 2)},
-        { DirFlag.RIGHT, new VertexIndexInfo(5, 0, 10)}
+        { DirFlag.LEFT,  new EditVertexIndexInfo(7, 2, 12) },
+        { DirFlag.DOWN,  new EditVertexIndexInfo(11, 10, 12) },
+        { DirFlag.UP,    new EditVertexIndexInfo(1, 0, 2)},
+        { DirFlag.RIGHT, new EditVertexIndexInfo(5, 0, 10)}
     };
     private static readonly Dictionary<DirFlag, float3> DIRECTION = new Dictionary<DirFlag, float3>()
     {
@@ -104,8 +81,8 @@ public static partial class EditMapUtil
 
     private static bool IsLinked(DirFlag direction_flag, EditMapTileData my_tile, EditMapTileData neighbor_tile)
     {
-        VertexIndexInfo my_vertex_info = my_vertex[direction_flag];
-        VertexIndexInfo neighbor_vertex_info = neighbor_vertex[direction_flag];
+        EditVertexIndexInfo my_vertex_info = vertexIndex[direction_flag];
+        EditVertexIndexInfo neighbor_vertex_info = neighbor_vertex[direction_flag];
 
         // 중앙점 비교
         if (false == my_tile.TryGetVerticeHeight(my_vertex_info.center, out int my_height_1000x)
@@ -120,13 +97,13 @@ public static partial class EditMapUtil
 
         // 양옆의 점 높이 비교
         bool compare = false;
-        if (true == my_tile.TryGetVerticeHeight(my_vertex_info.side_0, out my_height_1000x)
-            && true == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.side_0, out neighbor_height_1000x))
+        if (true == my_tile.TryGetVerticeHeight(my_vertex_info.side0, out my_height_1000x)
+            && true == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.side0, out neighbor_height_1000x))
         {
             compare |= my_height_1000x == neighbor_height_1000x;
         }
-        if (true == my_tile.TryGetVerticeHeight(my_vertex_info.side_1, out my_height_1000x)
-            && true == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.side_1, out neighbor_height_1000x))
+        if (true == my_tile.TryGetVerticeHeight(my_vertex_info.side1, out my_height_1000x)
+            && true == neighbor_tile.TryGetVerticeHeight(neighbor_vertex_info.side1, out neighbor_height_1000x))
         {
             compare |= my_height_1000x == neighbor_height_1000x;
         }
@@ -247,38 +224,58 @@ public static partial class EditMapUtil
         return isLinked;
     }
 
-    private static int GetLinkMaskShift(DirFlag direction_flag)
+    public static int GetLinkMaskShift(DirFlag flag)
     {
-        int shift = 0;
-        switch (direction_flag)
+        // 반시계 방향으로 돌린다~!!
+        return 2 * flag switch
         {
-            case DirFlag.LEFT | DirFlag.DOWN:
-                shift = 0 * 2;
-                break;
-            case DirFlag.DOWN:
-                shift = 1 * 2;
-                break;
-            case DirFlag.RIGHT | DirFlag.DOWN:
-                shift = 2 * 2;
-                break;
-            case DirFlag.RIGHT:
-                shift = 2 * 3;
-                break;
-            case DirFlag.RIGHT | DirFlag.UP:
-                shift = 2 * 4;
-                break;
-            case DirFlag.UP:
-                shift = 2 * 5;
-                break;
-            case DirFlag.LEFT | DirFlag.UP:
-                shift = 2 * 6;
-                break;
-            case DirFlag.LEFT:
-                shift = 2 * 7;
-                break;
-        }
+            DirFlag.LEFT | DirFlag.DOWN     => 0,
+            DirFlag.DOWN                    => 1,
+            DirFlag.RIGHT | DirFlag.DOWN    => 2,
+            DirFlag.RIGHT                   => 3,
+            DirFlag.RIGHT | DirFlag.UP      => 4,
+            DirFlag.UP                      => 5,
+            DirFlag.LEFT | DirFlag.UP       => 6,
+            DirFlag.LEFT                    => 7,
+            _ => -1
+        };
+    }
 
-        return shift;
+
+    // MapSampling.V2에서 사용
+    public static DirFlag GetDirFlag(float x, float z)
+    {
+        DirFlag flag = DirFlag.NONE;
+
+        if      (x > 0) { flag |= DirFlag.RIGHT; }
+        else if (x < 0) { flag |= DirFlag.LEFT;  }
+
+        if      (z > 0) { flag |= DirFlag.UP;   }
+        else if (z < 0) { flag |= DirFlag.DOWN; }
+
+        return flag;
+    }
+    public static EditVertexIndexInfo GetVertexIndexInfo(DirFlag flag)
+    {
+        return flag switch
+        {
+            DirFlag.LEFT  => new EditVertexIndexInfo( 5,  0, 10),
+            DirFlag.RIGHT => new EditVertexIndexInfo( 7,  2, 12),
+            DirFlag.UP    => new EditVertexIndexInfo(11, 10, 12),
+            DirFlag.DOWN  => new EditVertexIndexInfo( 1,  0,  2),
+            _ => default
+        };
+    }
+    public static float3 GetDirectionVector(DirFlag flag)
+    {
+        return flag switch
+        {
+            DirFlag.LEFT    => new float3(-1f, 0f,  0f),
+            DirFlag.RIGHT   => new float3( 1f, 0f,  0f),
+            DirFlag.UP      => new float3( 0f, 0f,  1f),
+            DirFlag.DOWN    => new float3( 0f, 0f, -1f),
+            _ => default
+        };
     }
 }
 #endif

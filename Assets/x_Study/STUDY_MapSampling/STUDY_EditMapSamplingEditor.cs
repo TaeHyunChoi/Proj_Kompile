@@ -19,6 +19,7 @@ namespace Study.MapSampling
         [MenuItem("Tools/MapSampling/Load Baked Map Tiles")]
         public static async Awaitable TempLoad()
         {
+            //string targetAssetName = "MapNavi_0";
             string targetAssetName = "MapNavi_65280";
             Debug.Log($"Load Baked Map({targetAssetName}) Tiles ");
 
