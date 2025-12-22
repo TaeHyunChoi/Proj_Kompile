@@ -96,7 +96,7 @@ public static class NavTileMeshEditor
             renderer.sharedMaterial = material;
 
             // 타일 정보를 유니티의 NavMesh를 Bake하는 것처럼 데이터 저장할 때 호출하는 함수
-            var maptilePrefab = prefabObject.AddComponent<EditMapData>();
+            var maptilePrefab = prefabObject.AddComponent<EditMapTileObject>();
             maptilePrefab.InitializePrefab(heights, isSmall);
 
             PrefabUtility.SaveAsPrefabAsset(prefabObject, path, out isSuccess);

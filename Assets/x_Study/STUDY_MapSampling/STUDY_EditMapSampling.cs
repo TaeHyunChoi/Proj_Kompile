@@ -9,7 +9,11 @@ namespace Study.MapSampling
     using Unity.Jobs;
     using Unity.Mathematics;
     using UnityEngine;
-    
+
+    /// <summary>
+    /// partial: STUDY_EditMapSampling
+    /// partial: STUDY_EditMapSampling_combineMesh.cs
+    /// </summary>
     public partial class STUDY_EditMapSampling
     {
         private class CombineMeshData
@@ -47,7 +51,7 @@ namespace Study.MapSampling
             var instanceTransform = instance.MapRoot;
             sceneIndex = instance.SceneIndex;
 
-            EditMapData[] tiles = instanceTransform.GetComponentsInChildren<EditMapData>(true);
+            EditMapTileObject[] tiles = instanceTransform.GetComponentsInChildren<EditMapTileObject>(true);
             int length = tiles.Length;
             Allocator allocationType = Allocator.TempJob;
 
@@ -58,7 +62,7 @@ namespace Study.MapSampling
             var nativeHeights     = new NativeArray<ulong> (length, allocationType);
             var nativeResult      = new NativeArray<EditMapTileData>(length, allocationType);
 
-            EditMapData tileObject; // TODO: EditMapTileObject 식으로 이름 바꿔야겠네.
+            EditMapTileObject tileObject; // TODO: EditMapTileObject 식으로 이름 바꿔야겠네.
             for (int i = 0; i < tiles.Length; ++i)
             {
                 tileObject = tiles[i];
@@ -151,7 +155,6 @@ namespace Study.MapSampling
             Debug.Log($"End Bake (length: {tiles.Length})");
             System.GC.Collect();
         }
-
         private void LinkTiles(ConcurrentDictionary<int, EditMapGridData> map, long startID)
         {
             Stack<long> stack = new Stack<long>();
@@ -216,7 +219,6 @@ namespace Study.MapSampling
                 }
             }
         }
-
     }
 }
 #endif

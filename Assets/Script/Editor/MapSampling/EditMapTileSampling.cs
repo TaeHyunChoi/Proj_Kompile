@@ -54,7 +54,7 @@ namespace Script.Editor.MapSampling
             Debug.Log($"--- Start Baking Map ---");
 
             // set data
-            EditMapData[] tiles = instanceTransform.GetComponentsInChildren<EditMapData>();
+            EditMapTileObject[] tiles = instanceTransform.GetComponentsInChildren<EditMapTileObject>();
 
             // JobSystem -> EditMapData 일괄 생성
             int length = tiles.Length;
@@ -67,7 +67,7 @@ namespace Script.Editor.MapSampling
             var native_array_heights        = new NativeArray<ulong>(length, allocation_type);
             var native_array_result         = new NativeArray<EditMapTileData>(length, allocation_type);
 
-            EditMapData tileData;
+            EditMapTileObject tileData;
             for (int i = 0; i < tiles.Length; i++)
             {
                 tileData = tiles[i];
@@ -213,10 +213,10 @@ namespace Script.Editor.MapSampling
                 }
             }
         }
-        private void CombineMapMeshes(ConcurrentDictionary<int, EditMapGridData> map, EditMapData[] tiles)
+        private void CombineMapMeshes(ConcurrentDictionary<int, EditMapGridData> map, EditMapTileObject[] tiles)
         {
             Dictionary<long, CombineMeshData> tempDataDict = new Dictionary<long, CombineMeshData>();
-            EditMapData tile;
+            EditMapTileObject tile;
             CombineMeshData tempData;
 
             for (int i = 0; i < tiles.Length; ++i)
