@@ -1,10 +1,9 @@
 #if UNITY_EDITOR
 
 using Script.Data;
+using System;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static Script.Index.MapTileIndex;
 
 /// <summary> 맵타일 관련하여 '에디터'에서만 사용하는 함수.
 /// 비슷한 기능으로 함수가 많아지니까 헷갈려서 분리;
@@ -18,6 +17,11 @@ public static partial class EditMapUtil
     public const int TOTAL_BITS     = 13;
     public const int BITS_PER_CELL  = 4;
     public const int MATRIX_SIZE    = 5;
+
+    public const int GRID_SIZE = 64;
+    public const int SIZE_TILE = 8;
+    public const int TILE_BITS = 6;
+    public const int TILE_MASK = (1 << TILE_BITS) - 1;
 
     // (주의) map_tile_pivot != matrix.Origin(원점)
     public static readonly Vector2Int[] INDEX_MAP = new Vector2Int[]
@@ -161,6 +165,21 @@ public static partial class EditMapUtil
             return false;
         }
 
+        return true;
+    }
+
+    public static bool TryGetVerticeHeight(EditMapTileData tile, int vertice, out int heightx1000)
+    {
+        long mask = tile.NaviMask >> (Script.Index.MapTileIndex.HEIGHT_BITS * vertice);
+        int maskInt = (int)mask & Script.Index.MapTileIndex.HEIGHT_MASK;
+        if (0b1111 == maskInt)
+        {
+            heightx1000 = default;
+            return false;
+        }
+
+        float pivotY = EditMapUtil.ComputeWorldPosition(tile.ID).y;
+        heightx1000 = Mathf.RoundToInt((pivotY + maskInt * 0.125f) * 1000);
         return true;
     }
 }
