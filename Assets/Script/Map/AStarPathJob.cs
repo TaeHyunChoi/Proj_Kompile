@@ -4,7 +4,6 @@ namespace Script.Map
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Mathematics;
-    using System.Diagnostics;
 
     [BurstCompile]
     public class AStarPathJob : IJob

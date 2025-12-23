@@ -3,7 +3,6 @@ namespace Script.Map
     using MessagePack;
     using MessagePack.Resolvers;
     using Script.Data;
-    using Script.Util;
     using System.Collections.Generic;
     using Unity.Mathematics;
     using UnityEngine;
