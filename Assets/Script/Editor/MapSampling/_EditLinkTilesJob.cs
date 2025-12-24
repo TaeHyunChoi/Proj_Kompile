@@ -36,22 +36,23 @@ public struct EditLinkTilesJob : IJobParallelFor
             {
                 float dy = DiffYs[y];
                 float3 targetDir = new float3(dir2D.x, dy, dir2D.y);
-                long neighborID = EditMapUtil.ComputeID(myPivot + targetDir);
+                long neighborID = EditMapUtil.ComputeTileID(myPivot + targetDir);
 
                 if (true == Map.TryGetValue(neighborID, out EditMapTileData neighborTile))
                 {
                     if (true == CheckConnectable(myTile, neighborTile, targetDir, dirFlag))
                     {
                         const int LINK_ZERO = 0b_01;
-                        const int LINK_UP = 0b_10;
+                        const int LINK_UP   = 0b_10;
                         const int LINK_DOWN = 0b_11;
+                        const int LINK_NONE = 0b_00;
 
                         int linkValue = dy switch
                         {
-                            0 => LINK_ZERO,
-                            1 => LINK_UP,
+                            0  => LINK_ZERO,
+                            1  => LINK_UP,
                             -1 => LINK_DOWN,
-                            _ => 0
+                            _  => LINK_NONE
                         };
 
                         accumulatedLinkMask |= (linkValue << EditMapUtil.GetLinkMaskShift(dirFlag));
@@ -140,7 +141,7 @@ public struct EditLinkTilesJob : IJobParallelFor
         float3 startPivot = EditMapUtil.ComputeWorldPosition(startTile.ID);
         float3 midPivot = startPivot + EditMapUtil.GetDirectionVector(first);
 
-        long midID = EditMapUtil.ComputeID(midPivot);
+        long midID = EditMapUtil.ComputeTileID(midPivot);
         if (false == Map.TryGetValue(midID, out EditMapTileData midTile))
         {
             return false;

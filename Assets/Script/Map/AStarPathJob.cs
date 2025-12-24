@@ -1,12 +1,13 @@
 namespace Script.Map
 {
+    using UnityEngine;
     using Unity.Jobs;
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Mathematics;
 
     [BurstCompile]
-    public class AStarPathJob : IJob
+    public struct AStarPathJob : IJob
     {
         private const float SUBTILE_SIZE = 0.25f;
         private const int   SUBTILE_UNIT = 4;   // 0.25f 단위로 양자화 (1f/0.25f = 4;)
@@ -14,7 +15,7 @@ namespace Script.Map
         // --- input data ---
         [ReadOnly] public float3 StartPos;
         [ReadOnly] public float3 EndPos;
-        [ReadOnly] public float  Radius = 0.45f;
+        [ReadOnly] public float  Radius;
         [ReadOnly] public NativeHashMap<long, (long,long)> Map; // (Key:TileID, Value:NaviMask)
 
         // --- output data ---
@@ -23,7 +24,7 @@ namespace Script.Map
         // --- internal structs ----
         private struct PathNode
         {
-            public int3 GridPosInt;     // 정수형 좌표 (부동 소수점 오차 방지)
+            public int3 PivotInt;     // 정수형 좌표 (부동 소수점 오차 방지)
             public int ParentIndex;     // 경로 역추적을 위한 부모 노드 인덱스
             public float G;             // 지금까지 온 거리
             public float H;             // 앞으로 갈 거리
@@ -41,22 +42,21 @@ namespace Script.Map
         public void Execute()
         {
             // init data
-            int3 startGridInt = WorldToGrid(StartPos);
+            int3 startTilePosInt = WorldToGrid(StartPos);
             var allNodes   = new NativeList<PathNode>(Allocator.Temp);
             var closedSet  = new NativeHashMap<int3, int>(1024, Allocator.Temp);
             var openHeap   = new NativeList<int>(Allocator.Temp);
 
-
             // add start node
             allNodes.Add(new PathNode
             {
-                GridPosInt = startGridInt,
+                PivotInt = startTilePosInt,
                 ParentIndex = -1,
                 G = 0,
                 H = math.distance(StartPos, EndPos)
             });
             openHeap.Add(0);
-            closedSet.Add(startGridInt, 0);
+            closedSet.Add(startTilePosInt, 0);
 
 
             // A* Loop
@@ -64,9 +64,9 @@ namespace Script.Map
             {
                 int currIndex = PopMinHeap(ref openHeap, ref allNodes);
                 PathNode current = allNodes[currIndex];
-                float3 currWorldPos = GridToWorld(current.GridPosInt);
+                float3 currentPos = TargetPathPosition(current.PivotInt);
 
-                if (SUBTILE_SIZE >= math.distance(currWorldPos, EndPos))
+                if (SUBTILE_SIZE * 2 >= math.distance(currentPos, EndPos))
                 {
                     ReconstructPath(currIndex, allNodes);
                     ResultPath.Add(EndPos);
@@ -74,14 +74,14 @@ namespace Script.Map
                 }
 
                 // 탐색 위치 (current) => Tile 조회
-                long currentLinkKey = EditMapUtil.ComputeID(currWorldPos);
+                long currentLinkKey = EditMapUtil.ComputeTileID(currentPos);
                 if (false == Map.TryGetValue(currentLinkKey, out (long navi, long link) item))
                 {
                     continue;
                 }
 
                 // 탐색 위치 (current) => Sub-Tile 조회
-                int subareaIndex = MapPathUtil.GetSubTileIndex(currWorldPos);
+                int subareaIndex = MapPathUtil.GetSubTileIndex(currentPos.x, currentPos.z);
                 if (false == MapPathUtil.IsSubTileValid(item.navi, subareaIndex))
                 {
                     continue;
@@ -90,46 +90,51 @@ namespace Script.Map
                 // 이웃 노드 탐색
                 for (int i = 0; i < NEIGHBOR_OFFSETS.Length; ++i)
                 {
+                    // 물리적 공간(Radius) 확인
+                    const int LINK_ZERO = 0b_01;
+                    const int LINK_UP   = 0b_10;
+                    const int LINK_DOWN = 0b_11;
+                    const int LINK_NONE = 0b_00;
+
                     // link 확인 (i번째 방향으로 길이 열려 있는가?)
-                    if (0 == (item.link & (0b10 << i * 2)))
+                    if (LINK_NONE == (item.link & (0b11 << i * 2)))
                     {
                         continue;
                     }
 
-                    // 물리적 공간(Radius) 확인
                     int yMask = (int)(item.link >> (i * 2)) & 0b11;
                     int yInt; 
                     switch(yMask)
                     {
-                        case 0b00: yInt = 0; break;
-                        case 0b01: yInt = 1; break;
-                        case 0b11: yInt = -1; break;
+                        case LINK_ZERO: yInt =  0; break;
+                        case LINK_UP:   yInt =  1; break;
+                        case LINK_DOWN: yInt = -1; break;
                         default:
                             continue;
                     }
 
-                    int3 nextGridInt = current.GridPosInt + new int3(NEIGHBOR_OFFSETS[i].x, yInt, NEIGHBOR_OFFSETS[i].z);
-                    float3 nextWorldPos = GridToWorld(nextGridInt);
+                    int3 nextTilePosInt = current.PivotInt + new int3(NEIGHBOR_OFFSETS[i].x, yInt, NEIGHBOR_OFFSETS[i].z);
+                    float3 nextWorldPos = TargetPathPosition(nextTilePosInt);
                     if (false == IsPositionWalkable(nextWorldPos))
                     {
                         continue;
                     }
 
                     // 이미 방문한 노드인지 확인
-                    if (true == closedSet.ContainsKey(nextGridInt))
+                    if (true == closedSet.ContainsKey(nextTilePosInt))
                     {
                         continue;
                     }
 
                     allNodes.Add(new PathNode
                     {
-                        GridPosInt = nextGridInt,
+                        PivotInt = nextTilePosInt,
                         ParentIndex = currIndex,
                         G = current.G + GetMoveCost(i),
                         H = math.distance(nextWorldPos, EndPos)
                     });
                     int nextIndex = allNodes.Length - 1;
-                    closedSet.Add(nextGridInt, nextIndex);
+                    closedSet.Add(nextTilePosInt, nextIndex);
                     PushMinHeap(ref openHeap, ref allNodes, nextIndex);
                 }
             }
@@ -142,18 +147,21 @@ namespace Script.Map
 
         private int3 WorldToGrid(float3 p)
         {
-            int x = (int)math.round(p.x * SUBTILE_UNIT);
-            int y = (int)math.round(p.y * SUBTILE_UNIT);
-            int z = (int)math.round(p.z * SUBTILE_UNIT);
+            int x = Mathf.FloorToInt(p.x);
+            int y = Mathf.FloorToInt(p.y);
+            int z = Mathf.FloorToInt(p.z);
 
             return new int3(x, y, z);
-        }
-        private float3 GridToWorld(int3 g)
-        {
-            float3 offset = new float3(0.125f, 0.125f, 0.125f);
-            float3 p = new float3(g.x, g.y, g.z);
+            //int x = (int)math.round(p.x * SUBTILE_UNIT);
+            //int y = (int)math.round(p.y * SUBTILE_UNIT);
+            //int z = (int)math.round(p.z * SUBTILE_UNIT);
 
-            return (SUBTILE_SIZE * p) + offset;
+            //return new int3(x, y, z);
+        }
+        private readonly float3 TargetPathPosition(int3 tPivot)
+        {
+            const float offset = 0.5f;
+            return new float3(tPivot.x, tPivot.y, tPivot.z) + new float3(offset, 0f, offset);
         }
         private bool IsPositionWalkable(float3 pos)
         {
@@ -161,28 +169,28 @@ namespace Script.Map
             float3 minBound = pos - new float3(Radius, 0, Radius);
             float3 maxBound = pos + new float3(Radius, 0, Radius);
 
-            int minX = (int)math.floor(minBound.x * SUBTILE_UNIT);
-            int minZ = (int)math.floor(minBound.z * SUBTILE_UNIT);
+            int minX = (int)Mathf.FloorToInt(minBound.x);
+            int minZ = (int)math.floor(minBound.z);
 
-            int maxX = (int)math.floor(maxBound.x * SUBTILE_UNIT);
-            int maxZ = (int)math.floor(maxBound.z * SUBTILE_UNIT);
+            int maxX = (int)math.floor(maxBound.x);
+            int maxZ = (int)math.floor(maxBound.z);
 
             const float offset = 0.125f;
             for (int x = minX; x <= maxX; ++x)
             {
                 for (int z = minZ; z <= maxZ; ++z)
                 {
-                    // 일단은 XZ로만 이동 여부를 결정한다.
+                    // 일단은 XZ로만 이동 여부를 결정한다?
                     float3 subC = new float3(x * SUBTILE_SIZE + offset, pos.y, z * SUBTILE_SIZE + offset);
                     if (rSquare < math.lengthsq(new float2(subC.x - pos.x, subC.z - pos.z)))
                     {
                         continue;
                     }
-                    if (false == Map.TryGetValue(EditMapUtil.ComputeID(subC), out (long navi, long link) item))
+                    if (false == Map.TryGetValue(EditMapUtil.ComputeTileID(subC), out (long navi, long link) item))
                     {
                         continue;
                     }
-                    if (false == MapPathUtil.IsSubTileValid(item.navi, MapPathUtil.GetSubTileIndex(subC)))
+                    if (false == MapPathUtil.IsSubTileValid(item.navi, MapPathUtil.GetSubTileIndex(subC.x, subC.z)))
                     {
                         return false;
                     }
@@ -192,7 +200,7 @@ namespace Script.Map
             return true;
         }
 
-        private void PushMinHeap(ref NativeList<int> heap, ref NativeList<PathNode> nodes, int index)
+        private readonly void PushMinHeap(ref NativeList<int> heap, ref NativeList<PathNode> nodes, int index)
         {
             heap.Add(index);
 
@@ -212,7 +220,7 @@ namespace Script.Map
                 i = p;
             }
         }
-        private int PopMinHeap(ref NativeList<int> heap, ref NativeList<PathNode> nodes)
+        private readonly int PopMinHeap(ref NativeList<int> heap, ref NativeList<PathNode> nodes)
         {
             int result = heap[0];
 
@@ -258,7 +266,7 @@ namespace Script.Map
             int curr = endIndex;
             while (-1 != curr)
             {
-                float3 pathPos = GridToWorld(nodes[curr].GridPosInt);
+                float3 pathPos = TargetPathPosition(nodes[curr].PivotInt);
                 ResultPath.Add(pathPos);
 
                 curr = nodes[curr].ParentIndex;
@@ -275,7 +283,7 @@ namespace Script.Map
             }
         }
 
-        private float GetMoveCost(int i)
+        private readonly float GetMoveCost(int i)
         {
             return i switch
             {

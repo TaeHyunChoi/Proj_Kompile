@@ -176,7 +176,7 @@ namespace Script.Editor.MapSampling
                     for (int y = 0; y < ny.Length; ++y)
                     {
                         float3 target_dir = new float3(dir[i].x, ny[y], dir[i].y);
-                        long neighborID = EditMapUtil.ComputeID(target_pivot + target_dir);
+                        long neighborID = EditMapUtil.ComputeTileID(target_pivot + target_dir);
 
                         // 이미 방문했다면 pass
                         if (true == visited.Contains(neighborID))

@@ -16,7 +16,7 @@ public class EditAStarTestPlayInspector : Editor
         // 기본 인스펙터 표시
         base.OnInspectorGUI();
 
-        if (GUILayout.Button("Save"))
+        if (GUILayout.Button("Test Pathfinding Play"))
         {
             if (null != tester)
             {

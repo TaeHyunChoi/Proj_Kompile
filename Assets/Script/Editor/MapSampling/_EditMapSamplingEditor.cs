@@ -3,7 +3,6 @@ using MessagePack;
 using MessagePack.Resolvers;
 using Script.Data;
 using Script.Map;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -29,6 +28,18 @@ public class STUDY_EditMapSamplingEditor
                 var options = MessagePackSerializerOptions.Standard.WithResolver(ContractlessStandardResolver.Instance);
                 MapGridData grid = MessagePackSerializer.Deserialize<MapGridData>(textAsset.bytes, options);
                 Debug.Log($"[Load Baked Map ] {textAsset.name}");
+
+                int gKey = grid.Key;
+                foreach (var tKV in grid.NaviTileDict)
+                {
+                    int tKey = tKV.Key;
+                    var tile = tKV.Value;
+
+                    long id = MapPathUtil.ComputeID(gKey, tKey);
+                    Debug.Log($"{MapPathUtil.ComputeWorldPosition(id)} nav:{System.Convert.ToString(tile.NaviMask, 16)}, link:{System.Convert.ToString(tile.LinkMask, 2)}");
+
+                }
+
             }
         });
         await handle.Task;

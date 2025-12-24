@@ -30,7 +30,7 @@ namespace Script.Data
 
             Data[index] = new EditMapTileData()
             {
-                ID          = EditMapUtil.ComputeID(rotatedPivot),
+                ID          = EditMapUtil.ComputeTileID(rotatedPivot),
                 NaviMask    = naviMask,
                 LinkMask    = default,
                 RenderIndex  = (ushort)layer

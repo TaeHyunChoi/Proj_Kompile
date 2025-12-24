@@ -70,10 +70,9 @@ namespace Script.Map
             }
 
             // 3개의 정점을 순회하며 유효성 체크
-            int offset = sIndex0to15 * 3;
             for (int i = 0; i < 3; ++i)
             {
-                int vIndex = SubTileVertexMap[offset + i];
+                int vIndex = SubTileVertexMap[sIndex0to15 * 3 + i];
 
                 // 4비트씩 시프트하여 높이값 추출
                 int vVal = (int)((naviMask >> (vIndex * 4)) & 0b1111);
@@ -91,10 +90,10 @@ namespace Script.Map
         /// tile.pivot 으로부터 상대 거리를 구해서 정점의 인덱스를 구하는 방식
         /// </summary>
         [BurstCompile]
-        public static int GetSubTileIndex(float3 worldPos)
+        public static int GetSubTileIndex(float x, float z)
         {
-            float localX = worldPos.x - math.floor(worldPos.x);
-            float localZ = worldPos.z - math.floor(worldPos.z);
+            float localX = x - math.floor(x);
+            float localZ = z - math.floor(z);
 
             // 사분면의 기준 인덱스:
             // 각 사분면의 서브 타일의 시작 인덱스는 (s0, s4, s8, s12)이다

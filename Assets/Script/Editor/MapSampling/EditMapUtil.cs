@@ -33,7 +33,7 @@ public static partial class EditMapUtil
         new Vector2Int(0, 0), new Vector2Int(2, 0), new Vector2Int(4, 0)
     };
 
-    public static long ComputeID(Vector3 worldPos)
+    public static long ComputeTileID(Vector3 worldPos)
     {
         int absTx = Mathf.FloorToInt(worldPos.x);
         int absTy = Mathf.FloorToInt(worldPos.y);
