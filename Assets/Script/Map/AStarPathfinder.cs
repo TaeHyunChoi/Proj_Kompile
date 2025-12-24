@@ -9,47 +9,44 @@ namespace Script.Map
 
     public class AStarPathfinder
     {
-        public static async Awaitable<float3[]> RequestPath(Vector3 startPos, Vector3 endPos, Dictionary<long, MapTileData> tileDic)
+        public static Awaitable<float3[]> RequestPath(Vector3 startPos, Vector3 endPos, Dictionary<long, MapTileData> tileDic)
         {
-            NativeHashMap<long, (long, long)> map = new NativeHashMap<long, (long, long)>(tileDic.Count, Allocator.TempJob);
+            // 1. 캐시된 맵 데이터 가져오기 (여기서 시간 단축!)
+            var nativeMap = EditMapCache.GetOrCreateNativeMap(tileDic);
+
+            // 2. 결과 담을 리스트
             NativeList<float3> resultPath = new NativeList<float3>(Allocator.TempJob);
             List<float3> result = new List<float3>();
 
             try
             {
-                foreach (var tile in tileDic)
-                {
-                    long naviMask = tile.Value.NaviMask;
-                    long linkMask = tile.Value.LinkMask;
-                    map.TryAdd(tile.Key, (naviMask, linkMask));
-                }
-
-                AStarPathJob job = new ()
+                // 3. Job 생성
+                AStarPathJob job = new AStarPathJob
                 {
                     StartPos = startPos,
                     EndPos = endPos,
-                    Radius = 0.3f,
-                    Map = map,
+                    // [MapSampling] 규칙: 이동체는 반경 0.45f 내의 서브 타일을 체크해야 함
+                    Radius = 0.45f,
+                    Map = nativeMap,
                     ResultPath = resultPath
                 };
 
-                var handle = job.Schedule();
-                while (false == handle.IsCompleted)
-                {
-                    await Awaitable.NextFrameAsync();
-                }
-                handle.Complete();
+                // 4. 즉시 실행 및 대기 (Run은 메인 스레드에서 즉시 실행, Schedule().Complete()와 유사하나 오버헤드가 적음)
+                job.Run();
 
-
-                for (int i = 0; i < resultPath.Length; ++i)
+                // 5. 결과 변환
+                foreach (var p in resultPath)
                 {
-                    result.Add(resultPath[i]);
+                    result.Add(p);
                 }
             }
             finally
             {
-                map.Dispose();
-                resultPath.Dispose();
+                // 결과 리스트는 꼭 해제 (맵은 해제하지 않음)
+                if (true == resultPath.IsCreated)
+                {
+                    resultPath.Dispose();
+                }
             }
 
             return result.ToArray();

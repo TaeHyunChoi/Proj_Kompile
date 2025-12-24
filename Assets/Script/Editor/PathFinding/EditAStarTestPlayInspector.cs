@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
-using Script.Editor.MapSampling;
+using Script.Data;
+using Script.Map;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,6 +9,7 @@ using UnityEngine;
 public class EditAStarTestPlayInspector : Editor
 {
     private EditAStarTestPlay tester;
+
     private void Awake()
     {
         tester = target as EditAStarTestPlay;
