@@ -9,7 +9,7 @@ namespace Script.Map
 
     public class AStarPathfinder
     {
-        public static Awaitable<float3[]> RequestPath(Vector3 startPos, Vector3 endPos, Dictionary<long, MapTileData> tileDic)
+        public static float3[] RequestPathImmediate(Vector3 startPos, Vector3 endPos, Dictionary<long, MapTileData> tileDic)
         {
             // 1. 캐시된 맵 데이터 가져오기 (여기서 시간 단축!)
             var nativeMap = EditMapCache.GetOrCreateNativeMap(tileDic);

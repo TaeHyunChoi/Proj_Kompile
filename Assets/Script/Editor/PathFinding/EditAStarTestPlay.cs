@@ -50,7 +50,7 @@ public class EditAStarTestPlay : MonoBehaviour
 
         Vector3 startPos = startTransform.position;
         Vector3 endPos = endTransform.position;
-        float3[] path = await AStarPathfinder.RequestPath(startPos, endPos, cachedTileDic);
+        float3[] path = AStarPathfinder.RequestPathImmediate(startPos, endPos, cachedTileDic);
 
         stopwatch.ToString();
         Debug.Log($"pathfind time: {stopwatch.ElapsedMilliseconds/1000f:F3} seconds");
