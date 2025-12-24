@@ -223,7 +223,7 @@ namespace Script.Manager
 #if UNITY_EDITOR
     public static partial class AssetManager
     {
-        public static void WriteBinaryFile<T>(T data, string dataPath, string fileName, string addressableGroup = null)
+        public static void WriteBinaryFile<T>(T data, string dataPath, string fileName, string addressableGroup = null, string addressableLabel = null)
         {
             // 1. 경로 설정 (Path.Combine 권장)
             // dataPath는 "Data/Maps" 처럼 Assets 하위 경로라고 가정
@@ -269,13 +269,18 @@ namespace Script.Manager
                 if (entry != null)
                 {
                     entry.SetAddress(fileName);
-                    
-                    // Label 설정이 꼭 필요한 경우가 아니라면 생략 가능하지만, 유지한다면 아래와 같이
-                    //entry.SetLabel(fileName, true);
+
+                    if (false == string.IsNullOrEmpty(addressableLabel))
+                    {
+                        // Settings에 해당 라벨이 등록되어 있지 않다면 추가 (중복 방지 로직 내장됨)
+                        settings.AddLabel(addressableLabel);
+
+                        // Entry에 라벨 체크 활성화
+                        entry.SetLabel(addressableLabel, true);
+                    }
 
                     settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
                     AssetDatabase.SaveAssets();
-                    Debug.Log($"[DataExporter] Saved and Addressable registered: {assetPath}");
                 }
             }
         }

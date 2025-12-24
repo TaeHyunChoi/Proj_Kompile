@@ -143,7 +143,8 @@ public partial class EditMapSampling
                 data: mapGridData,
                 dataPath: MAP_NAVI_DATA_PATH,
                 fileName: $"MapNavi_{mapGridData.Key}",
-                addressableGroup: "MapNavi"
+                addressableGroup: "MapNavi",
+                addressableLabel: "MapNavi"
                 );
         }
 

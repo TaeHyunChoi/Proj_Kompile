@@ -116,6 +116,7 @@ MonoBehaviour:
     - MapRender_0
     - MapGrid_0
     - MapNavi_0
+    - MapNavi
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 0d418115f10642c4d81f37ea0df76de7, type: 2}
