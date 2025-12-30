@@ -66,7 +66,7 @@ namespace Script.Map
                     tileDict[id] = tile;
                 }
 
-                int3 absPivot = MapPathUtil.ComputeAbsoluteWorldPosition(id);
+                int3 absPivot = MapPathUtil.ComputeWorldPositionInt(id);
                 posToID.TryAdd(absPivot, id);
             }
         }

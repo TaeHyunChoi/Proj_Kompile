@@ -1,10 +1,11 @@
 namespace Script.Map
 {
+    using System;
     using Unity.Burst;
     using Unity.Mathematics;
     using UnityEngine;
+    using static UnityEditor.Progress;
 
-    // 참고: STUDY_PositionKeyUtil
     public static class MapPathUtil
     {
         public const int GRID_SIZE = 64;
@@ -12,7 +13,8 @@ namespace Script.Map
         public const int TILE_MASK = (1 << TILE_BITS) - 1;
         public const int NONE_SUBTILE = 0b1111;
 
-        private static readonly int[] SubTileVertexMap = new int[]
+        /// <summary> 서브 타일을 구성하는 3개의 정점 모음 </summary>
+        public static readonly int[] SubTileVertexMap = new int[]
         {
             0, 1, 3,    // s0
             1, 3, 6,    // s1
@@ -31,6 +33,25 @@ namespace Script.Map
             9, 11, 12,  // s14
             6, 9, 11    // s15            
         };
+
+        /// <summary> 그림의 v00 ~ v12 위치를 2D 좌표로 매핑 </summary>
+        public static readonly float2[] VertexPositions = new float2[]
+        {
+        new float2(0.00f, 0.00f), // v00
+        new float2(0.50f, 0.00f), // v01
+        new float2(1.00f, 0.00f), // v02
+        new float2(0.25f, 0.25f), // v03 (Center of Bottom-Left Quad)
+        new float2(0.75f, 0.25f), // v04 (Center of Bottom-Right Quad)
+        new float2(0.00f, 0.50f), // v05
+        new float2(0.50f, 0.50f), // v06 (Center of Tile)
+        new float2(1.00f, 0.50f), // v07
+        new float2(0.25f, 0.75f), // v08 (Center of Top-Left Quad)
+        new float2(0.75f, 0.75f), // v09 (Center of Top-Right Quad)
+        new float2(0.00f, 1.00f), // v10
+        new float2(0.50f, 1.00f), // v11
+        new float2(1.00f, 1.00f)  // v12
+        };
+
         /// <summary>
         /// 0.25f 단위의 정수 인덱스(indexX, indexY, indexZ)를 받아 TileID를 생성합니다.
         /// 부동소수점 연산과 분기문(if)을 제거하여 매우 빠릅니다.
@@ -77,40 +98,6 @@ namespace Script.Map
 
             return (((long)gKey) << 32) | tKey;
         }
-        public static long ComputeTileID(float3 p)
-        {
-            const int GRID_SIZE = 64;
-            const int TILE_BITS = 6;
-            const int TILE_MASK = (1 << TILE_BITS) - 1;
-
-            int absTx = Mathf.FloorToInt(p.x);
-            int absTy = Mathf.FloorToInt(p.y);
-            int absTz = Mathf.FloorToInt(p.z);
-
-            int gX = Mathf.FloorToInt((float)absTx / GRID_SIZE);
-            int gY = Mathf.FloorToInt((float)absTy / GRID_SIZE);
-            int gZ = Mathf.FloorToInt((float)absTz / GRID_SIZE);
-
-            int tX = absTx - gX * GRID_SIZE;
-            int tY = absTy - gY * GRID_SIZE;
-            int tZ = absTz - gZ * GRID_SIZE;
-
-            if (tX < 0) { tX += GRID_SIZE; gX -= 1; }
-            if (tY < 0) { tY += GRID_SIZE; gY -= 1; }
-            if (tZ < 0) { tZ += GRID_SIZE; gZ -= 1; }
-
-            uint tKey =
-                (uint)((tX & TILE_MASK) << (TILE_BITS * 2)) |
-                (uint)((tY & TILE_MASK) << (TILE_BITS * 1)) |
-                (uint)((tZ & TILE_MASK) << (TILE_BITS * 0));
-
-            byte bX = (byte)(sbyte)gX;
-            byte bY = (byte)(sbyte)gY;
-            byte bZ = (byte)(sbyte)gZ;
-
-            uint gKey = (uint)((bX << 16) | (bY << 8) | bZ);
-            return (((long)gKey) << 32) | tKey;
-        }
         public static long ComputeID(int gKey, int tKey)
         {
             const int SHFIT = 32;
@@ -118,10 +105,10 @@ namespace Script.Map
         }
         public static Vector3 ComputeWorldPosition(long id)
         {
-            int3 absPos = ComputeAbsoluteWorldPosition(id);
+            int3 absPos = ComputeWorldPositionInt(id);
             return new Vector3(absPos.x, absPos.y, absPos.z);
         }
-        public static int3 ComputeAbsoluteWorldPosition(long id)
+        public static int3 ComputeWorldPositionInt(long id)
         {
             uint gKey = (uint)((ulong)id >> 32);
             uint tKey = (uint)id;
@@ -154,7 +141,7 @@ namespace Script.Map
                 int vIndex = SubTileVertexMap[sIndex0to15 * 3 + i];
 
                 // 4비트씩 시프트하여 높이값 추출
-                int vVal = (int)((naviMask >> (vIndex * 4)) & 0b1111);
+                int vVal = (int)((naviMask >> (vIndex * 4)) & NONE_SUBTILE);
                 if (NONE_SUBTILE == vVal)
                 {
                     return false;
@@ -163,47 +150,93 @@ namespace Script.Map
 
             return true;
         }
-
-        /// <summary>
-        /// 월드 좌표를 서브 타일 인덱스(0..15)로 변환</br>
-        /// tile.pivot 으로부터 상대 거리를 구해서 정점의 인덱스를 구하는 방식
-        /// </summary>
         [BurstCompile]
-        public static int GetSubTileIndex(float x, float z)
+        public static bool IsCircleOverlappingSubTile(int sIndex, float2 circleCenter, float radiusSq)
         {
-            float localX = x - math.floor(x);
-            float localZ = z - math.floor(z);
+            int vIdx0 = SubTileVertexMap[sIndex * 3 + 0];
+            int vIdx1 = SubTileVertexMap[sIndex * 3 + 1];
+            int vIdx2 = SubTileVertexMap[sIndex * 3 + 2];
 
-            // 사분면의 기준 인덱스:
-            // 각 사분면의 서브 타일의 시작 인덱스는 (s0, s4, s8, s12)이다
-            int col = (localX >= 0.5f) ? 1 : 0;
-            int row = (localZ >= 0.5f) ? 1 : 0;
-            int baseIndex = (row * 8) + (col * 4);
+            float2 p0 = VertexPositions[vIdx0];
+            float2 p1 = VertexPositions[vIdx1];
+            float2 p2 = VertexPositions[vIdx2];
 
-            // 사분면 내에서의 로컬 중심 좌표 계산:
-            // 각 사분면은 0.5*0.5 크기이며 중심은 (0.25, 0.25)이다.
-            float quadCenterX = (col * 0.5f) + 0.25f;
-            float quadCenterZ = (row * 0.5f) + 0.25f;
-
-            // 중심으로부터의 오차
-            float dx = localX - quadCenterX;
-            float dz = localZ - quadCenterZ;
-
-            // (사분면의 중점으로부터 worldPos까지의 거리의 방향의) 절대값을 비교하여
-            // 가로형(좌/우), 세로형(상/하)인지 판단
-            int offset;
-            if (math.abs(dx) > math.abs(dz))
+            // 원의 중심이 삼각형 '내부'에 있는지 먼저 확인
+            if (true == IsPointInTriangle(circleCenter, p0, p1, p2))
             {
-                // 가로형: dx가 양수면 오른쪽(right)
-                offset = (dx > 0) ? 1 : 3;
-            }
-            else
-            {
-                // 세로형: dz가 양수면 위쪽(top)
-                offset = (dz > 0) ? 2 : 0;
+                // 내부에 있으면 무조건 겹침;
+                return true;
             }
 
-            return baseIndex + offset;
+            // 삼각형 내부에 원이 없다면, 삼각형의 변(edge)와 원의 거리를 확인
+            // 가장 가까운 변까지의 거리가 반지름보다 작으면 겹친 것
+
+            float dSq0 = DistanceSqToSegment(p0, p1, circleCenter);
+            if (dSq0 <= radiusSq)
+            {
+                return true;
+            }
+
+            float dSq1 = DistanceSqToSegment(p1, p2, circleCenter);
+            if (dSq1 <= radiusSq)
+            {
+                return true;
+            }
+
+            float dSq2 = DistanceSqToSegment(p2, p0, circleCenter);
+            if (dSq2 <= radiusSq)
+            {
+                return true;
+            }
+
+            return false;
+
+
+            // 삼각형 내부에 있는가?
+            static bool IsPointInTriangle(float2 p, float2 a, float2 b, float2 c)
+            {
+                // 2D 외적 (cross product) 부호 확인
+                float cp1 = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+                float cp2 = (c.x - b.x) * (p.y - b.y) - (c.y - b.y) * (p.x - b.x);
+                float cp3 = (a.x - c.x) * (p.y - c.y) - (a.y - c.y) * (p.x - c.x);
+
+                return (cp1 >= 0 && cp2 >= 0 && cp3 >= 0) || (cp1 <= 0 && cp2 <= 0 && cp3 <= 0);
+            }
+
+            // 선분(a-b)과 점(p) 사이의 거리의 제곱을 반환
+            static float DistanceSqToSegment(float2 a, float2 b, float2 p)
+            {
+                float2 ab = b - a;
+                float2 ap = p - a;
+
+                float t = math.dot(ap, ab) / math.dot(ab, ab);
+
+                // 선분 범위를 벗어나지 않도록 0..1 사이로 Clamp
+                t = math.saturate(t);
+
+                // 가장 가까운 점
+                float2 closest = a + t * ab;
+
+                // 거리 제곱 반환
+                return math.distancesq(p, closest);
+            }
+        }
+        [BurstCompile]
+        public static bool TryGetYInt(long linkMask, int dirIndex, out int yInt)
+        {
+            const int LINK_MASK = 0b11;
+            int yMask = (int)(linkMask >> (dirIndex * 2)) & LINK_MASK;
+            switch (yMask)
+            {
+                case 0b01: yInt = 0; break;
+                case 0b10: yInt = 1; break;
+                case 0b11: yInt = -1; break;
+                default:
+                    yInt = default;
+                    return false;
+            }
+
+            return true;
         }
     }
 }

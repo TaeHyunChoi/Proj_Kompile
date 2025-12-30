@@ -1,9 +1,8 @@
 namespace Script.Map
 {
-    using UnityEngine;
-    using Unity.Jobs;
     using Unity.Burst;
     using Unity.Collections;
+    using Unity.Jobs;
     using Unity.Mathematics;
 
     [BurstCompile]
@@ -17,7 +16,7 @@ namespace Script.Map
         [ReadOnly] public float3 StartPos;
         [ReadOnly] public float3 EndPos;
         [ReadOnly] public float  Radius;
-        [ReadOnly] public NativeHashMap<long, (long,long)> Map; // (Key:TileID, Value:NaviMask)
+        [ReadOnly] public NativeHashMap<long, (long Navi, long Link)> Map; // (Key:TileID, Value:NaviMask)
 
         // --- output data ---
         public NativeList<float3> ResultPath;
@@ -40,7 +39,13 @@ namespace Script.Map
             }
         }
 
-        // A* 방향 벡터 (상하좌우 + 대각선): 0.25f 단위 이동을 정수 좌표(1)로 표현
+        private const int LINK_ZERO = 0b_01;
+        private const int LINK_UP   = 0b_10;
+        private const int LINK_DOWN = 0b_11;
+        private const int LINK_NONE = 0b_00;
+        private const int LINK_MASK = 0b_11;
+
+        // A* 방향 벡터 (상하좌우 + 대각선): 0.25f( = 2* PATH_SEARCH_UNIT) 단위 이동을 정수 좌표(1)로 표현
         private static readonly int3[] NEIGHBOR_OFFSETS_INT = new int3[]
         {
             new int3(-2, 0, -2), new int3(0, 0, -4), new int3( 2, 0, -2), new int3( 4, 0, 0),
@@ -50,15 +55,16 @@ namespace Script.Map
         public void Execute()
         {
             // init data
-            var allNodes = new NativeList<PathVerticeNode>(Allocator.Temp);
+            var allNodes  = new NativeList<PathVerticeNode>(Allocator.Temp);
             var closedSet = new NativeHashMap<int3, int>(1024, Allocator.Temp);
-            var openHeap = new NativeList<int>(Allocator.Temp);
+            var openHeap  = new NativeList<int>(Allocator.Temp);
+
 
             // add start vertice path node
             int3 startVerticeInt = GetVerticeInt(StartPos);
             allNodes.Add(new PathVerticeNode
             {
-                VerticeInt = startVerticeInt,
+                VerticeInt  = startVerticeInt,
                 ParentIndex = -1,
                 G = 0,
                 H = math.distance(StartPos, EndPos)
@@ -66,6 +72,7 @@ namespace Script.Map
             openHeap.Add(0);
             closedSet.Add(startVerticeInt, 0);
 
+            int nextIndex;
 
             // A* Loop
             while (0 < openHeap.Length)
@@ -73,10 +80,10 @@ namespace Script.Map
                 int currIndex = PopMinHeap(ref openHeap, ref allNodes);
                 PathVerticeNode currentNode = allNodes[currIndex];
 
-                if (PATH_SEARCH_UNIT * 2 >= math.distance(currentNode.Vertice, EndPos))
+                if (PATH_SEARCH_UNIT >= math.distance(currentNode.Vertice, EndPos))
                 {
                     ReconstructPath(currIndex, allNodes);
-                    ResultPath.Add(EndPos);
+                    //ResultPath.Add(EndPos);
                     break;
                 }
 
@@ -88,58 +95,49 @@ namespace Script.Map
                     continue;
                 }
 
-                // 탐색 위치 (current) => Sub-Tile 조회
-                int subAreaIndex = GetSubTileIndexInt(currentVerticeInt.x, currentVerticeInt.z);
-                if (false == MapPathUtil.IsSubTileValid(item.navi, subAreaIndex))
-                {
-                    continue;
-                }
-
-                // 이웃 노드 탐색
                 for (int i = 0; i < NEIGHBOR_OFFSETS_INT.Length; ++i)
                 {
-                    const int LINK_ZERO = 0b_01;
-                    const int LINK_UP   = 0b_10;
-                    const int LINK_DOWN = 0b_11;
-                    const int LINK_NONE = 0b_00;
-
-                    int3 targetVerticeInt = currentVerticeInt + new int3(NEIGHBOR_OFFSETS_INT[i].x, 0, NEIGHBOR_OFFSETS_INT[i].z);
+                    //이웃 x,z 값을 우선 구한 후 -> 이후에 y값을 더하는 것으로..
+                    int3 targetVerticeInt = currentVerticeInt + NEIGHBOR_OFFSETS_INT[i];
                     long targetID = MapPathUtil.ComputeTileIDInt(targetVerticeInt);
+                    float3 pos = PATH_SEARCH_UNIT * new float3(targetVerticeInt.x, targetVerticeInt.y, targetVerticeInt.z);
 
-                    // 타겟 정점이 다른 타일에 존재한다면? 
+                    // vertice 이동을 하니 다른 타일이다 -> 이웃 타일 탐색
                     if (targetID != currentID)
                     {
-                        // 유효한 타일인지 확인
-                        if (false == Map.ContainsKey(targetID))
-                        {
-                            continue;
-                        }
+                        int3 diffInt = GetTileDiff(currentID, targetID);
 
-                        // 이게 어느 방향으로 연결되었는지를 확인해야 하는덴
-                        // link 확인 (i번째 방향으로 길이 열려 있는가?)
-                        int yMask = (int)(item.link >> (i * 2)) & 0b11;
-                        if (LINK_NONE == yMask)
+                        int yMask;
+                        switch ((diffInt.x, diffInt.z))
                         {
-                            continue;
-                        }
-
-                        // (다른 타일이므로) y값 갱신
-                        int yInt;
-                        switch (yMask)
-                        {
-                            case LINK_ZERO: yInt = 0; break;
-                            case LINK_UP: yInt = 1; break;
-                            case LINK_DOWN: yInt = -1; break;
+                            case (-1, -1): yMask = 0; break;
+                            case ( 0, -1): yMask = 1; break;
+                            case ( 1, -1): yMask = 2; break;
+                            case ( 1,  0): yMask = 3; break;
+                            case ( 1,  1): yMask = 4; break;
+                            case ( 0,  1): yMask = 5; break;
+                            case (-1,  1): yMask = 6; break;
+                            case (-1,  0): yMask = 7; break;
                             default:
                                 continue;
                         }
-                        targetVerticeInt += new int3(0, yInt, 0);
-                    }
 
-                    // 타겟 위치에서 이동 가능한지 여부 확인
-                    if (false == IsPositionWalkable(targetVerticeInt))
-                    {
-                        continue;
+                        int y = (int)(item.link >> (yMask * 2)) & 0b11;
+                        switch (y)
+                        {
+                            case LINK_ZERO: y = 0;  break;
+                            case LINK_UP:   y = 1;  break;
+                            case LINK_DOWN: y = -1; break;
+                            default:
+                                continue;
+                        }
+
+                        targetVerticeInt += PATH_SEARCH_RECIPROCAL * new int3(0, y, 0);
+                        targetID = MapPathUtil.ComputeTileIDInt(targetVerticeInt);
+                        if (false == Map.TryGetValue(targetID, out item))
+                        {
+                            continue;
+                        }
                     }
 
                     // 이미 방문한 노드인지 확인
@@ -148,17 +146,103 @@ namespace Script.Map
                         continue;
                     }
 
-                    float3 targetVertice = PATH_SEARCH_UNIT * new float3(targetVerticeInt.x, targetVerticeInt.y, targetVerticeInt.z);
-                    allNodes.Add(new PathVerticeNode
+                    // 이동한 vertice에서 확인해야 할 타일: 본인
+                    float3 targetPivot    = MapPathUtil.ComputeWorldPosition(targetID);
+                    int3   targetPivotInt = PATH_SEARCH_RECIPROCAL * MapPathUtil.ComputeWorldPositionInt(targetID);
+                    float3 circleCenter   = PATH_SEARCH_UNIT * new float3(targetVerticeInt.x, targetVerticeInt.y, targetVerticeInt.z);
+                    if (false == IsVerticeMovable(item.navi, targetPivot, circleCenter, Radius))
                     {
-                        VerticeInt = targetVerticeInt,
+                        // 해당 지점으로 이동 불가; 탐색 중지
+                        continue;
+                    }
+
+                    // 이동한 vertice에서 확인해야 할 타일: 주변부
+                    int verticeIndex = GetVerticeIndex(targetVerticeInt - targetPivotInt);
+                    if (false == TryGetNeighborLinkIndex(verticeIndex, out int linkIndex, out int length))
+                    {
+                        continue;
+                    }
+                    else if (0 == length) // v06: 자기 본인은 앞에서 확인 완료
+                    {
+                        allNodes.Add(new PathVerticeNode()
+                        {
+                            VerticeInt = targetVerticeInt,
+                            ParentIndex = currIndex,
+                            G = currentNode.G + GetMoveCost(i),
+                            H = math.distance(targetVerticeInt, EndPos)
+                        });
+
+                        nextIndex = allNodes.Length - 1;
+                        closedSet.Add(targetVerticeInt, nextIndex);
+                        PushMinHeap(ref openHeap, ref allNodes, nextIndex);
+                        break;
+                    }
+
+                    for (int l = 0; l < length; ++l)
+                    {
+                        // 연산 순서가 잘못 되었음
+                        // 거리가 닿는지 먼저 판단한 다음에 => 닿으면 연결 여부를 확인해야 한다.
+                        // 이걸 어떻게 해야 좋을까~!! 
+                        
+
+                        // 연결 여부 확인
+                        int x, y, z;
+                        int index = (linkIndex + l + 8) % 8;
+                        if (false == MapPathUtil.TryGetYInt(item.link, index, out y))
+                        {
+                            goto CONTINUE;
+                        }
+
+                        switch (index)
+                        {
+                            case 0: x = -1; z = -1; break;
+                            case 1: x =  0; z = -1; break;
+                            case 2: x =  1; z = -1; break;
+                            case 3: x =  1; z =  0; break;
+                            case 4: x =  1; z =  1; break;
+                            case 5: x =  0; z =  1; break;
+                            case 6: x = -1; z =  1; break;
+                            case 7: x = -1; z =  0; break;
+                            default:
+                                goto CONTINUE;
+                        }
+
+                        int3 neighborPivotInt = targetPivotInt + PATH_SEARCH_RECIPROCAL * new int3(x, y, z);
+                        long neighborID       = MapPathUtil.ComputeTileIDInt(neighborPivotInt);
+
+                        if (false == Map.ContainsKey(neighborID))
+                        {
+                            goto CONTINUE;
+                        }
+
+                        long neighborNaviMask = Map[targetID].Navi;
+                        if (false == IsVerticeMovable(neighborNaviMask, neighborPivotInt, circleCenter, Radius))
+                        {
+                            // 하나라도 이동이 불가하면 해당 정점에서 유효성 확인 종료;
+                            goto CONTINUE;
+                        }
+                    }
+
+                    // 이미 방문한 노드인지 확인
+                    if (true == closedSet.ContainsKey(targetVerticeInt))
+                    {
+                        continue;
+                    }
+
+                    allNodes.Add(new PathVerticeNode()
+                    {
+                        VerticeInt  = targetVerticeInt,
                         ParentIndex = currIndex,
                         G = currentNode.G + GetMoveCost(i),
-                        H = math.distance(targetVertice, EndPos)
+                        H = math.distance(targetVerticeInt, EndPos)
                     });
-                    int nextIndex = allNodes.Length - 1;
+
+                    nextIndex = allNodes.Length - 1;
                     closedSet.Add(targetVerticeInt, nextIndex);
                     PushMinHeap(ref openHeap, ref allNodes, nextIndex);
+
+                CONTINUE:
+                    continue;
                 }
             }
 
@@ -168,54 +252,6 @@ namespace Script.Map
             openHeap.Dispose();
         }
 
-        public static int GetSubTileIndexInt(int indexX, int indexZ)
-        {
-            // 1. 유닛 타일(1.0f 크기) 내의 로컬 인덱스 (0..7) 구하기
-            // 설명: 1.0f는 0.125f가 8개 모인 것이므로 8로 나눈 나머지
-            int lx = (indexX % 8 + 8) % 8;
-            int lz = (indexZ % 8 + 8) % 8;
-
-            // 2. 사분면(Quadrant) 판별
-            // 0.125f 기준이므로 8칸의 절반인 4가 0.5f 지점입니다.
-            int col = (lx >= 4) ? 1 : 0;
-            int row = (lz >= 4) ? 1 : 0;
-
-            // 각 사분면의 서브타일 시작 인덱스 (s0, s4, s8, s12)
-            int baseIndex = (row * 8) + (col * 4);
-
-            // 3. 사분면 내 중심점(Pivot) 인덱스 계산 (여기가 핵심 수정 사항)
-            // 0.25f 단위일 때: (col * 2) + 1  => 결과: 1, 3
-            // 0.125f 단위일 때: (col * 4) + 2  => 결과: 2, 6
-            // 이유: 
-            //   Col 0 (0.0~0.5)구역의 중심 0.25는 0.125 단위로 '2'입니다.
-            //   Col 1 (0.5~1.0)구역의 중심 0.75는 0.125 단위로 '6'입니다.
-            int cx = (col * 4) + 2;
-            int cz = (row * 4) + 2;
-
-            // 4. 중심으로부터의 오차 (dx, dz)
-            int dx = lx - cx;
-            int dz = lz - cz;
-
-            // 5. 방향 결정 (절대값 비교)
-            // 인덱스 범위가 커졌을 뿐(dx가 -2 ~ +1 범위), 대소 비교 로직은 동일하게 유효합니다.
-            int offset;
-
-            int absDx = (dx < 0) ? -dx : dx;
-            int absDz = (dz < 0) ? -dz : dz;
-
-            if (absDx > absDz)
-            {
-                // 가로형 (Left/Right)
-                offset = (dx > 0) ? 1 : 3;
-            }
-            else
-            {
-                // 세로형 (Top/Bottom)
-                offset = (dz > 0) ? 2 : 0;
-            }
-
-            return baseIndex + offset;
-        }
         private readonly int3 GetVerticeInt(float3 p)
         {
             int x = (int)math.round(p.x * PATH_SEARCH_RECIPROCAL);
@@ -224,61 +260,141 @@ namespace Script.Map
 
             return new int3(x, y, z);
         }
-        private bool IsPositionWalkable(int3 posInt)
+        private readonly int3 GetTileDiff(long idFrom, long idTo)
         {
-            // [설정값 계산]
-            // Radius(0.35f) / PATH_SEARCH_UNIT(0.125f) = 2.8
-            // 정수 좌표계에서의 탐색 범위: Ceil(2.8) = 3칸
-            const int SEARCH_RANGE = 3;
+            const int TILE_BITS = 6;
+            const int TILE_MASK = 0x3F;
 
-            // 거리 제곱 임계값: 2.8 * 2.8 = 7.84
-            // 정수 거리 제곱이 7 이하이면 반경 내에 포함됨 (8 이상은 포함 안 됨)
-            const int RADIUS_SQ_LIMIT = 7;
+            int gX1 = (sbyte)((idFrom >> 48) & 0xFF);
+            int gZ1 = (sbyte)((idFrom >> 32) & 0xFF);
 
-            // 1. posInt를 중심으로 +-3칸 범위 순회
-            // minX, maxX 등의 변수 할당 없이 루프 범위로 직접 제어
-            for (int dx = -SEARCH_RANGE; dx <= SEARCH_RANGE; ++dx)
+            int gX2 = (sbyte)((idTo >> 48) & 0xFF);
+            int gZ2 = (sbyte)((idTo >> 32) & 0xFF);
+
+            int tX1 = (int)((idFrom >> 12) & TILE_MASK);
+            int tZ1 = (int)((idFrom >> 0) & TILE_MASK);
+
+            int tX2 = (int)((idTo >> 12) & TILE_MASK);
+            int tZ2 = (int)((idTo >> 0) & TILE_MASK);
+
+            int diffX = ((gX2 - gX1) << TILE_BITS) + (tX2 - tX1);
+            int diffZ = ((gZ2 - gZ1) << TILE_BITS) + (tZ2 - tZ1);
+
+            return new int3(diffX, 0, diffZ);
+        }
+        private readonly bool IsVerticeMovable(long naviMask, float3 tilePivot, float3 circleCenter, float radius)
+        {
+            float2 localCircleCenter = new float2(circleCenter.x - tilePivot.x, circleCenter.z - tilePivot.z);
+            float radisuSq = radius * radius;
+
+            // 모든 서브 타일에 대하여 순회
+            for (int sIndex = 0; sIndex < 16; ++sIndex)
             {
-                for (int dz = -SEARCH_RANGE; dz <= SEARCH_RANGE; ++dz)
+                // 기하학적 교차 검사 (서브타일 삼각형 vs 원)
+                if (false == MapPathUtil.IsCircleOverlappingSubTile(sIndex, localCircleCenter, radisuSq))
                 {
-                    // 2. 정수 거리 제곱 계산 (x^2 + z^2)
-                    // float math.lengthsq()를 완전히 대체합니다.
-                    int distSq = (dx * dx) + (dz * dz);
-
-                    // 3. 반경(2.8칸) 밖이면 검사 제외
-                    if (distSq > RADIUS_SQ_LIMIT)
-                    {
-                        continue;
-                    }
-
-                    // 4. 검사할 타겟의 절대 정수 좌표 계산
-                    int targetX = posInt.x + dx;
-                    int targetZ = posInt.z + dz;
-
-                    // 5. Tile ID 계산 (Int 버전 사용)
-                    // posInt.y는 현재 높이를 그대로 사용 (필요시 y 탐색 범위 추가 가능)
-                    long targetID = MapPathUtil.ComputeTileIDInt(new int3(targetX, posInt.y, targetZ));
-
-                    // 6. Map 데이터 존재 여부 확인
-                    // 데이터가 아예 없으면(void), 이동 불가로 치지 않고 무시(continue)하는 기존 로직 유지
-                    if (false == Map.TryGetValue(targetID, out (long navi, long link) item))
-                    {
-                        continue;
-                    }
-
-                    // 7. Sub-Tile 유효성 검사 (Int 버전 사용)
-                    // float 변환 없이 정수 좌표를 그대로 넘김
-                    if (false == MapPathUtil.IsSubTileValid(item.navi, MapPathUtil.GetSubTileIndex(targetX, targetZ)))
-                    {
-                        // 반경 내에 "데이터는 있는데 유효하지 않은(높이 1111)" 서브타일이 있으면 이동 불가 판정
-                        return false;
-                    }
+                    continue;
+                }
+                if (false == MapPathUtil.IsSubTileValid(naviMask, sIndex))
+                {
+                    return false;
                 }
             }
 
             return true;
         }
+        private readonly int GetVerticeIndex(int3 diffInt)
+        {
+            switch ((diffInt.x, diffInt.z))
+            {
+                case (0, 0): return 0;
+                case (4, 0): return 1;
+                case (8, 0): return 2;
+                case (2, 2): return 3;
+                case (6, 2): return 4;
+                case (0, 4): return 5;
+                case (4, 4): return 6;
+                case (8, 4): return 7;
+                case (2, 6): return 8;
+                case (6, 6): return 9;
+                case (0, 8): return 10;
+                case (4, 8): return 11;
+                case (8, 8): return 12;
+                default:
+                    break;
+            }
 
+            // error
+            return -1;
+        }
+        private readonly bool TryGetNeighborLinkIndex(int verticeIndex, out int linkIndex, out int length)
+        {
+            linkIndex = 0;
+            length = 0;
+
+            switch (verticeIndex)
+            {
+                // South West
+                case 0:
+                case 3:
+                    linkIndex = 7;
+                    length = 3;
+                    break;
+
+                // South
+                case 1:
+                    linkIndex = 1;
+                    length = 1;
+                    break;
+
+                // South East
+                case 2:
+                case 4:
+                    linkIndex = 1;
+                    length = 3;
+                    break;
+
+                // MySelf: 자기 자신이라 탐색할 이웃이 없음
+                case 6:
+                    return true;
+
+                // East
+                case 7:
+                    linkIndex = 3;
+                    length = 1;
+                    break;
+
+                // North East
+                case 9:
+                case 12:
+                    linkIndex = 3;
+                    length = 3;
+                    break;
+
+                // North
+                case 11:
+                    length = 1;
+                    break;
+
+                // North West
+                case 8:
+                case 10:
+                    linkIndex = 5;
+                    length = 3;
+                    break;
+
+                // West
+                case 5:
+                    linkIndex = 7;
+                    length = 1;
+                    break;
+
+                default:
+                    break;
+            }
+
+            return true;
+        }
 
         private readonly void PushMinHeap(ref NativeList<int> heap, ref NativeList<PathVerticeNode> nodes, int index)
         {
@@ -362,7 +478,6 @@ namespace Script.Map
                 ResultPath[count - 1 - i] = temp;
             }
         }
-
         private readonly float GetMoveCost(int i)
         {
             return i switch

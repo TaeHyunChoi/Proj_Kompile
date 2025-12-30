@@ -26,7 +26,7 @@ namespace Script.Map
                     StartPos = startPos,
                     EndPos = endPos,
                     // [MapSampling] 규칙: 이동체는 반경 0.45f 내의 서브 타일을 체크해야 함
-                    Radius = 0.45f,
+                    Radius = 0.325f,
                     Map = nativeMap,
                     ResultPath = resultPath
                 };
