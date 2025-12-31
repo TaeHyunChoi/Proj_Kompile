@@ -55,22 +55,31 @@ namespace Script.Map
         public void Execute()
         {
             // init data
-            var allNodes  = new NativeList<PathVerticeNode>(Allocator.Temp);
-            var closedSet = new NativeHashMap<int3, int>(1024, Allocator.Temp);
-            var openHeap  = new NativeList<int>(Allocator.Temp);
+            var allNodes = new NativeList<PathVerticeNode>(Allocator.Temp);
+            var gCosts   = new NativeHashMap<int3, float>(1024, Allocator.Temp);
+            var openHeap = new NativeList<int>(Allocator.Temp);
 
-
-            // add start vertice path node
+            // --- Start Node 설정 ---
             int3 startVerticeInt = GetVerticeInt(StartPos);
+
+            // [추가 체크] 시작 지점 자체가 맵에 없으면 바로 종료 (안전장치)
+            long startID = MapPathUtil.ComputeTileIDInt(startVerticeInt);
+            if (!Map.ContainsKey(startID))
+            {
+                // Debug.Log("Start Position is invalid"); // Burst에서는 Debug.Log 사용 불가
+                allNodes.Dispose(); gCosts.Dispose(); openHeap.Dispose();
+                return;
+            }
+
             allNodes.Add(new PathVerticeNode
             {
-                VerticeInt  = startVerticeInt,
+                VerticeInt = startVerticeInt,
                 ParentIndex = -1,
                 G = 0,
                 H = math.distance(StartPos, EndPos)
             });
             openHeap.Add(0);
-            closedSet.Add(startVerticeInt, 0);
+            gCosts.Add(startVerticeInt, 0);
 
             int nextIndex;
 
@@ -79,176 +88,188 @@ namespace Script.Map
             {
                 int currIndex = PopMinHeap(ref openHeap, ref allNodes);
                 PathVerticeNode currentNode = allNodes[currIndex];
+                int3 currentVerticeInt = currentNode.VerticeInt;
 
+                // [Lazy Deletion]
+                if (gCosts.TryGetValue(currentVerticeInt, out float bestG))
+                {
+                    if (currentNode.G > bestG) continue;
+                }
+
+                // [도착 판정]
                 if (PATH_SEARCH_UNIT >= math.distance(currentNode.Vertice, EndPos))
                 {
                     ReconstructPath(currIndex, allNodes);
-                    //ResultPath.Add(EndPos);
                     break;
                 }
 
-                // 탐색 위치 (current) => Tile 조회
-                int3 currentVerticeInt = currentNode.VerticeInt;
                 long currentID = MapPathUtil.ComputeTileIDInt(currentVerticeInt);
-                if (false == Map.TryGetValue(currentID, out (long navi, long link) item))
+
+                // [수정 1] 변수 이름을 'currentItem'으로 명확히 하고, 루프 밖에서 선언
+                if (false == Map.TryGetValue(currentID, out (long navi, long link) currentItem))
                 {
                     continue;
                 }
 
                 for (int i = 0; i < NEIGHBOR_OFFSETS_INT.Length; ++i)
                 {
-                    //이웃 x,z 값을 우선 구한 후 -> 이후에 y값을 더하는 것으로..
                     int3 targetVerticeInt = currentVerticeInt + NEIGHBOR_OFFSETS_INT[i];
                     long targetID = MapPathUtil.ComputeTileIDInt(targetVerticeInt);
-                    float3 pos = PATH_SEARCH_UNIT * new float3(targetVerticeInt.x, targetVerticeInt.y, targetVerticeInt.z);
 
-                    // vertice 이동을 하니 다른 타일이다 -> 이웃 타일 탐색
+                    // [수정 2] 루프를 시작할 때마다 targetItem을 currentItem으로 초기화 (매우 중요!)
+                    // 이렇게 해야 이전 루프에서 item이 바뀌어도 이번 루프에 영향을 주지 않음
+                    (long navi, long link) targetItem = currentItem;
+
+                    // --- 타일 변경 및 높이(y) 보정 로직 ---
                     if (targetID != currentID)
                     {
                         int3 diffInt = GetTileDiff(currentID, targetID);
-
                         int yMask;
+
                         switch ((diffInt.x, diffInt.z))
                         {
                             case (-1, -1): yMask = 0; break;
-                            case ( 0, -1): yMask = 1; break;
-                            case ( 1, -1): yMask = 2; break;
-                            case ( 1,  0): yMask = 3; break;
-                            case ( 1,  1): yMask = 4; break;
-                            case ( 0,  1): yMask = 5; break;
-                            case (-1,  1): yMask = 6; break;
-                            case (-1,  0): yMask = 7; break;
-                            default:
-                                continue;
+                            case (0, -1): yMask = 1; break;
+                            case (1, -1): yMask = 2; break;
+                            case (1, 0): yMask = 3; break;
+                            case (1, 1): yMask = 4; break;
+                            case (0, 1): yMask = 5; break;
+                            case (-1, 1): yMask = 6; break;
+                            case (-1, 0): yMask = 7; break;
+                            default: continue;
                         }
 
-                        int y = (int)(item.link >> (yMask * 2)) & 0b11;
+                        // 현재 타일(currentItem)의 링크 정보를 확인해야 함
+                        int y = (int)(currentItem.link >> (yMask * 2)) & 0b11;
                         switch (y)
                         {
-                            case LINK_ZERO: y = 0;  break;
-                            case LINK_UP:   y = 1;  break;
+                            case LINK_ZERO: y = 0; break;
+                            case LINK_UP: y = 1; break;
                             case LINK_DOWN: y = -1; break;
-                            default:
-                                continue;
+                            default: continue;
                         }
 
                         targetVerticeInt += PATH_SEARCH_RECIPROCAL * new int3(0, y, 0);
                         targetID = MapPathUtil.ComputeTileIDInt(targetVerticeInt);
-                        if (false == Map.TryGetValue(targetID, out item))
+
+                        // [수정 3] 타일이 바뀌었으므로 targetItem을 새로 가져와서 덮어씌움
+                        // 이 변수는 이 for문의 이번 iteration(i)에서만 유효하므로 안전함
+                        if (false == Map.TryGetValue(targetID, out targetItem))
                         {
                             continue;
                         }
                     }
+                    // ------------------------------------
 
-                    // 이미 방문한 노드인지 확인
-                    if (true == closedSet.ContainsKey(targetVerticeInt))
+                    // 1. 이동할 지점(target) 자체의 유효성 검사 (targetItem 사용)
+                    float3 targetPivot = MapPathUtil.ComputeWorldPosition(targetID);
+                    int3 targetPivotInt = PATH_SEARCH_RECIPROCAL * MapPathUtil.ComputeWorldPositionInt(targetID);
+                    float3 circleCenter = PATH_SEARCH_UNIT * new float3(targetVerticeInt.x, targetVerticeInt.y, targetVerticeInt.z);
+
+                    if (false == IsVerticeMovable(targetItem.navi, targetPivot, circleCenter, Radius))
                     {
                         continue;
                     }
 
-                    // 이동한 vertice에서 확인해야 할 타일: 본인
-                    float3 targetPivot    = MapPathUtil.ComputeWorldPosition(targetID);
-                    int3   targetPivotInt = PATH_SEARCH_RECIPROCAL * MapPathUtil.ComputeWorldPositionInt(targetID);
-                    float3 circleCenter   = PATH_SEARCH_UNIT * new float3(targetVerticeInt.x, targetVerticeInt.y, targetVerticeInt.z);
-                    if (false == IsVerticeMovable(item.navi, targetPivot, circleCenter, Radius))
-                    {
-                        // 해당 지점으로 이동 불가; 탐색 중지
-                        continue;
-                    }
-
-                    // 이동한 vertice에서 확인해야 할 타일: 주변부
+                    // 2. 주변부 연결(Link) 검사
                     int verticeIndex = GetVerticeIndex(targetVerticeInt - targetPivotInt);
                     if (false == TryGetNeighborLinkIndex(verticeIndex, out int linkIndex, out int length))
                     {
                         continue;
                     }
-                    else if (0 == length) // v06: 자기 본인은 앞에서 확인 완료
+                    else if (0 == length)
                     {
-                        allNodes.Add(new PathVerticeNode()
-                        {
-                            VerticeInt = targetVerticeInt,
-                            ParentIndex = currIndex,
-                            G = currentNode.G + GetMoveCost(i),
-                            H = math.distance(targetVerticeInt, EndPos)
-                        });
-
-                        nextIndex = allNodes.Length - 1;
-                        closedSet.Add(targetVerticeInt, nextIndex);
-                        PushMinHeap(ref openHeap, ref allNodes, nextIndex);
-                        break;
+                        goto ADD_PATH;
                     }
 
                     for (int l = 0; l < length; ++l)
                     {
-                        // 연산 순서가 잘못 되었음
-                        // 거리가 닿는지 먼저 판단한 다음에 => 닿으면 연결 여부를 확인해야 한다.
-                        // 이걸 어떻게 해야 좋을까~!! 
-                        
-
-                        // 연결 여부 확인
-                        int x, y, z;
                         int index = (linkIndex + l + 8) % 8;
-                        if (false == MapPathUtil.TryGetYInt(item.link, index, out y))
-                        {
-                            goto CONTINUE;
-                        }
+                        int x, y, z;
 
                         switch (index)
                         {
                             case 0: x = -1; z = -1; break;
-                            case 1: x =  0; z = -1; break;
-                            case 2: x =  1; z = -1; break;
-                            case 3: x =  1; z =  0; break;
-                            case 4: x =  1; z =  1; break;
-                            case 5: x =  0; z =  1; break;
-                            case 6: x = -1; z =  1; break;
-                            case 7: x = -1; z =  0; break;
-                            default:
-                                goto CONTINUE;
+                            case 1: x = 0; z = -1; break;
+                            case 2: x = 1; z = -1; break;
+                            case 3: x = 1; z = 0; break;
+                            case 4: x = 1; z = 1; break;
+                            case 5: x = 0; z = 1; break;
+                            case 6: x = -1; z = 1; break;
+                            case 7: x = -1; z = 0; break;
+                            default: goto CONTINUE;
+                        }
+
+                        // 범위 검사
+                        long tempID = MapPathUtil.ComputeTileIDInt(targetPivotInt + PATH_SEARCH_RECIPROCAL * new int3(x, 0, z));
+                        var tempInt = MapPathUtil.ComputeWorldPositionInt(tempID);
+                        if (false == MapPathUtil.IsCircleOverlappingSquare(tempInt, new float2(circleCenter.x, circleCenter.z), Radius))
+                        {
+                            continue;
+                        }
+
+                        // 연결성(Link) 확인 (targetItem 사용)
+                        if (false == MapPathUtil.TryGetYInt(targetItem.link, index, out y))
+                        {
+                            goto CONTINUE;
                         }
 
                         int3 neighborPivotInt = targetPivotInt + PATH_SEARCH_RECIPROCAL * new int3(x, y, z);
-                        long neighborID       = MapPathUtil.ComputeTileIDInt(neighborPivotInt);
+                        long neighborID = MapPathUtil.ComputeTileIDInt(neighborPivotInt);
 
-                        if (false == Map.ContainsKey(neighborID))
+                        if (false == Map.TryGetValue(neighborID, out var neighborItem))
                         {
                             goto CONTINUE;
                         }
 
-                        long neighborNaviMask = Map[targetID].Navi;
-                        if (false == IsVerticeMovable(neighborNaviMask, neighborPivotInt, circleCenter, Radius))
+                        // [수정 4] 이웃의 NaviMask를 가져올 때 올바른 neighborItem 사용
+                        if (false == IsVerticeMovable(neighborItem.Navi, neighborPivotInt, circleCenter, Radius))
                         {
-                            // 하나라도 이동이 불가하면 해당 정점에서 유효성 확인 종료;
                             goto CONTINUE;
                         }
                     }
 
-                    // 이미 방문한 노드인지 확인
-                    if (true == closedSet.ContainsKey(targetVerticeInt))
+                ADD_PATH:
                     {
-                        continue;
+                        float newG = currentNode.G + GetMoveCost(i);
+
+                        bool foundBetterPath = false;
+                        if (gCosts.TryGetValue(targetVerticeInt, out float oldG))
+                        {
+                            if (newG < oldG)
+                            {
+                                gCosts[targetVerticeInt] = newG;
+                                foundBetterPath = true;
+                            }
+                        }
+                        else
+                        {
+                            gCosts.Add(targetVerticeInt, newG);
+                            foundBetterPath = true;
+                        }
+
+                        if (foundBetterPath)
+                        {
+                            allNodes.Add(new PathVerticeNode()
+                            {
+                                VerticeInt = targetVerticeInt,
+                                ParentIndex = currIndex,
+                                G = newG,
+                                H = math.distance(targetVerticeInt, EndPos)
+                            });
+
+                            nextIndex = allNodes.Length - 1;
+                            PushMinHeap(ref openHeap, ref allNodes, nextIndex);
+                        }
                     }
-
-                    allNodes.Add(new PathVerticeNode()
-                    {
-                        VerticeInt  = targetVerticeInt,
-                        ParentIndex = currIndex,
-                        G = currentNode.G + GetMoveCost(i),
-                        H = math.distance(targetVerticeInt, EndPos)
-                    });
-
-                    nextIndex = allNodes.Length - 1;
-                    closedSet.Add(targetVerticeInt, nextIndex);
-                    PushMinHeap(ref openHeap, ref allNodes, nextIndex);
 
                 CONTINUE:
                     continue;
                 }
             }
 
-            // dispose native
             allNodes.Dispose();
-            closedSet.Dispose();
+            gCosts.Dispose();
             openHeap.Dispose();
         }
 

@@ -1,10 +1,8 @@
 namespace Script.Map
 {
-    using System;
     using Unity.Burst;
     using Unity.Mathematics;
     using UnityEngine;
-    using static UnityEditor.Progress;
 
     public static class MapPathUtil
     {
@@ -149,6 +147,23 @@ namespace Script.Map
             }
 
             return true;
+        }
+        [BurstCompile]
+        public static bool IsCircleOverlappingSquare(int3 pos, float2 circleCenter, float radius)
+        {
+            const float TILE_SIZE = 1f;
+            float2 squareMin = new float2(pos.x, pos.z);
+            float2 squareMax = squareMin + new float2(TILE_SIZE, TILE_SIZE);
+
+            // 1. 원의 중심에서 사각형 영역 안으로 가장 가까운 점(Closest Point)을 찾습니다.
+            //    (삼각형 코드에서 변까지의 거리를 구하는 과정을 사각형에 맞춰 최적화한 것입니다.)
+            float2 closestPoint = math.clamp(circleCenter, squareMin, squareMax);
+
+            // 2. 그 '가장 가까운 점'과 '원의 중심' 사이의 거리를 구합니다.
+            float distanceSq = math.distancesq(closestPoint, circleCenter);
+
+            // 3. 거리의 제곱이 반지름의 제곱보다 작거나 같으면 겹친 것입니다.
+            return distanceSq <= radius * radius;
         }
         [BurstCompile]
         public static bool IsCircleOverlappingSubTile(int sIndex, float2 circleCenter, float radiusSq)
