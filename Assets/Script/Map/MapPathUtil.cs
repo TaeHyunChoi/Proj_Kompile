@@ -253,5 +253,55 @@ namespace Script.Map
 
             return true;
         }
+
+        /// <summary>
+        /// 타일 내 로컬 좌표(0~8)를 기반으로 Vertex Index(0~12)를 반환합니다.
+        /// </summary>
+        [BurstCompile]
+        public static int GetVertexIndexFromLocalPos(int localX, int localZ)
+        {
+            // localX, localZ는 0 ~ 8 사이의 값 (0.125f 단위)
+
+            if (localZ == 0) // Bottom Line
+            {
+                if (localX == 0) return 0; // v00
+                if (localX == 4) return 1; // v01
+                if (localX == 8) return 2; // v02
+            }
+            else if (localZ == 2) // Bottom Quarter Line
+            {
+                if (localX == 2) return 3; // v03
+                if (localX == 6) return 4; // v04
+            }
+            else if (localZ == 4) // Middle Line
+            {
+                if (localX == 0) return 5; // v05
+                if (localX == 4) return 6; // v06
+                if (localX == 8) return 7; // v07
+            }
+            else if (localZ == 6) // Top Quarter Line
+            {
+                if (localX == 2) return 8; // v08
+                if (localX == 6) return 9; // v09
+            }
+            else if (localZ == 8) // Top Line
+            {
+                if (localX == 0) return 10; // v10
+                if (localX == 4) return 11; // v11
+                if (localX == 8) return 12; // v12
+            }
+
+            return -1; // 유효한 정점 위치가 아님
+        }
+
+        /// <summary>
+        /// NaviMask에서 특정 정점(vIndex)의 4비트 높이 값을 추출합니다.
+        /// </summary>
+        [BurstCompile]
+        public static int GetHeightFromNaviMask(long naviMask, int vIndex)
+        {
+            if (vIndex < 0 || vIndex > 12) return 15; // Error or None
+            return (int)((naviMask >> (vIndex * 4)) & 0b1111);
+        }
     }
 }

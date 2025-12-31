@@ -56,17 +56,16 @@ namespace Script.Map
         {
             // init data
             var allNodes = new NativeList<PathVerticeNode>(Allocator.Temp);
-            var gCosts   = new NativeHashMap<int3, float>(1024, Allocator.Temp);
+            var gCosts = new NativeHashMap<int3, float>(1024, Allocator.Temp);
             var openHeap = new NativeList<int>(Allocator.Temp);
 
             // --- Start Node 설정 ---
             int3 startVerticeInt = GetVerticeInt(StartPos);
 
-            // [추가 체크] 시작 지점 자체가 맵에 없으면 바로 종료 (안전장치)
+            // 시작 지점 유효성 체크
             long startID = MapPathUtil.ComputeTileIDInt(startVerticeInt);
             if (!Map.ContainsKey(startID))
             {
-                // Debug.Log("Start Position is invalid"); // Burst에서는 Debug.Log 사용 불가
                 allNodes.Dispose(); gCosts.Dispose(); openHeap.Dispose();
                 return;
             }
@@ -86,11 +85,12 @@ namespace Script.Map
             // A* Loop
             while (0 < openHeap.Length)
             {
+                // 1. Min Heap Pop
                 int currIndex = PopMinHeap(ref openHeap, ref allNodes);
                 PathVerticeNode currentNode = allNodes[currIndex];
                 int3 currentVerticeInt = currentNode.VerticeInt;
 
-                // [Lazy Deletion]
+                // [Lazy Deletion] 더 짧은 경로로 이미 방문했다면 스킵
                 if (gCosts.TryGetValue(currentVerticeInt, out float bestG))
                 {
                     if (currentNode.G > bestG) continue;
@@ -105,22 +105,23 @@ namespace Script.Map
 
                 long currentID = MapPathUtil.ComputeTileIDInt(currentVerticeInt);
 
-                // [수정 1] 변수 이름을 'currentItem'으로 명확히 하고, 루프 밖에서 선언
+                // 현재 타일 정보 가져오기 ('currentItem'으로 명명하여 오염 방지)
                 if (false == Map.TryGetValue(currentID, out (long navi, long link) currentItem))
                 {
                     continue;
                 }
 
+                // 이웃 순회
                 for (int i = 0; i < NEIGHBOR_OFFSETS_INT.Length; ++i)
                 {
                     int3 targetVerticeInt = currentVerticeInt + NEIGHBOR_OFFSETS_INT[i];
                     long targetID = MapPathUtil.ComputeTileIDInt(targetVerticeInt);
 
-                    // [수정 2] 루프를 시작할 때마다 targetItem을 currentItem으로 초기화 (매우 중요!)
-                    // 이렇게 해야 이전 루프에서 item이 바뀌어도 이번 루프에 영향을 주지 않음
+                    // [중요] 타겟 타일 정보 초기화 (기본값: 현재 타일)
+                    // 루프 돌 때마다 리셋되어야 변수 오염이 발생하지 않음
                     (long navi, long link) targetItem = currentItem;
 
-                    // --- 타일 변경 및 높이(y) 보정 로직 ---
+                    // 1. 타일 경계(Link) 처리
                     if (targetID != currentID)
                     {
                         int3 diffInt = GetTileDiff(currentID, targetID);
@@ -139,7 +140,7 @@ namespace Script.Map
                             default: continue;
                         }
 
-                        // 현재 타일(currentItem)의 링크 정보를 확인해야 함
+                        // Link 정보를 통해 층(Layer) 이동 확인 (0, +1, -1)
                         int y = (int)(currentItem.link >> (yMask * 2)) & 0b11;
                         switch (y)
                         {
@@ -152,26 +153,51 @@ namespace Script.Map
                         targetVerticeInt += PATH_SEARCH_RECIPROCAL * new int3(0, y, 0);
                         targetID = MapPathUtil.ComputeTileIDInt(targetVerticeInt);
 
-                        // [수정 3] 타일이 바뀌었으므로 targetItem을 새로 가져와서 덮어씌움
-                        // 이 변수는 이 for문의 이번 iteration(i)에서만 유효하므로 안전함
+                        // 이동한 타일의 정보로 갱신
                         if (false == Map.TryGetValue(targetID, out targetItem))
                         {
                             continue;
                         }
                     }
-                    // ------------------------------------
 
-                    // 1. 이동할 지점(target) 자체의 유효성 검사 (targetItem 사용)
-                    float3 targetPivot = MapPathUtil.ComputeWorldPosition(targetID);
+                    // 2. [Slope Logic] NaviMask 높이 적용
+                    // 타일의 기준 층(Base Layer) 계산 (음수 좌표 대응)
+                    int baseLayerY = (int)math.floor((float)targetVerticeInt.y / PATH_SEARCH_RECIPROCAL) * PATH_SEARCH_RECIPROCAL;
+
+                    // 타일 내 로컬 좌표(0~8) 계산
+                    // targetPivot(타일 원점)을 구해서 차이를 계산하는 것이 가장 정확함
                     int3 targetPivotInt = PATH_SEARCH_RECIPROCAL * MapPathUtil.ComputeWorldPositionInt(targetID);
+                    int3 localPos = targetVerticeInt - targetPivotInt;
+
+                    int vIndex = MapPathUtil.GetVertexIndexFromLocalPos(localPos.x, localPos.z);
+                    if (vIndex != -1)
+                    {
+                        int heightY = MapPathUtil.GetHeightFromNaviMask(targetItem.navi, vIndex);
+
+                        // 구멍(15)이면 이동 불가
+                        if (heightY == MapPathUtil.NONE_SUBTILE)
+                        {
+                            continue;
+                        }
+
+                        // 높이 갱신: 기준 층 + NaviMask높이
+                        targetVerticeInt.y = baseLayerY + heightY;
+                    }
+
+                    // 3. 이동 유효성 검사 (IsVerticeMovable)
+                    float3 targetPivot = MapPathUtil.ComputeWorldPosition(targetID); // World Pivot (float)
+                    // PivotInt는 위에서 구한 값 재사용 가능하나, 안전을 위해 재계산하거나 그대로 사용
+                    targetPivotInt = PATH_SEARCH_RECIPROCAL * MapPathUtil.ComputeWorldPositionInt(targetID);
+
                     float3 circleCenter = PATH_SEARCH_UNIT * new float3(targetVerticeInt.x, targetVerticeInt.y, targetVerticeInt.z);
 
+                    // [수정] targetItem.navi 사용
                     if (false == IsVerticeMovable(targetItem.navi, targetPivot, circleCenter, Radius))
                     {
                         continue;
                     }
 
-                    // 2. 주변부 연결(Link) 검사
+                    // 4. 주변 연결(Link) 검사
                     int verticeIndex = GetVerticeIndex(targetVerticeInt - targetPivotInt);
                     if (false == TryGetNeighborLinkIndex(verticeIndex, out int linkIndex, out int length))
                     {
@@ -208,7 +234,7 @@ namespace Script.Map
                             continue;
                         }
 
-                        // 연결성(Link) 확인 (targetItem 사용)
+                        // 이웃 타일 연결성 확인 (targetItem.link 사용)
                         if (false == MapPathUtil.TryGetYInt(targetItem.link, index, out y))
                         {
                             goto CONTINUE;
@@ -222,7 +248,7 @@ namespace Script.Map
                             goto CONTINUE;
                         }
 
-                        // [수정 4] 이웃의 NaviMask를 가져올 때 올바른 neighborItem 사용
+                        // [중요] 이웃 타일의 NaviMask 체크 (neighborItem.Navi 사용)
                         if (false == IsVerticeMovable(neighborItem.Navi, neighborPivotInt, circleCenter, Radius))
                         {
                             goto CONTINUE;
@@ -232,8 +258,9 @@ namespace Script.Map
                 ADD_PATH:
                     {
                         float newG = currentNode.G + GetMoveCost(i);
-
                         bool foundBetterPath = false;
+
+                        // 비용 갱신 및 큐 추가
                         if (gCosts.TryGetValue(targetVerticeInt, out float oldG))
                         {
                             if (newG < oldG)
@@ -268,6 +295,7 @@ namespace Script.Map
                 }
             }
 
+            // dispose native
             allNodes.Dispose();
             gCosts.Dispose();
             openHeap.Dispose();
