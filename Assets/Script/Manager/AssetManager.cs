@@ -14,9 +14,10 @@ namespace Script.Manager
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
+    using System.Collections.Concurrent;
+
 
 #endif
-    
     /// <summary>
     /// 다시 보니까 AssetManager의 개념 정의도 애매모호한 것 같은데?
     /// 'ingame 외부의 에셋을 관리/제어한다'로 정의하는게 맞지 않을까...
@@ -42,27 +43,6 @@ namespace Script.Manager
         private static readonly ConcurrentDictionary<int, AsyncOperationHandle> _nonGameObjectInstances = new ConcurrentDictionary<int, AsyncOperationHandle>();
 
         private static readonly System.Threading.SynchronizationContext mainSyncContext = System.Threading.SynchronizationContext.Current;
-
-        // Table Data (Binary)
-        public static async Task<T> ReadBinaryFileAsync<T>(string key)
-        {
-            // 어드레서블 에셋 로드
-            AsyncOperationHandle<IList<TextAsset>> handle = Addressables.LoadAssetsAsync<TextAsset>(key, null);
-            await handle.Task;
-
-            if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result.Count == 0)
-            {
-                throw new FileNotFoundException($"라벨에 해당하는 파일이 존재하지 않습니다: {key}");
-            }
-
-            // 파일에서 바이트 배열 읽기 및 역직렬화
-            byte[] serializedData = handle.Result[0].bytes;
-            T data = MessagePackSerializer.Deserialize<T>(serializedData);
-
-            // T라는 데이터로 저장했으니 원본 TextAsset은 가지고 있을 이유가 없다. -> 곧장 해제
-            handle.ReleaseHandleOnCompletion();
-            return data;
-        }
 
         // GameObject Instance
         public static async Task<GameObject> GetOrNewInstanceAsync(AssetCode assetCode, Transform parent, bool usePooling = false)
@@ -160,8 +140,6 @@ namespace Script.Manager
             return (hash_code, value);
         }
 
-
-        // 얘네를 하나로 통합하는게 제일 베스트일 것 같습니다만...
         public static void ReleaseInstance(AssetCode assetCode, GameObject instance, bool forced = false)
         {
             string key = assetCode.ToString();
@@ -194,28 +172,12 @@ namespace Script.Manager
             if (true == entry.ShouldRelease())
             {
                 Addressables.Release(entry.Handle);
-                _gameObjectInstances.TryRemove(key);
+                _gameObjectInstances.TryRemove(key, out _);
 
 #if UNITY_EDITOR
                 Debug.Log($"[AssetManager] Release Asset Handler [{assetCode}]");
 #endif
             }
-        }
-        public static void ReleaseInstance(int instanceID)
-        {
-            mainSyncContext.Post((state) =>
-            {
-                if (_nonGameObjectInstances.TryGetValue(instanceID, out var handle))
-                {
-#if UNITY_EDITOR
-                    Debug.Log($"[AssetManager] Release[{handle.Result}] (id: {instanceID})");
-#endif
-
-                    Addressables.Release(handle);
-                    _nonGameObjectInstances.TryRemove(instanceID);
-                }
-            },
-            null);
         }
     }
 

@@ -4,6 +4,7 @@ namespace Script.Editor.MapSampling
     using Script.Data;
     using Script.Manager;
     using System.Collections.Generic;
+    using System.Collections.Concurrent;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
@@ -12,7 +13,7 @@ namespace Script.Editor.MapSampling
     using UnityEditor.AddressableAssets.Settings;
     using UnityEngine;
 
-    public partial class EditMapTileSampling : MonoBehaviour
+    public class EditMapTileSampling : MonoBehaviour
     {
         private class CombineMeshData
         {

@@ -1,26 +1,19 @@
 namespace Script.Data
 {
     using MessagePack;
-    using MessagePack.Formatters;
     using MessagePack.Resolvers;
 
-    /// <summary> MessagePack의 (Cumstom) Attribute 설정에 쓰인다. 없으면 런타임 에러 </summary>
+    /// <summary> MessagePack의 옵션 설정 </summary>
     public static class MessagePackConfig<T>
     {
         public static MessagePackSerializerOptions Options
         {
             get
             {
+                // StandardResolver가 이미 ConcurrentDictionary를 포함한
+                // 대부분의 C# 컬렉션을 지원하므로 이것만으로 충분합니다.
                 return MessagePackSerializerOptions.Standard
-                        .WithResolver(CompositeResolver
-                        .Create
-                        (
-                            // 커스텀 포맷터 등록
-                            new IMessagePackFormatter[] { new ConcurrentDictionaryFormatter<int, T>() },
-
-                            // 기본 Resolver
-                            new IFormatterResolver[] { StandardResolver.Instance }
-                        ));
+                        .WithResolver(StandardResolver.Instance);
             }
         }
     }

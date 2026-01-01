@@ -2,6 +2,7 @@
 namespace Script.Data
 {
     using System.Collections.Generic;
+    using System.Collections.Concurrent;
 
     public partial class EditMapGridData
     {

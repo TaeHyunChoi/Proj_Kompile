@@ -3,6 +3,7 @@ namespace Script.Data
     using MessagePack;
     using Unity.Collections;
     using System.Collections.Generic;
+    using System.Collections.Concurrent;
 
     [MessagePackObject]
     public class MapGridData

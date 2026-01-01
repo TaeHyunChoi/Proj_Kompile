@@ -2,6 +2,7 @@
 using Script.Data;
 using Script.Editor.MapSampling;
 using Script.Manager;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -14,14 +15,6 @@ using UnityEngine;
 /// </summary>
 public partial class EditMapSampling
 {
-    private class CombineMeshData
-    {
-        public List<CombineInstance> combineInstances;
-        public List<Vector2> combinedUVs;
-        public int vertexCount;
-        public int index;
-    }
-
     private readonly string MAP_NAVI_DATA_PATH = "Rcs\\Bytes\\MapNavi";
 
     // tile link를 할 때에 탐색 순서가 지정되어 있음!
@@ -33,9 +26,7 @@ public partial class EditMapSampling
     };
 
     private byte sceneIndex = 0;
-
     private ConcurrentDictionary<int, EditMapGridData> map;
-    public ConcurrentDictionary<int, EditMapGridData> Map => map;
 
     public void Bake()
     {

@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using Script.Data;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEditor.Hardware;
