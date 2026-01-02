@@ -1,9 +1,5 @@
-using Script.Manager;
 using System.Threading.Tasks;
 using UnityEngine;
-using Script.Interface;
-using Script.Index;
-using static Script.Index.IDxInput;
 using Unity.Mathematics;
 
 public class x_IngameFieldPlayer //: IngameUnitBase, IInputReceiver, IIngameFixedUpdater
@@ -29,54 +25,55 @@ public class x_IngameFieldPlayer //: IngameUnitBase, IInputReceiver, IIngameFixe
         return true;
     }
 
-    public bool ReceiveInput(InputFlag inputFlag)
-    {
-        //switch (index)
-        //{
-        //    case 0:
-        //        Vector3 dir = Vector3.zero;
-        //        if (true == inputFlag.Contains(InputFlag.UP))    { dir += Vector3.forward; }
-        //        if (true == inputFlag.Contains(InputFlag.DOWN))  { dir += Vector3.back; }
-        //        if (true == inputFlag.Contains(InputFlag.LEFT))  { dir += Vector3.left; }
-        //        if (true == inputFlag.Contains(InputFlag.RIGHT)) { dir += Vector3.right; }
-        //        dir.Normalize();
+    //public bool ReceiveInput(InputFlag inputFlag)
+    //{
+    //    //switch (index)
+    //    //{
+    //    //    case 0:
+    //    //        Vector3 dir = Vector3.zero;
+    //    //        if (true == inputFlag.Contains(InputFlag.UP))    { dir += Vector3.forward; }
+    //    //        if (true == inputFlag.Contains(InputFlag.DOWN))  { dir += Vector3.back; }
+    //    //        if (true == inputFlag.Contains(InputFlag.LEFT))  { dir += Vector3.left; }
+    //    //        if (true == inputFlag.Contains(InputFlag.RIGHT)) { dir += Vector3.right; }
+    //    //        dir.Normalize();
 
-        //        direction = dir;
-        //        return true;
-        //    default:
-        //        break;
-        //}
+    //    //        direction = dir;
+    //    //        return true;
+    //    //    default:
+    //    //        break;
+    //    //}
 
-        return false;
-    }
-    public IngameUpdateState FixedUpdateState()
-    {
-        //if (true == direction.Equals(default))
-        //{
-        //    return IngameUpdateState.RUNNING;
-        //}
-        ////direction = direction.Normalize();
+    //    return false;
+    //}
 
-        //Vector3 currenet_position = transform.position;
-        //Vector3 move_delta = (moveSpeed * Time.fixedDeltaTime) * direction;
+    //public IngameUpdateState FixedUpdateState()
+    //{
+    //    //if (true == direction.Equals(default))
+    //    //{
+    //    //    return IngameUpdateState.RUNNING;
+    //    //}
+    //    ////direction = direction.Normalize();
 
-        //if (true == FieldManager.TryPlayerMove(currenet_position, move_delta, out float y))
-        //{
-        //    float x = currenet_position.x + move_delta.x;
-        //    float z = currenet_position.z + move_delta.z;
-        //    transform.position = new Vector3(x, y, z);
-        //}
+    //    //Vector3 currenet_position = transform.position;
+    //    //Vector3 move_delta = (moveSpeed * Time.fixedDeltaTime) * direction;
+
+    //    //if (true == FieldManager.TryPlayerMove(currenet_position, move_delta, out float y))
+    //    //{
+    //    //    float x = currenet_position.x + move_delta.x;
+    //    //    float z = currenet_position.z + move_delta.z;
+    //    //    transform.position = new Vector3(x, y, z);
+    //    //}
 
 
-        ////float3 target_position = position  + (moveSpeed * Time.fixedDeltaTime) * direction;
-        ////if (true == FieldManager.TryPlayerMove(target_position, out float y))
-        ////{
-        ////    transform.position = new Vector3(target_position.x, y, target_position.z);
-        ////}
+    //    ////float3 target_position = position  + (moveSpeed * Time.fixedDeltaTime) * direction;
+    //    ////if (true == FieldManager.TryPlayerMove(target_position, out float y))
+    //    ////{
+    //    ////    transform.position = new Vector3(target_position.x, y, target_position.z);
+    //    ////}
 
-        //direction = new float3(0, 0, 0);
-        return IngameUpdateState.RUNNING;
-    }
+    //    //direction = new float3(0, 0, 0);
+    //    return IngameUpdateState.RUNNING;
+    //}
 
     public void SetAnime(string key)
     {

@@ -4,7 +4,6 @@ namespace Script.Manager
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.InputSystem;
-    using static Script.Index.IDxInput;
 
     public class x_InputHandler //: IContentUpdater
     {

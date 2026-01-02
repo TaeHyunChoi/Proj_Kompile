@@ -19,7 +19,7 @@ namespace Script.Content
         //    return type == procedureType;
         //}
 
-        protected abstract Task<bool> ExecuteIngameEventAsync(IngameEventType eventType);
+        //protected abstract Task<bool> ExecuteIngameEventAsync(IngameEventType eventType);
 
         /// <summary> 신경 안쓰고 싶어서 virtual로 일괄 Dispose <br/>
         /// 필요하면 override 하여 기능 추가 </summary>
@@ -36,34 +36,34 @@ namespace Script.Content
             //}
         }
 
-        protected async Task<T> GetIngameObjectAsync<T>(AssetCode assetCode, Transform parent) where T:IngameMonoBehaviourBase
-        {
-            //for (int i = 0; i < ingameObjects.Count; ++i)
-            //{
-            //    if (assetCode == ingameObjects[i].code)
-            //    {
-            //        return ingameObjects[i].obj.GetComponent<T>();
-            //    }
-            //}
+        //protected async Task<T> GetIngameObjectAsync<T>(AssetCode assetCode, Transform parent) where T:IngameMonoBehaviourBase
+        //{
+        //    //for (int i = 0; i < ingameObjects.Count; ++i)
+        //    //{
+        //    //    if (assetCode == ingameObjects[i].code)
+        //    //    {
+        //    //        return ingameObjects[i].obj.GetComponent<T>();
+        //    //    }
+        //    //}
 
-            //GameObject obj = await AssetManager.GetOrNewInstanceAsync(assetCode, parent);
-            //if (null == obj)
-            //{
-            //    return null;
-            //}
+        //    //GameObject obj = await AssetManager.GetOrNewInstanceAsync(assetCode, parent);
+        //    //if (null == obj)
+        //    //{
+        //    //    return null;
+        //    //}
 
-            //return obj.GetComponent<T>();
-            return default;
-        }
+        //    //return obj.GetComponent<T>();
+        //    return default;
+        //}
 
-        public x_IngameProcedureBase()
-        {
-            //if (this is IMessageReceiver receiver)
-            //{
-            //    MessageManager.AddReceiver(receiver);
-            //}
+        //public x_IngameProcedureBase()
+        //{
+        //    //if (this is IMessageReceiver receiver)
+        //    //{
+        //    //    MessageManager.AddReceiver(receiver);
+        //    //}
 
-            //ingameObjects = new List<(AssetCode, GameObject)>();
-        }
+        //    //ingameObjects = new List<(AssetCode, GameObject)>();
+        //}
     }
 }

@@ -1,17 +1,13 @@
-using Script.Index;
-using Script.Interface;
-using Script.Manager;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
-using static Script.Index.IDxInput;
 
 public class x_TitleObject : IngameMonoBehaviourBase //, IInputReceiver
 {
     private float DeltaTime => Time.deltaTime;
 
-    [SerializeField] private UITitleMenuObject titleMenu;
+    [SerializeField] private x_UITitleMenuObject titleMenu;
     [SerializeField] private Image[] images;
 
     // play company logo
@@ -190,7 +186,7 @@ public class x_TitleObject : IngameMonoBehaviourBase //, IInputReceiver
         };
     }
 
-    public UITitleMenuObject SetActiveTitleMenu()
+    public x_UITitleMenuObject SetActiveTitleMenu()
     {
         //x_InputHandler.RemoveInputReceiver(this);
 

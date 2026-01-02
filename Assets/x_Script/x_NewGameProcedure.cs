@@ -39,38 +39,38 @@ namespace Script.Content
             return false;
         }
 
-        protected /*override*/ async Task<bool> ExecuteIngameEventAsync(IngameEventType eventType)
-        {
-            //switch (eventType)
-            //{
-            //    case IngameEventType.LOADING_CURTAIN_ON:
-            //        UILoadingCurtainObject loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain, IngameManager.UIOverayRootTransform);
-            //        ingameObjects.Add(new(AssetCode.UI_LoadingCurtain, loadingCurtainObject.gameObject));
-            //        loadingCurtainObject.On(true);
-            //        break;
+        //protected /*override*/ async Task<bool> ExecuteIngameEventAsync(IngameEventType eventType)
+        //{
+        //    //switch (eventType)
+        //    //{
+        //    //    case IngameEventType.LOADING_CURTAIN_ON:
+        //    //        UILoadingCurtainObject loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain, IngameManager.UIOverayRootTransform);
+        //    //        ingameObjects.Add(new(AssetCode.UI_LoadingCurtain, loadingCurtainObject.gameObject));
+        //    //        loadingCurtainObject.On(true);
+        //    //        break;
 
-            //    case IngameEventType.OPENING_DISPOSE:
-            //        IngameManager.RemoveIngameProcedure(IngameProcedureType.OPENING);
-            //        goto case IngameEventType.NEWGAME_INITIALIZE;
+        //    //    case IngameEventType.OPENING_DISPOSE:
+        //    //        IngameManager.RemoveIngameProcedure(IngameProcedureType.OPENING);
+        //    //        goto case IngameEventType.NEWGAME_INITIALIZE;
 
-            //    case IngameEventType.NEWGAME_INITIALIZE:
-            //        IngameManager.EnterField(new PlayData());
-            //        break;
+        //    //    case IngameEventType.NEWGAME_INITIALIZE:
+        //    //        IngameManager.EnterField(new PlayData());
+        //    //        break;
 
-            //    case IngameEventType.LOADING_CURTAIN_OFF:
-            //        loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain, IngameManager.UIOverayRootTransform);
-            //        loadingCurtainObject.On(false);
-            //        break;
+        //    //    case IngameEventType.LOADING_CURTAIN_OFF:
+        //    //        loadingCurtainObject = await GetIngameObjectAsync<UILoadingCurtainObject>(AssetCode.UI_LoadingCurtain, IngameManager.UIOverayRootTransform);
+        //    //        loadingCurtainObject.On(false);
+        //    //        break;
 
-            //    case IngameEventType.NEWGAME_DISPOSE:
-            //        IngameManager.RemoveIngameProcedure(IngameProcedureType.NEW_GAME);
-            //        break;
+        //    //    case IngameEventType.NEWGAME_DISPOSE:
+        //    //        IngameManager.RemoveIngameProcedure(IngameProcedureType.NEW_GAME);
+        //    //        break;
 
-            //    default:
-            //        return false;
-            //}
+        //    //    default:
+        //    //        return false;
+        //    //}
 
-            return true;
-        }
+        //    return true;
+        //}
     }
 }
