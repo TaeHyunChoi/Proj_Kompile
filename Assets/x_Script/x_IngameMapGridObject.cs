@@ -1,10 +1,8 @@
 using Script.Data;
-using Script.Index;
-using Script.Manager;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class x_IngameMapGridObject :IngameMonoBehaviourBase
+public class x_IngameMapGridObject : MonoBehaviour //:IngameMonoBehaviourBase
 {
     private MapGridData raw_data;
     private List<x_IngameMapGridLayerObject> by_layer_objects;

@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using Script.Asset;
 using Script.Data;
 using Script.Manager;
 using System.Collections.Concurrent;
@@ -129,12 +130,11 @@ public partial class EditMapSampling
                 layerMeshAssets = grid.Value.LayerMeshAssets
             };
 
-            x_AssetManager.WriteBinaryFile<MapGridData>(
+            AssetSystem.WriteBinaryFile<MapGridData>(
                 data:             mapGridData,
-                dataPath:         MAP_NAVI_DATA_PATH,
+                relativePath:     MAP_NAVI_DATA_PATH,
                 fileName:         $"MapNavi_{mapGridData.Key}",
-                addressableGroup: "MapNavi",
-                addressableLabel: "MapNavi"
+                addressableGroup: "MapNavi"
                 );
         }
 

@@ -23,10 +23,10 @@ namespace Script.Manager
 
 
         // camera
-        public static void InitFollowingCamera(IngameUnitBase player_character)
-        {
-            //ingameCam.InitFollowingCamera(player_character);
-        }
+        //public static void InitFollowingCamera(IngameUnitBase player_character)
+        //{
+        //    //ingameCam.InitFollowingCamera(player_character);
+        //}
 
 
         private void Awake()

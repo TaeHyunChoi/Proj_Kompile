@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-public class STUDY_EditMapSamplingEditor
+public class EditMapSamplingEditor
 {
     [MenuItem("Tools/MapSampling/Bake Path Tiles to .btyes")]
     public static void Bake()

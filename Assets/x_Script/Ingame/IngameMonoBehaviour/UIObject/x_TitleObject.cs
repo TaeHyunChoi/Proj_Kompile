@@ -3,7 +3,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class x_TitleObject : IngameMonoBehaviourBase //, IInputReceiver
+public class x_TitleObject : MonoBehaviour //: IngameMonoBehaviourBase //, IInputReceiver
 {
     private float DeltaTime => Time.deltaTime;
 
