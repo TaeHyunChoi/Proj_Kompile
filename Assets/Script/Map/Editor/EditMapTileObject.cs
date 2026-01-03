@@ -7,11 +7,11 @@ namespace Script.Data
     using UnityEngine;
     using static Script.Index.MapTileIndex;
 
-    [Serializable]       // 에셋으로 저장하기 위함
-    [ExecuteInEditMode]  // 에디터에서 텍스쳐 곧장 적용하기 위함
+    [Serializable]
+    [ExecuteInEditMode]
     public class EditMapTileObject : MonoBehaviour
     {
-        private const int SPRITE_WIDTH  = 256;
+        private const int SPRITE_WIDTH = 256;
         private const int SPRITE_HEIGHT = 256;
 
         [Header("Render")]
@@ -19,11 +19,11 @@ namespace Script.Data
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private bool isOnlyRender;
         [SerializeField] private ushort renderLayer;
-        [SerializeField] private TextureIndex textureType;
+        [SerializeField] private TextureIndex textureType = Script.Index.TextureIndex.map_w;
 
         [Header("Data")]
         [SerializeField] private ulong heightMask;
-        
+
         public int GridKey => EditMapUtil.ComputeGridKey(transform.position);
         public ushort RenderLayer => renderLayer;
         public int TextureIndex => (int)textureType;
@@ -31,9 +31,9 @@ namespace Script.Data
 
         private void Awake()
         {
-            // ExecuteInEditMode 라서 Edit Mode 에서도 호출된다.
-            meshFilter = transform.GetComponent<MeshFilter>();
-            meshRenderer = transform.GetComponent<MeshRenderer>();
+            // 런타임/에디터 초기화 보장
+            if (!meshFilter) meshFilter = GetComponent<MeshFilter>();
+            if (!meshRenderer) meshRenderer = GetComponent<MeshRenderer>();
         }
 
         /// <summary> 프리팹 데이터를 초기화 ( != 실제 맵 타일 오브젝트) <br/>
@@ -43,11 +43,11 @@ namespace Script.Data
         {
             int height;
             ulong heightFlag;
-  
+
             for (int i = 0; i < heights.Length; ++i)
             {
-                height      = heights[i];
-                heightFlag  = (-1 == height) ? HEIGHT_MASK : (ulong)height;
+                height = heights[i];
+                heightFlag = (-1 == height) ? HEIGHT_MASK : (ulong)height;
                 heightMask |= heightFlag << i * HEIGHT_BITS;
             }
 
@@ -68,10 +68,27 @@ namespace Script.Data
 
         private void OnValidate()
         {
-            // ApplyTexture();
+            // 1. meshRenderer가 연결되어 있지 않다면 재연결 시도
+            if (meshRenderer == null)
+            {
+                meshRenderer = GetComponent<MeshRenderer>();
+            }
+
+            // 2. 방어 코드: 렌더러가 없거나, 머티리얼이 없거나, 텍스처가 없으면 로직을 수행하지 않음
+            if (meshRenderer == null ||
+                meshRenderer.sharedMaterial == null ||
+                meshRenderer.sharedMaterial.mainTexture == null)
+            {
+                return;
+            }
 
             // 공유된 Material 유지
             Texture texture = meshRenderer.sharedMaterial.mainTexture;
+
+            // 3. 텍스처 크기가 0이거나 유효하지 않은 경우 방지 (드문 경우이나 안전장치)
+            if (texture.width == 0 || texture.height == 0) 
+                return;
+
             int textureWidth = texture.width;
             int textureHeight = texture.height;
 

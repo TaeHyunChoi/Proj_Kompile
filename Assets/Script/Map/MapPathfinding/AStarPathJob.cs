@@ -64,7 +64,7 @@ namespace Script.Map
 
             // 시작 지점 유효성 체크
             long startID = MapPathUtil.ComputeTileIDInt(startVerticeInt);
-            if (!Map.ContainsKey(startID))
+            if (false == Map.ContainsKey(startID))
             {
                 allNodes.Dispose(); gCosts.Dispose(); openHeap.Dispose();
                 return;
@@ -93,7 +93,10 @@ namespace Script.Map
                 // [Lazy Deletion] 더 짧은 경로로 이미 방문했다면 스킵
                 if (gCosts.TryGetValue(currentVerticeInt, out float bestG))
                 {
-                    if (currentNode.G > bestG) continue;
+                    if (currentNode.G > bestG)
+                    {
+                        continue;
+                    }
                 }
 
                 // [도착 판정]
@@ -256,38 +259,36 @@ namespace Script.Map
                     }
 
                 ADD_PATH:
-                    {
-                        float newG = currentNode.G + GetMoveCost(i);
-                        bool foundBetterPath = false;
+                    float newG = currentNode.G + GetMoveCost(i);
+                    bool foundBetterPath = false;
 
-                        // 비용 갱신 및 큐 추가
-                        if (gCosts.TryGetValue(targetVerticeInt, out float oldG))
+                    // 비용 갱신 및 큐 추가
+                    if (gCosts.TryGetValue(targetVerticeInt, out float oldG))
+                    {
+                        if (newG < oldG)
                         {
-                            if (newG < oldG)
-                            {
-                                gCosts[targetVerticeInt] = newG;
-                                foundBetterPath = true;
-                            }
-                        }
-                        else
-                        {
-                            gCosts.Add(targetVerticeInt, newG);
+                            gCosts[targetVerticeInt] = newG;
                             foundBetterPath = true;
                         }
+                    }
+                    else
+                    {
+                        gCosts.Add(targetVerticeInt, newG);
+                        foundBetterPath = true;
+                    }
 
-                        if (foundBetterPath)
+                    if (foundBetterPath)
+                    {
+                        allNodes.Add(new PathVerticeNode()
                         {
-                            allNodes.Add(new PathVerticeNode()
-                            {
-                                VerticeInt = targetVerticeInt,
-                                ParentIndex = currIndex,
-                                G = newG,
-                                H = math.distance(targetVerticeInt, EndPos)
-                            });
+                            VerticeInt = targetVerticeInt,
+                            ParentIndex = currIndex,
+                            G = newG,
+                            H = math.distance(targetVerticeInt, EndPos)
+                        });
 
-                            nextIndex = allNodes.Length - 1;
-                            PushMinHeap(ref openHeap, ref allNodes, nextIndex);
-                        }
+                        nextIndex = allNodes.Length - 1;
+                        PushMinHeap(ref openHeap, ref allNodes, nextIndex);
                     }
 
                 CONTINUE:

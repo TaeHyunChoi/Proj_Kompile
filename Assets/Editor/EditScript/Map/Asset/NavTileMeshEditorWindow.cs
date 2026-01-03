@@ -7,8 +7,8 @@ using Script.Data;
 public partial class NavTileMeshEditorWindow : EditorWindow
 {
     private readonly int[]  inputHeights  = new int[13];    // 각 vertex의 height 입력값
-    private string inputFileName = "default_name"; // 에셋 파일 이름
-    private bool   isSmall       = false;          // (실내 등) 타일맵을 작게 만들 때 체크
+    private string inputFileName = "tile_mesh";             // 에셋 파일 이름
+    private bool   isSmall       = false;                   // (실내 등) 타일맵을 작게 만들 때 체크
 
     // 커스텀 에디터 표기
     [MenuItem("Tools/Asset/Map/Generate Map Tile Mesh", priority = 0)]

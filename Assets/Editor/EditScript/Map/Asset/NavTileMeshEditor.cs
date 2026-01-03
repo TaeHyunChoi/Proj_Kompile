@@ -75,7 +75,7 @@ public static class NavTileMeshEditor
         Debug.Log("Mesh asset created: " + fileName);
 
         // create|save prefab for test
-        stringBuilder.Append("Assets/Editor/Prefab/MapTilePrefab/");
+        stringBuilder.Append("Assets/Editor/EditPrefab/MapTilePrefab/");
         stringBuilder.Append($"{fileName}");
         stringBuilder.Append(".prefab");
 
@@ -93,7 +93,7 @@ public static class NavTileMeshEditor
             var filter = prefabObject.AddComponent<MeshFilter>();
             filter.mesh = mesh;
             var renderer = prefabObject.AddComponent<MeshRenderer>();
-            var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Editor/Texture/mat_NavTile_00.mat"); //임의로 생성한 매터리얼
+            var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Editor/EditTexture/mat_NavTile_00.mat"); //임의로 생성한 매터리얼
             renderer.sharedMaterial = material;
 
             // 타일 정보를 유니티의 NavMesh를 Bake하는 것처럼 데이터 저장할 때 호출하는 함수

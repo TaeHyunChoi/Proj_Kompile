@@ -13,7 +13,7 @@ namespace Script.Asset
         /// <summary>
         /// [Editor Only] 데이터를 바이너리(MessagePack)로 직렬화하여 파일로 저장하고 어드레서블에 등록합니다.
         /// </summary>
-        public static void WriteBinaryFile<T>(T data, string relativePath, string fileName, string addressableGroup = null)
+        public static void WriteBinaryFile<T>(T data, string relativePath, string fileName, string addressableGroup = null, string addressableLabel = null)
         {
             string fullDir = Path.Combine(Application.dataPath, relativePath);
             string filePath = Path.Combine(fullDir, fileName + ".bytes");
@@ -46,6 +46,14 @@ namespace Script.Asset
 
                 if (entry != null)
                 {
+                    if (!string.IsNullOrEmpty(addressableLabel))
+                    {
+                        // 설정에 라벨이 없으면 추가
+                        settings.AddLabel(addressableLabel);
+                        // 엔트리에 라벨 활성화 (true: 추가, false: 제거)
+                        entry.SetLabel(addressableLabel, true);
+                    }
+
                     entry.SetAddress(fileName);
                     settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
                 }

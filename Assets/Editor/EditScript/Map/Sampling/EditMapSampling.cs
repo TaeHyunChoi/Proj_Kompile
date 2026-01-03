@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 using Script.Asset;
 using Script.Data;
-using Script.Manager;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -67,12 +66,12 @@ public partial class EditMapSampling
 
         EditMapTileJob job = new EditMapTileJob
         {
-            SceneIndex = nativeSceneIndex,
+            SceneIndex  = nativeSceneIndex,
             RenderLayer = nativeRenderLayer,
-            Position = nativePosition,
-            RotY = nativeRotateY,
-            Height = nativeHeights,
-            Data = nativeResult
+            Position    = nativePosition,
+            RotY        = nativeRotateY,
+            Height      = nativeHeights,
+            Data        = nativeResult
         };
         JobHandle jobHandle = job.Schedule(tiles.Length, 64);
         jobHandle.Complete();
@@ -134,7 +133,8 @@ public partial class EditMapSampling
                 data:             mapGridData,
                 relativePath:     MAP_NAVI_DATA_PATH,
                 fileName:         $"MapNavi_{mapGridData.Key}",
-                addressableGroup: "MapNavi"
+                addressableGroup: "MapNavi",
+                addressableLabel: "MapNavi"
                 );
         }
 

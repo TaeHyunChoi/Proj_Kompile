@@ -10,8 +10,8 @@ public class TextureMerger : MonoBehaviour
     public static void MergeSprites()
     {
         // 스프라이트 폴더 경로
-        string inputPath = "Assets/Editor/Texture";
-        string outputPath = "Assets/Editor/Texture/MergedTexture.png";
+        string inputPath = "Assets/Editor/EditTexture";
+        string outputPath = "Assets/Editor/EditTexture/MergedTexture.png";
 
         // 타겟 텍스처 크기 및 각 스프라이트 크기
         int targetTextureWidth = 2048;

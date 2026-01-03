@@ -7,13 +7,13 @@ namespace Script.Data
     using Unity.Mathematics;
     using UnityEngine;
 
-    public partial struct EditMapTileJob : IJobParallelFor
+    public struct EditMapTileJob : IJobParallelFor
     {
-        [ReadOnly] public NativeArray<byte> SceneIndex;  // 씬 인덱스
+        [ReadOnly] public NativeArray<byte>   SceneIndex;  // 씬 인덱스
         [ReadOnly] public NativeArray<ushort> RenderLayer; // 레이어 인덱스
         [ReadOnly] public NativeArray<float3> Position; // 타일 좌표
-        [ReadOnly] public NativeArray<float> RotY;      // 타일 회전값 (y축 회전)
-        [ReadOnly] public NativeArray<ulong> Height;    // height mask
+        [ReadOnly] public NativeArray<float>  RotY;      // 타일 회전값 (y축 회전)
+        [ReadOnly] public NativeArray<ulong>  Height;    // height mask
 
         public NativeArray<EditMapTileData> Data;       // result data
 

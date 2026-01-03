@@ -1,7 +1,6 @@
 using Script.Data;
 using Script.Map;
 using System.Collections.Generic;
-using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
