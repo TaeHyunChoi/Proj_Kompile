@@ -20,7 +20,7 @@ public class AssetIDGenerator
 
     // 로컬 컴퓨터에서 경로를 직접 찾아 입력한다 =>  "Assets\" 붙인다. 앞에는 Unity 로컬 경로가 붙는다.
     // 이걸 const로 둘 필요는 없었네.
-    private const string ID_FILE_PATH = "Script/Data/AssetMap/{0}.cs";
+    private const string ID_FILE_PATH = "Script/Data/AssetID/{0}.cs";
 
 
     [MenuItem("Tools/AssetMap/Generate Enums From Folders")]

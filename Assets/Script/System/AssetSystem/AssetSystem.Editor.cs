@@ -8,7 +8,7 @@ namespace Script.Asset
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
 
-    public static partial class AssetSystem
+    public static partial class AssetSystem // .Editor
     {
         /// <summary>
         /// [Editor Only] 데이터를 바이너리(MessagePack)로 직렬화하여 파일로 저장하고 어드레서블에 등록합니다.

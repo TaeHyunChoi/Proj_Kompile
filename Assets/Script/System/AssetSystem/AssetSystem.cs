@@ -305,5 +305,10 @@ namespace Script.Asset
         }
 
         #endregion
+
+        public static async Awaitable LoadAllDatatable()
+        {
+            Debug.Log("AssetSystem.LoadAllDatatable();");
+        }
     }
 }
