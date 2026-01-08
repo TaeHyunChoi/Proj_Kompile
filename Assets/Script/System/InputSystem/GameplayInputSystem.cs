@@ -16,6 +16,7 @@ namespace Script.GameSystem
         private IDxInput inputFlag;
 
         public IDxInput InputFlag => inputFlag;
+        public CancellationToken Token => cts.Token;
 
         public GameplayInputSystem()
         {

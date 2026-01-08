@@ -10,8 +10,9 @@ namespace Script.GamePlay
     public class OpeningTitleManager : ManagerBase
     {
         private OpeningPlayObject openingPlay;
-        GameplayInputSystem inputSystem;
+        // x_UITitleMenuObject
 
+        private GameplayInputSystem inputSystem;
 
         public override async Awaitable Intialize(Dictionary<Type, ISystem> systems)
         {
@@ -22,24 +23,23 @@ namespace Script.GamePlay
             
             var obj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.OpeningPlayObject);
             openingPlay = obj.GetComponent<OpeningPlayObject>();
-            Awaitable playTask = openingPlay.Play();
 
             // 데이터테이블 불러오기가 완료될 때까지 일단 대기해
             await loadTask;
 
             try
             {
-
+                await openingPlay.Play(inputSystem);
             }
             catch (OperationCanceledException)
             {
-                inputSystem.Reset();
-
-                // openingPlay 단계에 따라서 여차저차.
+                await openingPlay.ExitLogoSequence(inputSystem);
             }
+
+
         }
 
-        public override bool OnInputReceive(Data.DataType.IDxInput inputFlag)
+        public override bool OnInputReceive(DataType.IDxInput inputFlag)
         {
             return true;
         }
