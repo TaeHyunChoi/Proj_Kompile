@@ -15,7 +15,8 @@ namespace Script.GamePlay
         }
 
         private OpeningPlayObject openingPlay;
-
+        // private UITitleMenuObject uiTitleMenu;
+        
         private State state;
 
         public override async Awaitable Intialize()
@@ -25,22 +26,20 @@ namespace Script.GamePlay
         }
         public async Awaitable PlayOpening()
         {
-            var obj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.OpeningPlayObject);
+            var obj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.OpeningPlayObject, Main.UI.OverlayCanvas);
             openingPlay = obj.GetComponent<OpeningPlayObject>();
 
 
             state = State.LOAD_DATA;
             Awaitable loadTask = AssetSystem.LoadAllDatatable();
             await loadTask;
-
-
+            
+            // opening sequence: 입력을 받아 시퀀스를 skip할 수 있다;
             state = State.OPENING_SEQUENCE;
-            await openingPlay.PlaySequence(); // 입력에서 skip 여차저차
-            // demo ...
-            // ...
-            // ...
+            await openingPlay.PlaySequence();
 
-
+            // title menu: 입력을 받아서 여차저차;
+            // ...
         }
 
         public override bool OnInputReceive(Data.DataType.InputState inputState)

@@ -26,8 +26,6 @@ namespace Script.Asset
         // 일반 에셋(ScriptableObject, Texture 등) 핸들 관리 (Key: InstanceID)
         private static ConcurrentDictionary<int, AsyncOperationHandle> _nonGameObjectInstances;
 
-        private static SynchronizationContext _mainSyncContext;
-
         /// <summary>
         /// 시스템 초기화. 게임 시작 시(OpeningManager 등)에서 반드시 호출해야 합니다.
         /// </summary>
@@ -38,9 +36,6 @@ namespace Script.Asset
 
             _gameObjectInstances = new ConcurrentDictionary<string, InstanceEntry>();
             _nonGameObjectInstances = new ConcurrentDictionary<int, AsyncOperationHandle>();
-            _mainSyncContext = SynchronizationContext.Current;
-
-            Debug.Log("[AssetSystem] Initialized.");
         }
 
         #region AssetMap Logic

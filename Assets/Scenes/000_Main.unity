@@ -303,6 +303,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a02894153204bd45b521ed9415bf7e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cameraCanvas: {fileID: 766687174}
+  overlayCanvas: {fileID: 1723229619}
+  curtainCanvas: {fileID: 1840611886}
 --- !u!1 &766687173
 GameObject:
   m_ObjectHideFlags: 0
@@ -315,7 +318,7 @@ GameObject:
   - component: {fileID: 766687177}
   - component: {fileID: 766687176}
   m_Layer: 0
-  m_Name: CanvasCamera
+  m_Name: CameraCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -398,7 +401,7 @@ GameObject:
   - component: {fileID: 1723229622}
   - component: {fileID: 1723229621}
   m_Layer: 0
-  m_Name: CanvasOverlay
+  m_Name: OverlayCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

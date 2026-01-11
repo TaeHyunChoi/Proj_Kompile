@@ -1,16 +1,27 @@
+using Script.Asset;
+using System;
+
 namespace Script.GamePlay
 {
     using Script.GameSystem;
     using System.Collections.Generic;
     using UnityEngine;
 
-    public class MainBehaviour : MonoBehaviour
+    public partial class Main : MonoBehaviour
     {
-        private static MainBehaviour     instance;
+        private static Main     instance;
+        
         private static GamePlaySystem    systems;
         private static List<ManagerBase> managers;
 
+        // ui canvas
+        private UICanvas uiCanvas;
+        [SerializeField] private Transform cameraCanvas;
+        [SerializeField] private Transform overlayCanvas;
+        [SerializeField] private Transform curtainCanvas;
 
+        public static UICanvas UI => instance.uiCanvas;
+        
         private void Awake()
         {
             if (null != instance)
@@ -22,14 +33,26 @@ namespace Script.GamePlay
 
             systems  = new GamePlaySystem();
             managers = new List<ManagerBase>();
+
+            uiCanvas = new UICanvas(cameraCanvas, overlayCanvas, curtainCanvas);
+                
+            AssetSystem.Initialize();
         }
 
         private async void Start()
         {
-            var openingMgr = new OpeningTitleManager();
-            managers.Add(openingMgr);
+            try
+            {
+                var openingMgr = new OpeningTitleManager();
+                managers.Add(openingMgr);
 
-            await openingMgr.Intialize();
+                await openingMgr.Intialize();
+            }
+            catch (Exception e)
+            {
+                // async void 라서 예외를 잡기 위하여 try catch 구문을 사용;
+                throw; // TODO 예외 처리
+            }
         }
 
         private void Update()

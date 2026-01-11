@@ -49,14 +49,10 @@ namespace Script.GamePlay
         private float DeltaTime => Time.deltaTime;
         public override PrefabID PrefabID => PrefabID.OpeningPlayObject;
 
-
         private void Awake()
         {
             state = State.NONE;
             skip = false;
-
-            transform.GetChild(0).gameObject.SetActive(false);
-            transform.GetChild(2).gameObject.SetActive(false);
 
             Color initColor = new Color(1f, 1f, 1f, 0f);
             images[(int)ImageType.COMPANY_LOGO].color = initColor;
@@ -83,7 +79,8 @@ namespace Script.GamePlay
             transform.GetChild(0).gameObject.SetActive(true);
 
             alpha = 0f;
-            while (alpha < 1f)
+            while (alpha < 1f 
+                   && false == skip)
             {
                 alpha += DeltaTime * logoAlphaDelta;
                 images[(int)ImageType.COMPANY_LOGO].color = new Color(1f, 1f, 1f, alpha);
@@ -92,14 +89,18 @@ namespace Script.GamePlay
 
 
             waitTime = 0f;
-            while (waitTime < 1f 
+            while (waitTime < 1f
                    && false == skip)
             {
                 waitTime += DeltaTime;
                 await Awaitable.NextFrameAsync();
-
             }
 
+            if (true == skip)
+            {
+                await Awaitable.NextFrameAsync();                
+            }
+            
             alpha = 1f;
             while (alpha > 0f)
             {
@@ -108,6 +109,8 @@ namespace Script.GamePlay
                 await Awaitable.NextFrameAsync();
             }
             alpha = 0f;
+
+            skip = false;
         }
         public async Awaitable PlayDemo()
         {
@@ -167,24 +170,21 @@ namespace Script.GamePlay
                 alpha += DeltaTime * flashDelta;
                 images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, alpha);
                 await Awaitable.NextFrameAsync();
-            }
-    ;
+            };
             alpha = 1f;
 
             while (waitTime < 0.25f)
             {
                 waitTime += DeltaTime;
                 await Awaitable.NextFrameAsync();
-            }
-    ;
+            };
 
             while (alpha > 0f)
             {
                 alpha -= DeltaTime * flashDelta * 1.125f;
                 images[(int)ImageType.TITLE_FLASH].color = new Color(1f, 1f, 1f, alpha);
                 await Awaitable.NextFrameAsync();
-            }
-    ;
+            };
         }
 
         public bool SkipSequence(Data.DataType.InputState inputState)
