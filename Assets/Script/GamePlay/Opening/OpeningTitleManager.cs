@@ -51,6 +51,7 @@ namespace Script.GamePlay
                     return openingPlay.SkipSequence(inputState);
                 case State.TITLE_MENU:
                     return uiTitleMenu.Select(inputState);
+                default:
                     break;
             }
             return true;
