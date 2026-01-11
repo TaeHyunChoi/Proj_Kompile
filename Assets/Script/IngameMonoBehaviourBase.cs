@@ -4,6 +4,6 @@ namespace Script.Asset
 
     public abstract class IngameMonoBehaviourBase : MonoBehaviour
     {
-        public PrefabID PrefabID;
+        public abstract PrefabID PrefabID { get; }
     }
 }
