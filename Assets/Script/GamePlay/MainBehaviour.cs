@@ -35,8 +35,7 @@ namespace Script.GamePlay
         private void Update()
         {
             // 입력값 갱신 (현재와 과거)
-            var currentFlag = systems.Input.InputFlag;
-            var prevFlag = systems.Input.PrevInputFlag;
+            Data.DataType.InputState inputState = systems.Input.Current;
 
             // 매니저 업데이트
             bool inputReceived = false;
@@ -46,7 +45,7 @@ namespace Script.GamePlay
                 if (false == inputReceived)
                 {
                     // 입력 처리: 한 번이라도 입력 처리가 되었으면 이후 순번은 입력을 받지 않음
-                    inputReceived |= managers[i].OnInputReceive(currentFlag, prevFlag);
+                    inputReceived |= managers[i].OnInputReceive(inputState);
                 }
 
                 // 업데이트: 

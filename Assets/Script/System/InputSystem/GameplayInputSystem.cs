@@ -15,8 +15,7 @@ namespace Script.GameSystem
         private IDxInput inputFlag;
         private IDxInput prevInputFlag; // 이전 프레임 입력값
 
-        public IDxInput InputFlag => inputFlag;
-        public IDxInput PrevInputFlag => prevInputFlag;
+        public InputState Current => new InputState(inputFlag, prevInputFlag);
 
         public GameplayInputSystem()
         {

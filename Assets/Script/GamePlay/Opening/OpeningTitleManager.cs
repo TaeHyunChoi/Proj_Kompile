@@ -43,12 +43,12 @@ namespace Script.GamePlay
 
         }
 
-        public override bool OnInputReceive(DataType.IDxInput current, DataType.IDxInput prev)
+        public override bool OnInputReceive(Data.DataType.InputState inputState)
         {
             switch (state)
             {
                 case State.OPENING_SEQUENCE:
-                    return openingPlay.SkipSequence(current, prev);
+                    return openingPlay.SkipSequence(inputState);
                 case State.TITLE_MENU:
                     // 입력 조작
                     break;

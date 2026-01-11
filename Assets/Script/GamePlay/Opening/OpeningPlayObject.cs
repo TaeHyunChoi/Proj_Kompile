@@ -3,7 +3,6 @@ namespace Script.GamePlay
     using Script.Asset;
     using UnityEngine;
     using UnityEngine.UI;
-    using Script.Util;
     using static Script.Data.DataType;
 
     public class OpeningPlayObject : IngameMonoBehaviourBase
@@ -188,27 +187,16 @@ namespace Script.GamePlay
     ;
         }
 
-        public bool SkipSequence(IDxInput current, IDxInput prev)
+        public bool SkipSequence(Data.DataType.InputState inputState)
         {
             switch (state)
             {
                 case State.PLAY_LOGO:
                 case State.PLAY_DEMO:
-                    // 해당 단계의 Play() 함수에서 진행 중이라면 while() 조건 문에서 이탈
-                    skip = true;
-
-                    // 예시 1: 메뉴 선택 (단발성 - 딱 한 번만 실행)
-                    if (current.IsDown(prev, IDxInput.ENTER))
-                    {
-                        Debug.Log("게임 시작! (한 번만 출력됨)");
+                    if (true == inputState.IsDown((IDxInput.ENTER)))
+                    {                    
+                        skip = true;
                         return true; // 입력 소모
-                    }
-
-                    // 예시 2: 스킵 가속 (연속 입력 - 누르고 있는 동안 실행)
-                    if (current.IsPressing(IDxInput.ACTION))
-                    {
-                        Debug.Log("스킵 중... (누르고 있으면 계속 출력됨)");
-                        // 입력 소모 안 함 (다른 로직과 겹칠 수 있으므로)
                     }
                     break;
                 default:
