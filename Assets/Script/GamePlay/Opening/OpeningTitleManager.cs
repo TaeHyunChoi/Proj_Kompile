@@ -1,46 +1,58 @@
 namespace Script.GamePlay
 {
-    using System;
     using Script.Data;
-    using System.Collections.Generic;
     using UnityEngine;
-    using Script.GameSystem;
     using Script.Asset;
 
     public class OpeningTitleManager : ManagerBase
     {
+        private enum State
+        { 
+            NONE,
+            LOAD_DATA,
+            OPENING_SEQUENCE,
+            TITLE_MENU,
+        }
+
         private OpeningPlayObject openingPlay;
-        // x_UITitleMenuObject
 
-        private GameplayInputSystem inputSystem;
+        private State state;
 
-        public override async Awaitable Intialize(Dictionary<Type, ISystem> systems)
+        public override async Awaitable Intialize()
         {
-            inputSystem = systems[typeof(GameplayInputSystem)] as GameplayInputSystem;
-            inputSystem.Reset();
-
-            Awaitable loadTask = AssetSystem.LoadAllDatatable();
-            
+            state = State.NONE;
+            await PlayOpening();
+        }
+        public async Awaitable PlayOpening()
+        {
             var obj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.OpeningPlayObject);
             openingPlay = obj.GetComponent<OpeningPlayObject>();
 
-            // 데이터테이블 불러오기가 완료될 때까지 일단 대기해
+
+            state = State.LOAD_DATA;
+            Awaitable loadTask = AssetSystem.LoadAllDatatable();
             await loadTask;
 
-            try
-            {
-                await openingPlay.Play(inputSystem);
-            }
-            catch (OperationCanceledException)
-            {
-                await openingPlay.ExitLogoSequence(inputSystem);
-            }
+
+            state = State.OPENING_SEQUENCE;
+            await openingPlay.PlaySequence(); // 입력에서 skip 여차저차
+            // demo ...
+            // ...
+            // ...
 
 
         }
 
-        public override bool OnInputReceive(DataType.IDxInput inputFlag)
+        public override bool OnInputReceive(DataType.IDxInput current, DataType.IDxInput prev)
         {
+            switch (state)
+            {
+                case State.OPENING_SEQUENCE:
+                    return openingPlay.SkipSequence(current, prev);
+                case State.TITLE_MENU:
+                    // 입력 조작
+                    break;
+            }
             return true;
         }
 
@@ -48,6 +60,9 @@ namespace Script.GamePlay
         {
             return true;
         }
+        public override void Dispose()
+        {
+            AssetSystem.ReleaseInstance(openingPlay);
+        }
     }
-
 }

@@ -1,31 +1,14 @@
 namespace Script.GamePlay
 {
-    using Script.Data;
     using Script.GameSystem;
-    using System;
     using System.Collections.Generic;
     using UnityEngine;
 
     public class MainBehaviour : MonoBehaviour
     {
-        private static MainBehaviour instance;
-        public static MainBehaviour Instance => instance;
-
-        private GameplayInputSystem inputSystem;
-        private List<ManagerBase> managers;
-
-
-        private Dictionary<Type, ISystem> systems;
-
-        public class OpeningSystem
-        {
-            public readonly GameplayInputSystem Input;
-
-            public OpeningSystem(GameplayInputSystem inputSystem)
-            {
-                Input = inputSystem;
-            }
-        }
+        private static MainBehaviour     instance;
+        private static GamePlaySystem    systems;
+        private static List<ManagerBase> managers;
 
 
         private void Awake()
@@ -37,25 +20,23 @@ namespace Script.GamePlay
             }
             instance = this;
 
-            systems = new Dictionary<Type, ISystem>();
-            inputSystem = new GameplayInputSystem();
-            systems.Add(typeof(GameplayInputSystem), inputSystem);
-
-            managers    = new List<ManagerBase>();
+            systems  = new GamePlaySystem();
+            managers = new List<ManagerBase>();
         }
 
         private async void Start()
         {
             var openingMgr = new OpeningTitleManager();
-            await openingMgr.Intialize(systems);
-
             managers.Add(openingMgr);
+
+            await openingMgr.Intialize();
         }
 
         private void Update()
         {
-            // 입력값 갱신
-            var inputFlag = inputSystem.InputFlag;
+            // 입력값 갱신 (현재와 과거)
+            var currentFlag = systems.Input.InputFlag;
+            var prevFlag = systems.Input.PrevInputFlag;
 
             // 매니저 업데이트
             bool inputReceived = false;
@@ -65,15 +46,15 @@ namespace Script.GamePlay
                 if (false == inputReceived)
                 {
                     // 입력 처리: 한 번이라도 입력 처리가 되었으면 이후 순번은 입력을 받지 않음
-                    inputReceived |= managers[i].OnInputReceive(inputFlag);
+                    inputReceived |= managers[i].OnInputReceive(currentFlag, prevFlag);
                 }
 
                 // 업데이트: 
                 managers[i].OnUpdate();
             }
-        }
 
-        // 매니저 관리하는 클래스가 있으면 좋겠는데요?
-        // 정말로 그럴까? 한 번 더 고민
+            // 프레임 처리가 다 끝난 후, 현재 입력을 '이전'으로 백업
+            systems.Input.OnEndOfFrame();
+        }
     }
 }

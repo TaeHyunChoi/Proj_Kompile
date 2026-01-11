@@ -1,6 +1,5 @@
 namespace Script.GameSystem
 {
-    using System.Threading;
     using UnityEngine;
     using UnityEngine.InputSystem;
     using Script.Data;
@@ -11,18 +10,18 @@ namespace Script.GameSystem
         private readonly InputAction moveInput;
         private readonly InputAction enterInput;
         private readonly InputAction actionInput;
+        private readonly InputAction cancelInput;
 
-        private CancellationTokenSource cts;
         private IDxInput inputFlag;
+        private IDxInput prevInputFlag; // 이전 프레임 입력값
 
         public IDxInput InputFlag => inputFlag;
-        public CancellationToken Token => cts.Token;
+        public IDxInput PrevInputFlag => prevInputFlag;
 
         public GameplayInputSystem()
         {
             inputFlag = IDxInput.NONE;
 
-            #region initialize input
             moveInput = new InputAction("Move", InputActionType.Value);
             moveInput.AddCompositeBinding("2DVector")
                      .With("Up", "<Keyboard>/upArrow")
@@ -43,6 +42,17 @@ namespace Script.GameSystem
                 inputFlag &= ~IDxInput.ENTER;
             };
 
+            cancelInput = new InputAction("Enter", InputActionType.Button);
+            cancelInput.AddBinding("<Keyboard>/x");
+            cancelInput.started += (context) =>
+            {
+                inputFlag |= IDxInput.CANCEL;
+            };
+            cancelInput.canceled += (context) =>
+            {
+                inputFlag &= ~IDxInput.CANCEL;
+            };
+
             actionInput = new InputAction("Action", InputActionType.Button);
             actionInput.AddBinding("<Keyboard>/space");
             actionInput.started += (context) =>
@@ -61,14 +71,9 @@ namespace Script.GameSystem
             moveInput.Enable();
             enterInput.Enable();
             actionInput.Enable();
-            #endregion
+            cancelInput.Enable();
 
-            #region initialize cancellation token source
-            cts = new CancellationTokenSource();
-            #endregion
-
-            //
-            //IngameUpdateManager.Register(this);
+            //cts = new CancellationTokenSource();
         }
 
         private void OnMovePerformed(InputAction.CallbackContext context)
@@ -86,31 +91,22 @@ namespace Script.GameSystem
             inputFlag &= ~IDxInput.MOVE_ALL;
         }
 
-        public void Reset()
+        // [신규] 프레임 끝에서 호출: 현재 입력을 과거로 저장
+        public void OnEndOfFrame()
         {
-            cts.Cancel();
-            cts.Dispose();
-            cts = new CancellationTokenSource();
-
-            inputFlag = IDxInput.NONE;
+            prevInputFlag = inputFlag;
         }
 
-        public void OnEnable()
-        {
-            moveInput.Enable();
-            enterInput.Enable();
-            actionInput.Enable();
-        }
-        public void OnDisable()
-        {
-            moveInput.Disable();
-            moveInput.Dispose();
+        // 현재 구조에선 입력 취소 토큰을 사용할 이유가 없음;
+        //private CancellationTokenSource cts;
+        //public CancellationToken Token => cts.Token;
+        //public void Reset()
+        //{
+        //    cts.Cancel();
+        //    cts.Dispose();
+        //    cts = new CancellationTokenSource();
 
-            enterInput.Disable();
-            enterInput.Dispose();
-
-            actionInput.Disable();
-            actionInput.Dispose();
-        }
+        //    inputFlag = IDxInput.NONE;
+        //}
     }
 }
