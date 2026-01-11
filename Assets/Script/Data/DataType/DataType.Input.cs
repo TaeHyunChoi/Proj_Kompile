@@ -13,11 +13,14 @@ namespace Script.Data
             RIGHT,
             UP,
             DOWN,
-            MOVE_ALL,
+
 
             ENTER,
             CANCEL,
-            ACTION
+            ACTION,
+            
+            MOVE_ALL = LEFT | RIGHT | UP | DOWN,
+            SELECT_ALL = ENTER | CANCEL | ACTION
         }
 
         public readonly struct InputState
@@ -25,6 +28,11 @@ namespace Script.Data
             private readonly IDxInput current;
             private readonly IDxInput previous;
 
+            #if UNITY_EDITOR
+            public IDxInput Curr => current;
+            public IDxInput Prev => previous; 
+            #endif
+            
             public InputState(IDxInput current, IDxInput previous)
             {
                 this.current = current;

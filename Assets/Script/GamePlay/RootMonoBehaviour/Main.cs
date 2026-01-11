@@ -59,7 +59,7 @@ namespace Script.GamePlay
         {
             // 입력값 갱신 (현재와 과거)
             Data.DataType.InputState inputState = systems.Input.Current;
-
+            
             // 매니저 업데이트
             bool inputReceived = false;
             for (int i = managers.Count - 1; i >= 0; --i)

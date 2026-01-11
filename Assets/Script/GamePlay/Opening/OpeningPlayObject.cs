@@ -193,7 +193,7 @@ namespace Script.GamePlay
             {
                 case State.PLAY_LOGO:
                 case State.PLAY_DEMO:
-                    if (true == inputState.IsDown((IDxInput.ENTER)))
+                    if (true == inputState.IsDown(IDxInput.SELECT_ALL))
                     {                    
                         skip = true;
                         return true; // 입력 소모

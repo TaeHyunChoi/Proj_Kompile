@@ -1,6 +1,5 @@
 namespace Script.GamePlay
 {
-    using Script.Data;
     using UnityEngine;
     using Script.Asset;
 
@@ -15,7 +14,7 @@ namespace Script.GamePlay
         }
 
         private OpeningPlayObject openingPlay;
-        // private UITitleMenuObject uiTitleMenu;
+        private UITitleMenuObject uiTitleMenu;
         
         private State state;
 
@@ -26,20 +25,22 @@ namespace Script.GamePlay
         }
         public async Awaitable PlayOpening()
         {
-            var obj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.OpeningPlayObject, Main.UI.OverlayCanvas);
-            openingPlay = obj.GetComponent<OpeningPlayObject>();
-
-
             state = State.LOAD_DATA;
             Awaitable loadTask = AssetSystem.LoadAllDatatable();
+            
+            var openingObj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.OpeningPlayObject, Main.UI.OverlayCanvas);
+            openingPlay = openingObj.GetComponent<OpeningPlayObject>();
+            
+            // 모든 데이터 테이블을 로드할 때까지 다른 루프 또는 입력을 막겠다.
             await loadTask;
             
             // opening sequence: 입력을 받아 시퀀스를 skip할 수 있다;
             state = State.OPENING_SEQUENCE;
             await openingPlay.PlaySequence();
 
-            // title menu: 입력을 받아서 여차저차;
-            // ...
+            var uiTitleMenuObj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.UI_TitleMenuObject, Main.UI.OverlayCanvas);
+            uiTitleMenu = uiTitleMenuObj.GetComponent<UITitleMenuObject>();
+            state = State.TITLE_MENU;
         }
 
         public override bool OnInputReceive(Data.DataType.InputState inputState)
@@ -49,7 +50,7 @@ namespace Script.GamePlay
                 case State.OPENING_SEQUENCE:
                     return openingPlay.SkipSequence(inputState);
                 case State.TITLE_MENU:
-                    // 입력 조작
+                    return uiTitleMenu.Select(inputState);
                     break;
             }
             return true;
@@ -57,6 +58,11 @@ namespace Script.GamePlay
 
         public override bool OnUpdate()
         {
+            if (State.TITLE_MENU == state)
+            {
+                uiTitleMenu.OnUpdate();
+            }
+
             return true;
         }
         public override void Dispose()
