@@ -1,10 +1,11 @@
 namespace Script.GamePlay
 {
+    using Script.Asset;
     using Script.Data;
     using UnityEngine;
     using UnityEngine.UI;
 
-    public class UITitleMenuObject : MonoBehaviour, IGameUpdater
+    public class UITitleMenuObject : IngameMonoBehaviourBase, IGameUpdater
     {
         [SerializeField] private Transform menuParent;
         [SerializeField] private Image selectSlotImage;
@@ -21,7 +22,9 @@ namespace Script.GamePlay
         private int index;
 
         private Color selectedColor;
-        
+
+        public override PrefabID PrefabID => PrefabID.UI_TitleMenuObject;
+
         private void Awake()
         {
             anchoredPositions = new Vector2[menuParent.childCount];
@@ -49,20 +52,24 @@ namespace Script.GamePlay
             return true;
         }
 
-        public bool Select(DataType.InputState inputState)
+        /// <summary>
+        /// 타이틀 메뉴에서 항목을 선택한다. <br/> OpeningTitleManager에게 선택한 인덱스를 반환하겠다.
+        /// </summary>
+        /// <param name="inputState"></param>
+        /// <returns>선택한 메뉴 인덱스, 메뉴 선택이 불가했다면 -1을 반환</returns>
+        public int Select(DataType.InputState inputState)
         {
             if (true == inputState.IsDown(DataType.IDxInput.ENTER | DataType.IDxInput.ACTION))
             {
                 selectedColor.a = alpha;
                 selectSlotImage.color = selectedColor;
-                Debug.Log($"Select! input.curr:{inputState.Curr}, input.prev:{inputState.Prev}");
-                return true;
+                return index;
             }
             
             waitTime += Time.deltaTime;
             if(FREEZE_INPUT_TIME >= waitTime)
             {
-                return false;
+                return -1;
             }
 
 
@@ -71,17 +78,17 @@ namespace Script.GamePlay
                 index = ((index - 1) + 4) % 4;
                 selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
                 waitTime = 0f;
-                return true;
+                return index;
             }
             else if (true == inputState.IsDown(DataType.IDxInput.DOWN))
             {
                 index = ((index + 1) + 4) % 4;
                 selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
                 waitTime = 0f;
-                return true;
+                return index;
             }
 
-            return false;
+            return -1;
         }
     }
 }

@@ -15,6 +15,8 @@ namespace Script.GamePlay
 
         private OpeningPlayObject openingPlay;
         private UITitleMenuObject uiTitleMenu;
+        // uiLoadDataListObject
+        // uiOption -> 이건 Main.Systems.UIOption 으로 가야 할까?
         
         private State state;
 
@@ -28,7 +30,7 @@ namespace Script.GamePlay
             state = State.LOAD_DATA;
             Awaitable loadTask = AssetSystem.LoadAllDatatable();
             
-            var openingObj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.OpeningPlayObject, Main.UI.OverlayCanvas);
+            var openingObj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.OpeningPlayObject, Main.UI.GamePlayRoot);
             openingPlay = openingObj.GetComponent<OpeningPlayObject>();
             
             // 모든 데이터 테이블을 로드할 때까지 다른 루프 또는 입력을 막겠다.
@@ -38,23 +40,47 @@ namespace Script.GamePlay
             state = State.OPENING_SEQUENCE;
             await openingPlay.PlaySequence();
 
-            var uiTitleMenuObj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.UI_TitleMenuObject, Main.UI.OverlayCanvas);
+            var uiTitleMenuObj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.UI_TitleMenuObject, Main.UI.PopupRoot);
             uiTitleMenu = uiTitleMenuObj.GetComponent<UITitleMenuObject>();
             state = State.TITLE_MENU;
         }
 
         public override bool OnInputReceive(Data.DataType.InputState inputState)
         {
-            switch (state)
+            if (State.OPENING_SEQUENCE == state)
             {
-                case State.OPENING_SEQUENCE:
-                    return openingPlay.SkipSequence(inputState);
-                case State.TITLE_MENU:
-                    return uiTitleMenu.Select(inputState);
-                default:
-                    break;
+                return openingPlay.SkipSequence(inputState);
             }
-            return true;
+
+            if (State.TITLE_MENU == state)
+            {
+                int selectedIndex = uiTitleMenu.Select(inputState);
+                switch (selectedIndex)
+                {
+                    case 0: // 처음부터 
+                        Main.StartNewGame();
+                        break;
+                    case 1:// 이어하기 
+
+                        break;
+                    case 2:// 환경설정 
+
+                        break;
+                    case 3:// 종료하기 
+#if UNITY_EDITOR
+    
+#else
+
+#endif
+                        break;
+                    default:
+                        break;
+                }
+
+                return -1 != selectedIndex;
+            }
+
+            return false;
         }
 
         public override bool OnUpdate()
@@ -69,6 +95,7 @@ namespace Script.GamePlay
         public override void Dispose()
         {
             AssetSystem.ReleaseInstance(openingPlay);
+            AssetSystem.ReleaseInstance(uiTitleMenu);
         }
     }
 }

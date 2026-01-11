@@ -1,27 +1,27 @@
-using Script.Asset;
-using System;
-
 namespace Script.GamePlay
 {
-    using Script.GameSystem;
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
+    using Script.Asset;
 
     public partial class Main : MonoBehaviour
     {
         private static Main     instance;
         
-        private static GamePlaySystem    systems;
-        private static List<ManagerBase> managers;
+        // 시스템 모음 (asset, input, sound, ...)
+        // 예외적으로 SystemUI를 넣어서 UIOption을 여기서 처리하는 것도 방법일 듯 하다.
+        private static GamePlaySystem   systems;
 
-        // ui canvas
-        private UICanvas uiCanvas;
-        [SerializeField] private Transform cameraCanvas;
-        [SerializeField] private Transform overlayCanvas;
-        [SerializeField] private Transform curtainCanvas;
+        // 매니저 일괄 관리
+        private static GamePlayManagers managers;
 
-        public static UICanvas UI => instance.uiCanvas;
+        // ui canvas : 얘도 이렇게 받는게 좀 짜침 => 그냥 매개변수로 넘기자
+        private UISystem uiCanvas;
+
+        public static UISystem UI => instance.uiCanvas;
         
+        // MonoBehaviours
         private void Awake()
         {
             if (null != instance)
@@ -32,51 +32,42 @@ namespace Script.GamePlay
             instance = this;
 
             systems  = new GamePlaySystem();
-            managers = new List<ManagerBase>();
+            managers = new GamePlayManagers();
 
-            uiCanvas = new UICanvas(cameraCanvas, overlayCanvas, curtainCanvas);
-                
+            Transform uiRoot = transform.Find("UI");
+            uiCanvas = new UISystem(uiRoot);
+
             AssetSystem.Initialize();
         }
-
         private async void Start()
         {
             try
             {
                 var openingMgr = new OpeningTitleManager();
                 managers.Add(openingMgr);
-
                 await openingMgr.Intialize();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // async void 라서 예외를 잡기 위하여 try catch 구문을 사용;
                 throw; // TODO 예외 처리
             }
         }
-
         private void Update()
         {
             // 입력값 갱신 (현재와 과거)
             Data.DataType.InputState inputState = systems.Input.Current;
-            
-            // 매니저 업데이트
-            bool inputReceived = false;
-            for (int i = managers.Count - 1; i >= 0; --i)
-            {
-                // 입력:
-                if (false == inputReceived)
-                {
-                    // 입력 처리: 한 번이라도 입력 처리가 되었으면 이후 순번은 입력을 받지 않음
-                    inputReceived |= managers[i].OnInputReceive(inputState);
-                }
 
-                // 업데이트: 
-                managers[i].OnUpdate();
-            }
+            // 매니저 업데이트
+            managers.OnUpdateAll(inputState);
 
             // 프레임 처리가 다 끝난 후, 현재 입력을 '이전'으로 백업
             systems.Input.OnEndOfFrame();
         }
+
+
+        // Managers
+        public static void StartNewGame() => managers.NewGame();
+
     }
 }
