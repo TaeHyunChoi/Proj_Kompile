@@ -39,6 +39,8 @@ namespace Script.GamePlay
                 var type = typeof(T);
                 if (dict.TryGetValue(type, out var manager))
                 {
+                    manager.Dispose();
+
                     dict.Remove(type);
                     list.Remove(manager);
                 }
@@ -65,16 +67,19 @@ namespace Script.GamePlay
             }
 
 
+            // 받을 때에 PlayData를 넣어줘야 하니까...
             public async void NewGame()
             {
                 // 로딩 커튼 on
                 await UI.SetLoadingCurtain(true);
 
                 // 오프닝-타이틀 매니저 해제
-                Get<OpeningTitleManager>().Dispose();
                 Remove<OpeningTitleManager>();
 
                 // 필드 매니저 생성 및 추가
+                var fieldMgr = new FieldManager(new Data.PlayData());
+                managers.Add(fieldMgr);
+                await fieldMgr.Intialize();
                 // FieldInfo, GamePlayData, Player, NPC
 
                 // 필드 HUD 초기화

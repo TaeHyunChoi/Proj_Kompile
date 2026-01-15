@@ -124,6 +124,36 @@ namespace Script.Map
                 gy * GRID_SIZE + ty,
                 gz * GRID_SIZE + tz);
         }
+        public static void ComputeKey(float3 worldPos, out int outGKey, out int outTKey)
+        {
+            int absTx = Mathf.FloorToInt(worldPos.x);
+            int absTy = Mathf.FloorToInt(worldPos.y);
+            int absTz = Mathf.FloorToInt(worldPos.z);
+
+            int gX = Mathf.FloorToInt((float)absTx / GRID_SIZE);
+            int gY = Mathf.FloorToInt((float)absTy / GRID_SIZE);
+            int gZ = Mathf.FloorToInt((float)absTz / GRID_SIZE);
+
+            int tX = absTx - gX * GRID_SIZE;
+            int tY = absTy - gY * GRID_SIZE;
+            int tZ = absTz - gZ * GRID_SIZE;
+
+            if (tX < 0) { tX += GRID_SIZE; gX -= 1; }
+            if (tY < 0) { tY += GRID_SIZE; gY -= 1; }
+            if (tZ < 0) { tZ += GRID_SIZE; gZ -= 1; }
+
+            outTKey = ((tX & TILE_MASK) << (TILE_BITS * 2))
+                    | ((tY & TILE_MASK) << (TILE_BITS * 1))
+                    | ((tZ & TILE_MASK) << (TILE_BITS * 0));
+
+            byte bX = (byte)(sbyte)gX;
+            byte bY = (byte)(sbyte)gY;
+            byte bZ = (byte)(sbyte)gZ;
+
+            outGKey = ((bX << 16) | (bY << 8) | bZ);
+        }
+
+
 
         [BurstCompile]
         public static bool IsSubTileValid(long naviMask, int sIndex0to15)
