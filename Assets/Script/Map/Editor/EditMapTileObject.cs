@@ -107,7 +107,7 @@ namespace Script.Data
 
             //propertyBlock.SetColor("_Color", GetColorByEnum(textureType)); // 개별 색상 적용
             propertyBlock.SetVector("_UVOffset", uvOffset); // UV Offset 적용
-            propertyBlock.SetVector("_UVScale", uvScale);   // UV Scale 적용
+            propertyBlock.SetVector("_UVScale", uvScale);   // UV Scale 
 
             meshRenderer.SetPropertyBlock(propertyBlock);
         }
