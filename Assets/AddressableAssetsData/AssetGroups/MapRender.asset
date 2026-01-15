@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: MapRender
   m_GUID: aead3c2cf363bb645ae30ad8c22b2f3f
   m_SerializeEntries:
+  - m_GUID: 46d84fa7fa2d50e4097e6231f42e1d3e
+    m_Address: MapRender_0_G255_L0_0
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5b5b258d6281b84499b3d6314c1eda0a
     m_Address: MapRender_0_G0_L0_0
     m_ReadOnly: 0
