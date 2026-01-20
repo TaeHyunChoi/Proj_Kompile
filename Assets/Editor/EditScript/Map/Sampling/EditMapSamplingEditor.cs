@@ -42,7 +42,18 @@ public class EditMapSamplingEditor
 
             }
         });
-        await handle.Task;
+
+        try
+        {
+            await handle.Task;
+        }
+        finally
+        {
+            if (true == handle.IsValid())
+            {
+                Addressables.Release(handle);
+            }
+        }
 
         //MapCacheManager cacheMgr = new MapCacheManager();
         //await cacheMgr.EditLoadAll();

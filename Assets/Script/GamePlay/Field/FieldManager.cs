@@ -1,39 +1,74 @@
 namespace Script.GamePlay
 {
+    using Script.Asset;
     using Script.Data;
     using Script.Map;
+    using Script.GameSystem.Utility;
+    using System.Collections.Generic;
     using UnityEngine;
+    using UnityEngine.AddressableAssets;
 
     public class FieldManager : ManagerBase
     {
         private PlayData playData;
-
-
+        private MapGridObject mapGridObject;
 
         public FieldManager(PlayData playData)
         {
             this.playData = playData;
         }
 
-        public override Awaitable Intialize()
+        public override async Awaitable Intialize()
         {
-            // var task_map = Init-Map
-            // var task_unit = Init-Unit
-            // var task_hud = UI.HUD
-            // await Task.WaitAll(task_map, task_unit, task_hud);
-            return null;
+            Awaitable task_map = InitializeMap();
+            Awaitable task_unit = InitializeUnit();
+            Awaitable task_ui = InitializeUI();
+
+            await task_map;
+            await task_unit;
+            await task_ui;
         }
         private async Awaitable InitializeMap()
         {
             MapPathUtil.ComputeKey(playData.Position, out int gridKey, out int tileKey);
 
-            // 근데 이거 asset system으로 불러오는게 맞지 않니?
             // (1) navi data 불러오기
+            MapGridData data = await LoadMap(gridKey);
+            if (null == data)
+            {
+                // error
+                return;
+            }
+
             // (2) map object 불러오기
-            // 둘 다 FieldManager에서 관리하도록 가져와야 하네?
+            List<(int, Mesh)> meshes = new List<(int, Mesh)>();
+            Mesh mesh;
+            string address;
+            for (int i = 0; i < data.layerMeshAssets.Count; ++i)
+            {
+                var layerData = data.layerMeshAssets[i];
+                int index = layerData.layer;
 
+                for (int l = 0; l < layerData.assets.Count; ++l)
+                {
+                    address = layerData.assets[i];
+                    mesh = await AssetSystem.LoadAssetAsync<Mesh>(address); //해제할 때엔 mesh.GetInstanceID()로
 
+                    meshes.Add((index, mesh));
+                }
+            }
 
+            var prefabObj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.MapGridPrefab, usePooling: true);
+            mapGridObject = prefabObj.GetComponent<MapGridObject>();
+            mapGridObject.Initialize(meshes);
+        }
+        private async Awaitable InitializeUnit()
+        { 
+        
+        }
+        private async Awaitable InitializeUI()
+        { 
+        
         }
 
         public override bool OnInputReceive(DataType.InputState inputState)
@@ -47,7 +82,36 @@ namespace Script.GamePlay
         }
         public override void Dispose()
         {
+            mapGridObject.Dispose();
+            AssetSystem.ReleaseInstance(mapGridObject);
+        }
 
+        private async Awaitable<MapGridData> LoadMap(int gridKey)
+        {
+            string label = $"MapNavi_{gridKey}";
+            MapGridData grid = null;
+
+            var handle = Addressables.LoadAssetsAsync<TextAsset>(label, callback: (textAsset) =>
+            {
+                if (null != textAsset)
+                {
+                    grid = GameDataSerializer.Deserialize<MapGridData>(textAsset.bytes);
+                }
+            });
+
+            try
+            {
+                await handle.Task;
+            }
+            finally
+            {
+                if (true == handle.IsValid())
+                {
+                    Addressables.Release(handle);
+                }
+            }
+
+            return grid;
         }
     }
 }

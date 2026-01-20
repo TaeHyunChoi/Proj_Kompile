@@ -17,6 +17,7 @@ namespace Script.Asset
     /// <summary>
     /// [Framework] Addressable Asset을 관리하고 제공하는 시스템입니다.
     /// AssetMap을 통해 Enum 키로 에셋을 로드하며, 게임 오브젝트 풀링 및 바이너리 로드를 지원합니다.
+    /// 그러니까, 얘는 (1)메모리 참조 (2)인스턴스 생성 역할만 한다. 그 외엔 아무 역할을 맡지 않는다.
     /// </summary>
     public static partial class AssetSystem
     {
@@ -109,19 +110,10 @@ namespace Script.Asset
 
             return await GetOrNewInstanceInternalAsync(address, parent, usePooling);
         }
-
-        /// <summary>
-        /// 문자열 주소로 직접 로드 (필요한 경우 사용)
-        /// </summary>
-        public static async Task<GameObject> GetOrNewInstanceAsync(string address, Transform parent = null, bool usePooling = true)
-        {
-            return await GetOrNewInstanceInternalAsync(address, parent, usePooling);
-        }
-
         private static async Task<GameObject> GetOrNewInstanceInternalAsync(string key, Transform parent, bool usePooling)
         {
             // 1. InstanceEntry 확인 및 없으면 최초 로드
-            if (!_gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
+            if (false == _gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
             {
                 var handle = Addressables.LoadAssetAsync<GameObject>(key);
                 await handle.Task;
@@ -160,6 +152,14 @@ namespace Script.Asset
         }
 
         /// <summary>
+        /// 문자열 주소로 직접 로드 (필요한 경우 사용)
+        /// </summary>
+        public static async Task<GameObject> GetOrNewInstanceAsync(string address, Transform parent = null, bool usePooling = true)
+        {
+            return await GetOrNewInstanceInternalAsync(address, parent, usePooling);
+        }
+
+        /// <summary>
         /// 인스턴스를 반환합니다. 풀링 대상이면 비활성화 후 풀로 돌아가고, 아니면 파괴됩니다.
         /// </summary>
         public static void ReleaseInstance<TEnum>(TEnum id, GameObject instance, bool forcedDestroy = false) where TEnum : Enum
@@ -174,7 +174,11 @@ namespace Script.Asset
         /// </summary>
         public static void ReleaseInstance(IngameMonoBehaviourBase instance, bool forcedDestroy = false)
         {
-            if (instance == null) return;
+            if (instance == null)
+            {
+                return;
+            }
+
             ReleaseInstance(instance.PrefabID, instance.gameObject, forcedDestroy);
         }
 
@@ -334,7 +338,7 @@ namespace Script.Asset
 
         public static async Awaitable LoadAllDatatable()
         {
-            Debug.Log("AssetSystem.LoadAllDatatable();");
+
         }
     }
 }

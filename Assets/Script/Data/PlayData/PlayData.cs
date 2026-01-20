@@ -11,7 +11,7 @@ namespace Script.Data
 
         public PlayData()
         {
-            position = new Vector3(1.5f, -1f, 1.5f);
+            position = new Vector3(1.5f, -1f, -2f);
         }
     }
 }

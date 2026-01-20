@@ -68,12 +68,10 @@ namespace Script.GamePlay
                         break;
                     case 3:// 종료하기 
 #if UNITY_EDITOR
-    
+
 #else
 
 #endif
-                        break;
-                    default:
                         break;
                 }
 
@@ -94,8 +92,8 @@ namespace Script.GamePlay
         }
         public override void Dispose()
         {
-            AssetSystem.ReleaseInstance(openingPlay);
-            AssetSystem.ReleaseInstance(uiTitleMenu);
+            AssetSystem.ReleaseInstance(openingPlay, true);
+            AssetSystem.ReleaseInstance(uiTitleMenu, true);
         }
     }
 }

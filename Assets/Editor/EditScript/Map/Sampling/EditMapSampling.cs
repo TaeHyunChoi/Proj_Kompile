@@ -230,20 +230,17 @@ public partial class EditMapSampling
 
         // ## Save Data.bin
 
-        // [Fix] MapNavi 데이터 저장 전 폴더 초기화 (Clean & Recreate)
         // AssetDatabase 사용을 위해 'Assets/' 접두사 추가 및 경로 구분자 통일
         string fullNaviPath = $"Assets/{MAP_NAVI_DATA_PATH.Replace('\\', '/')}";
-
-        if (AssetDatabase.IsValidFolder(fullNaviPath))
+        if (true == AssetDatabase.IsValidFolder(fullNaviPath))
         {
             AssetDatabase.DeleteAsset(fullNaviPath);
         }
-
-        if (!System.IO.Directory.Exists(fullNaviPath))
+        if (false == System.IO.Directory.Exists(fullNaviPath))
         {
             System.IO.Directory.CreateDirectory(fullNaviPath);
         }
-        AssetDatabase.Refresh(); // 폴더 생성 반영
+        AssetDatabase.Refresh();
 
         foreach (KeyValuePair<int, EditMapGridData> grid in map)
         {
@@ -325,11 +322,7 @@ public partial class EditMapSampling
         Debug.Log($"LinkTiles Job Completed: {count} tiles processed.");
     }
 
-    // ==================================================================================
-    // [Static Methods] Mesh Combine Logic
-    // ==================================================================================
-
-    // [Fix] gridKeys 배열 매개변수 추가
+    // gridKeys 배열 매개변수 추가
     public static void CombineAndRegister(ConcurrentDictionary<int, EditMapGridData> map,
                                           EditMapTileObject[] tiles,
                                           int[] gridKeys, // <-- 추가됨
@@ -342,22 +335,15 @@ public partial class EditMapSampling
             return;
         }
 
-        // [Fix] 기존 폴더 및 내부 데이터 완전 삭제 후 재생성 로직
-        // 1. 폴더가 존재하면 AssetDatabase를 통해 삭제 (메타 파일 포함 깔끔한 제거)
         if (AssetDatabase.IsValidFolder(SAVE_PATH_ROOT))
         {
             AssetDatabase.DeleteAsset(SAVE_PATH_ROOT);
         }
-
-        // 2. 폴더가 물리적으로 삭제되었는지 확인 후 재생성
-        // (AssetDatabase.DeleteAsset은 즉시 반영되지만, 안전을 위해 IO 체크)
         if (!System.IO.Directory.Exists(SAVE_PATH_ROOT))
         {
             System.IO.Directory.CreateDirectory(SAVE_PATH_ROOT);
         }
-
-        // 3. Unity가 새로 생성된 빈 폴더를 인식하도록 갱신
-        AssetDatabase.Refresh(); // 중요: 이 호출이 없으면 폴더가 없다고 에러가 날 수 있음
+        AssetDatabase.Refresh();
 
         if (null == cachedContext)
         {
@@ -438,7 +424,6 @@ public partial class EditMapSampling
         Debug.Log(true == userCancelled ? "Bake cancelled by user" : "Bake Completed successfully");
     }
 
-    // [Fix] gridKeys 매개변수 추가
     private static void ProcessBatch(BakeContext ctx, EditMapTileObject[] tilesInGrid, int[] gridKeys,
         List<int> indices, Dictionary<GroupKey, GroupAccumulator> accums)
     {

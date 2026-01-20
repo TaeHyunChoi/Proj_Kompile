@@ -78,14 +78,12 @@ namespace Script.GamePlay
                 index = ((index - 1) + 4) % 4;
                 selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
                 waitTime = 0f;
-                return index;
             }
             else if (true == inputState.IsDown(DataType.IDxInput.DOWN))
             {
                 index = ((index + 1) + 4) % 4;
                 selectSlotImage.rectTransform.anchoredPosition = anchoredPositions[index];
                 waitTime = 0f;
-                return index;
             }
 
             return -1;
