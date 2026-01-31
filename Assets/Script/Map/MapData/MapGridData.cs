@@ -8,14 +8,9 @@ namespace Script.Data
     [MessagePackObject]
     public class MapGridData
     {
-        [Key(0), ReadOnly] 
-        public int Key;
-
-        [Key(1), ReadOnly] 
-        public ConcurrentDictionary<int, MapTileData> NaviTileDict;
-
-        [Key(2), ReadOnly] 
-        public List<MapGridLayerData> layerMeshAssets;
+        [Key(0), ReadOnly] public int Key;
+        [Key(1), ReadOnly] public ConcurrentDictionary<int, MapTileData> NaviTileDict;
+        [Key(2), ReadOnly] public List<MapGridLayerData> layerMeshAssets;
 
         public bool TryGetTileData(int tileIntKey, out MapTileData tileData)
         {

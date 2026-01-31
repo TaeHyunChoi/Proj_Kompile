@@ -261,7 +261,23 @@ namespace Script.Asset
             Debug.LogError($"[AssetSystem] Failed load asset: {key}");
             return null;
         }
+        public static async Task<T> LoadAssetAsync<T>(string key, Action<T> callback) where T : UnityEngine.Object
+        {
+            var handle = Addressables.LoadAssetAsync<T>(key);
+            T result = await handle.Task;
 
+            if (handle.Status == AsyncOperationStatus.Succeeded)
+            {
+                // 일반 에셋은 InstanceID를 키로 관리하여 ReleaseAsset(obj.GetInstanceID())로 해제 가능하게 함
+                _nonGameObjectInstances.TryAdd(result.GetInstanceID(), handle);
+
+                callback?.Invoke(result);
+                return result;
+            }
+
+            Debug.LogError($"[AssetSystem] Failed load asset: {key}");
+            return null;
+        }
         public static async Task<T> LoadBinaryDataAsync<T>(string key)
         {
             var handle = Addressables.LoadAssetAsync<TextAsset>(key);

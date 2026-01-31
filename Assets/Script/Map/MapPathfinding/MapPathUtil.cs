@@ -153,8 +153,38 @@ namespace Script.Map
             outGKey = ((bX << 16) | (bY << 8) | bZ);
         }
 
+        public static int ComputeGridKey(Vector3 worldPos)
+        {
+            int gx = Mathf.FloorToInt(worldPos.x / GRID_SIZE);
+            int gy = Mathf.FloorToInt(worldPos.y / GRID_SIZE);
+            int gz = Mathf.FloorToInt(worldPos.z / GRID_SIZE);
+            
+            byte bX = (byte)(sbyte)gx;
+            byte bY = (byte)(sbyte)gy;
+            byte bZ = (byte)(sbyte)gz;
+            
+            return (bX << 16) | (bY << 8) | bZ;
+        }
+        public static int ComputeGridKey(int gridKey, int3 offset)
+        {
+            Vector3Int target = GetGridPivot(gridKey) + new Vector3Int(offset.x, offset.y, offset.z);
+            
+            byte bX = (byte)(sbyte)target.x;
+            byte bY = (byte)(sbyte)target.y;
+            byte bZ = (byte)(sbyte)target.z;
 
-
+            return (bX << 16) | bY << 8 | bZ;
+        }
+        
+        public static Vector3Int GetGridPivot(int gridKey)
+        {
+            int x = (sbyte)((gridKey >> 16) & 0xFF);
+            int y = (sbyte)((gridKey >> 8) & 0xFF);
+            int z = (sbyte)((gridKey >> 0) & 0xFF);
+            
+            return new Vector3Int(x, y, z);
+        }
+        
         [BurstCompile]
         public static bool IsSubTileValid(long naviMask, int sIndex0to15)
         {

@@ -6,17 +6,16 @@ namespace Script.Data
     [MessagePackObject]
     public struct MapTileData
     {
-        [ReadOnly, Key(0)]
-        public long NaviMask;
+        [ReadOnly, Key(0)] public long NaviMask;
+        [ReadOnly, Key(1)] public ushort LinkMask;
+        [ReadOnly, Key(2)] public ushort LayerMask; // TODO: 추후에 추가 예정
         
-        [ReadOnly, Key(1)]
-        public ushort LinkMask;
-
 #if UNITY_EDITOR
         public MapTileData(EditMapTileData edited)
         {
             NaviMask  = edited.NaviMask;
-            LinkMask = edited.LinkMask;
+            LinkMask  = edited.LinkMask;
+            LayerMask = 0;
         }
 #endif
     }

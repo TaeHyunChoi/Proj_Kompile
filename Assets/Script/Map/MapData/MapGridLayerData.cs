@@ -5,11 +5,8 @@ using Unity.Collections;
 [MessagePackObject]
 public class MapGridLayerData
 {
-    [Key(0), ReadOnly]
-    public int layer;
-
-    [Key(1), ReadOnly]
-    public List<string> assets;
+    [Key(0), ReadOnly] public int layer;
+    [Key(1), ReadOnly] public List<string> assets;
 
     public MapGridLayerData() { }
     public MapGridLayerData(int _layer, string asset)
