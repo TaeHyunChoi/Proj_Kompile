@@ -15,9 +15,12 @@ namespace Script.GameSystem
 
         public void Initialize(Camera cam)
         {
+            _frustumPlanes = new Plane[6];
             _targetCamera = cam;
         }
 
+        public Plane[] GetFrustumPlanes() => _frustumPlanes;
+        
         public void UpdateCulling(Dictionary<int, RuntimeMapGrid> activeGrids)
         {
             if (false == _targetCamera)
@@ -25,7 +28,7 @@ namespace Script.GameSystem
                 return;
             }
             
-            _frustumPlanes = GeometryUtility.CalculateFrustumPlanes(_targetCamera);
+            GeometryUtility.CalculateFrustumPlanes(_targetCamera, _frustumPlanes);
 
             foreach (var grid in activeGrids.Values)
             {
