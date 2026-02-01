@@ -252,9 +252,9 @@ namespace Script.GamePlay
             // MapGridObject 생성 및 초기화
             var prefabObj = await AssetSystem.GetOrNewInstanceAsync(PrefabID.MapGridPrefab, usePooling: true);
             var mapGridObj = prefabObj.GetComponent<MapGridObject>();
-            
+
             // 초기화
-            mapGridObj.transform.position = runtimeGrid.WorldBounds.min;
+            mapGridObj.transform.position = Vector3.zero;
             mapGridObj.Initialize(layerGroups);
             
             runtimeGrid.SetVisualObject(mapGridObj);
@@ -276,22 +276,31 @@ namespace Script.GamePlay
         private async Awaitable<MapGridData> LoadMapData(int gridKey)
         {
             string address = $"MapNavi_{gridKey}";
+
+            // 키 존재 여부를 먼저 확인하여 InvalidKeyException 방지
+            // Addressables.LoadResourceLocationsAsync는 키가 없으면 빈 리스트를 반환하며 예외를 던지지 않음
+            var locationHandle = Addressables.LoadResourceLocationsAsync(address);
+            var locations = await locationHandle.Task;
+
+            bool isKeyValid = locations != null && locations.Count > 0;
+            Addressables.Release(locationHandle); // 핸들 해제 필수
+
+            if (false == isKeyValid)
+            {
+                // 키가 없으므로 null 반환 (LoadGridProcess에서 _emptyGrids로 처리됨)
+                return null;
+            }
+
             MapGridData grid = null;
 
+            // 키가 유효함을 확인했으므로 안전하게 로드
             TextAsset textAsset = await AssetSystem.LoadAssetAsync<TextAsset>(address);
-            if (true == textAsset)
+
+            if (textAsset != null)
             {
-                // 바이너리 데이터 추출 후 TextAsset은 바로 메모리 해제
                 grid = GameDataSerializer.Deserialize<MapGridData>(textAsset.bytes);
                 AssetSystem.ReleaseAsset(textAsset.GetInstanceID());
             }
-#if UNITY_EDITOR
-            else
-            {
-                // 맵 데이터가 없는 구역일 수 있음
-                // Debug.LogWarning($"[FieldManager] No MapData for Key: {gridKey}");
-            }
-#endif
 
             return grid;
         }

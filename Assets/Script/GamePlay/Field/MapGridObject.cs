@@ -1,9 +1,7 @@
 namespace Script.Map
 {
     using Script.Asset;
-    using Script.Data;
     using System.Collections.Generic;
-    using System.Net;
     using UnityEngine;
 
     public class MapGridObject : IngameMonoBehaviourBase
