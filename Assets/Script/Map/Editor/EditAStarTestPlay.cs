@@ -1,11 +1,12 @@
+using MessagePack;
+using MessagePack.Resolvers;
 using Script.Data;
 using Script.Map;
+using Script.Map.Utility;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using MessagePack;
-using MessagePack.Resolvers;
 
 public class EditAStarTestPlay : MonoBehaviour
 {
@@ -37,7 +38,7 @@ public class EditAStarTestPlay : MonoBehaviour
                     foreach (var tKV in grid.NaviTileDict)
                     {
                         int tKey = tKV.Key;
-                        long id = EditMapUtil.ComputeID(gKey, tKey);
+                        long id = MapCoordUtil.ComputeID(gKey, tKey);
                         cachedTileDic.Add(id, tKV.Value);
                     }
                 }

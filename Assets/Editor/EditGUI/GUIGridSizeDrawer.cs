@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 
 using UnityEngine;
-using static Script.Index.MapTileIndex;
+using static Script.Map.Data.MapConsts;
 
 public class GUIGridSizeDrawer : MonoBehaviour
 {

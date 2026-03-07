@@ -77,9 +77,9 @@ namespace Script.GamePlay
                 Remove<OpeningTitleManager>();
 
                 // 필드 매니저 생성 및 추가
-                var fieldMgr = new FieldManager(new Data.PlayData());
-                managers.Add(fieldMgr);
-                await fieldMgr.Intialize();
+                //var fieldMgr = new FieldManager(new Data.PlayData());
+                //managers.Add(fieldMgr);
+                //await fieldMgr.Intialize();
                 // FieldInfo, GamePlayData, Player, NPC
 
                 // 필드 HUD 초기화

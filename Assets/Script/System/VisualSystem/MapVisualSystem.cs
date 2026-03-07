@@ -21,7 +21,7 @@ namespace Script.GameSystem
 
         public Plane[] GetFrustumPlanes() => _frustumPlanes;
         
-        public void UpdateCulling(Dictionary<int, RuntimeMapGrid> activeGrids)
+        public void UpdateCulling(Dictionary<int, MapGridContext> activeGrids)
         {
             if (false == _targetCamera)
             {

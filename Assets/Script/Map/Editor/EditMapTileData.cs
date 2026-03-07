@@ -1,6 +1,7 @@
 namespace Script.Data
 {
-    using Script.Index;
+    using static Script.Map.Data.MapConsts;
+    using Script.Map.Utility;
     using Unity.Burst;
     using UnityEngine;
 
@@ -14,15 +15,16 @@ namespace Script.Data
 
         public readonly bool TryGetVerticeHeight(int vertice, out int heightx1000)
         {
-            long mask = NaviMask >> (Index.MapTileIndex.HEIGHT_BITS * vertice);
-            int maskInt = (int)mask & Index.MapTileIndex.HEIGHT_MASK;
+
+            long mask = NaviMask >> (HEIGHT_BITS * vertice);
+            int maskInt = (int)mask & HEIGHT_MASK;
             if (0b1111 == maskInt)
             {
                 heightx1000 = default;
                 return false;
             }
 
-            float pivotY = EditMapUtil.ComputeWorldPosition(ID).y;
+            float pivotY = MapCoordUtil.ComputeWorldPosition(ID).y;
             heightx1000 = Mathf.RoundToInt((pivotY + maskInt * 0.125f) * 1000);
             return true;
         }

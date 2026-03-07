@@ -3,6 +3,7 @@ namespace Script.Map
     using MessagePack;
     using MessagePack.Resolvers;
     using Script.Data;
+    using Script.Map.Utility;
     using System.Collections.Generic;
     using Unity.Mathematics;
     using UnityEngine;
@@ -60,13 +61,13 @@ namespace Script.Map
                 int tKey = tileKV.Key;
                 MapTileData tile = tileKV.Value;
 
-                long id = MapPathUtil.ComputeID(gKey, tKey);
+                long id = MapCoordUtil.ComputeID(gKey, tKey);
                 if (false == tileDict.TryAdd(id, tile))
                 {
                     tileDict[id] = tile;
                 }
 
-                int3 absPivot = MapPathUtil.ComputeWorldPositionInt(id);
+                int3 absPivot = MapCoordUtil.ComputeWorldPositionInt(id);
                 posToID.TryAdd(absPivot, id);
             }
         }

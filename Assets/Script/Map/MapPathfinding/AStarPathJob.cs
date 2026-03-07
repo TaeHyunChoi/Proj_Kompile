@@ -1,5 +1,6 @@
 namespace Script.Map
 {
+    using Script.Map.Utility;
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Jobs;
@@ -63,7 +64,7 @@ namespace Script.Map
             int3 startVerticeInt = GetVerticeInt(StartPos);
 
             // 시작 지점 유효성 체크
-            long startID = MapPathUtil.ComputeTileIDInt(startVerticeInt);
+            long startID = MapCoordUtil.ComputeTileIDInt(startVerticeInt);
             if (false == Map.ContainsKey(startID))
             {
                 allNodes.Dispose(); gCosts.Dispose(); openHeap.Dispose();
@@ -106,7 +107,7 @@ namespace Script.Map
                     break;
                 }
 
-                long currentID = MapPathUtil.ComputeTileIDInt(currentVerticeInt);
+                long currentID = MapCoordUtil.ComputeTileIDInt(currentVerticeInt);
 
                 // 현재 타일 정보 가져오기 ('currentItem'으로 명명하여 오염 방지)
                 if (false == Map.TryGetValue(currentID, out (long navi, long link) currentItem))
@@ -118,7 +119,7 @@ namespace Script.Map
                 for (int i = 0; i < NEIGHBOR_OFFSETS_INT.Length; ++i)
                 {
                     int3 targetVerticeInt = currentVerticeInt + NEIGHBOR_OFFSETS_INT[i];
-                    long targetID = MapPathUtil.ComputeTileIDInt(targetVerticeInt);
+                    long targetID = MapCoordUtil.ComputeTileIDInt(targetVerticeInt);
 
                     // [중요] 타겟 타일 정보 초기화 (기본값: 현재 타일)
                     // 루프 돌 때마다 리셋되어야 변수 오염이 발생하지 않음
@@ -154,7 +155,7 @@ namespace Script.Map
                         }
 
                         targetVerticeInt += PATH_SEARCH_RECIPROCAL * new int3(0, y, 0);
-                        targetID = MapPathUtil.ComputeTileIDInt(targetVerticeInt);
+                        targetID = MapCoordUtil.ComputeTileIDInt(targetVerticeInt);
 
                         // 이동한 타일의 정보로 갱신
                         if (false == Map.TryGetValue(targetID, out targetItem))
@@ -169,16 +170,17 @@ namespace Script.Map
 
                     // 타일 내 로컬 좌표(0~8) 계산
                     // targetPivot(타일 원점)을 구해서 차이를 계산하는 것이 가장 정확함
-                    int3 targetPivotInt = PATH_SEARCH_RECIPROCAL * MapPathUtil.ComputeWorldPositionInt(targetID);
+                    int3 targetPivotInt = PATH_SEARCH_RECIPROCAL * MapCoordUtil.ComputeWorldPositionInt(targetID);
                     int3 localPos = targetVerticeInt - targetPivotInt;
 
-                    int vIndex = MapPathUtil.GetVertexIndexFromLocalPos(localPos.x, localPos.z);
+                    int vIndex = MapNaviTileUtil.GetVertexIndexFromLocalPos(localPos.x, localPos.z);
                     if (vIndex != -1)
                     {
-                        int heightY = MapPathUtil.GetHeightFromNaviMask(targetItem.navi, vIndex);
+                        int heightY = MapNaviTileUtil.GetHeightFromNaviMask(targetItem.navi, vIndex);
 
                         // 구멍(15)이면 이동 불가
-                        if (heightY == MapPathUtil.NONE_SUBTILE)
+                        int hole = 0b_1111;
+                        if (heightY == hole)
                         {
                             continue;
                         }
@@ -188,9 +190,9 @@ namespace Script.Map
                     }
 
                     // 3. 이동 유효성 검사 (IsVerticeMovable)
-                    float3 targetPivot = MapPathUtil.ComputeWorldPosition(targetID); // World Pivot (float)
+                    float3 targetPivot = MapCoordUtil.ComputeWorldPosition(targetID); // World Pivot (float)
                     // PivotInt는 위에서 구한 값 재사용 가능하나, 안전을 위해 재계산하거나 그대로 사용
-                    targetPivotInt = PATH_SEARCH_RECIPROCAL * MapPathUtil.ComputeWorldPositionInt(targetID);
+                    targetPivotInt = PATH_SEARCH_RECIPROCAL * MapCoordUtil.ComputeWorldPositionInt(targetID);
 
                     float3 circleCenter = PATH_SEARCH_UNIT * new float3(targetVerticeInt.x, targetVerticeInt.y, targetVerticeInt.z);
 
@@ -230,21 +232,21 @@ namespace Script.Map
                         }
 
                         // 범위 검사
-                        long tempID = MapPathUtil.ComputeTileIDInt(targetPivotInt + PATH_SEARCH_RECIPROCAL * new int3(x, 0, z));
-                        var tempInt = MapPathUtil.ComputeWorldPositionInt(tempID);
-                        if (false == MapPathUtil.IsCircleOverlappingSquare(tempInt, new float2(circleCenter.x, circleCenter.z), Radius))
+                        long tempID = MapCoordUtil.ComputeTileIDInt(targetPivotInt + PATH_SEARCH_RECIPROCAL * new int3(x, 0, z));
+                        var tempInt = MapCoordUtil.ComputeWorldPositionInt(tempID);
+                        if (false == MapNaviTileUtil.IsCircleOverlappingSquare(tempInt, new float2(circleCenter.x, circleCenter.z), Radius))
                         {
                             continue;
                         }
 
                         // 이웃 타일 연결성 확인 (targetItem.link 사용)
-                        if (false == MapPathUtil.TryGetYInt(targetItem.link, index, out y))
+                        if (false == MapNaviTileUtil.TryGetYInt(targetItem.link, index, out y))
                         {
                             goto CONTINUE;
                         }
 
                         int3 neighborPivotInt = targetPivotInt + PATH_SEARCH_RECIPROCAL * new int3(x, y, z);
-                        long neighborID = MapPathUtil.ComputeTileIDInt(neighborPivotInt);
+                        long neighborID = MapCoordUtil.ComputeTileIDInt(neighborPivotInt);
 
                         if (false == Map.TryGetValue(neighborID, out var neighborItem))
                         {
@@ -341,11 +343,11 @@ namespace Script.Map
             for (int sIndex = 0; sIndex < 16; ++sIndex)
             {
                 // 기하학적 교차 검사 (서브타일 삼각형 vs 원)
-                if (false == MapPathUtil.IsCircleOverlappingSubTile(sIndex, localCircleCenter, radisuSq))
+                if (false == MapNaviTileUtil.IsCircleOverlappingSubTile(sIndex, localCircleCenter, radisuSq))
                 {
                     continue;
                 }
-                if (false == MapPathUtil.IsSubTileValid(naviMask, sIndex))
+                if (false == MapNaviTileUtil.IsSubTileValid(naviMask, sIndex))
                 {
                     return false;
                 }

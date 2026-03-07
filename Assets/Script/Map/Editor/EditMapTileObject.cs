@@ -2,10 +2,11 @@
 namespace Script.Data
 {
     using Script.Index;
+    using Script.Map.Utility;
     using System;
     using UnityEditor;
     using UnityEngine;
-    using static Script.Index.MapTileIndex;
+    using static Script.Map.Data.MapConsts;
 
     [Serializable]
     [ExecuteInEditMode]
@@ -19,12 +20,12 @@ namespace Script.Data
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private bool isOnlyRender;
         [SerializeField] private ushort renderLayer;
-        [SerializeField] private TextureIndex textureType = Script.Index.TextureIndex.map_w;
+        [SerializeField] private MapTextureType textureType = Script.Index.MapTextureType.map_w;
 
         [Header("Data")]
         [SerializeField] private ulong heightMask;
 
-        public int GridKey => EditMapUtil.ComputeGridKey(transform.position);
+        public int GridKey => MapCoordUtil.ComputeGridKey(transform.position);
         public ushort RenderLayer => renderLayer;
         public int TextureIndex => (int)textureType;
         public ulong HeightMask => heightMask;
