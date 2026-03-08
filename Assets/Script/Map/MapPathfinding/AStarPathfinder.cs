@@ -1,6 +1,8 @@
+using Script.Map.Data;
+
 namespace Script.Map
 {
-    using Script.Data;
+    using Script.Map.Provider;
     using System.Collections.Generic;
     using Unity.Collections;
     using Unity.Jobs;
@@ -9,10 +11,10 @@ namespace Script.Map
 
     public class AStarPathfinder
     {
-        public static float3[] RequestPathImmediate(Vector3 startPos, Vector3 endPos, Dictionary<long, MapTileData> tileDic)
+        public static float3[] RequestPathImmediate(Vector3 startPos, Vector3 endPos, Dictionary<long, EditMapTileData> tileDic)
         {
             // 1. 캐시된 맵 데이터 가져오기 (여기서 시간 단축!)
-            var nativeMap = EditMapCache.GetOrCreateNativeMap(tileDic);
+            var nativeMap = EditMapCacheProvider.GetOrCreateNativeMap(tileDic);
 
             // 2. 결과 담을 리스트
             NativeList<float3> resultPath = new NativeList<float3>(Allocator.TempJob);
