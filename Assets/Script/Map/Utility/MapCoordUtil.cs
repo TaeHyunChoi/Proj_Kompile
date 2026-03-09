@@ -16,7 +16,7 @@ namespace Script.Map.Utility
         /// 0.25f 단위의 정수 인덱스(indexX, indexY, indexZ)를 받아 TileID를 생성합니다.
         /// 부동소수점 연산과 분기문(if)을 제거하여 매우 빠릅니다.
         /// </summary>
-        public static long ComputeTileIDInt(int3 pInt)
+        public static long ComputeTileIDInt(in int3 pInt)
         {
             const int TILE_BITS = 6;
             const int TILE_MASK_VAL = (1 << TILE_BITS) - 1; // 63 (0x3F)
@@ -59,18 +59,18 @@ namespace Script.Map.Utility
             return (((long)gKey) << 32) | tKey;
         }
         [BurstCompile]
-        public static long ComputeID(int gKey, int tKey)
+        public static void ComputeID(int gKey, int tKey, out long outID)
         {
             const int SHFIT = 32;
-            return ((long)gKey << SHFIT) | (uint)tKey;
+            outID = ((long)gKey << SHFIT) | (uint)tKey;
         }
-        public static float3 ComputeWorldPosition(long id)
+        public static void ComputeWorldPosition(long id, out float3 outWorldPos)
         {
-            int3 absPos = ComputeWorldPositionInt(id);
-            return new float3(absPos.x, absPos.y, absPos.z);
+            ComputeWorldPositionInt(id, out int3 absPos);
+            outWorldPos = new float3(absPos.x, absPos.y, absPos.z);
         }
         [BurstCompile]
-        public static int3 ComputeWorldPositionInt(long id)
+        public static void ComputeWorldPositionInt(long id, out int3 outWorldPosInt)
         {
             uint gKey = (uint)((ulong)id >> 32);
             uint tKey = (uint)id;
@@ -83,13 +83,13 @@ namespace Script.Map.Utility
             int ty = (int)((tKey >> (TILE_BITS * 1)) & TILE_MASK);
             int tz = (int)((tKey >> (TILE_BITS * 0)) & TILE_MASK);
 
-            return new int3(
+            outWorldPosInt = new int3(
                 gx * GRID_SIZE + tx,
                 gy * GRID_SIZE + ty,
                 gz * GRID_SIZE + tz);
         }
         [BurstCompile]
-        public static void ComputeKey(float3 worldPos, out int outGKey, out int outTKey)
+        public static void ComputeKey(in float3 worldPos, out int outGKey, out int outTKey)
         {
             int absTx = Mathf.FloorToInt(worldPos.x);
             int absTy = Mathf.FloorToInt(worldPos.y);
@@ -118,7 +118,7 @@ namespace Script.Map.Utility
             outGKey = ((bX << 16) | (bY << 8) | bZ);
         }
         [BurstCompile]
-        public static int ComputeGridKey(float3 worldPos)
+        public static int ComputeGridKey(in float3 worldPos)
         {
             int gx = Mathf.FloorToInt(worldPos.x / GRID_SIZE);
             int gy = Mathf.FloorToInt(worldPos.y / GRID_SIZE);
@@ -152,11 +152,11 @@ namespace Script.Map.Utility
         [BurstCompile]
         public static void ComputeKey(long id, out int outGKey, out int outTKey)
         {
-            float3 position = ComputeWorldPosition(id);
+            ComputeWorldPosition(id, out float3 position);
             ComputeKey(position, out outGKey, out outTKey);
         }
         [BurstCompile]
-        public static long ComputeTileID(Vector3 worldPos)
+        public static long ComputeTileID(in float3 worldPos)
         {
             int absTx = Mathf.FloorToInt(worldPos.x);
             int absTy = Mathf.FloorToInt(worldPos.y);

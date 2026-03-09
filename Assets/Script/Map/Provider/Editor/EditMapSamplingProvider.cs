@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
 namespace Script.Map.Provider
 {
-    using Script.Asset;
     using Script.Data;
     using Script.Map.Utility;
     using Script.Map.Data;
+    using Script.Asset.Provider;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
@@ -157,7 +157,7 @@ namespace Script.Map.Provider
                     layerMeshAssets = grid.Value.LayerMeshAssets
                 };
 
-                AssetSystem.WriteBinaryFile<MapGridData>(
+                    AssetProvider.WriteBinaryFile<MapGridData>(
                     data: mapGridData,
                     relativePath: MAP_NAVI_DATA_PATH,
                     fileName: $"MapNavi_{mapGridData.Key}",

@@ -170,7 +170,8 @@ namespace Script.Map
 
                     // 타일 내 로컬 좌표(0~8) 계산
                     // targetPivot(타일 원점)을 구해서 차이를 계산하는 것이 가장 정확함
-                    int3 targetPivotInt = PATH_SEARCH_RECIPROCAL * MapCoordUtil.ComputeWorldPositionInt(targetID);
+                    MapCoordUtil.ComputeWorldPositionInt(targetID, out int3 targetPivotInt);
+                    targetPivotInt *= PATH_SEARCH_RECIPROCAL;
                     int3 localPos = targetVerticeInt - targetPivotInt;
 
                     int vIndex = MapNaviTileUtil.GetVertexIndexFromLocalPos(localPos.x, localPos.z);
@@ -190,10 +191,11 @@ namespace Script.Map
                     }
 
                     // 3. 이동 유효성 검사 (IsVerticeMovable)
-                    float3 targetPivot = MapCoordUtil.ComputeWorldPosition(targetID); // World Pivot (float)
+                    MapCoordUtil.ComputeWorldPosition(targetID, out float3 targetPivot); // World Pivot (float)
                     // PivotInt는 위에서 구한 값 재사용 가능하나, 안전을 위해 재계산하거나 그대로 사용
-                    targetPivotInt = PATH_SEARCH_RECIPROCAL * MapCoordUtil.ComputeWorldPositionInt(targetID);
-
+                    MapCoordUtil.ComputeWorldPositionInt(targetID, out targetPivotInt);
+                    targetPivotInt *= PATH_SEARCH_RECIPROCAL;
+                    
                     float3 circleCenter = PATH_SEARCH_UNIT * new float3(targetVerticeInt.x, targetVerticeInt.y, targetVerticeInt.z);
 
                     // [수정] targetItem.navi 사용
@@ -233,7 +235,7 @@ namespace Script.Map
 
                         // 범위 검사
                         long tempID = MapCoordUtil.ComputeTileIDInt(targetPivotInt + PATH_SEARCH_RECIPROCAL * new int3(x, 0, z));
-                        var tempInt = MapCoordUtil.ComputeWorldPositionInt(tempID);
+                        MapCoordUtil.ComputeWorldPositionInt(tempID, out int3 tempInt);
                         if (false == MapNaviTileUtil.IsCircleOverlappingSquare(tempInt, new float2(circleCenter.x, circleCenter.z), Radius))
                         {
                             continue;

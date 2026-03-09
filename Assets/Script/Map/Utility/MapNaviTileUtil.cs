@@ -256,7 +256,8 @@ namespace Script.Map.Utility
                 return false;
             }
 
-            float pivotY = MapCoordUtil.ComputeWorldPosition(data.ID).y;
+            MapCoordUtil.ComputeWorldPosition(data.ID, out float3 pos);
+            float pivotY = pos.y;
             float actualHeight = pivotY + (maskInt * 0.125f);
     
             heightx1000 = (int)(actualHeight * 1000f + 0.5f); 

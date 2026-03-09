@@ -61,13 +61,13 @@ namespace Script.Map
                 int tKey = tileKV.Key;
                 MapTileData tile = tileKV.Value;
 
-                long id = MapCoordUtil.ComputeID(gKey, tKey);
+                MapCoordUtil.ComputeID(gKey, tKey, out long id);
                 if (false == tileDict.TryAdd(id, tile))
                 {
                     tileDict[id] = tile;
                 }
 
-                int3 absPivot = MapCoordUtil.ComputeWorldPositionInt(id);
+                MapCoordUtil.ComputeWorldPositionInt(id, out int3 absPivot);
                 posToID.TryAdd(absPivot, id);
             }
         }

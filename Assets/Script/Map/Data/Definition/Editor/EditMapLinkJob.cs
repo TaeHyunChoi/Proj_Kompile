@@ -31,7 +31,7 @@ public struct EditMapLinkJob : IJobParallelFor
         }
 
         int accumulatedLinkMask = 0;
-        float3 myPivot = MapCoordUtil.ComputeWorldPosition(myID);
+        MapCoordUtil.ComputeWorldPosition(myID, out float3 myPivot);
 
         for (int i = 0; i < LinkDirs.Length; i++)
         {
@@ -144,7 +144,7 @@ public struct EditMapLinkJob : IJobParallelFor
     }
     private readonly bool IsChainLinked(EditMapTileData startTile, EditMapTileData targetTile, EditMapTileDirFlag first, EditMapTileDirFlag second)
     {
-        float3 startPivot = MapCoordUtil.ComputeWorldPosition(startTile.ID);
+        MapCoordUtil.ComputeWorldPosition(startTile.ID, out float3 startPivot);
         float3 midPivot = startPivot + MapNaviTileUtil.GetDirectionVector(first);
 
         long midID = MapCoordUtil.ComputeTileID(midPivot);

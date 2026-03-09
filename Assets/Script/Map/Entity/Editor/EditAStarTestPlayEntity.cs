@@ -43,7 +43,7 @@ public class EditAStarTestPlayEntity : MonoBehaviour
                     foreach (var tKV in grid.Data)
                     {
                         int tKey = tKV.Key;
-                        long id = MapCoordUtil.ComputeID(gKey, tKey);
+                        MapCoordUtil.ComputeID(gKey, tKey, out long id);
                         cachedTileDic.Add(id, tKV.Value);
                     }
                 }
