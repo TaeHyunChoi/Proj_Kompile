@@ -51,11 +51,11 @@ namespace Script.GamePlay
                 }
 
                 // 인스턴스가 없으니 생성
-                instance = await AssetProvider.GetOrNewInstanceAsync(id, root);
-                if (null != instance)
-                {
-                    cachedUIs[id] = instance;
-                }
+                //instance = await AssetProvider.GetOrNewInstanceAsync(id, root);
+                //if (null != instance)
+                //{
+                //    cachedUIs[id] = instance;
+                //}
 
                 return instance;
             }
@@ -79,15 +79,15 @@ namespace Script.GamePlay
             /// </summary>
             public void ReleaseUniqueUI(PrefabID id)
             {
-                if (cachedUIs.TryGetValue(id, out var uiInstance))
-                {
-                    if (uiInstance != null)
-                    {
-                        AssetProvider.ReleaseInstance(id, uiInstance);
-                    }
+                //if (cachedUIs.TryGetValue(id, out var uiInstance))
+                //{
+                //    if (uiInstance != null)
+                //    {
+                //        AssetProvider.ReleaseInstance(id, uiInstance);
+                //    }
 
-                    cachedUIs.Remove(id);
-                }
+                //    cachedUIs.Remove(id);
+                //}
             }
 
             public async Awaitable SetLoadingCurtain(bool on)

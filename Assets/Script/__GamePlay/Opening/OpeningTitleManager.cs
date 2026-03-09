@@ -27,22 +27,22 @@ namespace Script.GamePlay
         }
         public async Awaitable PlayOpening()
         {
-            state = State.LOAD_DATA;
-            Awaitable loadTask = AssetProvider.LoadAllDatatable();
+            //state = State.LOAD_DATA;
+            //Awaitable loadTask = AssetProvider.LoadAllDatatable();
             
-            var openingObj = await AssetProvider.GetOrNewInstanceAsync(PrefabID.OpeningPlayObject, Main.UI.GamePlayRoot);
-            openingPlay = openingObj.GetComponent<OpeningPlayObject>();
+            //var openingObj = await AssetProvider.GetOrNewInstanceAsync(PrefabID.OpeningPlayObject, Main.UI.GamePlayRoot);
+            //openingPlay = openingObj.GetComponent<OpeningPlayObject>();
             
-            // 모든 데이터 테이블을 로드할 때까지 다른 루프 또는 입력을 막겠다.
-            await loadTask;
+            //// 모든 데이터 테이블을 로드할 때까지 다른 루프 또는 입력을 막겠다.
+            //await loadTask;
             
-            // opening sequence: 입력을 받아 시퀀스를 skip할 수 있다;
-            state = State.OPENING_SEQUENCE;
-            await openingPlay.PlaySequence();
+            //// opening sequence: 입력을 받아 시퀀스를 skip할 수 있다;
+            //state = State.OPENING_SEQUENCE;
+            //await openingPlay.PlaySequence();
 
-            var uiTitleMenuObj = await AssetProvider.GetOrNewInstanceAsync(PrefabID.UI_TitleMenuObject, Main.UI.PopupRoot);
-            uiTitleMenu = uiTitleMenuObj.GetComponent<UITitleMenuObject>();
-            state = State.TITLE_MENU;
+            //var uiTitleMenuObj = await AssetProvider.GetOrNewInstanceAsync(PrefabID.UI_TitleMenuObject, Main.UI.PopupRoot);
+            //uiTitleMenu = uiTitleMenuObj.GetComponent<UITitleMenuObject>();
+            //state = State.TITLE_MENU;
         }
 
         public override bool OnInputReceive(Data.DataType.InputState inputState)

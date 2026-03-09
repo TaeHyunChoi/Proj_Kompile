@@ -1,11 +1,10 @@
-namespace Script.GameSystem
+namespace Script.Global.Provider
 {
     using UnityEngine;
     using UnityEngine.InputSystem;
-    using Script.Data;
     using static Script.Data.DataType;
 
-    public class GameplayInputSystem : ISystem
+    public class IngameInputProvider
     {
         // 입력 액션 정의
         private readonly InputAction moveInput;
@@ -21,7 +20,7 @@ namespace Script.GameSystem
         // 외부에서는 이 속성을 통해 안전하게 처리된 상태를 가져갑니다.
         public InputState Current => new InputState(latchedInputFlag, prevInputFlag);
 
-        public GameplayInputSystem()
+        public IngameInputProvider()
         {
             // 초기화
             rawInputFlag = IDxInput.NONE;
@@ -35,33 +34,33 @@ namespace Script.GameSystem
                      .With("Down", "<Keyboard>/downArrow")
                      .With("Left", "<Keyboard>/leftArrow")
                      .With("Right", "<Keyboard>/rightArrow");
-            
+
             moveInput.performed += OnMovePerformed;
-            moveInput.canceled  += OnMoveCanceled;
+            moveInput.canceled += OnMoveCanceled;
 
             // 2. Enter Action (Z Key)
             enterInput = new InputAction("Enter", InputActionType.Button);
             enterInput.AddBinding("<Keyboard>/z");
-            enterInput.started += _ => 
+            enterInput.started += _ =>
             {
-                rawInputFlag     |= IDxInput.ENTER;
+                rawInputFlag |= IDxInput.ENTER;
                 latchedInputFlag |= IDxInput.ENTER; // 누르는 순간 즉시 기록
             };
-            enterInput.canceled += _ => 
+            enterInput.canceled += _ =>
             {
-                rawInputFlag &= ~IDxInput.ENTER; 
+                rawInputFlag &= ~IDxInput.ENTER;
                 // 주의: 뗄 때는 raw만 끕니다. latched는 프레임 끝까지 유지합니다.
             };
 
             // 3. Cancel Action (X Key)
             cancelInput = new InputAction("Cancel", InputActionType.Button);
             cancelInput.AddBinding("<Keyboard>/x");
-            cancelInput.started += _ => 
+            cancelInput.started += _ =>
             {
-                rawInputFlag     |= IDxInput.CANCEL;
+                rawInputFlag |= IDxInput.CANCEL;
                 latchedInputFlag |= IDxInput.CANCEL;
             };
-            cancelInput.canceled += _ => 
+            cancelInput.canceled += _ =>
             {
                 rawInputFlag &= ~IDxInput.CANCEL;
             };
@@ -69,12 +68,12 @@ namespace Script.GameSystem
             // 4. Action Action (Space Key)
             actionInput = new InputAction("Action", InputActionType.Button);
             actionInput.AddBinding("<Keyboard>/space");
-            actionInput.started += _ => 
+            actionInput.started += _ =>
             {
-                rawInputFlag     |= IDxInput.ACTION;
+                rawInputFlag |= IDxInput.ACTION;
                 latchedInputFlag |= IDxInput.ACTION;
             };
-            actionInput.canceled += _ => 
+            actionInput.canceled += _ =>
             {
                 rawInputFlag &= ~IDxInput.ACTION;
             };
@@ -83,7 +82,7 @@ namespace Script.GameSystem
             moveInput.Enable();
             enterInput.Enable();
             actionInput.Enable();
-            cancelInput.Enable(); // 누락 수정됨
+            cancelInput.Enable();
         }
 
         private void OnMovePerformed(InputAction.CallbackContext context)
@@ -92,15 +91,15 @@ namespace Script.GameSystem
 
             // raw 상태: 기존 이동 값 지우고 현재 값으로 갱신
             rawInputFlag &= ~IDxInput.MOVE_ALL;
-            
+
             IDxInput tempMove = IDxInput.NONE;
-            if (direction.x > 0.1f)  tempMove |= IDxInput.RIGHT;
+            if (direction.x > 0.1f) tempMove |= IDxInput.RIGHT;
             if (direction.x < -0.1f) tempMove |= IDxInput.LEFT;
-            if (direction.y > 0.1f)  tempMove |= IDxInput.UP;
+            if (direction.y > 0.1f) tempMove |= IDxInput.UP;
             if (direction.y < -0.1f) tempMove |= IDxInput.DOWN;
 
             rawInputFlag |= tempMove;
-            
+
             // latched 상태: 이번 프레임에 있었던 이동 입력을 누적 (OR 연산)
             latchedInputFlag |= tempMove;
         }

@@ -84,7 +84,7 @@ namespace Script.Map.Provider
             }
 
             // [Framework] Utility성 Job. Burst Compile 적용 대상
-            EditMapTileJob job = new EditMapTileJob
+            EditMapTileJobUtil job = new EditMapTileJobUtil
             {
                 SceneIndex = nativeSceneIndex,
                 RenderLayer = nativeRenderLayer,
@@ -197,7 +197,7 @@ namespace Script.Map.Provider
                 tileMap.TryAdd(allTiles[i].ID, allTiles[i]);
             }
 
-            EditMapLinkJob linkJob = new EditMapLinkJob
+            EditMapLinkJobUtil linkJob = new EditMapLinkJobUtil
             {
                 KeyArray = keyArray,
                 Map = tileMap,

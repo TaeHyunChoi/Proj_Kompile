@@ -1,7 +1,6 @@
-using Script.Map.Data;
-
-namespace Script.Map
+namespace Script.Map.Utility
 {
+    using Script.Map.Data;
     using Script.Map.Provider;
     using System.Collections.Generic;
     using Unity.Collections;
@@ -9,7 +8,7 @@ namespace Script.Map
     using Unity.Mathematics;
     using UnityEngine;
 
-    public class AStarPathfinder
+    public static class AStarPathfinderUtil
     {
         public static float3[] RequestPathImmediate(Vector3 startPos, Vector3 endPos, Dictionary<long, EditMapTileData> tileDic)
         {
@@ -22,13 +21,13 @@ namespace Script.Map
 
             try
             {
-                // 3. Job 생성
-                AStarPathJob job = new AStarPathJob
+                // 3. Job 생성 (이전에 리팩토링한 AStarPathUtil 사용)
+                AStarPathJobUtil job = new AStarPathJobUtil
                 {
-                    StartPos   = startPos,
-                    EndPos     = endPos,
-                    Radius     = 0.325f,
-                    Map        = nativeMap,
+                    StartPos = startPos,
+                    EndPos = endPos,
+                    Radius = 0.325f,
+                    Map = nativeMap,
                     ResultPath = resultPath
                 };
 

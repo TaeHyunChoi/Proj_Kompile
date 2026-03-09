@@ -1,15 +1,14 @@
-namespace Script.GameSystem
+namespace Script.Map.Manager
 {
-    using UnityEngine;
-    using System.Collections.Generic;
     using Script.GamePlay;
+    using System.Collections.Generic;
+    using UnityEngine;
 
-    /// <summary> Grid의 시각적 상태(Culling, LayerMask)를 총괄하는 시스템 </summary>
-    public class MapVisualSystem
+    public class MapVisualManager
     {
         private Camera _targetCamera;
         private Plane[] _frustumPlanes;
-        
+
         // 현재 활성화할 레이어 마스크 (기본값: -1)
         public int CurrentLayerMask { get; set; } = ~0;
 
@@ -20,14 +19,14 @@ namespace Script.GameSystem
         }
 
         public Plane[] GetFrustumPlanes() => _frustumPlanes;
-        
+
         public void UpdateCulling(Dictionary<int, MapGridContext> activeGrids)
         {
             if (false == _targetCamera)
             {
                 return;
             }
-            
+
             GeometryUtility.CalculateFrustumPlanes(_targetCamera, _frustumPlanes);
 
             foreach (var grid in activeGrids.Values)

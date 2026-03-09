@@ -1,14 +1,13 @@
 #if UNITY_EDITOR
-namespace Script.Data
+namespace Script.Map.Utility
 {
     using Script.Map.Data;
-    using Script.Map.Utility;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
     using UnityEngine;
 
-    public struct EditMapTileJob : IJobParallelFor
+    public struct EditMapTileJobUtil : IJobParallelFor
     {
         [ReadOnly] public NativeArray<byte>   SceneIndex;  // 씬 인덱스
         [ReadOnly] public NativeArray<ushort> RenderLayer; // 레이어 인덱스

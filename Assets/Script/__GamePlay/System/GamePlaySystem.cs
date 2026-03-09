@@ -1,15 +1,15 @@
 namespace Script.GamePlay
 {
-    using Script.GameSystem;
+    using Script.Global.Provider;
 
     public class GamePlaySystem
     {
-        public readonly GameplayInputSystem Input;
+        public readonly IngameInputProvider Input;
 
 
         public GamePlaySystem()
         {
-            Input = new GameplayInputSystem();
+            Input = new IngameInputProvider();
         }
     }
 }

@@ -1,22 +1,20 @@
-namespace Script.Map
+namespace Script.Map.Utility
 {
-    using Script.Map.Utility;
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
 
     [BurstCompile]
-    public struct AStarPathJob : IJob
+    public struct AStarPathJobUtil : IJob
     {
-
-        private const float PATH_SEARCH_UNIT       = 0.125f;  // sub-tile은 0.25 간격이지만 y값은 0.125 간격이라서 단위를 하나로 통일하였음
-        private const int   PATH_SEARCH_RECIPROCAL = 8;
+        private const float PATH_SEARCH_UNIT = 0.125f;
+        private const int PATH_SEARCH_RECIPROCAL = 8;
 
         // --- input data ---
         [ReadOnly] public float3 StartPos;
         [ReadOnly] public float3 EndPos;
-        [ReadOnly] public float  Radius;
+        [ReadOnly] public float Radius;
         [ReadOnly] public NativeHashMap<long, (long Navi, long Link)> Map; // (Key:TileID, Value:NaviMask)
 
         // --- output data ---
@@ -41,7 +39,7 @@ namespace Script.Map
         }
 
         private const int LINK_ZERO = 0b_01;
-        private const int LINK_UP   = 0b_10;
+        private const int LINK_UP = 0b_10;
         private const int LINK_DOWN = 0b_11;
         private const int LINK_NONE = 0b_00;
         private const int LINK_MASK = 0b_11;
@@ -195,7 +193,7 @@ namespace Script.Map
                     // PivotInt는 위에서 구한 값 재사용 가능하나, 안전을 위해 재계산하거나 그대로 사용
                     MapCoordUtil.ComputeWorldPositionInt(targetID, out targetPivotInt);
                     targetPivotInt *= PATH_SEARCH_RECIPROCAL;
-                    
+
                     float3 circleCenter = PATH_SEARCH_UNIT * new float3(targetVerticeInt.x, targetVerticeInt.y, targetVerticeInt.z);
 
                     // [수정] targetItem.navi 사용
@@ -314,6 +312,7 @@ namespace Script.Map
 
             return new int3(x, y, z);
         }
+
         private readonly int3 GetTileDiff(long idFrom, long idTo)
         {
             const int TILE_BITS = 6;
@@ -336,6 +335,7 @@ namespace Script.Map
 
             return new int3(diffX, 0, diffZ);
         }
+
         private readonly bool IsVerticeMovable(long naviMask, float3 tilePivot, float3 circleCenter, float radius)
         {
             float2 localCircleCenter = new float2(circleCenter.x - tilePivot.x, circleCenter.z - tilePivot.z);
@@ -357,6 +357,7 @@ namespace Script.Map
 
             return true;
         }
+
         private readonly int GetVerticeIndex(int3 diffInt)
         {
             switch ((diffInt.x, diffInt.z))
@@ -381,6 +382,7 @@ namespace Script.Map
             // error
             return -1;
         }
+
         private readonly bool TryGetNeighborLinkIndex(int verticeIndex, out int linkIndex, out int length)
         {
             linkIndex = 0;
@@ -470,6 +472,7 @@ namespace Script.Map
                 i = p;
             }
         }
+
         private readonly int PopMinHeap(ref NativeList<int> heap, ref NativeList<PathVerticeNode> nodes)
         {
             int result = heap[0];
@@ -483,8 +486,8 @@ namespace Script.Map
             while (true)
             {
                 int smallest = i;
-                int left     = 2 * i + 1;
-                int right    = 2 * i + 2;
+                int left = 2 * i + 1;
+                int right = 2 * i + 2;
 
                 if (left < length
                     && nodes[heap[left]].F < nodes[heap[smallest]].F)
@@ -511,6 +514,7 @@ namespace Script.Map
 
             return result;
         }
+
         private void ReconstructPath(int endIndex, NativeList<PathVerticeNode> nodes)
         {
             int curr = endIndex;
@@ -532,6 +536,7 @@ namespace Script.Map
                 ResultPath[count - 1 - i] = temp;
             }
         }
+
         private readonly float GetMoveCost(int i)
         {
             return i switch
