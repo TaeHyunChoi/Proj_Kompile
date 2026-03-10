@@ -1,8 +1,8 @@
-namespace Script.Global.Provider
+namespace Script.Input.Provider
 {
     using UnityEngine;
     using UnityEngine.InputSystem;
-    using static Script.Data.DataType;
+    using static Script.Input.Data.Definition;
 
     public class IngameInputProvider
     {

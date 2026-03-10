@@ -1,8 +1,8 @@
-namespace Script.Data
+namespace Script.Input.Data
 {
     using System;
 
-    public static class DataType
+    public static class Definition
     {
         [Flags]
         public enum IDxInput
@@ -26,11 +26,6 @@ namespace Script.Data
         {
             private readonly IDxInput current;
             private readonly IDxInput previous;
-
-            #if UNITY_EDITOR
-            public IDxInput Curr => current;
-            public IDxInput Prev => previous; 
-            #endif
             
             public InputState(IDxInput current, IDxInput previous)
             {

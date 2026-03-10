@@ -1,9 +1,9 @@
-using UnityEngine;
-
 namespace Script.GamePlay
 {
+    using static Script.Input.Data.Definition;
+    
     public interface IInputReceiver
     {
-        bool OnInputReceive(Data.DataType.InputState inputState);
+        bool OnInputReceive(InputState inputState);
     }
 }
