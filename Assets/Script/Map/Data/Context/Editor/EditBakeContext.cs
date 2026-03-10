@@ -5,7 +5,7 @@ namespace Script.Map.Provider
     using System.Collections.Concurrent;
     using System.Collections.Generic;
 
-    public partial class EditMapSamplingProvider
+    public partial class EditMapSamplingRepoProvider
     {
         private class EditBakeContext
         {

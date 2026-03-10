@@ -3,7 +3,7 @@ namespace Script.Map.Provider
 {
     using UnityEngine;
 
-    public partial class EditMapSamplingProvider
+    public partial class EditMapSamplingRepoProvider
     {
         private class EditMapTileChunkData
         {

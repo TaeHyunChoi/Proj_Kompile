@@ -8,7 +8,7 @@ namespace Script.Asset.Provider
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
 
-    public static partial class AssetProvider // .Editor
+    public static partial class AssetRepoProvider // .Editor
     {
         /// <summary>
         /// 데이터를 바이너리로 직렬화하여 저장하고 어드레서블에 등록합니다.

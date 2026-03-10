@@ -11,11 +11,11 @@ namespace Script.Map.Provider
     /// [Framework] System 분류: [MapSampling]에 필요한 네이티브 캐시 자원을 관리하고 제공함
     /// </summary>
     [InitializeOnLoad]
-    public static class EditMapCacheProvider
+    public static class EditMapRepoProvider
     {
         private static readonly EditMapCacheContextData _cacheData = new EditMapCacheContextData();
 
-        static EditMapCacheProvider()
+        static EditMapRepoProvider()
         {
             // 도메인 리로드 및 에디터 종료 시 메모리 누수 방지
             AssemblyReloadEvents.beforeAssemblyReload += Clear;

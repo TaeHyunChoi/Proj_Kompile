@@ -17,7 +17,7 @@ namespace Script.Map.Provider
     using UnityEngine;
     using Object = UnityEngine.Object;
 
-    public partial class EditMapSamplingProvider 
+    public partial class EditMapSamplingRepoProvider 
     {
         private readonly string MAP_NAVI_DATA_PATH = "Rcs\\Bytes\\MapNavi";
         private readonly float[] DIFF_Y = new float[] { 0, 1, -1 };
@@ -157,7 +157,7 @@ namespace Script.Map.Provider
                     layerMeshAssets = grid.Value.LayerMeshAssets
                 };
 
-                    AssetProvider.WriteBinaryFile<MapGridData>(
+                    AssetRepoProvider.WriteBinaryFile<MapGridData>(
                     data: mapGridData,
                     relativePath: MAP_NAVI_DATA_PATH,
                     fileName: $"MapNavi_{mapGridData.Key}",

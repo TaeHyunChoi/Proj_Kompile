@@ -3,7 +3,7 @@ namespace Script.Map.Provider
 {
     using System.Collections.Generic;
 
-    public partial class EditMapSamplingProvider
+    public partial class EditMapSamplingRepoProvider
     {
         private class EditGroupAccumulatorData
         {

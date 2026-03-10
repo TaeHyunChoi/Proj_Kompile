@@ -8,7 +8,7 @@ namespace Script.Map.Provider
     using UnityEngine;
     using UnityEngine.AddressableAssets;
 
-    public class MapCacheProvider
+    public class MapRepoProvider
     {
         private Dictionary<int, List<MapGridLayerData>> gridLayerDict;
         private Dictionary<long, MapTileData> tileDict;
@@ -16,7 +16,7 @@ namespace Script.Map.Provider
 
         public Dictionary<long, MapTileData> TileDic => tileDict;
 
-        public MapCacheProvider()
+        public MapRepoProvider()
         {
             gridLayerDict = new Dictionary<int, List<MapGridLayerData>>();
             tileDict = new Dictionary<long, MapTileData>();

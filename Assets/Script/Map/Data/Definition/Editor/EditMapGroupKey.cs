@@ -2,7 +2,7 @@ namespace Script.Map.Provider
 {
     using System;
     
-    public partial class EditMapSamplingProvider
+    public partial class EditMapSamplingRepoProvider
     {
         private readonly struct EditMapGroupKey : IEquatable<EditMapGroupKey>
         {

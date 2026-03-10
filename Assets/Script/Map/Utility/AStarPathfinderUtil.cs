@@ -13,7 +13,7 @@ namespace Script.Map.Utility
         public static float3[] RequestPathImmediate(Vector3 startPos, Vector3 endPos, Dictionary<long, EditMapTileData> tileDic)
         {
             // 1. 캐시된 맵 데이터 가져오기 (여기서 시간 단축!)
-            var nativeMap = EditMapCacheProvider.GetOrCreateNativeMap(tileDic);
+            var nativeMap = EditMapRepoProvider.GetOrCreateNativeMap(tileDic);
 
             // 2. 결과 담을 리스트
             NativeList<float3> resultPath = new NativeList<float3>(Allocator.TempJob);

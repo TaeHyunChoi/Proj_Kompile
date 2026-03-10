@@ -4,7 +4,7 @@ namespace Script.Asset.Provider
     using UnityEngine;
     using UnityEngine.ResourceManagement.AsyncOperations;
 
-    public static partial class AssetProvider // InstanceEntry
+    public static partial class AssetRepoProvider // InstanceEntry
     {
         /// <summary> Provider 계층의 데이터/에셋 공급 단위.
         /// 메모리 단편화를 줄이고 효율을 높이기 위해 sealed 예약어와 Stack 구조를 사용합니다.

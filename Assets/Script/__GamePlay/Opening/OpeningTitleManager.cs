@@ -92,8 +92,8 @@ namespace Script.GamePlay
         }
         public override void Dispose()
         {
-            AssetProvider.ReleaseAsset(openingPlay.GetInstanceID());
-            AssetProvider.ReleaseAsset(uiTitleMenu.GetInstanceID());
+            AssetRepoProvider.ReleaseAsset(openingPlay.GetInstanceID());
+            AssetRepoProvider.ReleaseAsset(uiTitleMenu.GetInstanceID());
         }
     }
 }

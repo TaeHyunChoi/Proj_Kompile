@@ -36,7 +36,7 @@ namespace Script.GamePlay
             Transform uiRoot = transform.Find("UI");
             uiCanvas = new UISystem(uiRoot);
 
-            AssetProvider.Initialize();
+            AssetRepoProvider.Initialize();
         }
         private async void Start()
         {

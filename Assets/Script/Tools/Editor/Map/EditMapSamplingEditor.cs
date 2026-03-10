@@ -14,7 +14,7 @@ public class EditMapSamplingEditor
     [MenuItem("Tools/MapSampling/Bake Path Tiles to .btyes")]
     public static void Bake()
     {
-        EditMapSamplingProvider sampler = new EditMapSamplingProvider();
+        EditMapSamplingRepoProvider sampler = new EditMapSamplingRepoProvider();
         sampler.Bake();
     }
 
