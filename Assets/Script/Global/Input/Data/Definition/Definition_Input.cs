@@ -1,4 +1,4 @@
-namespace Script.Input.Data
+namespace Script.Global.Input.Data
 {
     using System;
 

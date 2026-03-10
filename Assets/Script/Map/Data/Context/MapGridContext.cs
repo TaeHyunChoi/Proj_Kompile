@@ -2,7 +2,7 @@ namespace Script.GamePlay
 {
     using UnityEngine;
     using Script.Data;
-    using Script.Map;
+    using Script.Map.Entity;
     
     public class MapGridContext
     {
@@ -11,7 +11,7 @@ namespace Script.GamePlay
         public int GridKey { get; private set; }
         public Vector3Int GridIndex { get; private set; }
         public MapGridData Data { get; private set; }
-        public MapGridObject VisualObject { get; private set; }
+        public MapGridEntity VisualObject { get; private set; }
         public Bounds WorldBounds { get; private set; }
 
         public MapGridContext(int gridKey, Vector3Int gridPivot)
@@ -42,7 +42,7 @@ namespace Script.GamePlay
         {
             Data = data;
         }
-        public void SetVisualObject(MapGridObject visualObject)
+        public void SetVisualObject(MapGridEntity visualObject)
         {
             VisualObject = visualObject;
         }

@@ -1,13 +1,15 @@
-namespace Script.Map
+namespace Script.Map.Entity
 {
-    using Script.Asset;
     using System.Collections.Generic;
     using UnityEngine;
+    using Script.Global.Entity.Data;
 
-    public class MapGridObject : IngameMonoBehaviourBase
+    /// <summary>
+    /// [Framework] 핵심 계층: Entity
+    /// 기존 MapGridObject를 대체하는 맵 그리드 엔티티입니다.
+    /// </summary>
+    public class MapGridEntity : Entity
     {
-        public override PrefabID PrefabID => PrefabID.MapGridPrefab;
-        
         /// <summary> Key:LayerIndex, Value:해당 레이어의 부모 오브젝트 </summary>
         private Dictionary<int, GameObject> _layerRoots = new Dictionary<int, GameObject>();
 
@@ -33,15 +35,15 @@ namespace Script.Map
                 
                 _layerRoots[layerIndex] =  layerRoot;
                 
-                // root 아래의 mesh parts를 생성 및 부탁
+                // root 아래의 mesh parts를 생성 및 부착
                 for (int i = 0; i < meshes.Count; ++i)
                 {
                     Mesh mesh = meshes[i];
                     GameObject meshPart = new GameObject(mesh.name);
                     meshPart.transform.SetParent(layerRoot.transform, false);
                     
-                    MeshFilter mf =  meshPart.AddComponent<MeshFilter>();
-                    MeshRenderer mr =  meshPart.AddComponent<MeshRenderer>();
+                    MeshFilter mf = meshPart.AddComponent<MeshFilter>();
+                    MeshRenderer mr = meshPart.AddComponent<MeshRenderer>();
 
                     mf.mesh = mesh;
                     
@@ -56,11 +58,12 @@ namespace Script.Map
         {
             foreach (var kvp in _layerRoots)
             {
-                int layerInex =  kvp.Key;
+                int layerIndex = kvp.Key;
                 GameObject root = kvp.Value;
                 
-                // TODO: LayerMask를 어떻게 확인?!
-                bool shouldShow = (targetLayerMask & 0b1111) != 0;
+                // TODO로 남겨두신 LayerMask 확인 로직을 비트 시프트 연산으로 해결했습니다.
+                // targetLayerMask의 layerIndex번째 비트가 1인지 검사합니다.
+                bool shouldShow = (targetLayerMask & (1 << layerIndex)) != 0;
                 if (shouldShow != root.activeSelf)
                 {
                     root.SetActive(shouldShow);
