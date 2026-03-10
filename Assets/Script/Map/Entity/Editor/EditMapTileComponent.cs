@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace Script.Data
+namespace Script.Map.Data
 {
     using Script.Index;
     using Script.Map.Utility;

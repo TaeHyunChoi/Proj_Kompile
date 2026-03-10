@@ -1,7 +1,7 @@
 namespace Script.Map.Provider
 {
     using Script.Asset.Data;
-    using Script.Data;
+    using Script.Map.Data;
     using Script.Map.Utility;
     using System.Collections.Generic;
     using Unity.Mathematics;

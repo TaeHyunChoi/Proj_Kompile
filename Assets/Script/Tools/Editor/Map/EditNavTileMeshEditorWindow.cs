@@ -1,7 +1,5 @@
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using Script.Data;
 
 // Custom Editor + Create Asset
 public partial class EditNavTileMeshEditorWindow : EditorWindow

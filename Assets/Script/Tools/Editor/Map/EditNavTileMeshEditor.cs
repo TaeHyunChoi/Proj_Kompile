@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-using Script.Data;
+using Script.Map.Data;
 using static Script.Map.Data.MapConsts;
 using System.Text;
 using UnityEditor;

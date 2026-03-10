@@ -10,7 +10,7 @@ namespace Script.Map.Utility
 
     public static class AStarPathfinderUtil
     {
-        public static float3[] RequestPathImmediate(Vector3 startPos, Vector3 endPos, Dictionary<long, EditMapTileData> tileDic)
+        public static float3[] RequestPathImmediate(Vector3 startPos, Vector3 endPos, Dictionary<long, MapTileData> tileDic)
         {
             // 1. 캐시된 맵 데이터 가져오기 (여기서 시간 단축!)
             var nativeMap = EditMapRepoProvider.GetOrCreateNativeMap(tileDic);

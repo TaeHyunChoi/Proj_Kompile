@@ -1,4 +1,4 @@
-namespace Script.Data
+namespace Script.Map.Data
 {
     using Script.Map.Data;
     using MessagePack;

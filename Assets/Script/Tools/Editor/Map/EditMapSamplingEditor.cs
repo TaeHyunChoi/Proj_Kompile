@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using MessagePack;
 using MessagePack.Resolvers;
-using Script.Data;
+using Script.Map.Data;
 using Script.Map.Provider;
 using Script.Map.Utility;
 using Unity.Mathematics;

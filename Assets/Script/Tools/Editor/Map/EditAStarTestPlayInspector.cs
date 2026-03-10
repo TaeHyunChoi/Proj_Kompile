@@ -1,16 +1,16 @@
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
-using Script.Map.Instance;
+using Script.Map.Entity;
 
-[CustomEditor(typeof(EditAStarTestPlayEntity))]
+[CustomEditor(typeof(EditAStarTestPlayComponent))]
 public class EditAStarTestPlayInspector : Editor
 {
-    private EditAStarTestPlayEntity tester;
+    private EditAStarTestPlayComponent tester;
 
     private void Awake()
     {
-        tester = target as EditAStarTestPlayEntity;
+        tester = target as EditAStarTestPlayComponent;
     }
 
     public override void OnInspectorGUI()

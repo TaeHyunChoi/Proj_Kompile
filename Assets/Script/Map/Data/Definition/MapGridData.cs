@@ -1,16 +1,19 @@
-namespace Script.Data
+namespace Script.Map.Data
 {
     using MessagePack;
-    using Unity.Collections;
     using System.Collections.Generic;
     using System.Collections.Concurrent;
-
+    
     [MessagePackObject]
     public class MapGridData
     {
-        [Key(0), ReadOnly] public int Key;
-        [Key(1), ReadOnly] public ConcurrentDictionary<int, MapTileData> NaviTileDict;
-        [Key(2), ReadOnly] public List<MapGridLayerData> layerMeshAssets;
+        [Key(0)] public int Key;
+        [Key(1)] public ConcurrentDictionary<int, MapTileData> NaviTileDict;
+        [Key(2)] public List<MapGridLayerData> layerMeshAssets;
+
+        // MessagePack 역직렬화용 생성자 명시
+        [SerializationConstructor]
+        public MapGridData() { }
 
         public bool TryGetTileData(int tileIntKey, out MapTileData tileData)
         {

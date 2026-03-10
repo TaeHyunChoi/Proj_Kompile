@@ -1,7 +1,7 @@
 namespace Script.GamePlay
 {
     using UnityEngine;
-    using Script.Data;
+    using Script.Map.Data;
     using Script.Map.Entity;
     
     public class MapGridContext

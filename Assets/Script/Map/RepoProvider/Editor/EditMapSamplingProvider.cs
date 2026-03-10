@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 namespace Script.Map.Provider
 {
-    using Script.Data;
+    using Script.Map.Data;
     using Script.Map.Utility;
     using Script.Map.Data;
     using Script.Asset.Provider;
