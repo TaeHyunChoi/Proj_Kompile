@@ -1,17 +1,16 @@
-using Script.Map.Data;
-
 #if UNITY_EDITOR
 namespace Script.Map.Entity
 {
     using MessagePack;
     using MessagePack.Resolvers;
-    using Script.Map.Utility;
+    using Script.Map.Data;
+    using Script.Map.Utility; // 첨부해주신 Utility의 네임스페이스
     using System.Collections.Generic;
     using Unity.Mathematics;
     using UnityEngine;
     using UnityEngine.AddressableAssets;
 
-// [Framework] MonoBehaviour 상속 객체는 Component 명칭 사용
+    // [Framework] MonoBehaviour 상속 객체는 Component 명명 규칙 사용
     public class EditAStarTestPlayComponent : MonoBehaviour
     {
         [SerializeField] private Transform startTransform;
@@ -22,7 +21,7 @@ namespace Script.Map.Entity
 
         public async void Play()
         {
-            Debug.Log($"Start Test Play: A* Pathfinding");
+            Debug.Log($"Start Test Play: A* Pathfinding (Batch & Smoothed)");
             var stopwatch = new System.Diagnostics.Stopwatch();
             stopwatch.Start();
 
@@ -39,11 +38,11 @@ namespace Script.Map.Entity
                         var options =
                             MessagePackSerializerOptions.Standard.WithResolver(ContractlessStandardResolver.Instance);
 
-                        // [FIX] EditMapGridData가 아닌 MapGridData로 로드해야 함
+                        // MapGridData로 정상 로드
                         MapGridData grid = MessagePackSerializer.Deserialize<MapGridData>(textAsset.bytes, options);
 
                         int gKey = grid.Key;
-                        // [FIX] NaviTileDict를 순회하여 캐시에 등록
+                        // NaviTileDict를 순회하여 캐시에 등록
                         foreach (var tKV in grid.NaviTileDict)
                         {
                             int tKey = tKV.Key;
@@ -63,12 +62,21 @@ namespace Script.Map.Entity
             Vector3 startPos = startTransform.position;
             Vector3 endPos = endTransform.position;
 
-            // 로드된 MapTileData 캐시를 기반으로 경로 탐색 수행
-            float3[] path = AStarPathfinderUtil.RequestPathImmediate(startPos, endPos, cachedTileDic);
+            // [FIX] Batch 함수의 파라미터 규격(List)에 맞게 래핑하여 전달
+            List<Vector3> startPositions = new List<Vector3> { startPos };
+            List<Vector3> endPositions = new List<Vector3> { endPos };
+
+            // [FIX] 반환 타입 일치 (여러 개의 경로(배열)를 담은 리스트 반환)
+            List<float3[]> batchPaths =
+                AStarPathfinderUtil.RequestPathsBatch(startPositions, endPositions, cachedTileDic);
 
             stopwatch.Stop();
             Debug.Log($"Pathfind time: {stopwatch.ElapsedMilliseconds / 1000f:F3} seconds");
 
+            // 요청한 1개의 경로 중 첫 번째 결과를 추출
+            float3[] path = (batchPaths != null && batchPaths.Count > 0) ? batchPaths[0] : null;
+
+            // [FIX] 추출된 경로는 배열(float3[])이므로 .Length 사용
             if (path != null && path.Length > 0)
             {
                 var sb = new System.Text.StringBuilder();

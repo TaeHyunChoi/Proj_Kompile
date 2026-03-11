@@ -1,8 +1,8 @@
 namespace Script.Map.Utility
 {
+    using System.Collections.Generic;
     using Script.Map.Data;
     using Script.Map.Provider;
-    using System.Collections.Generic;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
@@ -10,46 +10,73 @@ namespace Script.Map.Utility
 
     public static class AStarPathfinderUtil
     {
-        public static float3[] RequestPathImmediate(Vector3 startPos, Vector3 endPos, Dictionary<long, MapTileData> tileDic)
+        public static List<float3[]> RequestPathsBatch(List<Vector3> starts, List<Vector3> ends,
+            Dictionary<long, MapTileData> tileDic)
         {
-            // 1. 캐시된 맵 데이터 가져오기 (여기서 시간 단축!)
+            int batchCount = starts.Count;
+            var nativeStarts = new NativeArray<float3>(batchCount, Allocator.TempJob);
+            var nativeEnds = new NativeArray<float3>(batchCount, Allocator.TempJob);
+            var resultStream = new NativeStream(batchCount, Allocator.TempJob);
+
+            for (int i = 0; i < batchCount; i++)
+            {
+                nativeStarts[i] = starts[i];
+                nativeEnds[i] = ends[i];
+            }
+
             var nativeMap = EditMapRepoProvider.GetOrCreateNativeMap(tileDic);
 
-            // 2. 결과 담을 리스트
-            NativeList<float3> resultPath = new NativeList<float3>(Allocator.TempJob);
-            List<float3> result = new List<float3>();
-
-            try
+            var job = new AStarBatchJobUtil
             {
-                // 3. Job 생성 (이전에 리팩토링한 AStarPathUtil 사용)
-                AStarPathJobUtil job = new AStarPathJobUtil
-                {
-                    StartPos = startPos,
-                    EndPos = endPos,
-                    Radius = 0.325f,
-                    Map = nativeMap,
-                    ResultPath = resultPath
-                };
+                StartPositions = nativeStarts,
+                EndPositions = nativeEnds,
+                Radius = 0.325f,
+                Map = nativeMap,
+                ResultPathStream = resultStream.AsWriter()
+            };
 
-                // 4. 즉시 실행 및 대기 (Run은 메인 스레드에서 즉시 실행, Schedule().Complete()와 유사하나 오버헤드가 적음)
-                job.Run();
+            JobHandle handle = job.Schedule(batchCount, 1);
+            handle.Complete();
 
-                // 5. 결과 변환
-                foreach (var p in resultPath)
-                {
-                    result.Add(p);
-                }
-            }
-            finally
+            List<float3[]> finalPaths = new List<float3[]>(batchCount);
+            NativeStream.Reader reader = resultStream.AsReader();
+
+            for (int i = 0; i < batchCount; i++)
             {
-                // 결과 리스트는 꼭 해제 (맵은 해제하지 않음)
-                if (true == resultPath.IsCreated)
+                reader.BeginForEachIndex(i);
+                int totalItems = reader.RemainingItemCount;
+
+                if (totalItems > 1)
                 {
-                    resultPath.Dispose();
+                    // 데이터 구성: [Point 0, Point 1, ..., Point N, Count]
+                    // 정점 데이터들만 담을 배열 (마지막 int 제외)
+                    int pointCount = totalItems - 1;
+                    float3[] path = new float3[pointCount];
+
+                    for (int j = 0; j < pointCount; j++)
+                    {
+                        path[j] = reader.Read<float3>();
+                    }
+
+                    reader.Read<int>(); // 마지막 Count 값 읽어서 소모
+
+                    // [옥토패스 트래블러용 팁] 
+                    // Smoothing된 경로는 이미 직선이므로 별도의 Reverse 없이 그대로 반환
+                    finalPaths.Add(path);
                 }
+                else
+                {
+                    finalPaths.Add(System.Array.Empty<float3>());
+                }
+
+                reader.EndForEachIndex();
             }
 
-            return result.ToArray();
+            nativeStarts.Dispose();
+            nativeEnds.Dispose();
+            resultStream.Dispose();
+
+            return finalPaths;
         }
     }
 }
