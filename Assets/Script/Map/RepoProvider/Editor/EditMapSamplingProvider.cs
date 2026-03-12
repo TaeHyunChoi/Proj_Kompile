@@ -3,7 +3,6 @@ namespace Script.Map.Provider
 {
     using Script.Map.Data;
     using Script.Map.Utility;
-    using Script.Map.Data;
     using Script.Asset.Provider;
     using System;
     using System.Collections.Concurrent;

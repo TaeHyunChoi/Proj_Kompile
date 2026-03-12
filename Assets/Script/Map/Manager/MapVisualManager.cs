@@ -1,6 +1,6 @@
 namespace Script.Map.Manager
 {
-    using Script.GamePlay;
+    using Script.Map.Data;
     using System.Collections.Generic;
     using UnityEngine;
 

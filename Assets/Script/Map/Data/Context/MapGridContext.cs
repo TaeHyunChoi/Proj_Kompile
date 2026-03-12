@@ -1,4 +1,4 @@
-namespace Script.GamePlay
+namespace Script.Map.Data
 {
     using UnityEngine;
     using Script.Map.Data;
