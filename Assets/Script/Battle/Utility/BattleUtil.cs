@@ -34,5 +34,19 @@ namespace Script.Battle.Utility
 
             return frameLeft > buffer ? scale : 1.0f;
         }
+        
+        [BurstCompile]
+        public static float CalculateProgressPerTick(int currentSpeed)
+        {
+            return currentSpeed * ORDER_PER_TICK;
+        }
+        
+        // [UI를 위한 잔여 틱 예측]
+        public static int PredictRemainingTicks(float remainDist, float actionDist, int speed)
+        {
+            if (speed <= 0) return 999;
+            float progress = CalculateProgressPerTick(speed);
+            return Mathf.CeilToInt((remainDist + actionDist) / progress);
+        }
     }
 }
