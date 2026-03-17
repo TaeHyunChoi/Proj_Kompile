@@ -4,7 +4,8 @@ namespace Script.Map.Entity
     using MessagePack;
     using MessagePack.Resolvers;
     using Script.Map.Data;
-    using Script.Map.Utility; // 첨부해주신 Utility의 네임스페이스
+    using Script.Map.Provider; // [추가됨] EditMapRepoProvider를 사용하기 위해 네임스페이스 추가
+    using Script.Map.Utility;  // 첨부해주신 Utility의 네임스페이스
     using System.Collections.Generic;
     using Unity.Mathematics;
     using UnityEngine;
@@ -66,9 +67,14 @@ namespace Script.Map.Entity
             List<Vector3> startPositions = new List<Vector3> { startPos };
             List<Vector3> endPositions = new List<Vector3> { endPos };
 
+            // [추가됨] 유틸리티에 전달하기 전, 에디터 전용 RepoProvider를 이용해 Dictionary를 NativeHashMap으로 변환/가져옵니다.
+            // 이 스크립트 자체가 #if UNITY_EDITOR 안에 있으므로 에디터 클래스 호출이 전혀 문제되지 않습니다.
+            var nativeMap = EditMapRepoProvider.GetOrCreateNativeMap(cachedTileDic);
+
             // [FIX] 반환 타입 일치 (여러 개의 경로(배열)를 담은 리스트 반환)
+            // 변환된 nativeMap을 순수 함수인 AStarPathfinderUtil에 주입합니다.
             List<float3[]> batchPaths =
-                AStarPathfinderUtil.RequestPathsBatch(startPositions, endPositions, cachedTileDic);
+                AStarPathfinderUtil.RequestPathsBatch(startPositions, endPositions, nativeMap);
 
             stopwatch.Stop();
             Debug.Log($"Pathfind time: {stopwatch.ElapsedMilliseconds / 1000f:F3} seconds");

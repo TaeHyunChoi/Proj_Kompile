@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 
@@ -82,3 +83,4 @@ public partial class EditNavTileMeshEditorWindow : EditorWindow
         }
     }
 }
+#endif

@@ -22,9 +22,7 @@ namespace Script.Map.Provider
             EditorApplication.quitting += Clear;
         }
 
-        /// <summary>
-        /// Manager가 요청할 때 캐시된 데이터를 제공하거나 새로 생성하여 반환함
-        /// </summary>
+        /// <summary> Manager가 요청할 때 캐시된 데이터를 제공하거나 새로 생성하여 반환함 </summary>
         public static NativeHashMap<long, (long, long)> GetOrCreateNativeMap(Dictionary<long, MapTileData> tileDic, bool forceToCreate = false)
         {
             // 규칙: 데이터 개수가 동일하면 기존 System 자원을 재사용
