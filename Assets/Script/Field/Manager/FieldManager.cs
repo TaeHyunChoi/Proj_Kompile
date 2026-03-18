@@ -1,319 +1,267 @@
+using System;
+
 namespace Script.Global.Manager
 {
     using UnityEngine;
     using Unity.Mathematics;
     using System.Collections.Generic;
-    
-    // [Framework]에서 분리된 각 계층의 데이터와 컴포넌트를 가져옵니다.
-    using Script.Global.Entity.Data;            // Entity 기본 클래스
-    using Script.Field.Entity.Component;        // PlayerMoveComponent, PartyMoveComponent
-    using Script.Global.Input.Provider;         // 입력 상태 제공자
-    using Script.Map.Provider;                  // 맵 에셋 제공자
-    using Script.Map.Utility;                   // 좌표, 비트 연산 최적화 유틸리티
-    using Script.Map.Data;                      // MapConsts 등 맵 데이터 구조
-    using Script.Map.Entity;                    // MapGridEntity 등 맵 비주얼 객체
-    using static Script.Global.Input.Data.Definition; // IDxInput 플래그
+    using Script.Global.Entity.Data;
+    using Script.Field.Entity.Component;
+    using Script.Global.Input.Provider;
+    using Script.Asset.Provider;
+    using Script.Map.Provider;                  
+    using Script.Map.Utility;                   
+    using Script.Map.Data;                      
+    using Script.Map.Entity;                    
+    using static Script.Global.Input.Data.Definition; 
 
     /// <summary>
-    /// [Framework] Manager: 필드 내의 Entity(Player, Party, MapGrid) 인스턴스들을 관리하고 흐름을 조율합니다.
-    /// 1. Provider로부터 입력을 받아 플레이어와 파티원의 이동(JRPG 뱀파이어 궤적)을 제어합니다.
-    /// 2. 플레이어의 위치를 기반으로 주변 타일(9-Grid ~ 최대 18-Grid)을 동적 로딩/언로딩합니다.
-    /// 3. 레이어(층간) 이동 시 글로벌 쉐이더를 이용한 부드러운 페이드 인/아웃 전환을 처리합니다.
+    /// [Framework] Manager: 필드의 생성, 이동, 맵 동적 로딩 흐름을 총괄 지휘합니다.
     /// </summary>
     public class FieldManager : MonoBehaviour
     {
-        [Header("Entity References (Prefab)")]
-        [Tooltip("플레이어, 파티원, 맵 그리드 등 Manager가 생성/관리할 프리팹들입니다.")]
-        public Entity PlayerPrefab;
-        public Entity PartyMemberPrefab;
-        public MapGridEntity MapGridPrefab; 
+        [Header("Entity Prefabs")]
+        [SerializeField] private MapGridEntity _mapGridPrefab;       // 맵 비주얼 컨테이너 프리팹
 
-        [Header("Map Control Settings")]
-        [Tooltip("레이어(층) 전환 시 페이드 인/아웃 속도입니다.")]
-        public float LayerFadeSpeed = 3f;
-        
-        [Tooltip("Y축 상/하단 그리드를 로드할 경계 거리입니다. (예: 10이면 0~10 구간에서 아래 그리드, 54~64 구간에서 위 그리드를 추가 로드)")]
-        public float VerticalLoadThreshold = 10f; 
+        [Header("Map Settings")]
+        [SerializeField] private Camera _mainCamera;                 // 가시 영역 계산용 카메라
+        [SerializeField] private float _cameraLoadMargin = 64f;      // $XZ$축 로딩 여유분
+        [SerializeField] private float _verticalLoadThreshold = 10f; // $Y$축 추가 로딩 경계값
+        [SerializeField] private float _layerFadeSpeed = 3f;         // 레이어 전환 투명도 속도
 
-        // --- 외부 Provider 캐싱 (Value-Centric 데이터 공급자) ---
-        private IngameInputProvider inputProvider;
-        private MapRepoProvider mapProvider;
+        // --- 외부 데이터 공급자 ---
+        private IngameInputProvider _inputProvider; // 입력 신호
+        private MapRepoProvider _mapProvider;       // 에셋 공급
 
-        // --- 관리 대상 Entity 인스턴스 (Instance-Centric) ---
-        private Entity playerEntity;
-        private PlayerMoveComponent playerMove;
-        
-        // 파티원들을 순차적으로 업데이트하기 위한 리스트
-        private List<PartyMoveComponent> partyMoves = new List<PartyMoveComponent>();
+        // --- 실시간 관리 인스턴스 ---
+        private Entity _playerEntity;
+        private PlayerMoveComponent _playerMove;
+        private readonly List<PartyMoveComponent> _partyMoves               = new List<PartyMoveComponent>();
+        private readonly Dictionary<int, MapGridEntity> _activeGridEntities = new Dictionary<int, MapGridEntity>();
+        private readonly HashSet<int> _loadingGrids                         = new HashSet<int>(); // 비동기 로딩 중인 그리드 추적
 
-        // --- Map Grid 공간 해싱(Spatial Hashing) 캐싱 관리 ---
-        // 플레이어가 현재 위치한 중심 그리드 키
-        private int currentPlayerGridKey = -1;
-        // 화면과 메모리에 활성화되어 있는 맵 그리드 엔티티들 (Key: GridKey)
-        private Dictionary<int, MapGridEntity> activeGridEntities = new Dictionary<int, MapGridEntity>();
+        // --- 최적화용 상태 변수 ---
+        private int _lastGMinX, _lastGMaxX, _lastGMinZ, _lastGMaxZ, _lastYStart, _lastYEnd;
+        private int _currentVisibleLayer, _targetVisibleLayer;
+        private float _currentFadeAlpha = 1f;
+        private bool _isLayerTransitioning;
+        private static readonly int _globalMapAlphaID = Shader.PropertyToID("_GlobalMapAlpha");
 
-        // --- Layer Transition (페이드 전환) 상태 관리 ---
-        private int currentVisibleLayer = 0;
-        private int targetVisibleLayer = 0;
-        private float currentFadeAlpha = 1f;
-        private bool isLayerTransitioning = false;
-
-        // 글로벌 쉐이더의 투명도 변수 ID를 캐싱하여 성능(가비지 생성 및 문자열 검색)을 최적화합니다.
-        private static readonly int GlobalMapAlphaID = Shader.PropertyToID("_GlobalMapAlpha");
-
-        /// <summary>
-        /// 상위 시스템(GameManager 등)에서 진입할 때 Provider들을 주입해주며 초기화합니다.
-        /// </summary>
-        public void Initialize(IngameInputProvider input, MapRepoProvider map)
+        private void Awake()
         {
-            inputProvider = input;
-            mapProvider = map;
-            
-            // 1. 플레이어와 파티원을 스폰합니다. (임시로 float3.zero 위치에 파티원 2명 생성)
-            SpawnPlayerAndParty(float3.zero, 2); 
-            
-            // 2. 초기 위치를 기준으로 주변 맵 그리드 로딩을 강제로 1회 실행합니다.
-            UpdateMapGrids(float3.zero, forceUpdate: true);
+            enabled = false;
         }
 
         /// <summary>
-        /// 플레이어와 파티원 엔티티를 생성하고, 서로 꼬리를 물도록 추적 대상을 연결합니다.
+        /// 상위 시스템에서 진입 시 호출하여 필드를 기동합니다.
         /// </summary>
-        private void SpawnPlayerAndParty(float3 spawnPos, int partyCount)
+        public async Awaitable Initialize(IngameInputProvider input, MapRepoProvider map)
         {
-            // [Player 생성]
-            playerEntity = Instantiate(PlayerPrefab, spawnPos, Quaternion.identity);
-            playerMove = playerEntity.GetComponent<PlayerMoveComponent>();
+            _inputProvider = input;
+            _mapProvider = map;
             
-            // MapProvider를 주입하여 Player가 맵 데이터를 기준으로 충돌 및 높이를 계산하게 합니다.
-            playerMove.Initialize(mapProvider);
+            Awaitable taskParty = SpawnPlayerAndPartyAsync(float3.zero, 2); 
+            Awaitable taskMap   = UpdateMapGridsAsync(float3.zero, true);
 
-            // [Party 생성 및 꼬리물기 연결]
-            Transform currentTarget = playerEntity.transform; // 1번 파티원의 타겟은 플레이어
-            float followDistance = 1.0f;
+            await taskParty;
+            await taskMap;
+            
+            enabled = true;
+        }
 
-            for (int i = 0; i < partyCount; i++)
+        /// <summary>
+        /// 플레이어와 파티원(JRPG 방식)을 생성하고 추적 관계를 형성합니다.
+        /// </summary>
+        private async Awaitable SpawnPlayerAndPartyAsync(float3 spawnPos, int partyCount)
+        {
+            // 호출이 잦을 것 같지 않으므로 프리팹 참조를 들고 있지 말고 생성하고 차라리 캐싱을 하자.
+            GameObject playerObj = await AssetRepoProvider.GetOrNewInstanceAsync("unit_prefab");
+            playerObj.transform.SetPositionAndRotation(spawnPos, quaternion.identity);
+
+            _playerEntity        = playerObj.AddComponent<FieldUnitEntity>();
+            _playerMove          = playerObj.AddComponent<PlayerMoveComponent>();
+            _playerMove.Initialize(_mapProvider);
+            
+            // instantiate party unit objects
+            Transform currentTarget = _playerEntity.transform; 
+            for (int i = 0; i < partyCount; ++i)
             {
-                Entity partyEntity = Instantiate(PartyMemberPrefab, spawnPos, Quaternion.identity);
-                PartyMoveComponent partyMove = partyEntity.GetComponent<PartyMoveComponent>();
+                GameObject partyObj = await AssetRepoProvider.GetOrNewInstanceAsync("unit_prefab");
+                partyObj.transform.SetPositionAndRotation(spawnPos, quaternion.identity);
                 
-                // 앞선 타겟을 환형 버퍼(Ring Buffer) 방식으로 추적하도록 설정
-                partyMove.Initialize(currentTarget, followDistance);
-                partyMoves.Add(partyMove);
+                Entity partyEntity = partyObj.AddComponent<FieldUnitEntity>();
+                PartyMoveComponent partyMove = partyObj.AddComponent<PartyMoveComponent>();
+                partyMove.Initialize(currentTarget, 0f);
+                _partyMoves.Add(partyMove);
 
-                // 다음 생성될 파티원의 타겟은 방금 생성된 현재 파티원이 됩니다.
-                currentTarget = partyEntity.transform;
+                currentTarget = partyEntity.transform; // 줄줄이 이어갈 수 있도록 다음 타겟 변경
             }
         }
 
-        /// <summary>
-        /// Unity의 Update 루프에서 매 프레임 Entity들의 상태를 갱신합니다.
-        /// </summary>
         private void Update()
         {
-            if (playerMove == null || inputProvider == null) return;
-
+            if (false == _playerMove)
+            {
+                return;
+            }
+            
             float deltaTime = Time.deltaTime;
 
-            // 1. 이동 처리 (플레이어 입력 반영 및 파티원 추적)
+            // 1. 입력 및 이동 (플레이어 -> 파티원 순서 엄수)
             ProcessMovement(deltaTime);
-
-            // 2. 맵 그리드 동적 로드 검사 (플레이어 위치 기반)
-            UpdateMapGrids(playerEntity.transform.position);
-
-            // 3. 레이어 전환(Fade In/Out) 애니메이션 처리
+            
+            // 2. 카메라 시야 기반 맵 업데이트
+            UpdateMapGridsAsync(_playerEntity.transform.position);
+            
+            // 3. 레이어 전환 효과 처리
             ProcessLayerTransition(deltaTime);
         }
 
         /// <summary>
-        /// Provider의 입력을 읽어와 이동을 처리합니다.
-        /// (업데이트 순서가 매우 중요: Player가 먼저 움직여야 Party가 그 궤적을 쫓을 수 있습니다)
+        /// 카메라의 4개 모서리 좌표를 지면에 투영하여 현재 로드가 필요한 그리드 영역을 산출합니다.
         /// </summary>
-        private void ProcessMovement(float deltaTime)
+        private async Awaitable UpdateMapGridsAsync(float3 playerPos, bool forceUpdate = false)
         {
-            // 1. 누적된(latched) 현재 프레임의 입력 상태 가져오기
-            InputState input = inputProvider.Current;
-            float2 inputDir = float2.zero;
-
-            // 플래그 검사로 상/하/좌/우 대각선 벡터 생성
-            if (input.IsPressing(IDxInput.LEFT))  inputDir.x -= 1f;
-            if (input.IsPressing(IDxInput.RIGHT)) inputDir.x += 1f;
-            if (input.IsPressing(IDxInput.UP))    inputDir.y += 1f;
-            if (input.IsPressing(IDxInput.DOWN))  inputDir.y -= 1f;
-
-            // 벡터 정규화
-            if (math.lengthsq(inputDir) > 0f) 
+            if (false == _mainCamera)
             {
-                inputDir = math.normalize(inputDir);
+                return;                
             }
-
-            // 2. 플레이어 선행 이동
-            playerMove.ProcessMovement(inputDir, deltaTime);
             
-            // 3. 파티원 후행 이동
-            // 파티원은 궤적을 놓치지 않기 위해 플레이어보다 속도가 약간 빨라야 합니다. (예: 10.5f)
-            float partySpeed = 10.5f; 
-            for (int i = 0; i < partyMoves.Count; i++)
+            // 카메라 시야 영역 계산 (Raycast 활용)
+            Plane groundPlane = new Plane(Vector3.up, new Vector3(0, playerPos.y, 0));
+            float minX = float.MaxValue, maxX = float.MinValue, minZ = float.MaxValue, maxZ = float.MinValue;
+
+            Vector2[] viewports = { Vector2.zero, Vector2.up, Vector2.right, Vector2.one };
+            foreach (var vp in viewports)
             {
-                partyMoves[i].ProcessMovement(partySpeed, deltaTime);
-            }
-        }
-
-        /// <summary>
-        /// 플레이어의 위치를 기반으로 기본 9-Grid를 유지하되, 
-        /// 높이(Y) 경계에 접근하면 조건부로 위/아래 그리드를 로드해 최대 18-Grid를 캐싱합니다.
-        /// </summary>
-        private void UpdateMapGrids(float3 playerPos, bool forceUpdate = false)
-        {
-            // 최적화 유틸을 사용하여 부동소수점 오차 없이 현재 그리드 키 도출
-            int newGridKey = MapCoordUtil.ComputeGridKey(playerPos);
-
-            // 이동한 그리드가 이전 프레임과 동일하다면 무거운 연산을 스킵
-            if (!forceUpdate && newGridKey == currentPlayerGridKey) return;
-            
-            currentPlayerGridKey = newGridKey;
-
-            // 1. 현재 그리드 내에서의 로컬 Y 좌표 계산 (0.0f ~ 63.99f)
-            // math.floor를 사용해 음수 월드 좌표에서도 안정적인 로컬 값을 구합니다.
-            float gridFloorY = math.floor(playerPos.y / MapConsts.GRID_SIZE) * MapConsts.GRID_SIZE;
-            float localY = playerPos.y - gridFloorY;
-
-            // 2. Y축 탐색 범위 결정 (기본값은 0, 즉 현재 높이의 평면 9칸만 탐색)
-            int yStart = 0;
-            int yEnd = 0;
-
-            // 플레이어가 하단 경계(예: 0~10)에 가까우면 바로 아래 그리드(-1) 포함 탐색
-            if (localY <= VerticalLoadThreshold)
-            {
-                yStart = -1;
-            }
-            // 플레이어가 상단 경계(예: 54~64)에 가까우면 바로 위 그리드(1) 포함 탐색
-            if (localY >= (MapConsts.GRID_SIZE - VerticalLoadThreshold))
-            {
-                yEnd = 1;
-            }
-
-            // 3. 이번 프레임에 활성화되어야 할 타겟 그리드 목록 생성
-            HashSet<int> targetGrids = new HashSet<int>();
-            for (int x = -1; x <= 1; x++)
-            {
-                for (int y = yStart; y <= yEnd; y++) 
+                Ray ray = _mainCamera.ViewportPointToRay(vp);
+                if (groundPlane.Raycast(ray, out float enter))
                 {
-                    for (int z = -1; z <= 1; z++)
+                    Vector3 hit = ray.GetPoint(enter);
+                    minX = Mathf.Min(minX, hit.x); maxX = Mathf.Max(maxX, hit.x);
+                    minZ = Mathf.Min(minZ, hit.z); maxZ = Mathf.Max(maxZ, hit.z);
+                }
+            }
+
+            // 여유분(Margin) 적용 및 그리드 인덱스화
+            int gMinX = Mathf.FloorToInt((minX - _cameraLoadMargin) / MapConsts.GRID_SIZE);
+            int gMaxX = Mathf.FloorToInt((maxX + _cameraLoadMargin) / MapConsts.GRID_SIZE);
+            int gMinZ = Mathf.FloorToInt((minZ - _cameraLoadMargin) / MapConsts.GRID_SIZE);
+            int gMaxZ = Mathf.FloorToInt((maxZ + _cameraLoadMargin) / MapConsts.GRID_SIZE);
+
+            // $Y$축 조건부 로딩 구간 계산
+            float localY = playerPos.y - (math.floor(playerPos.y / MapConsts.GRID_SIZE) * MapConsts.GRID_SIZE);
+            int yStart = (localY <= _verticalLoadThreshold) ? -1 : 0;
+            int yEnd = (localY >= MapConsts.GRID_SIZE - _verticalLoadThreshold) ? 1 : 0;
+
+            // 범위 변화가 없다면 연산 중단 (최적화)
+            if (!forceUpdate && gMinX == _lastGMinX && gMaxX == _lastGMaxX && gMinZ == _lastGMinZ && gMaxZ == _lastGMaxZ && yStart == _lastYStart && yEnd == _lastYEnd) return;
+
+            _lastGMinX = gMinX; _lastGMaxX = gMaxX; _lastGMinZ = gMinZ; _lastGMaxZ = gMaxZ; _lastYStart = yStart; _lastYEnd = yEnd;
+
+            // 타겟 그리드 키 집합 생성
+            HashSet<int> targetKeys = new HashSet<int>();
+            for (int x = gMinX; x <= gMaxX; x++)
+            {
+                for (int y = yStart; y <= yEnd; y++)
+                {
+                    for (int z = gMinZ; z <= gMaxZ; z++)
                     {
-                        // X, Y, Z축 오프셋을 적용해 주변 그리드의 위치를 추적
-                        float3 offsetPos = playerPos + new float3(
-                            x * MapConsts.GRID_SIZE, 
-                            y * MapConsts.GRID_SIZE, 
-                            z * MapConsts.GRID_SIZE
-                        );
-                        
-                        int adjGridKey = MapCoordUtil.ComputeGridKey(offsetPos);
-                        targetGrids.Add(adjGridKey);
+                        float3 pos = new float3(x * MapConsts.GRID_SIZE, y * MapConsts.GRID_SIZE, z * MapConsts.GRID_SIZE);
+                        targetKeys.Add(MapCoordUtil.ComputeGridKey(pos));
                     }
                 }
             }
 
-            // 4. 언로드 (Unload): 타겟에 없는 기존 그리드 제거
-            // 순회 중 컬렉션 수정을 피하기 위해 삭제할 키를 리스트에 먼저 모읍니다.
-            List<int> keysToRemove = new List<int>();
-            foreach (var kvp in activeGridEntities)
+            // [언로드] 시야에서 벗어난 그리드 파괴 및 에셋 해제
+            List<int> toRemove = new List<int>();
+            foreach (var kvp in _activeGridEntities)
             {
-                if (!targetGrids.Contains(kvp.Key))
+                if (!targetKeys.Contains(kvp.Key))
                 {
-                    kvp.Value.Dispose(); // 메모리 정리
-                    Destroy(kvp.Value.gameObject); // 비주얼 객체 파괴
-                    keysToRemove.Add(kvp.Key);
+                    kvp.Value.Dispose();
+                    Destroy(kvp.Value.gameObject);
+                    _mapProvider.ReleaseGridMeshes(kvp.Key); // 메모리 해제 필수
+                    toRemove.Add(kvp.Key);
                 }
             }
-            foreach (int key in keysToRemove) 
-            {
-                activeGridEntities.Remove(key);
-            }
+            foreach (int k in toRemove) 
+                _activeGridEntities.Remove(k);
 
-            // 5. 로드 (Load): 타겟에 있는데 현재 활성화되지 않은 새 그리드 생성
-            foreach (int targetKey in targetGrids)
+            // [로드] 새롭게 시야에 들어온 그리드 비동기 요청
+            foreach (int k in targetKeys)
             {
-                if (!activeGridEntities.ContainsKey(targetKey))
-                {
-                    LoadGridVisualAsync(targetKey);
-                }
+                if (!_activeGridEntities.ContainsKey(k) && !_loadingGrids.Contains(k))
+                    await LoadGridVisualAsync(k);
             }
         }
 
         /// <summary>
-        /// 비주얼 엔티티(MapGridEntity)를 로드하고 계층을 구성합니다.
+        /// 비동기 로드 시 발생하는 동시성 버그(화면 밖으로 나간 그리드의 중복 생성)를 방어하며 로드합니다.
         /// </summary>
-        private async void LoadGridVisualAsync(int gridKey)
+        private async Awaitable LoadGridVisualAsync(int gridKey)
         {
-            // TODO: 실제 프로젝트에서는 mapProvider를 통해 Addressables 비동기 로드 로직이 들어갑니다.
-            // var layerGroups = await mapProvider.LoadGridMeshesAsync(gridKey);
-            
-            // 프리팹을 생성하고 딕셔너리에 등록 (Manager가 Instance를 제어)
-            MapGridEntity newGrid = Instantiate(MapGridPrefab, transform);
-            
-            // newGrid.Initialize(layerGroups); // 로드된 메쉬 데이터를 전달하여 초기화
-            newGrid.UpdateLayerVisibility(1 << currentVisibleLayer); // 현재 시야의 레이어 마스크 적용
-            
-            activeGridEntities.Add(gridKey, newGrid);
+            if (!_loadingGrids.Add(gridKey)) 
+                return;
+
+            try
+            {
+                // Provider에 요청하여 메쉬 에셋들을 병렬 로드
+                var layers = await _mapProvider.LoadGridMeshesAsync(gridKey);
+
+                // [Cancellation Check] 로드 대기 중 시야에서 사라졌다면 생성을 취소하고 메모리 즉시 반환
+                if (!_loadingGrids.Contains(gridKey))
+                {
+                    _mapProvider.ReleaseGridMeshes(gridKey);
+                    return;
+                }
+
+                if (layers == null) return;
+
+                // 비주얼 인스턴스화 및 초기화
+                MapGridEntity entity = Instantiate(_mapGridPrefab, transform);
+                entity.Initialize(layers);
+                entity.UpdateLayerVisibility(1 << _currentVisibleLayer);
+                
+                _activeGridEntities.Add(gridKey, entity);
+            }
+            finally { _loadingGrids.Remove(gridKey); }
         }
 
-        // ==========================================================
-        // Layer Transition (Fade In/Out) Logic
-        // ==========================================================
-
-        /// <summary> 
-        /// 외부(계단 타일 밟음, 사다리 탑승 등)에서 레이어 변경을 요청할 때 호출합니다. 
-        /// </summary>
-        public void RequestLayerChange(int newLayerIndex)
-        {
-            if (currentVisibleLayer == newLayerIndex) return;
-            
-            targetVisibleLayer = newLayerIndex;
-            isLayerTransitioning = true;
-        }
-
-        /// <summary>
-        /// 맵 전체의 투명도를 글로벌하게 제어하여 드로우콜(Draw Call) 증가 없이 부드럽게 층간을 전환합니다.
-        /// </summary>
         private void ProcessLayerTransition(float deltaTime)
         {
-            if (!isLayerTransitioning) return;
+            if (!_isLayerTransitioning) return;
 
-            // [Phase 1: Fade Out] 화면이 서서히 어두워짐
-            if (currentVisibleLayer != targetVisibleLayer)
+            if (_currentVisibleLayer != _targetVisibleLayer)
             {
-                currentFadeAlpha -= deltaTime * LayerFadeSpeed;
-                
-                // 완전히 투명해진 시점(0f)에 물리적 레이어 객체(SetActive)를 스위칭합니다.
-                if (currentFadeAlpha <= 0f)
+                _currentFadeAlpha -= deltaTime * _layerFadeSpeed;
+                if (_currentFadeAlpha <= 0f)
                 {
-                    currentFadeAlpha = 0f;
-                    currentVisibleLayer = targetVisibleLayer;
-                    
-                    int layerMask = 1 << currentVisibleLayer;
-                    foreach (var grid in activeGridEntities.Values)
-                    {
-                        grid.UpdateLayerVisibility(layerMask);
-                    }
+                    _currentFadeAlpha = 0f;
+                    _currentVisibleLayer = _targetVisibleLayer;
+                    foreach (var g in _activeGridEntities.Values) g.UpdateLayerVisibility(1 << _currentVisibleLayer);
                 }
             }
-            // [Phase 2: Fade In] 화면이 다시 서서히 밝아짐
-            else 
+            else
             {
-                currentFadeAlpha += deltaTime * LayerFadeSpeed;
-                
-                // 완전히 밝아지면 전환 상태 종료
-                if (currentFadeAlpha >= 1f)
-                {
-                    currentFadeAlpha = 1f;
-                    isLayerTransitioning = false;
-                }
+                _currentFadeAlpha += deltaTime * _layerFadeSpeed;
+                if (_currentFadeAlpha >= 1f) { _currentFadeAlpha = 1f; _isLayerTransitioning = false; }
             }
+            Shader.SetGlobalFloat(_globalMapAlphaID, _currentFadeAlpha);
+        }
 
-            // 쉐이더의 글로벌 알파값을 조절합니다. 
-            // 맵 타일의 머티리얼 쉐이더 내부에 이 '_GlobalMapAlpha' 값을 참조하여 투명도를 조절하는 로직이 있어야 합니다.
-            Shader.SetGlobalFloat(GlobalMapAlphaID, currentFadeAlpha);
+        public void RequestLayerChange(int layerIdx) { if (_currentVisibleLayer == layerIdx) return; _targetVisibleLayer = layerIdx; _isLayerTransitioning = true; }
+
+        private void ProcessMovement(float deltaTime)
+        {
+            InputState state = _inputProvider.Current;
+            float2 dir = float2.zero;
+            if (state.IsPressing(IDxInput.LEFT)) dir.x -= 1; if (state.IsPressing(IDxInput.RIGHT)) dir.x += 1;
+            if (state.IsPressing(IDxInput.UP)) dir.y += 1; if (state.IsPressing(IDxInput.DOWN)) dir.y -= 1;
+
+            if (math.lengthsq(dir) > 0) dir = math.normalize(dir);
+            _playerMove.ProcessMovement(dir, deltaTime);
+            foreach (var m in _partyMoves) m.ProcessMovement(10.5f, deltaTime);
         }
     }
 }

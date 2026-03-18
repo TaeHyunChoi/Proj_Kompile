@@ -1,3 +1,4 @@
+using Script.Asset.Provider;
 using Script.Global.Input.Provider;
 using Script.Global.Manager;
 using Script.Map.Provider;
@@ -12,6 +13,8 @@ public class EditFieldMain : MonoBehaviour
 
     private void Awake()
     {
+        AssetRepoProvider.Initialize();
+        
         _inputProvider = new IngameInputProvider();
         _mapRepoProvider = new MapRepoProvider();
         _fieldManager = transform.GetComponent<FieldManager>();
