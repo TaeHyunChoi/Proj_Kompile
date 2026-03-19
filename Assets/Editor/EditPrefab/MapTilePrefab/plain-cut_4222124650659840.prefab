@@ -41,7 +41,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9012454660465057747}
-  m_Mesh: {fileID: 4300000, guid: 002183056c4779447b0fe9d275de9d73, type: 2}
+  m_Mesh: {fileID: 0}
 --- !u!23 &7843191140051812062
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -105,3 +105,5 @@ MonoBehaviour:
   renderLayer: 0
   textureType: 3
   heightMask: 4222124650659840
+  heightData:
+    PointHeights: 

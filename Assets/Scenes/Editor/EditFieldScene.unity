@@ -151,7 +151,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _mapGridPrefab: {fileID: -6643857607745183384, guid: 0d388db74e59eba4f9f4e8a1de7d63c5, type: 3}
   _mainCamera: {fileID: 1733834471}
-  _cameraLoadMargin: 64
+  _cameraLoadMargin: 16
   _verticalLoadThreshold: 10
   _layerFadeSpeed: 3
 --- !u!114 &671700497
@@ -242,7 +242,7 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 1
+  orthographic: 0
   orthographic size: 5
   m_Depth: -1
   m_CullingMask:
@@ -267,13 +267,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1733834469}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalRotation: {x: 0.30070576, y: 0, z: 0, w: 0.953717}
+  m_LocalPosition: {x: 0, y: 2, z: -5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 671700498}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 35, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
