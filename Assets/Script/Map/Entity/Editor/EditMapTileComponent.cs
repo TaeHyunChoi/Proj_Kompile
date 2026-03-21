@@ -8,6 +8,9 @@ namespace Script.Map.Data
     using UnityEngine;
     using static Script.Map.Data.MapConsts;
 
+    /// <summary>
+    /// [Framework] Component: 맵 타일의 외형(Mesh)과 데이터(HeightMask)를 관리합니다.
+    /// </summary>
     [Serializable]
     [ExecuteInEditMode]
     public class EditMapTileComponent : MonoBehaviour
@@ -24,9 +27,10 @@ namespace Script.Map.Data
 
         [Header("Data")]
         [SerializeField] private ulong heightMask;
-        // [신규 추가] 13개 포인트의 높이 데이터를 저장합니다.
+        // 13개 포인트의 높이 데이터를 저장합니다. (0~8 단계)
         [SerializeField] private MapTileHeightsData heightData = new MapTileHeightsData();
 
+        // --- Properties ---
         public int GridKey => MapCoordUtil.ComputeGridKey(transform.position);
         public ushort RenderLayer => renderLayer;
         public int TextureIndex => (int)textureType;
@@ -34,34 +38,15 @@ namespace Script.Map.Data
 
         private void Awake()
         {
-            // 런타임/에디터 초기화 보장
+            // 참조 및 데이터 초기화
             if (!meshFilter) meshFilter = GetComponent<MeshFilter>();
             if (!meshRenderer) meshRenderer = GetComponent<MeshRenderer>();
-
-            // 데이터 배열이 비어있으면 초기화합니다.
             heightData.EnsureInitialized();
         }
 
-        /// <summary> 
-        /// 프리팹 데이터를 초기화 ( != 실제 맵 타일 오브젝트) <br/>
-        /// heights, isSmall 데이터만 저장한다.
+        /// <summary>
+        /// [복구 완료] 외부 스크립트에서 타일의 공유 메쉬를 안전하게 가져올 때 사용합니다.
         /// </summary>
-        public void InitializePrefab(int[] heights, bool isSmall)
-        {
-            int height;
-            ulong heightFlag;
-
-            for (int i = 0; i < heights.Length; ++i)
-            {
-                height = heights[i];
-                heightFlag = (-1 == height) ? HEIGHT_MASK : (ulong)height;
-                heightMask |= heightFlag << i * HEIGHT_BITS;
-            }
-
-            //this.isSmall = isSmall;
-            EditorUtility.SetDirty(this);
-        }
-
         public bool TryGetSharedMesh(out Mesh outSharedMesh)
         {
             if (null == meshFilter)
@@ -73,12 +58,46 @@ namespace Script.Map.Data
             return null != outSharedMesh;
         }
 
+        /// <summary> 
+        /// 프리팹 데이터를 초기화하고 비트마스크를 생성합니다.
+        /// </summary>
+        public void InitializePrefab(int[] heights, bool isSmall)
+        {
+            heightMask = 0;
+            for (int i = 0; i < heights.Length; ++i)
+            {
+                int height = heights[i];
+                ulong heightFlag = (-1 == height) ? HEIGHT_MASK : (ulong)height;
+                heightMask |= (heightFlag & HEIGHT_MASK) << (i * HEIGHT_BITS);
+
+                // 편집용 데이터 배열도 함께 동기화
+                if (i < 13) heightData[i] = (byte)height;
+            }
+
+            EditorUtility.SetDirty(this);
+        }
+
         private void OnValidate()
         {
-            // 1. Renderer 및 Filter 방어 코드
+            if (this == null) return;
+
+            // 1. 컴포넌트 참조 보장
             if (meshRenderer == null) meshRenderer = GetComponent<MeshRenderer>();
             if (meshFilter == null) meshFilter = GetComponent<MeshFilter>();
 
+            // 2. 데이터 및 메쉬 갱신 (텍스처 여부와 상관없이 무조건 실행)
+            EditorApplication.delayCall += () =>
+            {
+                if (this == null) return;
+
+                UpdateHeightMask();
+                UpdateMesh();
+
+                // 인스펙터 슬라이더 조작 시 씬 뷰 즉시 반영
+                SceneView.RepaintAll();
+            };
+
+            // 3. UV 및 텍스처 계산 (머티리얼이 있을 때만 진행)
             if (meshRenderer == null ||
                 meshRenderer.sharedMaterial == null ||
                 meshRenderer.sharedMaterial.mainTexture == null)
@@ -86,13 +105,16 @@ namespace Script.Map.Data
                 return;
             }
 
-            // 2. 텍스처 및 UV 계산 (나으리의 기존 로직 완벽 유지)
+            UpdateUVs();
+        }
+
+        private void UpdateUVs()
+        {
             Texture texture = meshRenderer.sharedMaterial.mainTexture;
             if (texture.width == 0 || texture.height == 0) return;
 
             int textureWidth = texture.width;
             int textureHeight = texture.height;
-
             int columnIndex = (int)textureType % 8;
             int rowIndex = (int)textureType / 8;
 
@@ -107,34 +129,17 @@ namespace Script.Map.Data
             propertyBlock.SetVector("_UVOffset", uvOffset);
             propertyBlock.SetVector("_UVScale", uvScale);
             meshRenderer.SetPropertyBlock(propertyBlock);
-
-            // 3. 메쉬 갱신 예약
-            // 유니티 정책상 OnValidate 내부에서 즉시 Mesh를 Destroy/생성하면 경고가 발생하므로,
-            // delayCall을 사용하여 한 프레임 뒤에 안전하게 메쉬를 업데이트합니다.
-            EditorApplication.delayCall += () =>
-            {
-                if (this != null) // 컴포넌트가 파괴되지 않았는지 확인
-                {
-                    UpdateMesh();
-                }
-            };
         }
 
-        // --- [신규 추가 메서드] 높이 조절 및 실시간 메쉬 갱신 ---
-
-        /// <summary>
-        /// 현재 heightData를 기반으로 메쉬를 다시 생성하고 콜라이더를 갱신합니다.
-        /// </summary>
         public void UpdateMesh()
         {
             if (meshFilter == null) return;
 
+            // MapMeshUtil을 통해 13개 포인트 기반 메쉬 생성
             Mesh newMesh = MapMeshUtil.GenerateMesh(heightData);
-
-            // 씬 파일 용량 최적화: 에디터에서 생성된 임시 메쉬는 씬에 저장하지 않음
             newMesh.hideFlags = HideFlags.DontSave;
 
-            // 기존 임시 메쉬 메모리 누수 방지
+            // 기존 임시 메쉬 메모리 해제
             if (meshFilter.sharedMesh != null && meshFilter.sharedMesh.name == "GeneratedTileMesh_Dynamic")
             {
                 DestroyImmediate(meshFilter.sharedMesh, true);
@@ -142,33 +147,39 @@ namespace Script.Map.Data
 
             meshFilter.sharedMesh = newMesh;
 
-            // 에디터에서 레이캐스트(클릭)가 제대로 되려면 MeshCollider도 함께 갱신해야 합니다.
+            // 에디터 레이캐스트 정밀도를 위해 콜라이더 동기화
             MeshCollider mc = GetComponent<MeshCollider>();
             if (mc != null) mc.sharedMesh = newMesh;
         }
 
-        /// <summary>
-        /// 특정 포인트의 높이 인덱스를 수정합니다. 에디터 윈도우에서 호출됩니다.
-        /// </summary>
-        /// <param name="pointIndex">0 ~ 12 사이의 13개 포인트 인덱스</param>
-        /// <param name="delta">더하거나 뺄 값 (예: +1, -1)</param>
-        public void ModifyHeightIndex(int pointIndex, int delta)
+        public void UpdateHeightMask()
         {
-            int newVal = heightData[pointIndex] + delta;
-            // 높이 범위를 -4에서 +4로 제한합니다.
-            heightData[pointIndex] = (sbyte)Mathf.Clamp(newVal, -4, 4);
+            heightMask = 0;
+            for (int i = 0; i < 13; i++)
+            {
+                ulong hValue = (ulong)heightData[i];
+                // 비트 압축 (MapConsts 설정 참조)
+                heightMask |= (hValue & HEIGHT_MASK) << (i * HEIGHT_BITS);
+            }
             EditorUtility.SetDirty(this);
         }
 
-        /// <summary>
-        /// 지정된 포인트 인덱스의 로컬 위치(에디터 상의 시각적 가이드용)를 반환합니다.
-        /// </summary>
+        public void ModifyHeightIndex(int pointIndex, int delta)
+        {
+            int newVal = heightData[pointIndex] + delta;
+            heightData[pointIndex] = (byte)Mathf.Clamp(newVal, 0, 8);
+
+            // 툴 조작 시 즉시 데이터 및 외형 동기화
+            UpdateHeightMask();
+            UpdateMesh();
+
+            EditorUtility.SetDirty(this);
+        }
+
         public Vector3 GetPointLocalPos(int index)
         {
-            // MapMeshUtil 내부 로직과 동일하게 높이를 구합니다.
+            // MapMeshUtil의 규칙(0.125f step)에 따른 로컬 높이 반환
             float y = heightData[index] * MapMeshUtil.HeightStep;
-            // 타일 중심을 기준으로 X, Z는 생략하거나 대략적으로 구성할 수 있습니다.
-            // 본래는 MapMeshUtil의 PointCoords를 참조하여 X, Z도 정확히 주면 좋습니다.
             return new Vector3(0, y, 0);
         }
     }
