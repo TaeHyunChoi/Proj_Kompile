@@ -6,27 +6,31 @@ namespace Script.Map.Editor
     using UnityEditor;
     using UnityEngine;
     using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
-    /// [Framework] Editor Manager: 모든 편집 모드에서 Y축 층 제한을 시각화하고 제어합니다.
+    /// [Framework] Editor Manager: 팔레트 기반 타일셋 선택, 직관적인 스포이드(Alt) UX, Y축 층 제한 편집을 지원하는 통합 맵 에디터입니다.
     /// </summary>
     public class KompileMapEditorWindow : EditorWindow
     {
-        // --- 에디터 상태 변수 ---
         private enum EditMode { None, Paint, Erase, Add, Height, Navi }
         private enum SelectionMode { Vertex, Face }
 
         private EditMode _currentMode = EditMode.None;
-        private MapTextureType _selectedTexture = MapTextureType.map_w;
         private SelectionMode _currentSelection = SelectionMode.Vertex;
 
         private bool _isEditingEnabled = false;
-
+        private bool _isAltPressed = false;
         private EditMapTileComponent _lastHoveredTile;
 
-        // 편집 기준 높이 변수
         private GameObject _tilePrefab;
         private float _targetY = 0f;
+
+        private List<TileSetDefinition> _allTileSets = new List<TileSetDefinition>();
+        private List<TileSetDefinition> _filteredTileSets = new List<TileSetDefinition>();
+        private TileSetDefinition _selectedTileSet;
+        private string _searchString = "";
+        private Vector2 _paletteScrollPos;
 
         private static readonly Vector2[] PointOffsets = new Vector2[]
         {
@@ -41,16 +45,58 @@ namespace Script.Map.Editor
         public static void ShowWindow()
         {
             var window = GetWindow<KompileMapEditorWindow>("Kompile Map Editor");
-            window.minSize = new Vector2(350, 450);
+            window.minSize = new Vector2(350, 500);
             window.Show();
+        }
+
+        private void OnEnable()
+        {
+            SceneView.duringSceneGui += OnSceneGUI;
+            RefreshLibraryData();
+        }
+
+        private void OnDisable()
+        {
+            SceneView.duringSceneGui -= OnSceneGUI;
+        }
+
+        private void RefreshLibraryData()
+        {
+            _allTileSets.Clear();
+            string[] guids = AssetDatabase.FindAssets("t:TileSetDefinition");
+            foreach (var guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<TileSetDefinition>(path);
+                if (asset != null) _allTileSets.Add(asset);
+            }
+            UpdateFilteredList();
+        }
+
+        private void UpdateFilteredList()
+        {
+            if (string.IsNullOrEmpty(_searchString))
+            {
+                _filteredTileSets = new List<TileSetDefinition>(_allTileSets);
+            }
+            else
+            {
+                _filteredTileSets = _allTileSets
+                    .Where(x => x.name.ToLower().Contains(_searchString.ToLower()))
+                    .ToList();
+            }
         }
 
         private void OnGUI()
         {
+            if (Event.current.type == EventType.Layout)
+            {
+                UpdateFilteredList();
+            }
+
             GUILayout.Label("Kompile Map 2.5D Editor", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
-            // 1. 편집 활성화 토글
             GUI.backgroundColor = _isEditingEnabled ? Color.green : Color.white;
             if (GUILayout.Button(_isEditingEnabled ? "Editing: ON (클릭하여 끄기)" : "Editing: OFF (클릭하여 켜기)", GUILayout.Height(30)))
             {
@@ -60,30 +106,23 @@ namespace Script.Map.Editor
             GUI.backgroundColor = Color.white;
             EditorGUILayout.Space();
 
-            // 2. 편집 모드 선택
             _currentMode = (EditMode)GUILayout.Toolbar((int)_currentMode, new string[] { "None", "Paint", "Erase", "Add", "Height", "Navi" });
             EditorGUILayout.Space();
 
-            // 3. [개선] 공통 설정 레이아웃 (편집 모드일 때 항상 표시)
             if (_currentMode != EditMode.None && _currentMode != EditMode.Navi)
             {
                 EditorGUILayout.BeginVertical("box");
                 GUILayout.Label("Layer Settings", EditorStyles.boldLabel);
-
-                // 모든 모드에서 Y값을 바로 수정할 수 있게 배치
                 _targetY = EditorGUILayout.FloatField("Target Base Y (제한 층)", _targetY);
-
-                // 나으리께서 요청하신 안내 메시지 표기
                 EditorGUILayout.HelpBox($"현재 {_targetY}층에서만 작업이 가능합니다.", MessageType.Warning);
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.Space();
             }
 
-            // 4. 모드별 특화 설정 UI
             switch (_currentMode)
             {
                 case EditMode.Paint:
-                    _selectedTexture = (MapTextureType)EditorGUILayout.EnumPopup("Brush Texture", _selectedTexture);
+                    DrawPaletteUI();
                     break;
 
                 case EditMode.Add:
@@ -102,28 +141,105 @@ namespace Script.Map.Editor
             }
         }
 
-        private void OnEnable() { SceneView.duringSceneGui += OnSceneGUI; }
-        private void OnDisable() { SceneView.duringSceneGui -= OnSceneGUI; }
+        private void DrawPaletteUI()
+        {
+            EditorGUILayout.BeginVertical("box");
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label("Brush Palette", EditorStyles.boldLabel);
+            if (GUILayout.Button("🔄 리로드", GUILayout.Width(80)))
+            {
+                RefreshLibraryData();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUI.BeginChangeCheck();
+            _searchString = EditorGUILayout.TextField("Search", _searchString);
+            if (EditorGUI.EndChangeCheck())
+            {
+                UpdateFilteredList();
+            }
+
+            EditorGUILayout.Space();
+
+            _paletteScrollPos = EditorGUILayout.BeginScrollView(_paletteScrollPos, GUILayout.Height(180));
+            int columnCount = Mathf.Max(1, (int)(position.width / 110f));
+
+            for (int i = 0; i < _filteredTileSets.Count; i += columnCount)
+            {
+                EditorGUILayout.BeginHorizontal();
+                for (int j = 0; j < columnCount; j++)
+                {
+                    int index = i + j;
+                    if (index >= _filteredTileSets.Count) break;
+
+                    var ts = _filteredTileSets[index];
+
+                    Color oldColor = GUI.backgroundColor;
+                    if (_selectedTileSet == ts) GUI.backgroundColor = Color.cyan;
+
+                    if (GUILayout.Button(ts.name, GUILayout.Width(100), GUILayout.Height(35)))
+                    {
+                        _selectedTileSet = ts;
+                        EditorGUIUtility.PingObject(ts);
+                    }
+                    GUI.backgroundColor = oldColor;
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+            EditorGUILayout.EndScrollView();
+
+            EditorGUILayout.Space();
+
+            _selectedTileSet = (TileSetDefinition)EditorGUILayout.ObjectField("Selected Brush", _selectedTileSet, typeof(TileSetDefinition), false);
+
+            if (_isAltPressed)
+            {
+                Color oldColor = GUI.backgroundColor;
+                GUI.backgroundColor = Color.magenta;
+                EditorGUILayout.HelpBox("스포이드 모드 활성화됨! 씬에서 타일을 클릭하여 추출하세요.", MessageType.Info);
+                GUI.backgroundColor = oldColor;
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("단축키: 씬에서 Alt + 클릭으로 타일셋을 추출(스포이드)할 수 있습니다.", MessageType.None);
+            }
+
+            EditorGUILayout.EndVertical();
+        }
 
         private void OnSceneGUI(SceneView sceneView)
         {
             if (!_isEditingEnabled || _currentMode == EditMode.None) return;
 
             Event e = Event.current;
+
+            // Alt 키 상태 감지 및 즉각 갱신
+            if (e.alt != _isAltPressed)
+            {
+                _isAltPressed = e.alt;
+                sceneView.Repaint();
+                Repaint();
+            }
+
+            // [오류 수정] 존재하지 않는 EyeDropper 대신 ArrowPlus 커서 사용
+            if (_currentMode == EditMode.Paint && _isAltPressed)
+            {
+                EditorGUIUtility.AddCursorRect(new Rect(0, 0, sceneView.position.width, sceneView.position.height), MouseCursor.ArrowPlus);
+            }
+
             int controlID = GUIUtility.GetControlID("KompileMapEditor".GetHashCode(), FocusType.Passive);
             if (e.type == EventType.Layout) HandleUtility.AddDefaultControl(controlID);
 
             Ray ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
             EditMapTileComponent hitTile = null;
 
-            // --- 픽킹 로직: 설정된 _targetY 층에 있는 타일만 골라냅니다 ---
             if (e.type != EventType.Layout && e.type != EventType.Repaint)
             {
                 GameObject pickedObj = HandleUtility.PickGameObject(e.mousePosition, false);
                 if (pickedObj != null)
                 {
                     var foundTile = pickedObj.GetComponentInParent<EditMapTileComponent>();
-                    // Y값 일치 여부 검사 (오차 범위 허용)
                     if (foundTile != null && Mathf.Abs(foundTile.transform.position.y - _targetY) < 0.01f)
                     {
                         hitTile = foundTile;
@@ -136,15 +252,14 @@ namespace Script.Map.Editor
                 hitTile = _lastHoveredTile;
             }
 
-            // 모드별 분기 처리
             if (_currentMode == EditMode.Add)
             {
                 HandleAddMode(ray, e);
             }
             else if (hitTile != null)
             {
-                if (_currentMode == EditMode.Paint) HandlePaintMode(hitTile, e);
-                else if (_currentMode == EditMode.Erase) HandleEraseMode(hitTile, e);
+                if (_currentMode == EditMode.Paint) HandlePaintMode(hitTile, e, controlID);
+                else if (_currentMode == EditMode.Erase) HandleEraseMode(hitTile, e, controlID);
                 else if (_currentMode == EditMode.Height) HandleHeightMode(hitTile, ray, e, controlID);
             }
 
@@ -165,35 +280,73 @@ namespace Script.Map.Editor
             }
         }
 
-        private void HandlePaintMode(EditMapTileComponent tile, Event input)
+        private void HandlePaintMode(EditMapTileComponent tile, Event input, int controlID)
         {
-            // 픽킹 단계에서 이미 층 필터링이 끝났으므로 칠하기만 수행
+            bool isEyedropper = input.alt;
+
             if (input.type == EventType.Repaint)
             {
                 Vector3 visualCenter = tile.transform.position + new Vector3(0.5f, 0.5f, 0.5f);
-                Handles.color = new Color(0, 1, 1, 0.3f);
-                Handles.CubeHandleCap(0, visualCenter, Quaternion.identity, 0.98f, EventType.Repaint);
-                Handles.color = Color.cyan;
-                Handles.DrawWireCube(visualCenter, Vector3.one);
+
+                if (isEyedropper)
+                {
+                    Handles.color = new Color(1f, 0f, 1f, 0.3f);
+                    Handles.CubeHandleCap(0, visualCenter, Quaternion.identity, 0.98f, EventType.Repaint);
+                    Handles.color = Color.magenta;
+                    Handles.DrawWireCube(visualCenter, Vector3.one);
+
+                    GUIStyle labelStyle = new GUIStyle(EditorStyles.helpBox);
+                    labelStyle.fontStyle = FontStyle.Bold;
+                    labelStyle.normal.textColor = Color.white;
+                    labelStyle.alignment = TextAnchor.MiddleCenter;
+                    Handles.Label(tile.transform.position + new Vector3(0.5f, 1.2f, 0.5f), "🎨 스포이드 추출", labelStyle);
+                }
+                else
+                {
+                    Handles.color = new Color(0, 1, 1, 0.3f);
+                    Handles.CubeHandleCap(0, visualCenter, Quaternion.identity, 0.98f, EventType.Repaint);
+                    Handles.color = Color.cyan;
+                    Handles.DrawWireCube(visualCenter, Vector3.one);
+                }
             }
 
-            if (0 != input.button) return;
-            if (!(input.type == EventType.MouseDown || input.type == EventType.MouseDrag)) return;
-            if ((int)_selectedTexture == tile.TextureIndex) return;
-
-            Undo.RecordObject(tile, "Paint Tile Texture");
-            SerializedObject so = new SerializedObject(tile);
-            SerializedProperty texProp = so.FindProperty("textureType");
-            if (texProp != null)
+            if (isEyedropper)
             {
-                texProp.enumValueIndex = (int)_selectedTexture;
-                so.ApplyModifiedProperties();
+                if (input.type == EventType.MouseDown && input.button == 0)
+                {
+                    if (tile.TileSet != null)
+                    {
+                        _selectedTileSet = tile.TileSet;
+                        EditorGUIUtility.PingObject(_selectedTileSet);
+                        Repaint();
+                        input.Use();
+                    }
+                }
+                return;
             }
-            tile.UpdateMesh();
-            input.Use();
+
+            if (input.button != 0) return;
+            if (_selectedTileSet == null) return;
+
+            if (input.type == EventType.MouseDown)
+            {
+                GUIUtility.hotControl = controlID;
+                tile.ApplyTileSet(_selectedTileSet);
+                input.Use();
+            }
+            else if (input.type == EventType.MouseDrag && GUIUtility.hotControl == controlID)
+            {
+                tile.ApplyTileSet(_selectedTileSet);
+                input.Use();
+            }
+            else if (input.type == EventType.MouseUp && GUIUtility.hotControl == controlID)
+            {
+                GUIUtility.hotControl = 0;
+                input.Use();
+            }
         }
 
-        private void HandleEraseMode(EditMapTileComponent tile, Event e)
+        private void HandleEraseMode(EditMapTileComponent tile, Event e, int controlID)
         {
             if (e.type == EventType.Repaint && tile != null)
             {
@@ -204,19 +357,20 @@ namespace Script.Map.Editor
                 Handles.DrawWireCube(visualCenter, Vector3.one);
             }
 
-            int controlID = GUIUtility.GetControlID("KompileMapEditor".GetHashCode(), FocusType.Passive);
-            if (e.type == EventType.MouseDown && e.button == 0 && !e.alt)
+            if (e.button != 0 || e.alt) return;
+
+            if (e.type == EventType.MouseDown)
             {
                 GUIUtility.hotControl = controlID;
                 Undo.DestroyObjectImmediate(tile.gameObject);
                 e.Use();
             }
-            else if (e.type == EventType.MouseDrag && e.button == 0 && !e.alt && GUIUtility.hotControl == controlID)
+            else if (e.type == EventType.MouseDrag && GUIUtility.hotControl == controlID)
             {
                 Undo.DestroyObjectImmediate(tile.gameObject);
                 e.Use();
             }
-            else if (e.type == EventType.MouseUp && e.button == 0 && GUIUtility.hotControl == controlID)
+            else if (e.type == EventType.MouseUp && GUIUtility.hotControl == controlID)
             {
                 GUIUtility.hotControl = 0;
                 e.Use();
@@ -236,30 +390,36 @@ namespace Script.Map.Editor
             if (e.type == EventType.Repaint) DrawCustomGrid(spawnPos);
 
             Vector3 visualCenter = spawnPos + new Vector3(0.5f, 0.5f, 0.5f);
-            bool isOccupied = false;
 
-            EditMapTileComponent[] allTiles = Object.FindObjectsByType<EditMapTileComponent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            foreach (var existingTile in allTiles)
+            if (e.type == EventType.Repaint)
             {
-                if (Vector3.Distance(existingTile.transform.position, spawnPos) < 0.1f) { isOccupied = true; break; }
+                bool isOccupied = false;
+                EditMapTileComponent[] allTiles = Object.FindObjectsByType<EditMapTileComponent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                foreach (var existingTile in allTiles)
+                {
+                    if (Vector3.Distance(existingTile.transform.position, spawnPos) < 0.1f) { isOccupied = true; break; }
+                }
+
+                if (isOccupied)
+                {
+                    Handles.color = new Color(1, 0, 0, 0.3f);
+                    Handles.CubeHandleCap(0, visualCenter, Quaternion.identity, 0.98f, EventType.Repaint);
+                    Handles.color = Color.red;
+                    Handles.DrawWireCube(visualCenter, Vector3.one);
+                }
+                else
+                {
+                    Handles.color = new Color(0, 1, 0, 0.3f);
+                    Handles.CubeHandleCap(0, visualCenter, Quaternion.identity, 0.98f, EventType.Repaint);
+                    Handles.color = Color.green;
+                    Handles.DrawWireCube(visualCenter, Vector3.one);
+                }
             }
 
-            if (isOccupied)
+            if (e.type == EventType.MouseDown && e.button == 0 && !e.alt)
             {
-                Handles.color = new Color(1, 0, 0, 0.3f);
-                Handles.CubeHandleCap(0, visualCenter, Quaternion.identity, 0.98f, EventType.Repaint);
-                Handles.color = Color.red;
-                Handles.DrawWireCube(visualCenter, Vector3.one);
-                if (e.type == EventType.MouseDown && e.button == 0) e.Use();
-            }
-            else
-            {
-                Handles.color = new Color(0, 1, 0, 0.3f);
-                Handles.CubeHandleCap(0, visualCenter, Quaternion.identity, 0.98f, EventType.Repaint);
-                Handles.color = Color.green;
-                Handles.DrawWireCube(visualCenter, Vector3.one);
-
-                if (e.type == EventType.MouseDown && e.button == 0)
+                var existing = Physics.OverlapBox(spawnPos + Vector3.one * 0.5f, Vector3.one * 0.4f);
+                if (existing.Length == 0)
                 {
                     GameObject newTile = (GameObject)PrefabUtility.InstantiatePrefab(_tilePrefab);
                     newTile.transform.position = spawnPos;
@@ -271,7 +431,6 @@ namespace Script.Map.Editor
 
         private void HandleHeightMode(EditMapTileComponent tile, Ray ray, Event e, int controlID)
         {
-            // 1. 수학적 마우스 위치 계산 (이전과 동일)
             Plane tileBasePlane = new Plane(tile.transform.up, tile.transform.position);
             if (!tileBasePlane.Raycast(ray, out float enter)) return;
 
@@ -291,7 +450,6 @@ namespace Script.Map.Editor
             if (_currentSelection == SelectionMode.Vertex) affectedIndices.Add(nearestIndex);
             else for (int i = 0; i < 13; i++) affectedIndices.Add(i);
 
-            // 2. 시각적 가이드 (Repaint)
             if (e.type == EventType.Repaint)
             {
                 DrawCustomGrid(tile.transform.position);
@@ -303,45 +461,20 @@ namespace Script.Map.Editor
                 }
             }
 
-            // 3. [데이터 갱신 강화] 실제 높이 변경 및 마스크 동기화
             if (e.type == EventType.MouseDown && e.button == 0 && !e.alt)
             {
                 GUIUtility.hotControl = controlID;
-
-                // Undo 기록 (HeightMask 필드까지 포함하기 위해 오브젝트 전체 기록)
-                Undo.RecordObject(tile, "Adjust Tile Height & Mask");
-
                 int delta = e.shift ? -1 : 1;
                 bool isAnyChanged = false;
-
+                Undo.RecordObject(tile, "Adjust Tile Height");
                 foreach (int idx in affectedIndices)
                 {
                     float currentH = tile.GetPointLocalPos(idx).y;
                     float nextH = currentH + (delta * 0.125f);
-
-                    if (nextH >= -0.01f && nextH <= 1.01f)
-                    {
-                        // [데이터 수정]
-                        tile.ModifyHeightIndex(idx, delta);
-                        isAnyChanged = true;
-                    }
+                    if (nextH >= -0.01f && nextH <= 1.01f) { tile.ModifyHeightIndex(idx, delta); isAnyChanged = true; }
                 }
 
-                if (isAnyChanged)
-                {
-                    // [핵심 추가] 내비게이션용 HeightMask 데이터를 실제 필드에 구워넣는 함수 호출
-                    // 예: tile.RefreshNavigationData(); 또는 tile.UpdateHeightMask();
-                    // 이 안에서 내부 heightData를 기반으로 필드(HeightMask)를 갱신해야 합니다.
-                    tile.UpdateHeightMask();
-
-                    // 메쉬 시각적 업데이트
-                    tile.UpdateMesh();
-
-                    // 인스펙터에 변경사항을 알리고 씬을 Dirty 상태로 만듭니다.
-                    EditorUtility.SetDirty(tile);
-                }
-
-                Selection.activeGameObject = null;
+                if (isAnyChanged) tile.UpdateMesh();
                 e.Use();
             }
             else if (e.type == EventType.MouseUp && e.button == 0 && GUIUtility.hotControl == controlID)
