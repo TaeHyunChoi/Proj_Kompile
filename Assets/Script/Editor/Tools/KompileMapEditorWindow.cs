@@ -22,7 +22,6 @@ namespace Script.Map.Editor
         private bool _isEditingEnabled = false;
         private bool _isAltPressed = false;
 
-        // 13개 포인트 정의
         private static readonly Vector2[] PointOffsets = new Vector2[]
         {
             new Vector2(0.0f, 0.0f),   new Vector2(0.5f, 0.0f),   new Vector2(1.0f, 0.0f),
@@ -32,15 +31,11 @@ namespace Script.Map.Editor
             new Vector2(0.0f, 1.0f),   new Vector2(0.5f, 1.0f),   new Vector2(1.0f, 1.0f)
         };
 
-        // --- 배치 및 레이어 설정 ---
         private GameObject _tilePrefab;
         private float _targetY = 0f;
         private ushort _targetRenderLayer = 0;
-
-        // --- 시각화 설정 ---
         private bool _focusSelectedLayer = false;
 
-        // --- 팔레트 데이터 ---
         private List<TileSetDefinition> _allTileSets = new List<TileSetDefinition>();
         private List<TileSetDefinition> _filteredTileSets = new List<TileSetDefinition>();
         private TileSetDefinition _selectedTileSet;
@@ -49,66 +44,35 @@ namespace Script.Map.Editor
         private EditMapTileComponent _lastHoveredTile;
 
         [MenuItem("Tools/Map/Map Editor")]
-        public static void ShowWindow()
-        {
-            var window = GetWindow<KompileMapEditorWindow>("Kompile Map Editor");
-            window.minSize = new Vector2(350, 550);
-            window.Show();
-        }
+        public static void ShowWindow() => GetWindow<KompileMapEditorWindow>("Kompile Map Editor").Show();
 
-        private void OnEnable()
-        {
-            SceneView.duringSceneGui += OnSceneGUI;
-            RefreshLibraryData();
-            UpdateTilesFocusState(); // 윈도우 열릴 때 포커스 상태 동기화
-        }
+        private void OnEnable() { SceneView.duringSceneGui += OnSceneGUI; RefreshLibraryData(); UpdateTilesFocusState(); }
+        private void OnDisable() { SceneView.duringSceneGui -= OnSceneGUI; ClearAllTilesFocusState(); }
 
-        private void OnDisable()
-        {
-            SceneView.duringSceneGui -= OnSceneGUI;
-            ClearAllTilesFocusState(); // 윈도우 닫힐 때 모든 딤(Dim) 처리 해제
-        }
-
-        // [신규] 씬 내의 타일들의 어둡기(Dim) 상태를 갱신합니다.
         private void UpdateTilesFocusState()
         {
             var allTiles = Object.FindObjectsByType<EditMapTileComponent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            foreach (var tile in allTiles)
-            {
-                bool shouldDim = _focusSelectedLayer && (tile.RenderLayer != _targetRenderLayer);
-                tile.SetVisualDimmed(shouldDim);
-            }
+            foreach (var tile in allTiles) tile.SetVisualDimmed(_focusSelectedLayer && (tile.RenderLayer != _targetRenderLayer));
             SceneView.RepaintAll();
         }
 
-        // [신규] 모든 타일의 어둡기 상태를 원상 복구합니다.
         private void ClearAllTilesFocusState()
         {
             var allTiles = Object.FindObjectsByType<EditMapTileComponent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            foreach (var tile in allTiles)
-            {
-                tile.SetVisualDimmed(false);
-            }
+            foreach (var tile in allTiles) tile.SetVisualDimmed(false);
         }
 
         private void RefreshLibraryData()
         {
             _allTileSets.Clear();
             string[] guids = AssetDatabase.FindAssets("t:TileSetDefinition");
-            foreach (var guid in guids)
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                var asset = AssetDatabase.LoadAssetAtPath<TileSetDefinition>(path);
-                if (asset != null) _allTileSets.Add(asset);
-            }
+            foreach (var guid in guids) _allTileSets.Add(AssetDatabase.LoadAssetAtPath<TileSetDefinition>(AssetDatabase.GUIDToAssetPath(guid)));
             UpdateFilteredList();
         }
 
         private void UpdateFilteredList()
         {
-            _filteredTileSets = string.IsNullOrEmpty(_searchString)
-                ? new List<TileSetDefinition>(_allTileSets)
-                : _allTileSets.Where(x => x.name.ToLower().Contains(_searchString.ToLower())).ToList();
+            _filteredTileSets = string.IsNullOrEmpty(_searchString) ? new List<TileSetDefinition>(_allTileSets) : _allTileSets.Where(x => x.name.ToLower().Contains(_searchString.ToLower())).ToList();
         }
 
         private void OnGUI()
@@ -127,7 +91,6 @@ namespace Script.Map.Editor
             GUI.backgroundColor = Color.white;
             EditorGUILayout.Space();
 
-            // --- View Options ---
             EditorGUILayout.BeginVertical("box");
             GUILayout.Label("View Options", EditorStyles.boldLabel);
 
@@ -135,7 +98,7 @@ namespace Script.Map.Editor
             _focusSelectedLayer = EditorGUILayout.ToggleLeft("🔍 Focus Target Layer (해당 레이어 외 어둡게 표시)", _focusSelectedLayer);
             if (EditorGUI.EndChangeCheck())
             {
-                UpdateTilesFocusState(); // 토글 변경 시 즉시 타일 색상 갱신
+                UpdateTilesFocusState();
             }
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space();
@@ -154,7 +117,6 @@ namespace Script.Map.Editor
                 _targetRenderLayer = (ushort)Mathf.Clamp(tempLayer, 0, ushort.MaxValue);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    // 타겟 레이어가 변경되면 어두워질 대상도 바뀌므로 갱신
                     if (_focusSelectedLayer) UpdateTilesFocusState();
                 }
 
@@ -248,11 +210,37 @@ namespace Script.Map.Editor
 
             if (e.type != EventType.Layout && e.type != EventType.Repaint)
             {
+                // 1. 메쉬 콜라이더 기반 피킹 시도
                 GameObject picked = HandleUtility.PickGameObject(e.mousePosition, false);
                 if (picked != null)
                 {
                     var found = picked.GetComponentInParent<EditMapTileComponent>();
                     if (found != null && Mathf.Abs(found.transform.position.y - _targetY) < 0.1f) hitTile = found;
+                }
+
+                // 2. [핵심 버그 수정] 피킹 실패 시 평면 기반 그리드 위치 탐색 (구멍 뚫린 타일 지원)
+                if (hitTile == null)
+                {
+                    Plane gridPlane = new Plane(Vector3.up, new Vector3(0, _targetY, 0));
+                    if (gridPlane.Raycast(ray, out float enter))
+                    {
+                        Vector3 hitPos = ray.GetPoint(enter);
+                        var allTiles = Object.FindObjectsByType<EditMapTileComponent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+                        foreach (var t in allTiles)
+                        {
+                            if (Mathf.Abs(t.transform.position.y - _targetY) > 0.1f) continue;
+
+                            // 타일의 1x1 픽셀 범위(XZ 평면) 안에 마우스가 있는지 확인
+                            Vector3 tPos = t.transform.position;
+                            if (hitPos.x >= tPos.x && hitPos.x <= tPos.x + 1f &&
+                                hitPos.z >= tPos.z && hitPos.z <= tPos.z + 1f)
+                            {
+                                hitTile = t;
+                                break;
+                            }
+                        }
+                    }
                 }
                 _lastHoveredTile = hitTile;
             }
@@ -301,7 +289,6 @@ namespace Script.Map.Editor
                     if (comp != null)
                     {
                         comp.SetRenderLayer(_targetRenderLayer);
-                        // 생성될 때 포커스 모드면 타겟 레이어이므로 어두워지지 않아야 함
                         comp.SetVisualDimmed(false);
                     }
 
@@ -400,19 +387,32 @@ namespace Script.Map.Editor
             if (e.type == EventType.Repaint)
             {
                 DrawCustomGrid(tile.transform.position);
-                Handles.color = Color.yellow;
+
                 foreach (int idx in (_currentSelection == SelectionMode.Vertex ? new int[] { nearIdx } : Enumerable.Range(0, 13)))
-                    Handles.SphereHandleCap(0, tile.transform.TransformPoint(new Vector3(PointOffsets[idx].x, tile.GetPointLocalPos(idx).y, PointOffsets[idx].y)), Quaternion.identity, 0.08f, EventType.Repaint);
+                {
+                    // [핵심] 삭제된 정점(-1)은 빨간색으로, 정상 정점은 노란색으로 가이드라인 표시
+                    sbyte currentHeight = tile.GetHeightData(idx);
+                    Handles.color = (currentHeight == -1) ? Color.red : Color.yellow;
+
+                    Vector3 pPos = new Vector3(PointOffsets[idx].x, tile.GetPointLocalPos(idx).y, PointOffsets[idx].y);
+                    Handles.SphereHandleCap(0, tile.transform.TransformPoint(pPos), Quaternion.identity, 0.08f, EventType.Repaint);
+                }
             }
 
             if (e.type == EventType.MouseDown && e.button == 0 && !e.alt)
             {
                 GUIUtility.hotControl = controlID;
+
+                // Shift 클릭이면 높이 감소(-1), 아니면 높이 상승(+1)
                 int delta = e.shift ? -1 : 1;
+
                 Undo.RecordObject(tile, "Adjust Height");
+
                 foreach (int idx in (_currentSelection == SelectionMode.Vertex ? new int[] { nearIdx } : Enumerable.Range(0, 13)))
+                {
                     tile.ModifyHeightIndex(idx, delta);
-                tile.UpdateMesh();
+                }
+
                 e.Use();
             }
             else if (e.type == EventType.MouseUp)

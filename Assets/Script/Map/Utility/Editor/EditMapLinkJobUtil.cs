@@ -48,10 +48,10 @@ namespace Script.Map.Utility
                     {
                         if (true == CheckConnectable(myTile, neighborTile, targetDir, dirFlag))
                         {
-                            const int LINK_ZERO = 0b_01;
-                            const int LINK_UP = 0b_10;
-                            const int LINK_DOWN = 0b_11;
-                            const int LINK_NONE = 0b_00;
+                            const int LINK_ZERO = 0b_00;
+                            const int LINK_UP   = 0b_01;
+                            const int LINK_DOWN = 0b_10;
+                            const int LINK_NONE = 0b_11;
 
                             int linkValue = dy switch
                             {

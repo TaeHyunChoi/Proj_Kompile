@@ -4,6 +4,7 @@ namespace Script.Map.Data
     using Script.Index;
     using Script.Map.Utility;
     using System;
+    using System.Collections.Generic;
     using UnityEditor;
     using UnityEngine;
     using static Script.Map.Data.MapConsts;
@@ -67,7 +68,7 @@ namespace Script.Map.Data
                 ulong heightFlag = (-1 == height) ? HEIGHT_MASK : (ulong)height;
                 heightMask |= (heightFlag & HEIGHT_MASK) << (i * HEIGHT_BITS);
 
-                if (i < 13) heightData[i] = (byte)height;
+                if (i < 13) heightData[i] = (sbyte)height;
             }
             EditorUtility.SetDirty(this);
         }
@@ -94,7 +95,6 @@ namespace Script.Map.Data
             }
         }
 
-        // [신규] 에디터에서 포커스되지 않은 레이어를 일시적으로 어둡게 만듭니다. (Bake에 영향 없음)
         public void SetVisualDimmed(bool isDimmed)
         {
             if (_isVisualDimmed == isDimmed) return;
@@ -128,7 +128,6 @@ namespace Script.Map.Data
             propertyBlock.SetVector("_SideUVOffset", sideUVOffset);
             propertyBlock.SetVector("_SideUVScale", sideUVScale);
 
-            // [핵심] 어두운 상태일 경우 회색조 틴트를 적용합니다. (URP/HDRP 사용 시 "_BaseColor"로 변경 가능)
             Color tintColor = _isVisualDimmed ? new Color(0.2f, 0.2f, 0.2f, 1.0f) : Color.white;
             propertyBlock.SetColor("_Color", tintColor);
 
@@ -169,18 +168,17 @@ namespace Script.Map.Data
         {
             if (meshFilter == null) return;
 
+            // [핵심] 인자가 1개인 새로운 GenerateMesh 로직 사용
             Mesh newMesh = MapMeshUtil.GenerateMesh(heightData);
-            newMesh.hideFlags = HideFlags.DontSave;
+            newMesh.name = "Generated3DBlockMesh";
 
             if (meshFilter.sharedMesh != null && meshFilter.sharedMesh.name == "Generated3DBlockMesh")
             {
                 DestroyImmediate(meshFilter.sharedMesh, true);
             }
-
             meshFilter.sharedMesh = newMesh;
 
-            MeshCollider mc = GetComponent<MeshCollider>();
-            if (mc != null) mc.sharedMesh = newMesh;
+            if (TryGetComponent<MeshCollider>(out var mc)) mc.sharedMesh = newMesh;
         }
 
         public void UpdateHeightMask()
@@ -188,16 +186,21 @@ namespace Script.Map.Data
             heightMask = 0;
             for (int i = 0; i < 13; i++)
             {
-                ulong hValue = (ulong)heightData[i];
-                heightMask |= (hValue & HEIGHT_MASK) << (i * HEIGHT_BITS);
+                int hValue = heightData[i];
+                ulong heightFlag = (-1 == hValue) ? HEIGHT_MASK : (ulong)hValue;
+                heightMask |= (heightFlag & HEIGHT_MASK) << (i * HEIGHT_BITS);
             }
             EditorUtility.SetDirty(this);
         }
 
+        /// <summary>
+        /// 정점의 높이를 조절합니다. y가 0일 때 delta가 -1이면 소멸(-1) 상태가 됩니다.
+        /// </summary>
         public void ModifyHeightIndex(int pointIndex, int delta)
         {
             int newVal = heightData[pointIndex] + delta;
-            heightData[pointIndex] = (byte)Mathf.Clamp(newVal, 0, 8);
+            // [핵심 수정] Clamp의 최소값을 0에서 -1로 변경하여 소멸(삭제) 상태를 허용합니다.
+            heightData[pointIndex] = (sbyte)Mathf.Clamp(newVal, -1, 8);
 
             UpdateHeightMask();
             UpdateMesh();
@@ -205,9 +208,16 @@ namespace Script.Map.Data
             EditorUtility.SetDirty(this);
         }
 
+        // [신규] 에디터에서 현재 정점의 상태를 가져오기 위한 유틸리티 함수
+        public sbyte GetHeightData(int index)
+        {
+            return heightData[index];
+        }
+
         public Vector3 GetPointLocalPos(int index)
         {
-            float y = heightData[index] * MapMeshUtil.HeightStep;
+            // 소멸(-1)된 정점은 핸들이 지하로 꺼지지 않도록 y를 0으로 고정하여 표시합니다.
+            float y = (heightData[index] == -1) ? 0f : (heightData[index] * MapMeshUtil.HeightStep);
             return new Vector3(0, y, 0);
         }
 
