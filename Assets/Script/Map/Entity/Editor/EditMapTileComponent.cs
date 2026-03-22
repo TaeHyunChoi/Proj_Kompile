@@ -24,21 +24,20 @@ namespace Script.Map.Data
         [SerializeField] private bool isOnlyRender;
         [SerializeField] private ushort renderLayer;
 
-        // [핵심] 윗면/옆면 텍스처 조합을 정의한 에셋을 사용합니다.
         [SerializeField] private TileSetDefinition tileSet;
 
         [Header("Data")]
         [SerializeField] private ulong heightMask;
-        // 13개 포인트의 높이 데이터를 저장합니다. (0~8 단계)
         [SerializeField] private MapTileHeightsData heightData = new MapTileHeightsData();
+
+        // --- 에디터 시각화용 변수 ---
+        private bool _isVisualDimmed = false;
 
         // --- Properties ---
         public int GridKey => MapCoordUtil.ComputeGridKey(transform.position);
         public ushort RenderLayer => renderLayer;
         public int TextureIndex => tileSet != null ? (int)tileSet.topTexture : 0;
         public ulong HeightMask => heightMask;
-
-        // [신규 추가] 에디터 스포이드 기능을 위해 에셋 참조를 반환합니다.
         public TileSetDefinition TileSet => tileSet;
 
         private void Awake()
@@ -70,34 +69,24 @@ namespace Script.Map.Data
 
                 if (i < 13) heightData[i] = (byte)height;
             }
-
             EditorUtility.SetDirty(this);
         }
 
         private void OnValidate()
         {
             if (this == null) return;
-
             if (meshRenderer == null) meshRenderer = GetComponent<MeshRenderer>();
             if (meshFilter == null) meshFilter = GetComponent<MeshFilter>();
 
-            // 데이터 및 메쉬 갱신 (텍스처 여부와 상관없이 무조건 실행)
             EditorApplication.delayCall += () =>
             {
                 if (this == null) return;
-
                 UpdateHeightMask();
                 UpdateMesh();
-
-                // 인스펙터 슬라이더 조작 시 씬 뷰 즉시 반영
                 SceneView.RepaintAll();
             };
 
-            // UV 및 머티리얼 속성 갱신
-            if (meshRenderer == null || meshRenderer.sharedMaterial == null || meshRenderer.sharedMaterial.mainTexture == null)
-            {
-                return;
-            }
+            if (meshRenderer == null || meshRenderer.sharedMaterial == null || meshRenderer.sharedMaterial.mainTexture == null) return;
 
             if (tileSet != null)
             {
@@ -105,9 +94,26 @@ namespace Script.Map.Data
             }
         }
 
+        // [신규] 에디터에서 포커스되지 않은 레이어를 일시적으로 어둡게 만듭니다. (Bake에 영향 없음)
+        public void SetVisualDimmed(bool isDimmed)
+        {
+            if (_isVisualDimmed == isDimmed) return;
+            _isVisualDimmed = isDimmed;
+
+            if (meshRenderer != null && tileSet != null)
+            {
+                UpdateMaterialProperties();
+            }
+        }
+
+        public void SetRenderLayer(ushort layer)
+        {
+            renderLayer = layer;
+            EditorUtility.SetDirty(this);
+        }
+
         private void UpdateMaterialProperties()
         {
-            // 윗면(Top)과 옆면(Side) UV 오프셋 개별 계산
             Vector2 topUVOffset = CalculateUVOffset(tileSet.topTexture);
             Vector2 topUVScale = CalculateUVScale();
 
@@ -117,11 +123,14 @@ namespace Script.Map.Data
             MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
             meshRenderer.GetPropertyBlock(propertyBlock);
 
-            // 셰이더로 정보 전달
             propertyBlock.SetVector("_TopUVOffset", topUVOffset);
             propertyBlock.SetVector("_TopUVScale", topUVScale);
             propertyBlock.SetVector("_SideUVOffset", sideUVOffset);
             propertyBlock.SetVector("_SideUVScale", sideUVScale);
+
+            // [핵심] 어두운 상태일 경우 회색조 틴트를 적용합니다. (URP/HDRP 사용 시 "_BaseColor"로 변경 가능)
+            Color tintColor = _isVisualDimmed ? new Color(0.2f, 0.2f, 0.2f, 1.0f) : Color.white;
+            propertyBlock.SetColor("_Color", tintColor);
 
             meshRenderer.SetPropertyBlock(propertyBlock);
         }

@@ -2,6 +2,9 @@ Shader "Custom/WorldSpaceAtlasShader_v2"
 {
     Properties
     {
+        // [추가됨] 에디터에서 타일을 어둡게 만들기 위해 주입받을 틴트 컬러 (기본값: 흰색)
+        _Color ("Main Color (Dim Tint)", Color) = (1,1,1,1)
+        
         _MainTex ("Atlas Texture", 2D) = "white" {}
         _TextureScale ("Global Texture Scale", Float) = 1.0
         // 옆면의 빛 세기를 조절하여 입체감을 줌
@@ -17,6 +20,7 @@ Shader "Custom/WorldSpaceAtlasShader_v2"
         #pragma target 3.0
 
         sampler2D _MainTex;
+        fixed4 _Color; // [추가됨] Properties의 _Color와 연결될 변수 선언
         float _TextureScale;
         float _SideBrightness;
 
@@ -67,8 +71,10 @@ Shader "Custom/WorldSpaceAtlasShader_v2"
             float2 atlasUV = worldUV * scale + offset;
 
             fixed4 c = tex2D(_MainTex, atlasUV);
-            o.Albedo = c.rgb * brightness; // 옆면 밝기 적용
-            o.Alpha = c.a;
+            
+            // [수정됨] 최종 텍스처 색상에 _Color(틴트)를 곱해주어 어둡게 만들 수 있도록 적용
+            o.Albedo = c.rgb * brightness * _Color.rgb; 
+            o.Alpha = c.a * _Color.a;
         }
         ENDCG
     }
