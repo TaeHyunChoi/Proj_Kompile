@@ -23,7 +23,8 @@ namespace Script.Map.Data
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private bool isOnlyRender;
         [SerializeField] private ushort renderLayer;
-        [SerializeField] private MapTextureType textureType = Script.Index.MapTextureType.map_w;
+        [SerializeField] private MapTextureType textureType     = MapTextureType.map_w;
+        [SerializeField] private MapTextureType sideTextureType = MapTextureType.map_g;
 
         [Header("Data")]
         [SerializeField] private ulong heightMask;
@@ -106,6 +107,12 @@ namespace Script.Map.Data
             }
 
             UpdateUVs();
+
+            // UV 및 머티리얼 속성 갱신
+            if (meshRenderer != null && meshRenderer.sharedMaterial != null)
+            {
+                UpdateMaterialProperties();
+            }
         }
 
         private void UpdateUVs()
@@ -181,6 +188,71 @@ namespace Script.Map.Data
             // MapMeshUtil의 규칙(0.125f step)에 따른 로컬 높이 반환
             float y = heightData[index] * MapMeshUtil.HeightStep;
             return new Vector3(0, y, 0);
+        }
+
+        private void UpdateMaterialProperties()
+        {
+            // 윗면(Top) UV 계산 (나으리의 기존 로직)
+            Vector2 topUVOffset = CalculateUVOffset(textureType);
+            Vector2 topUVScale = CalculateUVScale();
+
+            // 옆면(Side) UV 계산 (신규)
+            Vector2 sideUVOffset = CalculateUVOffset(sideTextureType);
+            Vector2 sideUVScale = topUVScale; // 스케일은 동일하다고 가정
+
+            // 머티리얼 속성 블록 설정
+            MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+            meshRenderer.GetPropertyBlock(propertyBlock);
+
+            // 윗면 정보 전달
+            propertyBlock.SetVector("_TopUVOffset", topUVOffset);
+            propertyBlock.SetVector("_TopUVScale", topUVScale);
+
+            // 옆면 정보 전달 (신규)
+            propertyBlock.SetVector("_SideUVOffset", sideUVOffset);
+            propertyBlock.SetVector("_SideUVScale", sideUVScale);
+
+            meshRenderer.SetPropertyBlock(propertyBlock);
+        }
+
+        /// <summary>
+        /// 아틀라스 텍스처 내에서 특정 타입의 시작 위치(Offset)를 계산합니다.
+        /// </summary>
+        private Vector2 CalculateUVOffset(MapTextureType type)
+        {
+            if (meshRenderer == null || meshRenderer.sharedMaterial == null || meshRenderer.sharedMaterial.mainTexture == null)
+                return Vector2.zero;
+
+            Texture texture = meshRenderer.sharedMaterial.mainTexture;
+            int textureWidth = texture.width;
+            int textureHeight = texture.height;
+
+            // 가로 8칸 기준 인덱스 계산
+            int columnIndex = (int)type % 8;
+            int rowIndex = (int)type / 8;
+
+            // [계산] 텍스처 좌표계는 좌하단이 (0,0)이므로 Y축(vMin)은 위에서부터 내려오는 계산이 필요합니다.
+            float uMin = columnIndex * (SPRITE_WIDTH / (float)textureWidth);
+            float vMin = 1.0f - (rowIndex + 1) * (SPRITE_HEIGHT / (float)textureHeight);
+
+            return new Vector2(uMin, vMin);
+        }
+
+        /// <summary>
+        /// 아틀라스 내에서 한 칸의 크기(Scale)를 계산합니다. (256x256 고정 비율)
+        /// </summary>
+        private Vector2 CalculateUVScale()
+        {
+            if (meshRenderer == null || meshRenderer.sharedMaterial == null || meshRenderer.sharedMaterial.mainTexture == null)
+                return Vector2.one;
+
+            Texture texture = meshRenderer.sharedMaterial.mainTexture;
+
+            // 전체 텍스처 대비 스프라이트 한 칸의 비율
+            float uScale = SPRITE_WIDTH / (float)texture.width;
+            float vScale = SPRITE_HEIGHT / (float)texture.height;
+
+            return new Vector2(uScale, vScale);
         }
     }
 }
