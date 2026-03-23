@@ -164,20 +164,14 @@ namespace Script.Map.Data
             return new Vector2(uScale, vScale);
         }
 
-        public void UpdateMesh()
+        public void UpdateMesh() { UpdateMesh(0); }
+        public void UpdateMesh(byte skipSideMask)
         {
             if (meshFilter == null) return;
-
-            // [핵심] 인자가 1개인 새로운 GenerateMesh 로직 사용
-            Mesh newMesh = MapMeshUtil.GenerateMesh(heightData);
+            Mesh newMesh = MapMeshUtil.GenerateMesh(heightData, skipSideMask);
             newMesh.name = "Generated3DBlockMesh";
-
-            if (meshFilter.sharedMesh != null && meshFilter.sharedMesh.name == "Generated3DBlockMesh")
-            {
-                DestroyImmediate(meshFilter.sharedMesh, true);
-            }
+            if (meshFilter.sharedMesh != null && meshFilter.sharedMesh.name == "Generated3DBlockMesh") DestroyImmediate(meshFilter.sharedMesh, true);
             meshFilter.sharedMesh = newMesh;
-
             if (TryGetComponent<MeshCollider>(out var mc)) mc.sharedMesh = newMesh;
         }
 
@@ -233,6 +227,41 @@ namespace Script.Map.Data
             {
                 UpdateMaterialProperties();
             }
+        }
+
+        /// <summary>
+        /// [신규] 주변 타일을 찾아 높이가 같은 옆면을 계산하고 메쉬를 최적화합니다.
+        /// </summary>
+        public void OptimizeSides(Dictionary<Vector2Int, EditMapTileComponent> tileMap)
+        {
+            Vector3 pos = transform.position;
+            Vector2Int gridPos = new Vector2Int(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.z));
+            byte skipMask = 0;
+
+            // 8개 옆면 구간 정의에 따른 방향 매핑
+            // Perimeter: { 0, 1, 2, 7, 12, 11, 10, 5 }
+            // Neighbor Directions: Back(0,1), Right(2,3), Forward(4,5), Left(6,7)
+
+            skipMask |= CheckNeighbor(tileMap, gridPos + Vector2Int.down, 0, new int[] { 0, 1 }, new int[] { 10, 11, 12 }); // Back
+            skipMask |= CheckNeighbor(tileMap, gridPos + Vector2Int.right, 2, new int[] { 2, 7 }, new int[] { 0, 5, 10 });   // Right
+            skipMask |= CheckNeighbor(tileMap, gridPos + Vector2Int.up, 4, new int[] { 12, 11 }, new int[] { 2, 1, 0 });  // Forward
+            skipMask |= CheckNeighbor(tileMap, gridPos + Vector2Int.left, 6, new int[] { 10, 5 }, new int[] { 12, 7, 2 });  // Left
+
+            UpdateMesh(skipMask);
+        }
+        private byte CheckNeighbor(Dictionary<Vector2Int, EditMapTileComponent> tileMap, Vector2Int nPos, int bitStart, int[] myIdx, int[] nIdx)
+        {
+            if (tileMap.TryGetValue(nPos, out var neighbor))
+            {
+                // 두 타일의 인접한 변의 정점 높이가 모두 일치하는지 확인
+                // 예: 내 정점 0,1,2의 높이가 이웃의 10,11,12와 같다면 그 사이 벽은 안 보임
+                bool match0 = GetHeightData(myIdx[0]) == neighbor.GetHeightData(nIdx[0]) && GetHeightData(myIdx[0]) != -1;
+                bool matchMid = neighbor.GetHeightData(nIdx[1]) != -1; // 중간 점 체크 생략 가능하면 생략
+                bool match1 = GetHeightData(myIdx[1]) == neighbor.GetHeightData(nIdx[2]) && GetHeightData(myIdx[1]) != -1;
+
+                if (match0 && match1) return (byte)(0b11 << bitStart);
+            }
+            return 0;
         }
     }
 }

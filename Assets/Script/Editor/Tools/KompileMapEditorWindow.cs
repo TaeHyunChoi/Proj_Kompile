@@ -137,6 +137,18 @@ namespace Script.Map.Editor
             {
                 if (EditorUtility.DisplayDialog("Bake Map", "맵 데이터를 구우시겠습니까?", "Bake", "Cancel")) ExecuteBake();
             }
+
+            // [신규] 최적화 버튼
+            if (GUILayout.Button("Optimize Visible Sides (옆면 최적화)", GUILayout.Height(30)))
+            {
+                ExecuteOptimizeMesh();
+            }
+
+            if (GUILayout.Button("Bake Map (Combine Meshes)", GUILayout.Height(40)))
+            {
+                ExecuteOptimizeMesh(); // Bake 전에도 최적화 강제 수행
+                if (EditorUtility.DisplayDialog("Bake Map", "맵 데이터를 구우시겠습니까?", "Bake", "Cancel")) ExecuteBake();
+            }
         }
 
         private void DrawPaletteUI()
@@ -434,6 +446,28 @@ namespace Script.Map.Editor
         }
 
         private void ExecuteBake() { Debug.Log("Bake 실행"); }
+
+        private void ExecuteOptimizeMesh()
+        {
+            var allTiles = Object.FindObjectsByType<EditMapTileComponent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+            // 빠른 조회를 위해 딕셔너리 생성
+            Dictionary<Vector2Int, EditMapTileComponent> tileMap = new Dictionary<Vector2Int, EditMapTileComponent>();
+            foreach (var t in allTiles)
+            {
+                Vector2Int gridPos = new Vector2Int(Mathf.RoundToInt(t.transform.position.x), Mathf.RoundToInt(t.transform.position.z));
+                if (!tileMap.ContainsKey(gridPos)) tileMap.Add(gridPos, t);
+            }
+
+            // 각 타일에게 최적화 명령
+            foreach (var t in allTiles)
+            {
+                Undo.RecordObject(t, "Optimize Side Mesh");
+                t.OptimizeSides(tileMap);
+            }
+
+            Debug.Log($"[Framework] {allTiles.Length}개 타일의 메쉬 최적화가 완료되었습니다.");
+        }
     }
 }
 #endif
