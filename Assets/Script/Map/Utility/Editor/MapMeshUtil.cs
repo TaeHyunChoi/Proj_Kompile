@@ -11,7 +11,7 @@ namespace Script.Map.Utility
 
         public static readonly float2[] PointCoords = new float2[]
         {
-            new float2(0.0f, 0.0f),   new float2(0.5f, 0.0f),   new Vector2(1.0f, 0.0f),
+            new float2(0.0f, 0.0f),   new float2(0.5f, 0.0f),   new float2(1.0f, 0.0f),
             new float2(0.25f, 0.25f), new float2(0.75f, 0.25f),
             new float2(0.0f, 0.5f),   new float2(0.5f, 0.5f),   new float2(1.0f, 0.5f),
             new float2(0.25f, 0.75f), new float2(0.75f, 0.75f),
@@ -27,9 +27,9 @@ namespace Script.Map.Utility
         };
 
         /// <summary>
-        /// [수정됨] skipSideMask를 통해 보이지 않는 옆면을 생략합니다.
+        /// [고도화] neighborHeights(길이 16)를 참조하여 맞닿는 구간만 부분 클리핑합니다.
         /// </summary>
-        public static Mesh GenerateMesh(MapTileHeightsData data, byte skipSideMask = 0)
+        public static Mesh GenerateMesh(MapTileHeightsData data, sbyte[] neighborHeights = null)
         {
             Mesh mesh = new Mesh { name = "Generated3DBlockMesh" };
 
@@ -37,6 +37,7 @@ namespace Script.Map.Utility
             Vector2[] uvs = new Vector2[45];
             List<int> dynamicTriangles = new List<int>();
 
+            // 1. 윗면 생성
             for (int i = 0; i < 13; i++)
             {
                 sbyte h = data[i];
@@ -47,39 +48,51 @@ namespace Script.Map.Utility
 
             for (int i = 0; i < TriangleIndices.Length; i += 3)
             {
-                int v0 = TriangleIndices[i];
-                int v1 = TriangleIndices[i + 1];
-                int v2 = TriangleIndices[i + 2];
+                int v0 = TriangleIndices[i]; int v1 = TriangleIndices[i + 1]; int v2 = TriangleIndices[i + 2];
                 if (data[v0] == -1 || data[v1] == -1 || data[v2] == -1) continue;
                 dynamicTriangles.Add(v0); dynamicTriangles.Add(v1); dynamicTriangles.Add(v2);
             }
 
+            // 2. 옆면 가변 높이 클리핑
             int[] perimeter = { 0, 1, 2, 7, 12, 11, 10, 5 };
             int vIdx = 13;
 
             for (int i = 0; i < 8; i++)
             {
-                int top1 = perimeter[i];
-                int top2 = perimeter[(i + 1) % 8];
+                int topIdx1 = perimeter[i];
+                int topIdx2 = perimeter[(i + 1) % 8];
 
-                // [핵심] 1. 정점이 삭제되었거나 2. 최적화 마스크에 의해 가려진 경우 옆면 생성 안 함
-                bool isSideHidden = (skipSideMask & (1 << i)) != 0;
-                if (data[top1] == -1 || data[top2] == -1 || isSideHidden)
+                sbyte h1 = data[topIdx1];
+                sbyte h2 = data[topIdx2];
+
+                if (h1 == -1 || h2 == -1) { vIdx += 4; continue; }
+
+                // 이웃 타일 정점 높이 (배열 없으면 -1 취급)
+                sbyte nh1 = (neighborHeights != null) ? neighborHeights[i * 2] : (sbyte)-1;
+                sbyte nh2 = (neighborHeights != null) ? neighborHeights[i * 2 + 1] : (sbyte)-1;
+
+                float floorY1 = (nh1 == -1) ? 0f : nh1 * HeightStep;
+                float floorY2 = (nh2 == -1) ? 0f : nh2 * HeightStep;
+
+                // 내 정점이 이웃 정점보다 같거나 낮으면 벽 생성 생략
+                if (h1 <= nh1 && h2 <= nh2 && nh1 != -1 && nh2 != -1)
                 {
                     vIdx += 4;
                     continue;
                 }
 
-                vertices[vIdx] = vertices[top1];
-                vertices[vIdx + 1] = vertices[top2];
-                vertices[vIdx + 2] = new Vector3(vertices[top1].x, 0, vertices[top1].z);
-                vertices[vIdx + 3] = new Vector3(vertices[top2].x, 0, vertices[top2].z);
+                // 옆면 정점 4개: 윗면 높이부터 이웃 타일 높이(floorY)까지만 메쉬 생성
+                vertices[vIdx] = vertices[topIdx1];
+                vertices[vIdx + 1] = vertices[topIdx2];
+                vertices[vIdx + 2] = new Vector3(vertices[topIdx1].x, floorY1, vertices[topIdx1].z);
+                vertices[vIdx + 3] = new Vector3(vertices[topIdx2].x, floorY2, vertices[topIdx2].z);
 
                 uvs[vIdx] = new Vector2(0, 1); uvs[vIdx + 1] = new Vector2(1, 1);
                 uvs[vIdx + 2] = new Vector2(0, 0); uvs[vIdx + 3] = new Vector2(1, 0);
 
                 dynamicTriangles.Add(vIdx); dynamicTriangles.Add(vIdx + 1); dynamicTriangles.Add(vIdx + 2);
                 dynamicTriangles.Add(vIdx + 1); dynamicTriangles.Add(vIdx + 3); dynamicTriangles.Add(vIdx + 2);
+
                 vIdx += 4;
             }
 
