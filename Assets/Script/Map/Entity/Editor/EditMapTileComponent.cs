@@ -22,7 +22,9 @@ namespace Script.Map.Data
         [SerializeField] private bool isOnlyRender;
         [SerializeField] private ushort renderLayer;
 
-        [SerializeField] private TileSetDefinition tileSet;
+        // [핵심 변경] TileSetDefinition 에셋 의존성을 제거하고 인덱스를 직접 저장합니다.
+        [SerializeField] private int topTextureIndex = 0;
+        [SerializeField] private int sideTextureIndex = 0;
 
         [Header("Data")]
         [SerializeField] private ulong heightMask;
@@ -32,9 +34,12 @@ namespace Script.Map.Data
 
         public int GridKey => MapCoordUtil.ComputeGridKey(transform.position);
         public ushort RenderLayer => renderLayer;
-        public int TextureIndex => tileSet != null ? (int)tileSet.topTexture : 0;
+
+        // 외부에서 텍스처 인덱스를 읽어갈 수 있도록 프로퍼티 개방 (스포이드 용도)
+        public int TopTextureIndex => topTextureIndex;
+        public int SideTextureIndex => sideTextureIndex;
+
         public ulong HeightMask => heightMask;
-        public TileSetDefinition TileSet => tileSet;
 
         private void Awake()
         {
@@ -77,14 +82,22 @@ namespace Script.Map.Data
                 SceneView.RepaintAll();
             };
 
-            if (meshRenderer != null && tileSet != null) UpdateMaterialProperties();
+            // 에셋 의존성이 없으므로 무조건 갱신합니다.
+            if (meshRenderer != null) UpdateMaterialProperties();
         }
 
         public void SetVisualDimmed(bool isDimmed)
         {
-            if (_isVisualDimmed == isDimmed) return;
+            if (_isVisualDimmed == isDimmed)
+            {
+                return;
+            }
             _isVisualDimmed = isDimmed;
-            if (meshRenderer != null && tileSet != null) UpdateMaterialProperties();
+
+            if (meshRenderer != null)
+            {
+                UpdateMaterialProperties();
+            }
         }
 
         public void SetRenderLayer(ushort layer)
@@ -95,9 +108,10 @@ namespace Script.Map.Data
 
         private void UpdateMaterialProperties()
         {
-            Vector2 topUVOffset = CalculateUVOffset(tileSet.topTexture);
+            // [변경] MapTextureType Enum 강제 캐스팅을 사용하여 Offset을 계산합니다.
+            Vector2 topUVOffset = CalculateUVOffset((MapTextureType)topTextureIndex);
             Vector2 topUVScale = CalculateUVScale();
-            Vector2 sideUVOffset = CalculateUVOffset(tileSet.sideTexture);
+            Vector2 sideUVOffset = CalculateUVOffset((MapTextureType)sideTextureIndex);
             Vector2 sideUVScale = topUVScale;
 
             MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
@@ -129,10 +143,8 @@ namespace Script.Map.Data
             return new Vector2(SPRITE_WIDTH / (float)texture.width, SPRITE_HEIGHT / (float)texture.height);
         }
 
-        // [컴파일 에러 해결] 기본 업데이트 시 null 전달
         public void UpdateMesh() { UpdateMesh(null); }
 
-        // [컴파일 에러 해결] byte mask가 아닌 sbyte[] neighborHeights 배열을 받도록 수정
         public void UpdateMesh(sbyte[] neighborHeights)
         {
             if (meshFilter == null) return;
@@ -180,12 +192,19 @@ namespace Script.Map.Data
             return new Vector3(0, y, 0);
         }
 
-        public void ApplyTileSet(TileSetDefinition newTileSet)
+        /// <summary>
+        /// [신규] 에디터에서 선택한 Top과 Side 텍스처 인덱스를 타일에 직접 적용합니다.
+        /// </summary>
+        public void ApplyTextures(int topIndex, int sideIndex)
         {
-            if (tileSet == newTileSet || newTileSet == null) return;
+            // 인덱스가 바뀌지 않았다면 무시
+            if (topTextureIndex == topIndex && sideTextureIndex == sideIndex) return;
 
-            Undo.RecordObject(this, "Paint TileSet");
-            tileSet = newTileSet;
+            Undo.RecordObject(this, "Paint Texture Indices");
+
+            topTextureIndex = topIndex;
+            sideTextureIndex = sideIndex;
+
             EditorUtility.SetDirty(this);
 
             if (meshRenderer != null && meshRenderer.sharedMaterial != null)
@@ -194,9 +213,6 @@ namespace Script.Map.Data
             }
         }
 
-        /// <summary>
-        /// [고도화] 주변 타일의 정점 높이를 가져와 맞닿는 면적만큼만 옆면을 생성합니다.
-        /// </summary>
         public void OptimizeSides(Dictionary<Vector2Int, EditMapTileComponent> tileMap)
         {
             Vector3 pos = transform.position;

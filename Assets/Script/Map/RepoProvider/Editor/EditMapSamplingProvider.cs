@@ -3,6 +3,7 @@ namespace Script.Map.Provider
 {
     using Script.Map.Data;
     using Script.Map.Utility;
+    using Script.Map.Entity;
     using Script.Asset.Provider;
     using System;
     using System.Collections.Concurrent;
@@ -16,7 +17,7 @@ namespace Script.Map.Provider
     using UnityEngine;
     using Object = UnityEngine.Object;
 
-    public partial class EditMapSamplingRepoProvider 
+    public partial class EditMapSamplingRepoProvider
     {
         private readonly string MAP_NAVI_DATA_PATH = "Rcs\\Bytes\\MapNavi";
         private readonly float[] DIFF_Y = new float[] { 0, 1, -1 };
@@ -48,12 +49,10 @@ namespace Script.Map.Provider
         {
             Debug.Log($"Start Bake Map");
 
-            // [Framework] MonoBehaviour 상속 객체는 Component 명명 규칙 사용
-            var instance = Object.FindFirstObjectByType<EditMapSamplingComponent>(); 
+            var instance = Object.FindFirstObjectByType<EditMapSamplingComponent>();
             var instanceTransform = instance.transform;
             sceneIndex = instance.SceneIndex;
 
-            // [Framework] Entity 명칭 대신 Component 명칭 사용
             EditMapTileComponent[] tiles = instanceTransform.GetComponentsInChildren<EditMapTileComponent>(true);
             int length = tiles.Length;
             Allocator allocationType = Allocator.TempJob;
@@ -82,7 +81,6 @@ namespace Script.Map.Provider
                 nativeHeights[i] = tileComponent.HeightMask;
             }
 
-            // [Framework] Utility성 Job. Burst Compile 적용 대상
             EditMapTileJobUtil job = new EditMapTileJobUtil
             {
                 SceneIndex = nativeSceneIndex,
@@ -116,7 +114,10 @@ namespace Script.Map.Provider
 
                 EditMapTileData tileData = new EditMapTileData()
                 {
-                    ID = nativeResult[i].ID, NaviMask = naviMask, LinkMask = default, RenderIndex = renderIndex
+                    ID = nativeResult[i].ID,
+                    NaviMask = naviMask,
+                    LinkMask = default,
+                    RenderIndex = renderIndex
                 };
                 map[gridKey].TryAdd(tileKey, tileData);
             }
@@ -156,13 +157,13 @@ namespace Script.Map.Provider
                     layerMeshAssets = grid.Value.LayerMeshAssets
                 };
 
-                    AssetRepoProvider.WriteBinaryFile<MapGridData>(
-                    data: mapGridData,
-                    relativePath: MAP_NAVI_DATA_PATH,
-                    fileName: $"MapNavi_{mapGridData.Key}",
-                    addressableGroup: "MapNavi",
-                    addressableLabel: "MapNavi"
-                );
+                AssetRepoProvider.WriteBinaryFile<MapGridData>(
+                data: mapGridData,
+                relativePath: MAP_NAVI_DATA_PATH,
+                fileName: $"MapNavi_{mapGridData.Key}",
+                addressableGroup: "MapNavi",
+                addressableLabel: "MapNavi"
+            );
             }
 
             Debug.Log($"End Bake (length: {tiles.Length})");
@@ -228,8 +229,8 @@ namespace Script.Map.Provider
         }
 
         public static void CombineAndRegister(ConcurrentDictionary<int, EditMapGridData> map,
-            EditMapTileComponent[] tiles, // [Framework] 명칭 변경 반영
-            int[] gridKeys, 
+            EditMapTileComponent[] tiles,
+            int[] gridKeys,
             int sceneIndex,
             string adderessableGroupName)
         {
@@ -282,7 +283,7 @@ namespace Script.Map.Provider
 
                     while (idx < totalTiles && batchIndices.Count < BATCH_TILE_LIMIT)
                     {
-                        EditMapTileComponent tile = tiles[idx]; // [Framework] 명칭 변경 반영
+                        EditMapTileComponent tile = tiles[idx];
                         int vc = 0;
                         if (true == tile.TryGetSharedMesh(out Mesh tileMesh))
                         {
@@ -334,7 +335,7 @@ namespace Script.Map.Provider
         private static void ProcessBatch(EditBakeContext ctx, EditMapTileComponent[] tilesInGrid, int[] gridKeys,
             List<int> indices, Dictionary<EditMapGroupKey, EditGroupAccumulatorData> accums)
         {
-            EditMapTileComponent tile; // [Framework] 명칭 변경 반영
+            EditMapTileComponent tile;
             foreach (int i in indices)
             {
                 tile = tilesInGrid[i];
@@ -353,12 +354,15 @@ namespace Script.Map.Provider
 
                 EditMapTileChunkData chunkData = (0 < chunkPool.Count) ? chunkPool.Pop() : new EditMapTileChunkData();
                 chunkData.Instance = new CombineInstance { mesh = mesh, transform = tile.transform.localToWorldMatrix };
-                chunkData.UVs = CalculateAtlasUVs(mesh, tile.TextureIndex);
+
+                // [에러 수정] TopTextureIndex와 SideTextureIndex를 넘겨주도록 변경
+                chunkData.UVs = CalculateAtlasUVs(mesh, tile.TopTextureIndex, tile.SideTextureIndex);
+
                 chunkData.VertexCount = vc;
                 chunkData.RenderLayer = tile.RenderLayer;
-                chunkData.GridKey = correctGridKey; 
+                chunkData.GridKey = correctGridKey;
 
-                EditMapGroupKey key = new EditMapGroupKey(tile.RenderLayer, correctGridKey); 
+                EditMapGroupKey key = new EditMapGroupKey(tile.RenderLayer, correctGridKey);
                 if (false == accums.TryGetValue(key, out EditGroupAccumulatorData acc))
                 {
                     acc = 0 < accmPool.Count ? accmPool.Pop() : new EditGroupAccumulatorData();
@@ -376,27 +380,38 @@ namespace Script.Map.Provider
             }
         }
 
-        private static Vector2[] CalculateAtlasUVs(Mesh mesh, int textureIndex)
+        // [에러 수정 & 기능 향상] 윗면과 옆면의 인덱스를 각각 받아 UV를 정확히 분리하여 굽습니다.
+        private static Vector2[] CalculateAtlasUVs(Mesh mesh, int topTextureIndex, int sideTextureIndex)
         {
             Vector3[] verts = mesh.vertices;
-            Vector2[] uvs = new Vector2[verts.Length];
+            Vector2[] sourceUVs = mesh.uv; // GenerateMesh에서 만들어둔 로컬 UV (0~1)를 읽어옵니다.
+            Vector2[] resultUVs = new Vector2[verts.Length];
 
-            int atlasCols = ATLAS_WIDTH / ATLAS_HEIGHT;
+            int atlasCols = ATLAS_WIDTH / (int)SPRITE_SIZE; // 2048 / 256 = 8
             float uvW = SPRITE_SIZE / ATLAS_WIDTH;
             float uvH = SPRITE_SIZE / ATLAS_HEIGHT;
 
-            float baseX = (textureIndex % atlasCols) * uvW;
-            float baseY = (textureIndex / atlasCols) * uvH;
+            // Top과 Side의 시작 좌표 계산
+            float topBaseX = (topTextureIndex % atlasCols) * uvW;
+            float topBaseY = (topTextureIndex / atlasCols) * uvH;
 
-            float x, y;
+            float sideBaseX = (sideTextureIndex % atlasCols) * uvW;
+            float sideBaseY = (sideTextureIndex / atlasCols) * uvH;
+
+            // GenerateMesh의 특성: 0~12번 정점은 윗면, 13번부터는 옆면입니다.
             for (int i = 0; i < verts.Length; ++i)
             {
-                x = baseX + verts[i].x * uvW;
-                y = baseY + verts[i].y * uvH;
-                uvs[i] = new Vector2(x, y);
+                float baseX = (i < 13) ? topBaseX : sideBaseX;
+                float baseY = (i < 13) ? topBaseY : sideBaseY;
+
+                // 로컬 UV를 가져와서 아틀라스 내 해당 구역의 크기(uvW, uvH)만큼 축소시키고 더해줍니다.
+                resultUVs[i] = new Vector2(
+                    baseX + sourceUVs[i].x * uvW,
+                    baseY + sourceUVs[i].y * uvH
+                );
             }
 
-            return uvs;
+            return resultUVs;
         }
 
         private static void FlushAccumulatorPart(EditBakeContext ctx, EditMapGroupKey key, EditGroupAccumulatorData acc)
