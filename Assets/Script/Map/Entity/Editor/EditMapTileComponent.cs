@@ -192,13 +192,17 @@ namespace Script.Map.Data
             return new Vector3(0, y, 0);
         }
 
-        /// <summary>
-        /// [신규] 에디터에서 선택한 Top과 Side 텍스처 인덱스를 타일에 직접 적용합니다.
-        /// </summary>
+        /// <summary> 에디터에서 선택한 Top과 Side 텍스처 인덱스를 타일에 직접 적용 </summary>
         public void ApplyTextures(int topIndex, int sideIndex)
         {
-            // 인덱스가 바뀌지 않았다면 무시
-            if (topTextureIndex == topIndex && sideTextureIndex == sideIndex) return;
+            if (topTextureIndex == topIndex)
+            {
+                return;
+            }
+            if (sideTextureIndex == sideIndex)
+            {
+                return;
+            }
 
             Undo.RecordObject(this, "Paint Texture Indices");
 
@@ -207,7 +211,8 @@ namespace Script.Map.Data
 
             EditorUtility.SetDirty(this);
 
-            if (meshRenderer != null && meshRenderer.sharedMaterial != null)
+            if (meshRenderer
+                && meshRenderer.sharedMaterial)
             {
                 UpdateMaterialProperties();
             }

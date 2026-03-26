@@ -355,9 +355,7 @@ namespace Script.Map.Provider
                 EditMapTileChunkData chunkData = (0 < chunkPool.Count) ? chunkPool.Pop() : new EditMapTileChunkData();
                 chunkData.Instance = new CombineInstance { mesh = mesh, transform = tile.transform.localToWorldMatrix };
 
-                // [에러 수정] TopTextureIndex와 SideTextureIndex를 넘겨주도록 변경
                 chunkData.UVs = CalculateAtlasUVs(mesh, tile.TopTextureIndex, tile.SideTextureIndex);
-
                 chunkData.VertexCount = vc;
                 chunkData.RenderLayer = tile.RenderLayer;
                 chunkData.GridKey = correctGridKey;
@@ -380,31 +378,47 @@ namespace Script.Map.Provider
             }
         }
 
-        // [에러 수정 & 기능 향상] 윗면과 옆면의 인덱스를 각각 받아 UV를 정확히 분리하여 굽습니다.
         private static Vector2[] CalculateAtlasUVs(Mesh mesh, int topTextureIndex, int sideTextureIndex)
         {
             Vector3[] verts = mesh.vertices;
-            Vector2[] sourceUVs = mesh.uv; // GenerateMesh에서 만들어둔 로컬 UV (0~1)를 읽어옵니다.
+            Vector2[] sourceUVs = mesh.uv;
+
+            // 만약 원본 메쉬에 UV가 아예 없다면 안전을 위해 빈 배열 생성
+            if (sourceUVs == null || sourceUVs.Length < verts.Length)
+            {
+                sourceUVs = new Vector2[verts.Length];
+            }
+
             Vector2[] resultUVs = new Vector2[verts.Length];
 
             int atlasCols = ATLAS_WIDTH / (int)SPRITE_SIZE; // 2048 / 256 = 8
             float uvW = SPRITE_SIZE / ATLAS_WIDTH;
             float uvH = SPRITE_SIZE / ATLAS_HEIGHT;
 
-            // Top과 Side의 시작 좌표 계산
             float topBaseX = (topTextureIndex % atlasCols) * uvW;
             float topBaseY = (topTextureIndex / atlasCols) * uvH;
 
             float sideBaseX = (sideTextureIndex % atlasCols) * uvW;
             float sideBaseY = (sideTextureIndex / atlasCols) * uvH;
 
-            // GenerateMesh의 특성: 0~12번 정점은 윗면, 13번부터는 옆면입니다.
             for (int i = 0; i < verts.Length; ++i)
             {
-                float baseX = (i < 13) ? topBaseX : sideBaseX;
-                float baseY = (i < 13) ? topBaseY : sideBaseY;
+                float baseX = topBaseX;
+                float baseY = topBaseY;
 
-                // 로컬 UV를 가져와서 아틀라스 내 해당 구역의 크기(uvW, uvH)만큼 축소시키고 더해줍니다.
+                // [근사 로직] Y=0 이거나, 원본 UV가 0, 1 극단값(벽면의 직사각형 UV)이라면 옆면 텍스처 사용
+                if (verts[i].y <= 0.001f)
+                {
+                    baseX = sideBaseX;
+                    baseY = sideBaseY;
+                }
+                else if ((sourceUVs[i].x == 0f || sourceUVs[i].x == 1f) &&
+                         (sourceUVs[i].y == 0f || sourceUVs[i].y == 1f))
+                {
+                    baseX = sideBaseX;
+                    baseY = sideBaseY;
+                }
+
                 resultUVs[i] = new Vector2(
                     baseX + sourceUVs[i].x * uvW,
                     baseY + sourceUVs[i].y * uvH
@@ -414,6 +428,7 @@ namespace Script.Map.Provider
             return resultUVs;
         }
 
+        // [핵심 변경부] 에러가 났던 Flush와 SaveMesh 부분을 완전히 개선했습니다.
         private static void FlushAccumulatorPart(EditBakeContext ctx, EditMapGroupKey key, EditGroupAccumulatorData acc)
         {
             if (0 == acc.Tiles.Count)
@@ -422,7 +437,7 @@ namespace Script.Map.Provider
             }
 
             List<CombineInstance> takeInstances = new List<CombineInstance>();
-            List<Vector2> takeUVs = new List<Vector2>();
+            List<Mesh> tempMeshes = new List<Mesh>(); // 임시 복제 메쉬들을 보관할 리스트
             int takenVerts = 0;
             int tilesConsumed = 0;
 
@@ -433,8 +448,15 @@ namespace Script.Map.Provider
                     break;
                 }
 
-                takeInstances.Add(chunk.Instance);
-                takeUVs.AddRange(chunk.UVs);
+                // [해결책] UV 배열을 나중에 욱여넣지 않고, 임시 메쉬를 만들어 UV를 먹인 뒤 Combine 시킵니다!
+                Mesh tempMesh = Object.Instantiate(chunk.Instance.mesh);
+                tempMesh.uv = chunk.UVs;
+                tempMeshes.Add(tempMesh);
+
+                CombineInstance ci = chunk.Instance;
+                ci.mesh = tempMesh; // 아틀라스 UV가 적용된 임시 메쉬로 교체
+
+                takeInstances.Add(ci);
                 takenVerts += chunk.VertexCount;
                 ++tilesConsumed;
 
@@ -444,7 +466,14 @@ namespace Script.Map.Provider
                 }
             }
 
-            SaveMeshAsset(ctx, key, acc.PartIndex, takeInstances.ToArray(), takeUVs.ToArray());
+            // 이제 수동 UV 주입이 필요 없으므로 인스턴스 배열만 넘겨줍니다.
+            SaveMeshAsset(ctx, key, acc.PartIndex, takeInstances.ToArray());
+
+            // 합치는 작업이 끝난 임시 메쉬들은 메모리 누수 방지를 위해 즉각 파괴합니다.
+            foreach (var tm in tempMeshes)
+            {
+                Object.DestroyImmediate(tm);
+            }
 
             for (int i = 0; i < tilesConsumed; ++i)
             {
@@ -458,8 +487,8 @@ namespace Script.Map.Provider
             ++acc.PartIndex;
         }
 
-        private static void SaveMeshAsset(EditBakeContext ctx, EditMapGroupKey key, int partIdx,
-            CombineInstance[] instances, Vector2[] uvs)
+        // [핵심 변경부] CombineMeshes에 수동 UV 삽입 로직(combinedMesh.uv = uvs;)을 삭제했습니다.
+        private static void SaveMeshAsset(EditBakeContext ctx, EditMapGroupKey key, int partIdx, CombineInstance[] instances)
         {
             string assetName = $"MapRender_{ctx.SceneIndex}_G{key.GridKey}_L{key.RenderLayer}_{partIdx}";
             string path = $"{SAVE_PATH_ROOT}/{assetName}.asset";
@@ -467,13 +496,17 @@ namespace Script.Map.Provider
             Mesh combinedMesh = new Mesh();
             try
             {
-                if (VERTEX_LIMIT < uvs.Length)
+                // 병합될 총 정점 수를 미리 세어보고, 65535개를 넘기면 32비트 포맷으로 전환합니다.
+                int totalVerts = 0;
+                foreach (var ci in instances) totalVerts += ci.mesh.vertexCount;
+
+                if (VERTEX_LIMIT < totalVerts)
                 {
                     combinedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
                 }
 
+                // 유니티의 강력한 CombineMeshes가 불필요한 빈 정점 삭감과 UV 병합을 모두 알아서 처리합니다.
                 combinedMesh.CombineMeshes(instances, true, true);
-                combinedMesh.uv = uvs;
 
                 MeshUtility.Optimize(combinedMesh);
 

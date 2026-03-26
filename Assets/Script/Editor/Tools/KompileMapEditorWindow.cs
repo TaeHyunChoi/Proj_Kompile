@@ -422,45 +422,55 @@ namespace Script.Map.Editor
 
             if (input.type == EventType.Repaint)
             {
+                Color handleCapColor;
+                Color drawCubeColor;
+
                 if (isEyedropper)
                 {
-                    Handles.color = new Color(1f, 0f, 1f, 0.3f);
-                    Handles.CubeHandleCap(0, visualCenter, Quaternion.identity, 0.98f, EventType.Repaint);
-                    Handles.color = Color.magenta;
-                    Handles.DrawWireCube(visualCenter, Vector3.one);
+                    handleCapColor = new Color(1f, 0f, 1f, 0.3f); ;
+                    drawCubeColor = Color.magenta;
 
                     GUIStyle labelStyle = new GUIStyle(EditorStyles.helpBox);
-                    labelStyle.fontStyle = FontStyle.Bold; labelStyle.normal.textColor = Color.white; labelStyle.alignment = TextAnchor.MiddleCenter;
+                    labelStyle.fontStyle = FontStyle.Bold;
+                    labelStyle.normal.textColor = Color.white; 
+                    labelStyle.alignment = TextAnchor.MiddleCenter;
+                    
                     Handles.Label(tile.transform.position + new Vector3(0.5f, 1.2f, 0.5f), "🎨 스포이드", labelStyle);
                 }
                 else
                 {
-                    Handles.color = new Color(0, 1, 1, 0.3f);
-                    Handles.CubeHandleCap(0, visualCenter, Quaternion.identity, 0.98f, EventType.Repaint);
-                    Handles.color = Color.cyan;
-                    Handles.DrawWireCube(visualCenter, Vector3.one);
+                    handleCapColor = new Color(0, 1, 1, 0.3f);
+                    drawCubeColor = Color.cyan;
                 }
+
+                Handles.color = handleCapColor;
+                Handles.CubeHandleCap(0, visualCenter, Quaternion.identity, 0.98f, EventType.Repaint);
+                Handles.color = drawCubeColor;
+                Handles.DrawWireCube(visualCenter, Vector3.one);
             }
 
-            if (isEyedropper)
+            if (true == isEyedropper)
             {
                 if (input.type == EventType.MouseDown && input.button == 0)
                 {
-                    // [변경] 스포이드 시 에셋을 가져오는게 아니라 타일의 인덱스 값을 브러시에 저장
+                    // 스포이드 시 에셋을 가져오는게 아니라 타일의 인덱스 값을 브러시에 저장
                     _brushTopIndex = tile.TopTextureIndex;
                     _brushSideIndex = tile.SideTextureIndex;
                     Repaint();
                     input.Use();
                 }
+
+                return;
+            }
+            if (input.button != 0)
+            {
                 return;
             }
 
-            if (input.button != 0) return;
-
-            if (input.type == EventType.MouseDown || (input.type == EventType.MouseDrag && GUIUtility.hotControl == controlID))
+            if (input.type == EventType.MouseDown 
+                || (input.type == EventType.MouseDrag && GUIUtility.hotControl == controlID))
             {
                 GUIUtility.hotControl = controlID;
-                // [변경] 타일에게 브러시 인덱스를 직접 적용 명령
                 tile.ApplyTextures(_brushTopIndex, _brushSideIndex);
                 input.Use();
             }
