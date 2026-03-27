@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 namespace Script.Map.Data
 {
-    using Script.Index;
     using Script.Map.Utility;
     using System;
     using System.Collections.Generic;
@@ -11,10 +10,11 @@ namespace Script.Map.Data
 
     [Serializable]
     [ExecuteInEditMode]
+    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class EditMapTileComponent : MonoBehaviour
     {
-        private const int SPRITE_WIDTH = 256;
-        private const int SPRITE_HEIGHT = 256;
+        // 텍스처 실제 해상도 압축에 무관하게 항상 8x8 고정 비율을 보장
+        private const float UV_STEP = 1f / 8f;
 
         [Header("Render")]
         [SerializeField] private MeshFilter meshFilter;
@@ -22,7 +22,9 @@ namespace Script.Map.Data
         [SerializeField] private bool isOnlyRender;
         [SerializeField] private ushort renderLayer;
 
-        // [핵심 변경] TileSetDefinition 에셋 의존성을 제거하고 인덱스를 직접 저장합니다.
+        [Header("Atlas Texture (다중 아틀라스 지원)")]
+        [SerializeField] private Texture2D currentAtlasTexture; // [추가] 이 타일이 사용하는 아틀라스
+
         [SerializeField] private int topTextureIndex = 0;
         [SerializeField] private int sideTextureIndex = 0;
 
@@ -35,9 +37,9 @@ namespace Script.Map.Data
         public int GridKey => MapCoordUtil.ComputeGridKey(transform.position);
         public ushort RenderLayer => renderLayer;
 
-        // 외부에서 텍스처 인덱스를 읽어갈 수 있도록 프로퍼티 개방 (스포이드 용도)
         public int TopTextureIndex => topTextureIndex;
         public int SideTextureIndex => sideTextureIndex;
+        public Texture2D CurrentAtlasTexture => currentAtlasTexture; // [추가] 스포이드에서 읽어갈 텍스처
 
         public ulong HeightMask => heightMask;
 
@@ -55,19 +57,6 @@ namespace Script.Map.Data
             return null != outSharedMesh;
         }
 
-        public void InitializePrefab(int[] heights, bool isSmall)
-        {
-            heightMask = 0;
-            for (int i = 0; i < heights.Length; ++i)
-            {
-                int height = heights[i];
-                ulong heightFlag = (-1 == height) ? HEIGHT_MASK : (ulong)height;
-                heightMask |= (heightFlag & HEIGHT_MASK) << (i * HEIGHT_BITS);
-                if (i < 13) heightData[i] = (sbyte)height;
-            }
-            EditorUtility.SetDirty(this);
-        }
-
         private void OnValidate()
         {
             if (this == null) return;
@@ -82,22 +71,14 @@ namespace Script.Map.Data
                 SceneView.RepaintAll();
             };
 
-            // 에셋 의존성이 없으므로 무조건 갱신합니다.
             if (meshRenderer != null) UpdateMaterialProperties();
         }
 
         public void SetVisualDimmed(bool isDimmed)
         {
-            if (_isVisualDimmed == isDimmed)
-            {
-                return;
-            }
+            if (_isVisualDimmed == isDimmed) return;
             _isVisualDimmed = isDimmed;
-
-            if (meshRenderer != null)
-            {
-                UpdateMaterialProperties();
-            }
+            if (meshRenderer != null) UpdateMaterialProperties();
         }
 
         public void SetRenderLayer(ushort layer)
@@ -108,19 +89,25 @@ namespace Script.Map.Data
 
         private void UpdateMaterialProperties()
         {
-            // [변경] MapTextureType Enum 강제 캐스팅을 사용하여 Offset을 계산합니다.
-            Vector2 topUVOffset = CalculateUVOffset((MapTextureType)topTextureIndex);
+            Vector2 topUVOffset = CalculateUVOffset(topTextureIndex);
             Vector2 topUVScale = CalculateUVScale();
-            Vector2 sideUVOffset = CalculateUVOffset((MapTextureType)sideTextureIndex);
+            Vector2 sideUVOffset = CalculateUVOffset(sideTextureIndex);
             Vector2 sideUVScale = topUVScale;
 
             MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
-            meshRenderer.GetPropertyBlock(propertyBlock);
+            if (meshRenderer.HasPropertyBlock()) meshRenderer.GetPropertyBlock(propertyBlock);
 
             propertyBlock.SetVector("_TopUVOffset", topUVOffset);
             propertyBlock.SetVector("_TopUVScale", topUVScale);
             propertyBlock.SetVector("_SideUVOffset", sideUVOffset);
             propertyBlock.SetVector("_SideUVScale", sideUVScale);
+
+            // [핵심 해결] 타일별로 지정된 다중 아틀라스를 머티리얼에 강제 적용
+            if (currentAtlasTexture != null)
+            {
+                propertyBlock.SetTexture("_MainTex", currentAtlasTexture);
+                propertyBlock.SetTexture("_BaseMap", currentAtlasTexture); // URP 호환 보장
+            }
 
             Color tintColor = _isVisualDimmed ? new Color(0.2f, 0.2f, 0.2f, 1.0f) : Color.white;
             propertyBlock.SetColor("_Color", tintColor);
@@ -128,36 +115,30 @@ namespace Script.Map.Data
             meshRenderer.SetPropertyBlock(propertyBlock);
         }
 
-        private Vector2 CalculateUVOffset(MapTextureType type)
+        // [안전장치] 해상도 의존성을 제거하여 어떤 환경에서도 정확한 셀을 비춥니다.
+        private Vector2 CalculateUVOffset(int globalTextureIndex)
         {
-            if (meshRenderer == null || meshRenderer.sharedMaterial == null || meshRenderer.sharedMaterial.mainTexture == null) return Vector2.zero;
-            Texture texture = meshRenderer.sharedMaterial.mainTexture;
-            int columnIndex = (int)type % 8; int rowIndex = (int)type / 8;
-            return new Vector2(columnIndex * (SPRITE_WIDTH / (float)texture.width), 1.0f - (rowIndex + 1) * (SPRITE_HEIGHT / (float)texture.height));
+            int localIndex = globalTextureIndex % 64;
+            int columnIndex = localIndex % 8;
+            int rowIndex = localIndex / 8;
+
+            return new Vector2(columnIndex * UV_STEP, 1.0f - ((rowIndex + 1) * UV_STEP));
         }
 
-        private Vector2 CalculateUVScale()
-        {
-            if (meshRenderer == null || meshRenderer.sharedMaterial == null || meshRenderer.sharedMaterial.mainTexture == null) return Vector2.one;
-            Texture texture = meshRenderer.sharedMaterial.mainTexture;
-            return new Vector2(SPRITE_WIDTH / (float)texture.width, SPRITE_HEIGHT / (float)texture.height);
-        }
+        private Vector2 CalculateUVScale() => new Vector2(UV_STEP, UV_STEP);
 
         public void UpdateMesh() { UpdateMesh(null); }
 
         public void UpdateMesh(sbyte[] neighborHeights)
         {
             if (meshFilter == null) return;
-
             Mesh newMesh = MapMeshUtil.GenerateMesh(heightData, neighborHeights);
             newMesh.name = "Generated3DBlockMesh";
 
             if (meshFilter.sharedMesh != null && meshFilter.sharedMesh.name == "Generated3DBlockMesh")
-            {
                 DestroyImmediate(meshFilter.sharedMesh, true);
-            }
-            meshFilter.sharedMesh = newMesh;
 
+            meshFilter.sharedMesh = newMesh;
             if (TryGetComponent<MeshCollider>(out var mc)) mc.sharedMesh = newMesh;
         }
 
@@ -177,10 +158,8 @@ namespace Script.Map.Data
         {
             int newVal = heightData[pointIndex] + delta;
             heightData[pointIndex] = (sbyte)Mathf.Clamp(newVal, -1, 8);
-
             UpdateHeightMask();
             UpdateMesh();
-
             EditorUtility.SetDirty(this);
         }
 
@@ -192,27 +171,18 @@ namespace Script.Map.Data
             return new Vector3(0, y, 0);
         }
 
-        /// <summary> 에디터에서 선택한 Top과 Side 텍스처 인덱스를 타일에 직접 적용 </summary>
-        public void ApplyTextures(int topIndex, int sideIndex)
+        // [추가] 에디터에서 텍스처를 칠할 때, 인덱스와 '아틀라스 텍스처'를 동시에 받아옵니다.
+        public void ApplyTextures(int topIndex, int sideIndex, Texture2D targetAtlas)
         {
-            if (topTextureIndex == topIndex)
-            {
-                return;
-            }
-            if (sideTextureIndex == sideIndex)
-            {
-                return;
-            }
-
             Undo.RecordObject(this, "Paint Texture Indices");
 
             topTextureIndex = topIndex;
             sideTextureIndex = sideIndex;
+            if (targetAtlas != null) currentAtlasTexture = targetAtlas;
 
             EditorUtility.SetDirty(this);
 
-            if (meshRenderer
-                && meshRenderer.sharedMaterial)
+            if (meshRenderer && meshRenderer.sharedMaterial)
             {
                 UpdateMaterialProperties();
             }
@@ -222,13 +192,12 @@ namespace Script.Map.Data
         {
             Vector3 pos = transform.position;
             Vector2Int gridPos = new Vector2Int(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.z));
-
             sbyte[] nh = new sbyte[16];
 
-            FillNeighborHeights(nh, 0, tileMap, gridPos + Vector2Int.down, 10, 11, 12); // Back 
-            FillNeighborHeights(nh, 2, tileMap, gridPos + Vector2Int.right, 0, 5, 10);   // Right 
-            FillNeighborHeights(nh, 4, tileMap, gridPos + Vector2Int.up, 2, 1, 0);    // Forward 
-            FillNeighborHeights(nh, 6, tileMap, gridPos + Vector2Int.left, 12, 7, 2);   // Left 
+            FillNeighborHeights(nh, 0, tileMap, gridPos + Vector2Int.down, 10, 11, 12);
+            FillNeighborHeights(nh, 2, tileMap, gridPos + Vector2Int.right, 0, 5, 10);
+            FillNeighborHeights(nh, 4, tileMap, gridPos + Vector2Int.up, 2, 1, 0);
+            FillNeighborHeights(nh, 6, tileMap, gridPos + Vector2Int.left, 12, 7, 2);
 
             UpdateMesh(nh);
         }
@@ -242,10 +211,7 @@ namespace Script.Map.Data
                 nh[(startSeg + 1) * 2] = neighbor.GetHeightData(nV2);
                 nh[(startSeg + 1) * 2 + 1] = neighbor.GetHeightData(nV3);
             }
-            else
-            {
-                nh[startSeg * 2] = nh[startSeg * 2 + 1] = nh[(startSeg + 1) * 2] = nh[(startSeg + 1) * 2 + 1] = -1;
-            }
+            else nh[startSeg * 2] = nh[startSeg * 2 + 1] = nh[(startSeg + 1) * 2] = nh[(startSeg + 1) * 2 + 1] = -1;
         }
     }
 }
