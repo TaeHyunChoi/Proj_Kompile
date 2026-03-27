@@ -13,7 +13,6 @@ namespace Script.Map.Data
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class EditMapTileComponent : MonoBehaviour
     {
-        // 텍스처 실제 해상도 압축에 무관하게 항상 8x8 고정 비율을 보장
         private const float UV_STEP = 1f / 8f;
 
         [Header("Render")]
@@ -22,8 +21,10 @@ namespace Script.Map.Data
         [SerializeField] private bool isOnlyRender;
         [SerializeField] private ushort renderLayer;
 
-        [Header("Atlas Texture (다중 아틀라스 지원)")]
-        [SerializeField] private Texture2D currentAtlasTexture; // [추가] 이 타일이 사용하는 아틀라스
+        [Header("Atlas Textures (면별 독립 아틀라스)")]
+        // [나으리 아이디어 적용] 윗면과 옆면이 서로 다른 아틀라스를 참조할 수 있도록 분리합니다.
+        [SerializeField] private Texture2D topAtlasTexture;
+        [SerializeField] private Texture2D sideAtlasTexture;
 
         [SerializeField] private int topTextureIndex = 0;
         [SerializeField] private int sideTextureIndex = 0;
@@ -39,7 +40,10 @@ namespace Script.Map.Data
 
         public int TopTextureIndex => topTextureIndex;
         public int SideTextureIndex => sideTextureIndex;
-        public Texture2D CurrentAtlasTexture => currentAtlasTexture; // [추가] 스포이드에서 읽어갈 텍스처
+
+        // 스포이드 시 에디터가 읽어갈 수 있도록 프로퍼티 개방
+        public Texture2D TopAtlasTexture => topAtlasTexture;
+        public Texture2D SideAtlasTexture => sideAtlasTexture;
 
         public ulong HeightMask => heightMask;
 
@@ -102,11 +106,17 @@ namespace Script.Map.Data
             propertyBlock.SetVector("_SideUVOffset", sideUVOffset);
             propertyBlock.SetVector("_SideUVScale", sideUVScale);
 
-            // [핵심 해결] 타일별로 지정된 다중 아틀라스를 머티리얼에 강제 적용
-            if (currentAtlasTexture != null)
+            // [핵심 변경] 커스텀 쉐이더가 윗면과 옆면 아틀라스를 따로 받을 수 있도록 2개의 프로퍼티에 텍스처를 주입합니다.
+            // 💡 주의: 나으리의 커스텀 쉐이더 내부에 _TopAtlas, _SideAtlas 프로퍼티가 정의되어 있어야 완벽하게 동작합니다!
+            if (topAtlasTexture != null)
             {
-                propertyBlock.SetTexture("_MainTex", currentAtlasTexture);
-                propertyBlock.SetTexture("_BaseMap", currentAtlasTexture); // URP 호환 보장
+                propertyBlock.SetTexture("_TopAtlas", topAtlasTexture);
+                propertyBlock.SetTexture("_MainTex", topAtlasTexture); // 구형 쉐이더용 Fallback
+                propertyBlock.SetTexture("_BaseMap", topAtlasTexture); // URP용 Fallback
+            }
+            if (sideAtlasTexture != null)
+            {
+                propertyBlock.SetTexture("_SideAtlas", sideAtlasTexture);
             }
 
             Color tintColor = _isVisualDimmed ? new Color(0.2f, 0.2f, 0.2f, 1.0f) : Color.white;
@@ -115,13 +125,11 @@ namespace Script.Map.Data
             meshRenderer.SetPropertyBlock(propertyBlock);
         }
 
-        // [안전장치] 해상도 의존성을 제거하여 어떤 환경에서도 정확한 셀을 비춥니다.
         private Vector2 CalculateUVOffset(int globalTextureIndex)
         {
             int localIndex = globalTextureIndex % 64;
             int columnIndex = localIndex % 8;
             int rowIndex = localIndex / 8;
-
             return new Vector2(columnIndex * UV_STEP, 1.0f - ((rowIndex + 1) * UV_STEP));
         }
 
@@ -171,14 +179,15 @@ namespace Script.Map.Data
             return new Vector3(0, y, 0);
         }
 
-        // [추가] 에디터에서 텍스처를 칠할 때, 인덱스와 '아틀라스 텍스처'를 동시에 받아옵니다.
-        public void ApplyTextures(int topIndex, int sideIndex, Texture2D targetAtlas)
+        // [변경] 브러시로부터 윗면 인덱스/아틀라스, 옆면 인덱스/아틀라스를 각각 독립적으로 부여받습니다.
+        public void ApplyTextures(int topIndex, Texture2D tAtlas, int sideIndex, Texture2D sAtlas)
         {
             Undo.RecordObject(this, "Paint Texture Indices");
 
             topTextureIndex = topIndex;
             sideTextureIndex = sideIndex;
-            if (targetAtlas != null) currentAtlasTexture = targetAtlas;
+            if (tAtlas != null) topAtlasTexture = tAtlas;
+            if (sAtlas != null) sideAtlasTexture = sAtlas;
 
             EditorUtility.SetDirty(this);
 

@@ -2,11 +2,12 @@
 namespace Script.Map.Editor
 {
     using Script.Map.Data;
-    using UnityEditor;
-    using UnityEngine;
+    using Script.Map.Entity;
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Collections.Generic;
+    using UnityEditor;
+    using UnityEngine;
 
     public class KompileMapEditorWindow : EditorWindow
     {
@@ -28,6 +29,7 @@ namespace Script.Map.Editor
             new Vector2(0.0f, 1.0f),   new Vector2(0.5f, 1.0f),   new Vector2(1.0f, 1.0f)
         };
 
+        private EditMapSamplingComponent _samplingRoot;
         private GameObject _tilePrefab;
         private float _targetY = 0f;
         private ushort _targetRenderLayer = 0;
@@ -49,8 +51,11 @@ namespace Script.Map.Editor
         private const string ROOT_INPUT_PATH = "Assets/Rcs/Map";
         private const string TABLE_ASSET_PATH = "Assets/Rcs/Map/MapTextureTable.asset";
 
+        // [핵심 변경] 브러시가 인덱스뿐만 아니라 "어떤 아틀라스의 텍스처인지"도 함께 기억합니다.
         private int _brushTopIndex = 0;
+        private Texture2D _brushTopAtlas = null;
         private int _brushSideIndex = 0;
+        private Texture2D _brushSideAtlas = null;
 
         private HashSet<EditMapTileComponent> _cachedTiles = new HashSet<EditMapTileComponent>();
 
@@ -63,6 +68,11 @@ namespace Script.Map.Editor
             LoadAllAtlases();
             RefreshTileCache();
             UpdateTilesFocusState();
+
+            if (false == _samplingRoot)
+            {
+                _samplingRoot = UnityEngine.Object.FindFirstObjectByType<EditMapSamplingComponent>();
+            }
         }
 
         private void OnDisable()
@@ -116,6 +126,10 @@ namespace Script.Map.Editor
                             page.GlobalIndices[localIndex] = kvp.Key;
                         }
                         _atlasPages.Add(page);
+
+                        // 최초 로드 시 브러시가 비어있다면 0번 텍스처로 초기화
+                        if (_brushTopAtlas == null) _brushTopAtlas = tex;
+                        if (_brushSideAtlas == null) _brushSideAtlas = tex;
                     }
                 }
             }
@@ -221,13 +235,16 @@ namespace Script.Map.Editor
 
             if (_atlasPages.Count == 0)
             {
-                EditorGUILayout.HelpBox($"아틀라스 텍스처를 찾을 수 없습니다.", MessageType.Warning);
+                EditorGUILayout.HelpBox("아틀라스 텍스처를 찾을 수 없습니다.", MessageType.Warning);
                 EditorGUILayout.EndVertical();
                 return;
             }
 
             string[] pageNames = _atlasPages.Select(p => $"[{p.PageName}] Atlas").ToArray();
             _selectedAtlasPageIndex = EditorGUILayout.Popup("Select Theme", _selectedAtlasPageIndex, pageNames);
+            EditorGUILayout.Space();
+
+            EditorGUILayout.HelpBox("💡 [아틀라스 픽업 조작법]\n• 좌클릭 : 윗면(Top) 지정\n• 우클릭 : 옆면(Side) 지정", MessageType.Info);
             EditorGUILayout.Space();
 
             AtlasPage currentPage = _atlasPages[_selectedAtlasPageIndex];
@@ -251,8 +268,18 @@ namespace Script.Map.Editor
 
                 if (e.type == EventType.MouseDown && hoveredGlobalIndex != -1)
                 {
-                    if (e.button == 0) { _brushTopIndex = hoveredGlobalIndex; e.Use(); }
-                    else if (e.button == 1) { _brushSideIndex = hoveredGlobalIndex; e.Use(); }
+                    if (e.button == 0)
+                    {
+                        _brushTopIndex = hoveredGlobalIndex;
+                        _brushTopAtlas = currentPage.Texture; // 텍스처도 함께 저장
+                        e.Use();
+                    }
+                    else if (e.button == 1)
+                    {
+                        _brushSideIndex = hoveredGlobalIndex;
+                        _brushSideAtlas = currentPage.Texture; // 텍스처도 함께 저장
+                        e.Use();
+                    }
                 }
             }
 
@@ -270,12 +297,13 @@ namespace Script.Map.Editor
                         continue;
                     }
 
-                    if (globalIndex == _brushTopIndex)
+                    // [조건 강화] 인덱스뿐만 아니라 아틀라스도 일치해야 T, S 마크를 표시합니다.
+                    if (globalIndex == _brushTopIndex && _brushTopAtlas == currentPage.Texture)
                     {
                         EditorGUI.DrawRect(cellRect, new Color(0, 1, 0, 0.4f));
                         GUI.Label(new Rect(cellRect.x, cellRect.y, cellSize, 15), " T", EditorStyles.whiteMiniLabel);
                     }
-                    if (globalIndex == _brushSideIndex)
+                    if (globalIndex == _brushSideIndex && _brushSideAtlas == currentPage.Texture)
                     {
                         EditorGUI.DrawRect(new Rect(cellRect.x, cellRect.y + cellSize / 2, cellSize, cellSize / 2), new Color(0, 0.5f, 1, 0.4f));
                         GUI.Label(new Rect(cellRect.x, cellRect.y + cellSize - 15, cellSize, 15), " S", EditorStyles.whiteMiniLabel);
@@ -286,10 +314,23 @@ namespace Script.Map.Editor
             }
 
             EditorGUILayout.Space();
+
+            // ==============================================================================
+            // [나으리 아이디어 구현부] 독립된 브러시 프리뷰 UI (실제 텍스처 잘라서 보여주기)
+            // ==============================================================================
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField($"🖌️ Current Brush Settings", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField($"Top Texture: Index {_brushTopIndex}");
-            EditorGUILayout.LabelField($"Side Texture: Index {_brushSideIndex}");
+            EditorGUILayout.Space(5);
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            DrawBrushPreview("Top (윗면)", _brushTopIndex, _brushTopAtlas);
+            GUILayout.Space(20);
+            DrawBrushPreview("Side (옆면)", _brushSideIndex, _brushSideAtlas);
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(5);
             EditorGUILayout.EndVertical();
 
             if (_isAltPressed)
@@ -303,6 +344,33 @@ namespace Script.Map.Editor
             {
                 EditorGUILayout.HelpBox("단축키: 씬에서 Alt + 클릭으로 맵에 깔린 타일의 텍스처를 스포이드 할 수 있습니다.", MessageType.None);
             }
+            EditorGUILayout.EndVertical();
+        }
+
+        // [신규] 브러시에 담긴 실제 아틀라스에서 해당 인덱스의 이미지를 잘라와 그립니다.
+        private void DrawBrushPreview(string label, int index, Texture2D atlas)
+        {
+            EditorGUILayout.BeginVertical(GUILayout.Width(80));
+            GUILayout.Label(label, EditorStyles.centeredGreyMiniLabel);
+            GUILayout.Label($"Idx: {index}", EditorStyles.centeredGreyMiniLabel);
+
+            Rect rect = GUILayoutUtility.GetRect(64, 64, GUILayout.ExpandWidth(false));
+            rect.x += (80 - 64) / 2f; // 중앙 정렬
+            EditorGUI.DrawRect(rect, new Color(0.15f, 0.15f, 0.15f, 1f)); // 배경
+
+            if (atlas != null)
+            {
+                int localIndex = index % 64;
+                int col = localIndex % 8;
+                int row = localIndex / 8;
+                Rect uvRect = new Rect(col / 8f, 1f - ((row + 1) / 8f), 1f / 8f, 1f / 8f);
+                GUI.DrawTextureWithTexCoords(rect, atlas, uvRect);
+            }
+            else
+            {
+                GUI.Label(rect, "Empty", EditorStyles.centeredGreyMiniLabel);
+            }
+
             EditorGUILayout.EndVertical();
         }
 
@@ -330,7 +398,6 @@ namespace Script.Map.Editor
                 if (picked != null)
                 {
                     var found = picked.GetComponentInParent<EditMapTileComponent>();
-                    // [해결] 스포이드 시 Y층 제한을 완전히 무시하여 클릭이 씹히지 않게 함
                     if (found != null && (_isAltPressed || Mathf.Abs(found.transform.position.y - _targetY) < 0.1f)) hitTile = found;
                 }
 
@@ -398,6 +465,7 @@ namespace Script.Map.Editor
                 if (!Physics.OverlapBox(spawnPos + Vector3.one * 0.5f, Vector3.one * 0.4f).Any())
                 {
                     GameObject newTile = (GameObject)PrefabUtility.InstantiatePrefab(_tilePrefab);
+                    newTile.transform.SetParent(_samplingRoot.transform);
                     newTile.transform.position = spawnPos;
 
                     var comp = newTile.GetComponent<EditMapTileComponent>();
@@ -406,9 +474,8 @@ namespace Script.Map.Editor
                         comp.SetRenderLayer(_targetRenderLayer);
                         comp.SetVisualDimmed(false);
 
-                        // 새로 설치할 때도 현재 팔레트 텍스처를 묻혀줍니다
-                        Texture2D currentTex = _atlasPages.Count > 0 ? _atlasPages[_selectedAtlasPageIndex].Texture : null;
-                        comp.ApplyTextures(_brushTopIndex, _brushSideIndex, currentTex);
+                        // [수정] 윗면과 옆면 아틀라스를 각각 독립적으로 전달
+                        comp.ApplyTextures(_brushTopIndex, _brushTopAtlas, _brushSideIndex, _brushSideAtlas);
 
                         _cachedTiles.Add(comp);
                     }
@@ -436,15 +503,18 @@ namespace Script.Map.Editor
             {
                 if (input.type == EventType.MouseDown && input.button == 0)
                 {
+                    // [핵심 변경] 스포이드 시 인덱스와 각각의 아틀라스를 쌍으로 가져옵니다.
                     _brushTopIndex = tile.TopTextureIndex;
+                    _brushTopAtlas = tile.TopAtlasTexture;
                     _brushSideIndex = tile.SideTextureIndex;
+                    _brushSideAtlas = tile.SideAtlasTexture;
 
-                    // [해결] 타일이 기억하는 실제 텍스처를 기반으로 UI 팔레트 테마를 변경합니다.
-                    if (tile.CurrentAtlasTexture != null)
+                    // 팔레트 페이지는 편의상 Top 텍스처가 있는 페이지로 돌려줍니다.
+                    if (_brushTopAtlas != null)
                     {
                         for (int i = 0; i < _atlasPages.Count; i++)
                         {
-                            if (_atlasPages[i].Texture == tile.CurrentAtlasTexture)
+                            if (_atlasPages[i].Texture == _brushTopAtlas)
                             {
                                 _selectedAtlasPageIndex = i;
                                 break;
@@ -460,12 +530,13 @@ namespace Script.Map.Editor
 
             if (input.button != 0) return;
 
-            // 페인트 칠할 때 현재 팔레트의 텍스처를 타일에게 전달
             if (input.type == EventType.MouseDown || (input.type == EventType.MouseDrag && GUIUtility.hotControl == controlID))
             {
                 GUIUtility.hotControl = controlID;
-                Texture2D currentTex = _atlasPages.Count > 0 ? _atlasPages[_selectedAtlasPageIndex].Texture : null;
-                tile.ApplyTextures(_brushTopIndex, _brushSideIndex, currentTex);
+
+                // [핵심 변경] 페인트 시 윗면 아틀라스와 옆면 아틀라스를 각각 전달
+                tile.ApplyTextures(_brushTopIndex, _brushTopAtlas, _brushSideIndex, _brushSideAtlas);
+
                 input.Use();
             }
             else if (input.type == EventType.MouseUp)

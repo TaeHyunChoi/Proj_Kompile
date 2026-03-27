@@ -103,7 +103,8 @@ MonoBehaviour:
   meshRenderer: {fileID: 404227116119194461}
   isOnlyRender: 0
   renderLayer: 0
-  currentAtlasTexture: {fileID: 0}
+  topAtlasTexture: {fileID: 0}
+  sideAtlasTexture: {fileID: 0}
   topTextureIndex: 0
   sideTextureIndex: 0
   heightMask: 0
