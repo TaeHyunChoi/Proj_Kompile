@@ -11,6 +11,7 @@ namespace Script.Map.Editor
 
     /// <summary>
     /// [Framework] Editor Manager: 멀티 아틀라스 팔레트, 스포이드, Focus Mode를 지원하는 통합 맵 에디터입니다.
+    /// [고도화] 각 텍스처 폴더별 독립적인 MapTextureTable을 읽어와 아틀라스 인덱스를 낭비 없이 관리합니다.
     /// </summary>
     public class KompileMapEditorWindow : EditorWindow
     {
@@ -21,7 +22,7 @@ namespace Script.Map.Editor
         private SelectionMode _currentSelection = SelectionMode.Vertex;
 
         private bool _isEditingEnabled = false;
-        private bool _isAltPressed = false; // 스포이드 트리거
+        private bool _isAltPressed = false;
 
         private static readonly Vector2[] PointOffsets = new Vector2[]
         {
@@ -52,7 +53,6 @@ namespace Script.Map.Editor
         private int _selectedAtlasPageIndex = 0;
 
         private const string ROOT_INPUT_PATH = "Assets/Rcs/Map";
-        private const string TABLE_ASSET_PATH = "Assets/Rcs/Map/MapTextureTable.asset";
 
         private int _brushTopIndex = 0;
         private Texture2D _brushTopAtlas = null;
@@ -90,18 +90,22 @@ namespace Script.Map.Editor
 
             if (!Directory.Exists(ROOT_INPUT_PATH)) return;
 
-            MapTextureTable textureTable = AssetDatabase.LoadAssetAtPath<MapTextureTable>(TABLE_ASSET_PATH);
-            if (textureTable == null)
-            {
-                Debug.LogWarning("[Framework] MapTextureTable 에셋을 찾을 수 없습니다. 병합기를 먼저 실행해주세요.");
-                return;
-            }
-
             string[] directories = Directory.GetDirectories(ROOT_INPUT_PATH);
 
             foreach (var dir in directories)
             {
                 string folderName = new DirectoryInfo(dir).Name;
+
+                // [핵심 변경] 전역 테이블 대신 해당 폴더(디렉토리) 내부의 로컬 테이블을 불러옵니다.
+                string tablePath = $"{dir}/MapTextureTable.asset";
+                MapTextureTable textureTable = AssetDatabase.LoadAssetAtPath<MapTextureTable>(tablePath);
+
+                if (textureTable == null)
+                {
+                    Debug.LogWarning($"[Framework] {folderName} 폴더에 MapTextureTable 에셋이 없습니다. 병합기를 먼저 실행해주세요.");
+                    continue;
+                }
+
                 var allFiles = Directory.GetFiles(dir, "*.png").Where(f => !Path.GetFileName(f).StartsWith("merged-")).ToList();
 
                 Dictionary<int, string> validFiles = new Dictionary<int, string>();
@@ -228,7 +232,10 @@ namespace Script.Map.Editor
             if (GUILayout.Button("Bake Map (Combine Meshes)", GUILayout.Height(40)))
             {
                 ExecuteOptimizeMesh();
-                if (EditorUtility.DisplayDialog("Bake Map", "맵 데이터를 구우시겠습니까?", "Bake", "Cancel")) ExecuteBake();
+                if (EditorUtility.DisplayDialog("Bake Map", "맵 데이터를 구우시겠습니까?", "Bake", "Cancel"))
+                {
+                    ExecuteBake();
+                }
             }
         }
 
@@ -397,32 +404,33 @@ namespace Script.Map.Editor
 
             if (e.type != EventType.Layout && e.type != EventType.Repaint)
             {
-                GameObject picked = HandleUtility.PickGameObject(e.mousePosition, false);
-                if (picked != null)
-                {
-                    var found = picked.GetComponentInParent<EditMapTileComponent>();
-                    if (found != null && (_isAltPressed || Mathf.Abs(found.transform.position.y - _targetY) < 0.1f)) hitTile = found;
-                }
+                float minDistanceToVertex = 40f;
+                EditMapTileComponent bestTile = null;
 
-                if (hitTile == null)
+                foreach (var tile in _cachedTiles)
                 {
-                    Plane gridPlane = new Plane(Vector3.up, new Vector3(0, _targetY, 0));
-                    if (gridPlane.Raycast(ray, out float enter))
+                    if (tile == null) continue;
+                    if (_focusSelectedLayer && tile.RenderLayer != _targetRenderLayer) continue;
+                    if (!_isAltPressed && Mathf.Abs(tile.transform.position.y - _targetY) > 0.1f) continue;
+
+                    for (int i = 0; i < 13; i++)
                     {
-                        Vector3 hitPos = ray.GetPoint(enter);
-                        foreach (var t in _cachedTiles)
-                        {
-                            if (t == null) continue;
-                            if (!_isAltPressed && Mathf.Abs(t.transform.position.y - _targetY) > 0.1f) continue;
+                        Vector3 pointPos = tile.transform.TransformPoint(new Vector3(PointOffsets[i].x, tile.GetPointLocalPos(i).y, PointOffsets[i].y));
+                        Vector2 guiPoint = HandleUtility.WorldToGUIPoint(pointPos);
+                        float dist = Vector2.Distance(guiPoint, e.mousePosition);
 
-                            Vector3 tPos = t.transform.position;
-                            if (hitPos.x >= tPos.x - 0.2f && hitPos.x <= tPos.x + 1.2f && hitPos.z >= tPos.z - 0.2f && hitPos.z <= tPos.z + 1.2f)
-                            {
-                                hitTile = t;
-                                break;
-                            }
+                        if (dist < minDistanceToVertex)
+                        {
+                            minDistanceToVertex = dist;
+                            bestTile = tile;
                         }
                     }
+                }
+                hitTile = bestTile;
+
+                if (_lastHoveredTile != hitTile)
+                {
+                    sceneView.Repaint();
                 }
                 _lastHoveredTile = hitTile;
             }
@@ -569,16 +577,13 @@ namespace Script.Map.Editor
 
         private void HandleHeightMode(EditMapTileComponent tile, Ray ray, Event e, int controlID)
         {
-            int nearIdx = 0;
-            float floatMinDist = float.MaxValue;
+            int nearIdx = -1;
+            float floatMinDist = 40f;
 
-            // 2D GUI 기반 버텍스 픽킹을 통해 메쉬가 지워져 있어도 구체를 조준할 수 있습니다.
-            for (int i = 0; i < PointOffsets.Length; i++)
+            for (int i = 0; i < 13; i++)
             {
-                Vector3 pPos = new Vector3(PointOffsets[i].x, tile.GetPointLocalPos(i).y, PointOffsets[i].y);
-                Vector3 worldPos = tile.transform.TransformPoint(pPos);
-
-                Vector2 guiPos = HandleUtility.WorldToGUIPoint(worldPos);
+                Vector3 pPos = tile.transform.TransformPoint(new Vector3(PointOffsets[i].x, tile.GetPointLocalPos(i).y, PointOffsets[i].y));
+                Vector2 guiPos = HandleUtility.WorldToGUIPoint(pPos);
                 float d = Vector2.Distance(guiPos, e.mousePosition);
 
                 if (d < floatMinDist)
@@ -592,25 +597,17 @@ namespace Script.Map.Editor
             {
                 DrawCustomGrid(tile.transform.position);
 
-                foreach (int idx in (_currentSelection == SelectionMode.Vertex ? new int[] { nearIdx } : Enumerable.Range(0, 13)))
+                if (nearIdx != -1 && _currentSelection == SelectionMode.Vertex)
                 {
-                    sbyte currentHeight = tile.GetHeightData(idx);
-                    Handles.color = (currentHeight == -1) ? Color.red : Color.yellow;
-
-                    Vector3 pPos = new Vector3(PointOffsets[idx].x, tile.GetPointLocalPos(idx).y, PointOffsets[idx].y);
-                    float handleSize = (idx == nearIdx && _currentSelection == SelectionMode.Vertex) ? 0.12f : 0.08f;
-                    Handles.SphereHandleCap(0, tile.transform.TransformPoint(pPos), Quaternion.identity, handleSize, EventType.Repaint);
+                    Vector3 pPos = tile.transform.TransformPoint(new Vector3(PointOffsets[nearIdx].x, tile.GetPointLocalPos(nearIdx).y, PointOffsets[nearIdx].y));
+                    Handles.color = Color.yellow;
+                    Handles.SphereHandleCap(0, pPos, Quaternion.identity, 0.12f, EventType.Repaint);
                 }
             }
 
-            if (e.type == EventType.MouseDown && e.button == 0 && !e.alt)
+            if (e.type == EventType.MouseDown && e.button == 0 && !e.alt && nearIdx != -1)
             {
-                // 클릭 거리가 너무 멀면 무시 (허공 클릭 시 엉뚱한 점이 반응하는 것 방지)
-                if (_currentSelection == SelectionMode.Vertex && floatMinDist > 40f) return;
-
                 GUIUtility.hotControl = controlID;
-
-                // e.shift가 눌려있으면 -1, 아니면 1을 더해 높이를 수정합니다. (-1 상태에서 1을 더하면 0이 되어 복구됨)
                 int delta = e.shift ? -1 : 1;
                 Undo.RecordObject(tile, "Adjust Height");
 

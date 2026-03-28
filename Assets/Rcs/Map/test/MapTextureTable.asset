@@ -12,4 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37ea4453249c2714193a23acf7972658, type: 3}
   m_Name: MapTextureTable
   m_EditorClassIdentifier: 
-  TextureList: []
+  TextureList:
+  - GlobalIndex: 0
+    TextureName: map_b
+  - GlobalIndex: 1
+    TextureName: map_g

@@ -9,7 +9,6 @@ using UnityEngine;
 public class EditTextureMerger : MonoBehaviour
 {
     private const string ROOT_INPUT_PATH = "Assets/Rcs/Map";
-    private const string TABLE_ASSET_PATH = "Assets/Rcs/Map/MapTextureTable.asset";
 
     private const int TARGET_TEXTURE_WIDTH = 2048;
     private const int TARGET_TEXTURE_HEIGHT = 2048;
@@ -25,14 +24,6 @@ public class EditTextureMerger : MonoBehaviour
         string[] directories = Directory.GetDirectories(ROOT_INPUT_PATH);
         if (directories.Length == 0) return;
 
-        MapTextureTable textureTable = AssetDatabase.LoadAssetAtPath<MapTextureTable>(TABLE_ASSET_PATH);
-        if (textureTable == null)
-        {
-            textureTable = ScriptableObject.CreateInstance<MapTextureTable>();
-            AssetDatabase.CreateAsset(textureTable, TABLE_ASSET_PATH);
-            AssetDatabase.SaveAssets(); // [안전장치] 생성 직후 디스크에 고정
-        }
-
         int totalMergedCount = 0;
         try
         {
@@ -42,19 +33,31 @@ public class EditTextureMerger : MonoBehaviour
             {
                 string dirPath = directories[i];
                 string folderName = new DirectoryInfo(dirPath).Name;
-                totalMergedCount += ProcessFolder(dirPath, folderName, textureTable);
+
+                // [핵심 변경 1] 각 폴더 전용 로컬 테이블을 찾거나 생성합니다.
+                string localTablePath = $"{dirPath}/MapTextureTable.asset";
+                MapTextureTable localTable = AssetDatabase.LoadAssetAtPath<MapTextureTable>(localTablePath);
+
+                if (localTable == null)
+                {
+                    localTable = ScriptableObject.CreateInstance<MapTextureTable>();
+                    AssetDatabase.CreateAsset(localTable, localTablePath);
+                    AssetDatabase.SaveAssets(); // 생성 직후 디스크 고정
+                }
+
+                totalMergedCount += ProcessFolder(dirPath, folderName, localTable);
+
+                // 해당 폴더의 테이블 작업이 끝났으므로 저장
+                EditorUtility.SetDirty(localTable);
                 EditorUtility.DisplayProgressBar("Merging Textures", $"Processing {folderName}...", (float)(i + 1) / directories.Length);
             }
         }
         finally
         {
             EditorUtility.ClearProgressBar();
-
-            // [안전장치] 변경된 테이블을 강제로 저장하고 에셋 데이터베이스 리프레시
-            EditorUtility.SetDirty(textureTable);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"[Framework] 텍스처 병합 완료! 총 {totalMergedCount}개의 아틀라스가 생성/갱신되었습니다.");
+            Debug.Log($"[Framework] 폴더별 독립 아틀라스 병합 완료! 총 {totalMergedCount}개의 아틀라스 페이지가 생성/갱신되었습니다.");
         }
     }
 
@@ -72,6 +75,7 @@ public class EditTextureMerger : MonoBehaviour
         foreach (string file in allFiles)
         {
             string fileNameNoExt = Path.GetFileNameWithoutExtension(file);
+            // 해당 폴더 전용 테이블에서 인덱스를 발급받습니다. (항상 0번부터 시작)
             int index = table.GetOrAssignIndex(fileNameNoExt);
 
             if (!validFiles.ContainsKey(index)) validFiles.Add(index, file);
