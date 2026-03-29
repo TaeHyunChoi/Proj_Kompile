@@ -37,10 +37,43 @@ namespace Script.Map.Provider
         private const string SAVE_PATH_ROOT = "Assets/Rcs/MapRender";
         private static readonly string PROGRESS_BAR_TITLE = "Bake Map - Combining Meshes";
 
-        // Pooling Objects
+        // [핵심 변경] 머티리얼 생성을 위해 텍스처 원본 참조를 일시적으로 보관합니다.
+        private struct BakeGroupKey : IEquatable<BakeGroupKey>
+        {
+            public ushort RenderLayer;
+            public int GridKey;
+            public string TopAtlas;
+            public string SideAtlas;
+            public Texture2D TopTexRef;  // 머티리얼 자동 생성용 참조
+            public Texture2D SideTexRef; // 머티리얼 자동 생성용 참조
+
+            public bool Equals(BakeGroupKey other) =>
+                RenderLayer == other.RenderLayer && GridKey == other.GridKey && TopAtlas == other.TopAtlas && SideAtlas == other.SideAtlas;
+
+            public override int GetHashCode() => HashCode.Combine(RenderLayer, GridKey, TopAtlas, SideAtlas);
+        }
+
+        private class BakeChunkData
+        {
+            public CombineInstance Instance;
+            public int VertexCount;
+            public ushort RenderLayer;
+            public int GridKey;
+            public int TopTextureIndex;
+            public int SideTextureIndex;
+        }
+
+        private class BakeAccumulator
+        {
+            public int VertexSum;
+            public int PartIndex;
+            public Queue<BakeChunkData> Tiles = new Queue<BakeChunkData>();
+            public void Clear() { VertexSum = 0; Tiles.Clear(); }
+        }
+
         private static EditBakeContext cachedContext;
-        private static readonly Stack<EditGroupAccumulatorData> accmPool = new Stack<EditGroupAccumulatorData>();
-        private static readonly Stack<EditMapTileChunkData> chunkPool = new Stack<EditMapTileChunkData>();
+        private static readonly Stack<BakeAccumulator> accmPool = new Stack<BakeAccumulator>();
+        private static readonly Stack<BakeChunkData> chunkPool = new Stack<BakeChunkData>();
 
         private byte sceneIndex = 0;
         private ConcurrentDictionary<int, EditMapGridData> map;
@@ -50,6 +83,8 @@ namespace Script.Map.Provider
             Debug.Log($"Start Bake Map");
 
             var instance = Object.FindFirstObjectByType<EditMapSamplingComponent>();
+            if (instance == null) return;
+
             var instanceTransform = instance.transform;
             sceneIndex = instance.SceneIndex;
 
@@ -60,14 +95,12 @@ namespace Script.Map.Provider
             var nativeSceneIndex = new NativeArray<byte>(length, allocationType);
             var nativeRenderLayer = new NativeArray<ushort>(length, allocationType);
             var nativePosition = new NativeArray<float3>(length, allocationType);
-            var nativeRotateY = new NativeArray<float>(length, allocationType);
             var nativeHeights = new NativeArray<ulong>(length, allocationType);
             var nativeResult = new NativeArray<EditMapTileData>(length, allocationType);
 
-            EditMapTileComponent tileComponent;
             for (int i = 0; i < tiles.Length; ++i)
             {
-                tileComponent = tiles[i];
+                EditMapTileComponent tileComponent = tiles[i];
 
                 nativeSceneIndex[i] = sceneIndex;
                 nativeRenderLayer[i] = tileComponent.RenderLayer;
@@ -76,8 +109,6 @@ namespace Script.Map.Provider
                 int y = Mathf.FloorToInt(tileComponent.transform.position.y);
                 int z = Mathf.FloorToInt(tileComponent.transform.position.z);
                 nativePosition[i] = new float3(x, y, z);
-
-                nativeRotateY[i] = Mathf.FloorToInt(tileComponent.transform.eulerAngles.y);
                 nativeHeights[i] = tileComponent.HeightMask;
             }
 
@@ -86,14 +117,12 @@ namespace Script.Map.Provider
                 SceneIndex = nativeSceneIndex,
                 RenderLayer = nativeRenderLayer,
                 Position = nativePosition,
-                RotY = nativeRotateY,
                 Height = nativeHeights,
                 Data = nativeResult
             };
             JobHandle jobHandle = job.Schedule(tiles.Length, 64);
             jobHandle.Complete();
 
-            // ## Register Map
             ushort renderIndex;
             long naviMask;
             int[] computedGridKeys = new int[length];
@@ -122,19 +151,15 @@ namespace Script.Map.Provider
                 map[gridKey].TryAdd(tileKey, tileData);
             }
 
-            // ## Dispose NativeArray
             nativeSceneIndex.Dispose();
             nativeRenderLayer.Dispose();
             nativePosition.Dispose();
-            nativeRotateY.Dispose();
             nativeHeights.Dispose();
             nativeResult.Dispose();
 
-            // ## Set Grid Data & Combine Mesh
             LinkTiles(map);
             CombineAndRegister(map, tiles, computedGridKeys, sceneIndex, "MapRender");
 
-            // ## Save Data.bin
             string fullNaviPath = $"Assets/{MAP_NAVI_DATA_PATH.Replace('\\', '/')}";
             if (true == AssetDatabase.IsValidFolder(fullNaviPath))
             {
@@ -158,12 +183,12 @@ namespace Script.Map.Provider
                 };
 
                 AssetRepoProvider.WriteBinaryFile<MapGridData>(
-                data: mapGridData,
-                relativePath: MAP_NAVI_DATA_PATH,
-                fileName: $"MapNavi_{mapGridData.Key}",
-                addressableGroup: "MapNavi",
-                addressableLabel: "MapNavi"
-            );
+                    data: mapGridData,
+                    relativePath: MAP_NAVI_DATA_PATH,
+                    fileName: $"MapNavi_{mapGridData.Key}",
+                    addressableGroup: "MapNavi",
+                    addressableLabel: "MapNavi"
+                );
             }
 
             Debug.Log($"End Bake (length: {tiles.Length})");
@@ -234,32 +259,17 @@ namespace Script.Map.Provider
             int sceneIndex,
             string adderessableGroupName)
         {
-            if (null == tiles || 0 == tiles.Length)
-            {
-                Debug.LogWarning("No tiles to process;");
-                return;
-            }
+            if (null == tiles || 0 == tiles.Length) return;
 
-            if (AssetDatabase.IsValidFolder(SAVE_PATH_ROOT))
-            {
-                AssetDatabase.DeleteAsset(SAVE_PATH_ROOT);
-            }
-
-            if (!System.IO.Directory.Exists(SAVE_PATH_ROOT))
-            {
-                System.IO.Directory.CreateDirectory(SAVE_PATH_ROOT);
-            }
+            if (AssetDatabase.IsValidFolder(SAVE_PATH_ROOT)) AssetDatabase.DeleteAsset(SAVE_PATH_ROOT);
+            if (!System.IO.Directory.Exists(SAVE_PATH_ROOT)) System.IO.Directory.CreateDirectory(SAVE_PATH_ROOT);
 
             AssetDatabase.Refresh();
 
-            if (null == cachedContext)
-            {
-                cachedContext = new EditBakeContext();
-            }
-
+            if (null == cachedContext) cachedContext = new EditBakeContext();
             cachedContext.Setup(sceneIndex, map, adderessableGroupName);
 
-            var accumulators = new Dictionary<EditMapGroupKey, EditGroupAccumulatorData>();
+            var accumulators = new Dictionary<BakeGroupKey, BakeAccumulator>();
             int totalTiles = tiles.Length;
             bool userCancelled = false;
 
@@ -269,9 +279,7 @@ namespace Script.Map.Provider
                 List<int> batchIndices = new List<int>();
                 while (start < totalTiles)
                 {
-                    if (true == EditorUtility.DisplayCancelableProgressBar(PROGRESS_BAR_TITLE,
-                            $"Processing {start}/{totalTiles}",
-                            (float)start / totalTiles))
+                    if (EditorUtility.DisplayCancelableProgressBar(PROGRESS_BAR_TITLE, $"Processing {start}/{totalTiles}", (float)start / totalTiles))
                     {
                         userCancelled = true;
                         break;
@@ -285,15 +293,9 @@ namespace Script.Map.Provider
                     {
                         EditMapTileComponent tile = tiles[idx];
                         int vc = 0;
-                        if (true == tile.TryGetSharedMesh(out Mesh tileMesh))
-                        {
-                            vc = tileMesh.vertexCount;
-                        }
+                        if (tile.TryGetSharedMesh(out Mesh tileMesh)) vc = tileMesh.vertexCount;
 
-                        if (BATCH_VERTEX_TARGET < currentBatchVertex + vc && 0 < batchIndices.Count)
-                        {
-                            break;
-                        }
+                        if (BATCH_VERTEX_TARGET < currentBatchVertex + vc && 0 < batchIndices.Count) break;
 
                         batchIndices.Add(idx);
                         currentBatchVertex += vc;
@@ -311,8 +313,8 @@ namespace Script.Map.Provider
 
             foreach (var kv in accumulators)
             {
-                EditMapGroupKey key = kv.Key;
-                EditGroupAccumulatorData accm = kv.Value;
+                BakeGroupKey key = kv.Key;
+                BakeAccumulator accm = kv.Value;
 
                 while (0 < accm.Tiles.Count)
                 {
@@ -329,41 +331,48 @@ namespace Script.Map.Provider
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log(true == userCancelled ? "Bake cancelled by user" : "Bake Completed successfully");
+            Debug.Log(userCancelled ? "Bake cancelled by user" : "Bake Completed successfully");
         }
 
         private static void ProcessBatch(EditBakeContext ctx, EditMapTileComponent[] tilesInGrid, int[] gridKeys,
-            List<int> indices, Dictionary<EditMapGroupKey, EditGroupAccumulatorData> accums)
+            List<int> indices, Dictionary<BakeGroupKey, BakeAccumulator> accums)
         {
-            EditMapTileComponent tile;
             foreach (int i in indices)
             {
-                tile = tilesInGrid[i];
-                if (false == tile.TryGetSharedMesh(out Mesh mesh))
-                {
-                    continue;
-                }
+                EditMapTileComponent tile = tilesInGrid[i];
+                if (!tile.TryGetSharedMesh(out Mesh mesh)) continue;
 
                 int vc = mesh.vertexCount;
-                if (0 == vc)
-                {
-                    continue;
-                }
+                if (vc == 0) continue;
 
                 int correctGridKey = gridKeys[i];
 
-                EditMapTileChunkData chunkData = (0 < chunkPool.Count) ? chunkPool.Pop() : new EditMapTileChunkData();
-                chunkData.Instance = new CombineInstance { mesh = mesh, transform = tile.transform.localToWorldMatrix };
+                string topAtlasName = tile.TopAtlasTexture != null ? tile.TopAtlasTexture.name : "None";
+                string sideAtlasName = tile.SideAtlasTexture != null ? tile.SideAtlasTexture.name : "None";
 
-                chunkData.UVs = CalculateAtlasUVs(mesh, tile.TopTextureIndex, tile.SideTextureIndex);
+                // [핵심 변경] 머티리얼 자동 생성을 위해 원본 텍스처 참조를 GroupKey에 담아 전달합니다.
+                BakeGroupKey key = new BakeGroupKey
+                {
+                    RenderLayer = tile.RenderLayer,
+                    GridKey = correctGridKey,
+                    TopAtlas = topAtlasName,
+                    SideAtlas = sideAtlasName,
+                    TopTexRef = tile.TopAtlasTexture,
+                    SideTexRef = tile.SideAtlasTexture
+                };
+
+                BakeChunkData chunkData = (0 < chunkPool.Count) ? chunkPool.Pop() : new BakeChunkData();
+                chunkData.Instance = new CombineInstance { mesh = mesh, transform = tile.transform.localToWorldMatrix };
                 chunkData.VertexCount = vc;
                 chunkData.RenderLayer = tile.RenderLayer;
                 chunkData.GridKey = correctGridKey;
 
-                EditMapGroupKey key = new EditMapGroupKey(tile.RenderLayer, correctGridKey);
-                if (false == accums.TryGetValue(key, out EditGroupAccumulatorData acc))
+                chunkData.TopTextureIndex = tile.TopTextureIndex;
+                chunkData.SideTextureIndex = tile.SideTextureIndex;
+
+                if (!accums.TryGetValue(key, out BakeAccumulator acc))
                 {
-                    acc = 0 < accmPool.Count ? accmPool.Pop() : new EditGroupAccumulatorData();
+                    acc = 0 < accmPool.Count ? accmPool.Pop() : new BakeAccumulator();
                     acc.Clear();
                     accums[key] = acc;
                 }
@@ -378,143 +387,112 @@ namespace Script.Map.Provider
             }
         }
 
-        private static Vector2[] CalculateAtlasUVs(Mesh mesh, int topTextureIndex, int sideTextureIndex)
+        private static void FlushAccumulatorPart(EditBakeContext ctx, BakeGroupKey key, BakeAccumulator acc)
         {
-            Vector3[] verts = mesh.vertices;
-            Vector2[] sourceUVs = mesh.uv;
-
-            // 만약 원본 메쉬에 UV가 아예 없다면 안전을 위해 빈 배열 생성
-            if (sourceUVs == null || sourceUVs.Length < verts.Length)
-            {
-                sourceUVs = new Vector2[verts.Length];
-            }
-
-            Vector2[] resultUVs = new Vector2[verts.Length];
-
-            int atlasCols = ATLAS_WIDTH / (int)SPRITE_SIZE; // 2048 / 256 = 8
-            float uvW = SPRITE_SIZE / ATLAS_WIDTH;
-            float uvH = SPRITE_SIZE / ATLAS_HEIGHT;
-
-            float topBaseX = (topTextureIndex % atlasCols) * uvW;
-            float topBaseY = (topTextureIndex / atlasCols) * uvH;
-
-            float sideBaseX = (sideTextureIndex % atlasCols) * uvW;
-            float sideBaseY = (sideTextureIndex / atlasCols) * uvH;
-
-            for (int i = 0; i < verts.Length; ++i)
-            {
-                float baseX = topBaseX;
-                float baseY = topBaseY;
-
-                // [근사 로직] Y=0 이거나, 원본 UV가 0, 1 극단값(벽면의 직사각형 UV)이라면 옆면 텍스처 사용
-                if (verts[i].y <= 0.001f)
-                {
-                    baseX = sideBaseX;
-                    baseY = sideBaseY;
-                }
-                else if ((sourceUVs[i].x == 0f || sourceUVs[i].x == 1f) &&
-                         (sourceUVs[i].y == 0f || sourceUVs[i].y == 1f))
-                {
-                    baseX = sideBaseX;
-                    baseY = sideBaseY;
-                }
-
-                resultUVs[i] = new Vector2(
-                    baseX + sourceUVs[i].x * uvW,
-                    baseY + sourceUVs[i].y * uvH
-                );
-            }
-
-            return resultUVs;
-        }
-
-        // [핵심 변경부] 에러가 났던 Flush와 SaveMesh 부분을 완전히 개선했습니다.
-        private static void FlushAccumulatorPart(EditBakeContext ctx, EditMapGroupKey key, EditGroupAccumulatorData acc)
-        {
-            if (0 == acc.Tiles.Count)
-            {
-                return;
-            }
+            if (0 == acc.Tiles.Count) return;
 
             List<CombineInstance> takeInstances = new List<CombineInstance>();
-            List<Mesh> tempMeshes = new List<Mesh>(); // 임시 복제 메쉬들을 보관할 리스트
+            List<Mesh> tempMeshes = new List<Mesh>();
             int takenVerts = 0;
             int tilesConsumed = 0;
+            float uvStep = 1f / 8f;
 
-            foreach (EditMapTileChunkData chunk in acc.Tiles)
+            foreach (BakeChunkData chunk in acc.Tiles)
             {
-                if (0 < takenVerts && VERTEX_LIMIT < takenVerts + chunk.VertexCount)
+                if (0 < takenVerts && VERTEX_LIMIT < takenVerts + chunk.VertexCount) break;
+
+                Mesh tempMesh = Object.Instantiate(chunk.Instance.mesh);
+                int vc = tempMesh.vertexCount;
+
+                Vector2[] uv2 = new Vector2[vc];
+                Vector2[] uv3 = new Vector2[vc];
+
+                int tLocal = chunk.TopTextureIndex % 64;
+                Vector2 tOffset = new Vector2((tLocal % 8) * uvStep, 1.0f - ((tLocal / 8 + 1) * uvStep));
+
+                int sLocal = chunk.SideTextureIndex % 64;
+                Vector2 sOffset = new Vector2((sLocal % 8) * uvStep, 1.0f - ((sLocal / 8 + 1) * uvStep));
+
+                for (int j = 0; j < vc; j++)
                 {
-                    break;
+                    uv2[j] = tOffset;
+                    uv3[j] = sOffset;
                 }
 
-                // [해결책] UV 배열을 나중에 욱여넣지 않고, 임시 메쉬를 만들어 UV를 먹인 뒤 Combine 시킵니다!
-                Mesh tempMesh = Object.Instantiate(chunk.Instance.mesh);
-                tempMesh.uv = chunk.UVs;
+                tempMesh.uv2 = uv2;
+                tempMesh.uv3 = uv3;
                 tempMeshes.Add(tempMesh);
 
                 CombineInstance ci = chunk.Instance;
-                ci.mesh = tempMesh; // 아틀라스 UV가 적용된 임시 메쉬로 교체
-
+                ci.mesh = tempMesh;
                 takeInstances.Add(ci);
+
                 takenVerts += chunk.VertexCount;
                 ++tilesConsumed;
 
-                if (VERTEX_LIMIT < takenVerts)
-                {
-                    break;
-                }
+                if (VERTEX_LIMIT < takenVerts) break;
             }
 
-            // 이제 수동 UV 주입이 필요 없으므로 인스턴스 배열만 넘겨줍니다.
             SaveMeshAsset(ctx, key, acc.PartIndex, takeInstances.ToArray());
 
-            // 합치는 작업이 끝난 임시 메쉬들은 메모리 누수 방지를 위해 즉각 파괴합니다.
-            foreach (var tm in tempMeshes)
-            {
-                Object.DestroyImmediate(tm);
-            }
+            foreach (var tm in tempMeshes) Object.DestroyImmediate(tm);
 
             for (int i = 0; i < tilesConsumed; ++i)
             {
                 var removed = acc.Tiles.Dequeue();
                 acc.VertexSum -= removed.VertexCount;
-
-                removed.Clear();
                 chunkPool.Push(removed);
             }
 
             ++acc.PartIndex;
         }
 
-        // [핵심 변경부] CombineMeshes에 수동 UV 삽입 로직(combinedMesh.uv = uvs;)을 삭제했습니다.
-        private static void SaveMeshAsset(EditBakeContext ctx, EditMapGroupKey key, int partIdx, CombineInstance[] instances)
+        private static void SaveMeshAsset(EditBakeContext ctx, BakeGroupKey key, int partIdx, CombineInstance[] instances)
         {
-            string assetName = $"MapRender_{ctx.SceneIndex}_G{key.GridKey}_L{key.RenderLayer}_{partIdx}";
+            // =================================================================================
+            // [나으리 아이디어 구현부] 머티리얼(Material) 에셋 자동 생성 및 등록
+            // =================================================================================
+            string matName = $"Mat_{key.TopAtlas}_{key.SideAtlas}";
+            string matPath = $"{SAVE_PATH_ROOT}/{matName}.mat";
+
+            Material mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+            if (mat == null)
+            {
+                Shader shader = Shader.Find("Custom/WorldSpaceAtlasShader_v4");
+                if (shader != null)
+                {
+                    mat = new Material(shader);
+                    if (key.TopTexRef != null) mat.SetTexture("_TopAtlas", key.TopTexRef);
+                    if (key.SideTexRef != null) mat.SetTexture("_SideAtlas", key.SideTexRef);
+
+                    AssetDatabase.CreateAsset(mat, matPath);
+                    // 생성된 머티리얼도 Addressable 시스템에 자동 등록시킵니다.
+                    ctx.CreatedAssets.Add((matPath, matName));
+                }
+                else
+                {
+                    Debug.LogWarning($"[Framework] 'Custom/WorldSpaceAtlasShader_v4' 쉐이더를 찾을 수 없어 {matName} 생성을 건너뜁니다.");
+                }
+            }
+
+            // =================================================================================
+            // 메쉬 저장 (기존 유지)
+            // =================================================================================
+            string assetName = $"MapRender_{ctx.SceneIndex}_G{key.GridKey}_L{key.RenderLayer}_{key.TopAtlas}_{key.SideAtlas}_{partIdx}";
             string path = $"{SAVE_PATH_ROOT}/{assetName}.asset";
 
             Mesh combinedMesh = new Mesh();
             try
             {
-                // 병합될 총 정점 수를 미리 세어보고, 65535개를 넘기면 32비트 포맷으로 전환합니다.
                 int totalVerts = 0;
                 foreach (var ci in instances) totalVerts += ci.mesh.vertexCount;
 
-                if (VERTEX_LIMIT < totalVerts)
-                {
-                    combinedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-                }
+                if (VERTEX_LIMIT < totalVerts) combinedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
-                // 유니티의 강력한 CombineMeshes가 불필요한 빈 정점 삭감과 UV 병합을 모두 알아서 처리합니다.
                 combinedMesh.CombineMeshes(instances, true, true);
-
                 MeshUtility.Optimize(combinedMesh);
 
-                if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path))
-                {
-                    AssetDatabase.DeleteAsset(path);
-                }
-
+                if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path)) AssetDatabase.DeleteAsset(path);
                 AssetDatabase.CreateAsset(combinedMesh, path);
 
                 if (null != ctx.Map)
@@ -535,25 +513,16 @@ namespace Script.Map.Provider
         private static void RegisterAddressables(EditBakeContext ctx)
         {
             AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
-            if (null == settings || 0 == ctx.CreatedAssets.Count)
-            {
-                return;
-            }
+            if (null == settings || 0 == ctx.CreatedAssets.Count) return;
 
             AddressableAssetGroup group = settings.FindGroup(ctx.AddressableGroupName);
-            if (null == group)
-            {
-                return;
-            }
+            if (null == group) return;
 
             List<AddressableAssetEntry> entries = new List<AddressableAssetEntry>();
             foreach ((string path, string assetName) in ctx.CreatedAssets)
             {
                 string guid = AssetDatabase.AssetPathToGUID(path);
-                if (true == string.IsNullOrEmpty(guid))
-                {
-                    continue;
-                }
+                if (true == string.IsNullOrEmpty(guid)) continue;
 
                 var entry = settings.CreateOrMoveEntry(guid, group, false, false);
                 entry.SetAddress(assetName);

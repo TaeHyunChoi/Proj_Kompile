@@ -211,6 +211,31 @@ namespace Script.Asset.Provider
             }
         }
 
+        public static async Awaitable<T> LoadBinaryDataAsync<T>(string key)
+        {
+            var handle = Addressables.LoadAssetAsync<TextAsset>(key);
+            TextAsset textAsset = await handle.Task;
+
+            if (handle.Status != AsyncOperationStatus.Succeeded || textAsset == null)
+            {
+                if (handle.IsValid()) Addressables.Release(handle);
+                throw new FileNotFoundException($"[AssetProvider] Binary file not found: {key.Value}");
+            }
+
+            try
+            {
+                byte[] bytes = textAsset.bytes;
+                var options =
+                    MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers
+                        .ContractlessStandardResolver.Instance);
+                return MessagePackSerializer.Deserialize<T>(bytes, options);
+            }
+            finally
+            {
+                Addressables.Release(handle);
+            }
+        }
+
         #endregion
     }
 }
