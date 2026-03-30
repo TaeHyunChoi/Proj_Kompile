@@ -32,12 +32,12 @@ namespace Script.Map.Editor
             EditorGUI.BeginChangeCheck();
             _atlasTexture = (Texture2D)EditorGUILayout.ObjectField("Atlas Texture", _atlasTexture, typeof(Texture2D), false);
 
-            if (EditorGUI.EndChangeCheck() && _atlasTexture != null)
+            if (EditorGUI.EndChangeCheck() && true == _atlasTexture)
             {
                 EditorPrefs.SetString("KompileMap_AtlasPreview", AssetDatabase.GetAssetPath(_atlasTexture));
             }
 
-            if (_atlasTexture != null)
+            if (true == _atlasTexture)
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.BeginHorizontal();

@@ -25,8 +25,8 @@ namespace Script.Map.Provider
             {
                 SceneIndex = sceneIndex;
                 Map = map;
-                AddressableGroupName = groupName;
                 CreatedAssets.Clear();
+                AddressableGroupName = groupName;
             }
         }
     }

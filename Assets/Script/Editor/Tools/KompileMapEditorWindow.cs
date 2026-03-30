@@ -10,7 +10,7 @@ namespace Script.Map.Editor
     using System.Collections.Generic;
 
     /// <summary>
-    /// [Framework] Editor Manager: 멀티 아틀라스 팔레트, 스포이드, Focus Mode를 지원하는 통합 맵 에디터입니다.
+    /// Editor Manager: 멀티 아틀라스 팔레트, 스포이드, Focus Mode를 지원하는 통합 맵 에디터.
     /// [고도화] 각 텍스처 폴더별 독립적인 MapTextureTable을 읽어와 아틀라스 인덱스를 낭비 없이 관리합니다.
     /// </summary>
     public class KompileMapEditorWindow : EditorWindow
@@ -35,6 +35,7 @@ namespace Script.Map.Editor
 
         private EditMapSamplingComponent _samplingRoot;
         private GameObject _tilePrefab;
+        
         private float _targetY = 0f;
         private ushort _targetRenderLayer = 0;
         private bool _focusSelectedLayer = false;
@@ -88,36 +89,52 @@ namespace Script.Map.Editor
             _atlasPages.Clear();
             _selectedAtlasPageIndex = 0;
 
-            if (!Directory.Exists(ROOT_INPUT_PATH)) return;
-
+            if (false == Directory.Exists(ROOT_INPUT_PATH))
+            {
+                return;
+            }
+            
             string[] directories = Directory.GetDirectories(ROOT_INPUT_PATH);
-
-            foreach (var dir in directories)
+            foreach (string dir in directories)
             {
                 string folderName = new DirectoryInfo(dir).Name;
-
-                // [핵심 변경] 전역 테이블 대신 해당 폴더(디렉토리) 내부의 로컬 테이블을 불러옵니다.
                 string tablePath = $"{dir}/MapTextureTable.asset";
                 MapTextureTable textureTable = AssetDatabase.LoadAssetAtPath<MapTextureTable>(tablePath);
 
-                if (textureTable == null)
+                if (false == textureTable)
                 {
-                    Debug.LogWarning($"[Framework] {folderName} 폴더에 MapTextureTable 에셋이 없습니다. 병합기를 먼저 실행해주세요.");
+                    Debug.LogWarning($"[Framework] {folderName} 폴더에 MapTextureTable 에셋이 없습니다. 병합을 먼저 실행해주세요.");
                     continue;
                 }
 
-                var allFiles = Directory.GetFiles(dir, "*.png").Where(f => !Path.GetFileName(f).StartsWith("merged-")).ToList();
+                string[] allFiles = Directory.GetFiles(dir, "*.png");
+                List<string> filteredFiles = new List<string>();
+
+                foreach (string f in allFiles)
+                {
+                    string fileName = Path.GetFileName(f);
+    
+                    // "merged-"로 시작하지 않는 파일만 추가
+                    if (!fileName.StartsWith("merged-"))
+                    {
+                        filteredFiles.Add(f);
+                    }
+                }
 
                 Dictionary<int, string> validFiles = new Dictionary<int, string>();
                 foreach (string file in allFiles)
                 {
                     string fileNameNoExt = Path.GetFileNameWithoutExtension(file);
                     var existingData = textureTable.TextureList.Find(x => x.TextureName.Equals(fileNameNoExt, System.StringComparison.OrdinalIgnoreCase));
-                    if (existingData != null) validFiles[existingData.GlobalIndex] = file;
+                    if (existingData != null)
+                    {
+                        validFiles[existingData.GlobalIndex] = file;                        
+                    }
                 }
 
-                var groupedFiles = validFiles.GroupBy(kvp => kvp.Key / 64).OrderBy(g => g.Key).ToList();
-
+                var groupedFiles = validFiles.GroupBy(kvp => kvp.Key >> 6)
+                                                                .OrderBy(g => g.Key)
+                                                                .ToList();
                 foreach (var group in groupedFiles)
                 {
                     int atlasPageNum = group.Key;
@@ -125,11 +142,18 @@ namespace Script.Map.Editor
                     string atlasPath = $"{dir}/merged-{folderName}{suffix}.png";
 
                     Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPath);
-                    if (tex != null)
+                    if (true == tex)
                     {
-                        AtlasPage page = new AtlasPage { PageName = $"{folderName}{suffix}", Texture = tex };
-                        for (int j = 0; j < 64; j++) page.GlobalIndices[j] = -1;
-
+                        AtlasPage page = new AtlasPage
+                        {
+                            PageName = $"{folderName}{suffix}", 
+                            Texture = tex
+                        };
+                        for (int j = 0; j < 64; j++)
+                        {
+                            page.GlobalIndices[j] = -1;
+                        }
+                        
                         foreach (var kvp in group)
                         {
                             int localIndex = kvp.Key % 64;
@@ -137,8 +161,15 @@ namespace Script.Map.Editor
                         }
                         _atlasPages.Add(page);
 
-                        if (_brushTopAtlas == null) _brushTopAtlas = tex;
-                        if (_brushSideAtlas == null) _brushSideAtlas = tex;
+                        if (false == _brushTopAtlas)
+                        {
+                            _brushTopAtlas = tex;                            
+                        }
+
+                        if (false == _brushSideAtlas)
+                        {
+                            _brushSideAtlas = tex;
+                        }
                     }
                 }
             }
@@ -148,14 +179,21 @@ namespace Script.Map.Editor
         {
             _cachedTiles.Clear();
             var allTiles = UnityEngine.Object.FindObjectsByType<EditMapTileComponent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            foreach (var t in allTiles) _cachedTiles.Add(t);
+            foreach (var t in allTiles)
+            {
+                _cachedTiles.Add(t);                
+            }
         }
 
         private void UpdateTilesFocusState()
         {
             foreach (EditMapTileComponent tile in _cachedTiles)
             {
-                if (tile != null) tile.SetVisualDimmed(true == _focusSelectedLayer && (tile.RenderLayer != _targetRenderLayer));
+                if (true == tile)
+                {
+                    bool dim = (true == _focusSelectedLayer) && (tile.RenderLayer != _targetRenderLayer);
+                    tile.SetVisualDimmed(dim);                    
+                }
             }
             SceneView.RepaintAll();
         }
@@ -164,7 +202,10 @@ namespace Script.Map.Editor
         {
             foreach (var tile in _cachedTiles)
             {
-                if (tile != null) tile.SetVisualDimmed(false);
+                if (true == tile)
+                {
+                    tile.SetVisualDimmed(false);                    
+                }
             }
         }
 
@@ -214,7 +255,9 @@ namespace Script.Map.Editor
 
             switch (_currentMode)
             {
-                case EditMode.Paint: DrawAtlasPaletteUI(); break;
+                case EditMode.Paint:
+                    DrawAtlasPaletteUI();
+                    break;
                 case EditMode.Add:
                     _tilePrefab = (GameObject)EditorGUILayout.ObjectField("Tile Prefab", _tilePrefab, typeof(GameObject), false);
                     _samplingRoot = (EditMapSamplingComponent)EditorGUILayout.ObjectField("Sampling Root", _samplingRoot, typeof(EditMapSamplingComponent), true);
@@ -244,7 +287,10 @@ namespace Script.Map.Editor
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label("Multi Atlas Palette", EditorStyles.boldLabel);
-            if (GUILayout.Button("🔄 리로드", GUILayout.Width(80))) LoadAllAtlases();
+            if (GUILayout.Button("🔄 리로드", GUILayout.Width(80)))
+            {
+                LoadAllAtlases();
+            }
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.Space();
 
@@ -265,7 +311,7 @@ namespace Script.Map.Editor
             AtlasPage currentPage = _atlasPages[_selectedAtlasPageIndex];
             float atlasSize = Mathf.Min(position.width - 30f, 300f);
             Rect atlasRect = GUILayoutUtility.GetRect(atlasSize, atlasSize, GUILayout.ExpandWidth(false));
-            atlasRect.x += (position.width - atlasSize - 20f) / 2f;
+            atlasRect.x += (position.width - atlasSize - 20f) * 0.5f;
 
             GUI.DrawTexture(atlasRect, currentPage.Texture, ScaleMode.ScaleToFit);
 
@@ -276,8 +322,9 @@ namespace Script.Map.Editor
 
             if (atlasRect.Contains(e.mousePosition))
             {
-                int col = Mathf.FloorToInt((e.mousePosition.x - atlasRect.x) / cellSize);
-                int row = Mathf.FloorToInt((e.mousePosition.y - atlasRect.y) / cellSize);
+                float cellSize_recip = 1 / cellSize;
+                int col = Mathf.FloorToInt((e.mousePosition.x - atlasRect.x) * cellSize_recip);
+                int row = Mathf.FloorToInt((e.mousePosition.y - atlasRect.y) *  cellSize_recip);
                 hoveredIndex = row * 8 + col;
                 hoveredGlobalIndex = currentPage.GlobalIndices[hoveredIndex];
 
@@ -323,7 +370,10 @@ namespace Script.Map.Editor
                         GUI.Label(new Rect(cellRect.x, cellRect.y + cellSize - 15, cellSize, 15), " S", EditorStyles.whiteMiniLabel);
                     }
 
-                    if (localIndex == hoveredIndex && globalIndex != -1) EditorGUI.DrawRect(cellRect, new Color(1, 1, 1, 0.2f));
+                    if (localIndex == hoveredIndex && globalIndex != -1)
+                    {
+                        EditorGUI.DrawRect(cellRect, new Color(1, 1, 1, 0.2f));                        
+                    }
                 }
             }
 
@@ -368,7 +418,7 @@ namespace Script.Map.Editor
             rect.x += (80 - 64) / 2f;
             EditorGUI.DrawRect(rect, new Color(0.15f, 0.15f, 0.15f, 1f));
 
-            if (atlas != null)
+            if (true == atlas)
             {
                 int localIndex = index % 64;
                 int col = localIndex % 8;
@@ -386,10 +436,17 @@ namespace Script.Map.Editor
 
         private void OnSceneGUI(SceneView sceneView)
         {
-            if (!_isEditingEnabled || _currentMode == EditMode.None) return;
+            if (!_isEditingEnabled || _currentMode == EditMode.None)
+            {
+                return;
+            }
 
             Event e = Event.current;
-            if (e.alt != _isAltPressed) { _isAltPressed = e.alt; sceneView.Repaint(); Repaint(); }
+            if (e.alt != _isAltPressed)
+            {
+                _isAltPressed = e.alt; 
+                sceneView.Repaint(); Repaint();
+            }
 
             if (_currentMode == EditMode.Paint && _isAltPressed)
             {
@@ -397,8 +454,11 @@ namespace Script.Map.Editor
             }
 
             int controlID = GUIUtility.GetControlID("KompileMapEditor".GetHashCode(), FocusType.Passive);
-            if (e.type == EventType.Layout) HandleUtility.AddDefaultControl(controlID);
-
+            if (e.type == EventType.Layout)
+            {
+                HandleUtility.AddDefaultControl(controlID);
+            }
+            
             Ray ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
             EditMapTileComponent hitTile = null;
 
@@ -409,9 +469,19 @@ namespace Script.Map.Editor
 
                 foreach (var tile in _cachedTiles)
                 {
-                    if (tile == null) continue;
-                    if (_focusSelectedLayer && tile.RenderLayer != _targetRenderLayer) continue;
-                    if (!_isAltPressed && Mathf.Abs(tile.transform.position.y - _targetY) > 0.1f) continue;
+                    if (false == tile)
+                    {
+                        continue;                        
+                    }
+                    if (_focusSelectedLayer && tile.RenderLayer != _targetRenderLayer)
+                    {
+                        continue;
+                    }
+
+                    if (false == _isAltPressed && Mathf.Abs(tile.transform.position.y - _targetY) > 0.1f)
+                    {
+                        continue;
+                    }
 
                     for (int i = 0; i < 13; i++)
                     {
@@ -434,26 +504,51 @@ namespace Script.Map.Editor
                 }
                 _lastHoveredTile = hitTile;
             }
-            else hitTile = _lastHoveredTile;
-
-            if (_currentMode == EditMode.Add) HandleAddMode(ray, e);
-            else if (hitTile != null)
+            else
             {
-                if (_currentMode == EditMode.Paint) HandlePaintMode(hitTile, e, controlID);
-                else if (_currentMode == EditMode.Erase) HandleEraseMode(hitTile, e, controlID);
-                else if (_currentMode == EditMode.Height) HandleHeightMode(hitTile, ray, e, controlID);
+                hitTile = _lastHoveredTile;
             }
 
-            if (e.type == EventType.MouseMove || e.type == EventType.MouseDrag) sceneView.Repaint();
+            if (_currentMode == EditMode.Add)
+            {
+                HandleAddMode(ray, e);
+            }
+            else if (true == hitTile)
+            {
+                if (_currentMode == EditMode.Paint)
+                {
+                    HandlePaintMode(hitTile, e, controlID);
+                }
+                else if (_currentMode == EditMode.Erase)
+                {
+                    HandleEraseMode(hitTile, e, controlID);
+                }
+                else if (_currentMode == EditMode.Height)
+                {
+                    HandleHeightMode(hitTile, ray, e, controlID);
+                }
+            }
+
+            if (e.type == EventType.MouseMove || e.type == EventType.MouseDrag)
+            {
+                sceneView.Repaint();
+            }
         }
 
         private void HandleAddMode(Ray ray, Event e)
         {
-            if (_tilePrefab == null) return;
-            Plane p = new Plane(Vector3.up, new Vector3(0, _targetY, 0));
-            if (!p.Raycast(ray, out float enter)) return;
-            Vector3 spawnPos = new Vector3(Mathf.Round(ray.GetPoint(enter).x), _targetY, Mathf.Round(ray.GetPoint(enter).z));
+            if (false == _tilePrefab)
+            {
+                return;
+            }
 
+            Plane p = new Plane(Vector3.up, new Vector3(0, _targetY, 0));
+            if (false == p.Raycast(ray, out float enter))
+            {
+                return;
+            }
+
+            Vector3 spawnPos = new Vector3(Mathf.Round(ray.GetPoint(enter).x), _targetY, Mathf.Round(ray.GetPoint(enter).z));
             if (e.type == EventType.Repaint)
             {
                 DrawCustomGrid(spawnPos);
@@ -462,7 +557,10 @@ namespace Script.Map.Editor
                 bool isOccupied = false;
                 foreach (var t in _cachedTiles)
                 {
-                    if (t != null && Vector3.Distance(t.transform.position, spawnPos) < 0.1f) { isOccupied = true; break; }
+                    if (t != null && Vector3.Distance(t.transform.position, spawnPos) < 0.1f)
+                    {
+                        isOccupied = true; break;
+                    }
                 }
 
                 Handles.color = isOccupied ? new Color(1, 0, 0, 0.3f) : new Color(0, 1, 0, 0.3f);
@@ -476,7 +574,7 @@ namespace Script.Map.Editor
                 if (!Physics.OverlapBox(spawnPos + Vector3.one * 0.5f, Vector3.one * 0.4f).Any())
                 {
                     GameObject newTile;
-                    if (_samplingRoot != null)
+                    if (true == _samplingRoot)
                     {
                         newTile = (GameObject)PrefabUtility.InstantiatePrefab(_tilePrefab, _samplingRoot.transform);
                     }
@@ -489,7 +587,7 @@ namespace Script.Map.Editor
                     newTile.transform.position = spawnPos;
 
                     var comp = newTile.GetComponent<EditMapTileComponent>();
-                    if (comp != null)
+                    if (true == comp)
                     {
                         comp.SetRenderLayer(_targetRenderLayer);
                         comp.SetVisualDimmed(false);
@@ -540,10 +638,14 @@ namespace Script.Map.Editor
                     Repaint();
                     input.Use();
                 }
+                
                 return;
             }
 
-            if (input.button != 0) return;
+            if (input.button != 0)
+            {
+                return;
+            }
 
             if (input.type == EventType.MouseDown || (input.type == EventType.MouseDrag && GUIUtility.hotControl == controlID))
             {
@@ -568,11 +670,23 @@ namespace Script.Map.Editor
                 Handles.DrawWireCube(tile.transform.position + new Vector3(0.5f, 0.5f, 0.5f), Vector3.one);
             }
 
-            if (e.button != 0 || e.alt) return;
+            if (e.button != 0 || e.alt)
+            {
+                return;
+            }
 
-            if (e.type == EventType.MouseDown) { GUIUtility.hotControl = controlID; _cachedTiles.Remove(tile); Undo.DestroyObjectImmediate(tile.gameObject); e.Use(); }
-            else if (e.type == EventType.MouseDrag && GUIUtility.hotControl == controlID) { Undo.DestroyObjectImmediate(tile.gameObject); e.Use(); }
-            else if (e.type == EventType.MouseUp) { GUIUtility.hotControl = 0; e.Use(); }
+            if (e.type == EventType.MouseDown)
+            {
+                GUIUtility.hotControl = controlID; _cachedTiles.Remove(tile); Undo.DestroyObjectImmediate(tile.gameObject); e.Use();
+            }
+            else if (e.type == EventType.MouseDrag && GUIUtility.hotControl == controlID)
+            {
+                Undo.DestroyObjectImmediate(tile.gameObject); e.Use();
+            }
+            else if (e.type == EventType.MouseUp)
+            {
+                GUIUtility.hotControl = 0; e.Use();
+            }
         }
 
         private void HandleHeightMode(EditMapTileComponent tile, Ray ray, Event e, int controlID)
@@ -641,14 +755,22 @@ namespace Script.Map.Editor
             Dictionary<Vector2Int, EditMapTileComponent> tileMap = new Dictionary<Vector2Int, EditMapTileComponent>();
             foreach (var t in _cachedTiles)
             {
-                if (t == null) continue;
+                if (false == t)
+                {
+                    continue;
+                }
+
                 Vector2Int gridPos = new Vector2Int(Mathf.RoundToInt(t.transform.position.x), Mathf.RoundToInt(t.transform.position.z));
                 if (!tileMap.ContainsKey(gridPos)) tileMap.Add(gridPos, t);
             }
 
             foreach (var t in _cachedTiles)
             {
-                if (t == null) continue;
+                if (false == t)
+                {
+                    continue;
+                }
+
                 Undo.RecordObject(t, "Optimize Side Mesh");
                 t.OptimizeSides(tileMap);
             }
@@ -658,14 +780,20 @@ namespace Script.Map.Editor
         private void ExecuteBake()
         {
             var rootComponent = UnityEngine.Object.FindFirstObjectByType<Data.EditMapTileComponent>();
-            if (rootComponent == null) return;
+            if (false == rootComponent)
+            {
+                return;
+            }
 
             try
             {
                 Provider.EditMapSamplingRepoProvider baker = new Provider.EditMapSamplingRepoProvider();
                 baker.Bake();
             }
-            catch (System.Exception e) { Debug.LogError($"[Framework] Bake 중 치명적 오류 발생: {e.Message}"); }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[Framework] Bake 중 치명적 오류 발생: {e.Message}");
+            }
         }
     }
 }

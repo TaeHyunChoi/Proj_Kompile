@@ -8,6 +8,8 @@ namespace Script.Map.Utility
     [BurstCompile]
     public static class MapNaviTileUtil
     {
+        private const int NONE_SUBTILE = 0b1111;
+
         [BurstCompile]
         public static bool IsSubTileValid(long naviMask, int sIndex0to15)
         {
@@ -17,14 +19,13 @@ namespace Script.Map.Utility
             }
 
             // 3개의 정점을 순회하며 유효성 체크
-            int NONE_SUBTILE = 0b1111;
             for (int i = 0; i < 3; ++i)
             {
                 int vIndex = MapConsts.SubTileVertexMap[sIndex0to15 * 3 + i];
 
                 // 4비트씩 시프트하여 높이값 추출
-                int vVal = (int)((naviMask >> (vIndex * 4)) & NONE_SUBTILE);
-                if (NONE_SUBTILE == vVal)
+                int vVal = (int)((naviMask >> (vIndex * 4)) & TILE_MASK);
+                if (TILE_MASK == vVal)
                 {
                     return false;
                 }
@@ -32,17 +33,19 @@ namespace Script.Map.Utility
 
             return true;
         }
-        
+
         /// <summary>
         /// NaviMask에서 특정 정점(vIndex)의 4비트 높이 값을 추출합니다.
         /// </summary>
         [BurstCompile]
         public static int GetHeightFromNaviMask(long naviMask, int vIndex)
         {
-            if (vIndex < 0 || vIndex > 12) return 15; // Error or None
+            if (vIndex < 0 || vIndex > 12)
+                return NONE_SUBTILE;
+
             return (int)((naviMask >> (vIndex * 4)) & 0b1111);
         }
-        
+
         /// <summary>
         /// 타일 내 로컬 좌표(0~8)를 기반으로 Vertex Index(0~12)를 반환합니다.
         /// </summary>
@@ -50,39 +53,36 @@ namespace Script.Map.Utility
         public static int GetVertexIndexFromLocalPos(int localX, int localZ)
         {
             // localX, localZ는 0 ~ 8 사이의 값 (0.125f 단위)
+            switch ((localX, localZ))
+            {
+                // Bottom Line
+                case (0, 0): return 0;
+                case (4, 0): return 1;
+                case (8, 0): return 2;
 
-            if (localZ == 0) // Bottom Line
-            {
-                if (localX == 0) return 0; // v00
-                if (localX == 4) return 1; // v01
-                if (localX == 8) return 2; // v02
-            }
-            else if (localZ == 2) // Bottom Quarter Line
-            {
-                if (localX == 2) return 3; // v03
-                if (localX == 6) return 4; // v04
-            }
-            else if (localZ == 4) // Middle Line
-            {
-                if (localX == 0) return 5; // v05
-                if (localX == 4) return 6; // v06
-                if (localX == 8) return 7; // v07
-            }
-            else if (localZ == 6) // Top Quarter Line
-            {
-                if (localX == 2) return 8; // v08
-                if (localX == 6) return 9; // v09
-            }
-            else if (localZ == 8) // Top Line
-            {
-                if (localX == 0) return 10; // v10
-                if (localX == 4) return 11; // v11
-                if (localX == 8) return 12; // v12
-            }
+                // Bottom Quarter Line
+                case (2, 2): return 3;
+                case (6, 2): return 4;
 
-            return -1; // 유효한 정점 위치가 아님
+                // Middle Line
+                case (0, 4): return 5;
+                case (4, 4): return 6;
+                case (8, 4): return 7;
+
+                // Top Quarter Line
+                case (2, 6): return 8;
+                case (6, 6): return 9;
+
+                // Top Line
+                case (0, 8): return 10;
+                case (4, 8): return 11;
+                case (2, 10): return 12;
+
+                default:
+                    return -1;
+            }
         }
-        
+
         [BurstCompile]
         public static bool TryGetYInt(long linkMask, int dirIndex, out int yInt)
         {
@@ -179,18 +179,13 @@ namespace Script.Map.Utility
                 float2 ap = p - a;
 
                 float t = math.dot(ap, ab) / math.dot(ab, ab);
-
-                // 선분 범위를 벗어나지 않도록 0..1 사이로 Clamp
                 t = math.saturate(t);
-
-                // 가장 가까운 점
                 float2 closest = a + t * ab;
 
-                // 거리 제곱 반환
                 return math.distancesq(p, closest);
             }
         }
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
         public static EditMapTileDirFlag GetDirFlag(float x, float z)
         {
             EditMapTileDirFlag flag = EditMapTileDirFlag.NONE;
@@ -203,6 +198,7 @@ namespace Script.Map.Utility
 
             return flag;
         }
+
         public static EditVertexContextData GetVertexIndexInfo(EditMapTileDirFlag flag)
         {
             return flag switch
@@ -214,6 +210,7 @@ namespace Script.Map.Utility
                 _ => default
             };
         }
+
         public static float3 GetDirectionVector(EditMapTileDirFlag flag)
         {
             return flag switch
@@ -242,26 +239,15 @@ namespace Script.Map.Utility
                 _ => -1
             };
         }
-        
+
         [BurstCompile]
-        public static bool TryGetVerticeHeight(this in EditMapTileData data, int vertice, out int heightx1000)
+        public static bool TryGetHeightMask(this in EditMapTileData data, int vertice, out int maskInt)
         {
             // data가 'in'이므로 필드 접근 시 복사가 일어나지 않는다.
             int shift = MapConsts.HEIGHT_BITS * vertice;
-            int maskInt = (int)((data.NaviMask >> shift) & MapConsts.HEIGHT_MASK);
+            maskInt = (int)((data.NaviMask >> shift) & MapConsts.HEIGHT_MASK);
 
-            if (maskInt == 0b1111)
-            {
-                heightx1000 = 0;
-                return false;
-            }
-
-            MapCoordUtil.ComputeWorldPosition(data.ID, out float3 pos);
-            float pivotY = pos.y;
-            float actualHeight = pivotY + (maskInt * 0.125f);
-    
-            heightx1000 = (int)(actualHeight * 1000f + 0.5f); 
-            return true;
+            return NONE_SUBTILE != maskInt;
         }
 #endif
     }

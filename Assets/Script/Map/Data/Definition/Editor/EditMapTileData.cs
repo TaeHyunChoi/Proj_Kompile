@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-// [Framework] 규격에 따라 단수형 Script.Map.Data를 Scripts.Datas.Map으로 변경
+
 namespace Script.Map.Data
 {
     using Unity.Burst;
@@ -7,7 +7,7 @@ namespace Script.Map.Data
 
     // Data: 정보의 상태, 구조, 가공 형태 및 자료형 정의 (Define: Type, Info)
     [BurstCompile]
-    [MessagePackObject] // MsgPack003 오류 해결: 직렬화 대상임을 명시
+    [MessagePackObject]
     public struct EditMapTileData
     {
         [Key(0)]

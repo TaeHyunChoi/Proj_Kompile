@@ -17,73 +17,44 @@ namespace Script.Map.Provider
     using UnityEngine;
     using Object = UnityEngine.Object;
 
-    public partial class EditMapSamplingRepoProvider
+    public partial class EditMapSamplingRepoProvider // main;
     {
+        // -- Path --
+        private const string SAVE_PATH_ROOT = "Assets/Rcs/MapRender";        
         private readonly string MAP_NAVI_DATA_PATH = "Rcs\\Bytes\\MapNavi";
+        
+        // -- Height, Link -- 
         private readonly float[] DIFF_Y = new float[] { 0, 1, -1 };
-
         private readonly float2[] LINK_DIR = new float2[]
         {
             new float2(1, -1), new float2(1, 1), new float2(-1, 1), new float2(-1, -1), new float2(0, -1),
             new float2(1, 0), new float2(0, 1), new float2(-1, 0)
         };
 
+        // -- Batch --
         private const int VERTEX_LIMIT = 65536;
         private const int BATCH_TILE_LIMIT = 512;
         private const int BATCH_VERTEX_TARGET = 200000;
-        private const float SPRITE_SIZE = 256f;
-        private const int ATLAS_WIDTH = 2048;
-        private const int ATLAS_HEIGHT = 2048;
-        private const string SAVE_PATH_ROOT = "Assets/Rcs/MapRender";
-        private static readonly string PROGRESS_BAR_TITLE = "Bake Map - Combining Meshes";
 
-        // [핵심 변경] 머티리얼 생성을 위해 텍스처 원본 참조를 일시적으로 보관합니다.
-        private struct BakeGroupKey : IEquatable<BakeGroupKey>
-        {
-            public ushort RenderLayer;
-            public int GridKey;
-            public string TopAtlas;
-            public string SideAtlas;
-            public Texture2D TopTexRef;  // 머티리얼 자동 생성용 참조
-            public Texture2D SideTexRef; // 머티리얼 자동 생성용 참조
-
-            public bool Equals(BakeGroupKey other) =>
-                RenderLayer == other.RenderLayer && GridKey == other.GridKey && TopAtlas == other.TopAtlas && SideAtlas == other.SideAtlas;
-
-            public override int GetHashCode() => HashCode.Combine(RenderLayer, GridKey, TopAtlas, SideAtlas);
-        }
-
-        private class BakeChunkData
-        {
-            public CombineInstance Instance;
-            public int VertexCount;
-            public ushort RenderLayer;
-            public int GridKey;
-            public int TopTextureIndex;
-            public int SideTextureIndex;
-        }
-
-        private class BakeAccumulator
-        {
-            public int VertexSum;
-            public int PartIndex;
-            public Queue<BakeChunkData> Tiles = new Queue<BakeChunkData>();
-            public void Clear() { VertexSum = 0; Tiles.Clear(); }
-        }
-
+        // -- Bake Context --
         private static EditBakeContext cachedContext;
-        private static readonly Stack<BakeAccumulator> accmPool = new Stack<BakeAccumulator>();
-        private static readonly Stack<BakeChunkData> chunkPool = new Stack<BakeChunkData>();
+        private static readonly Stack<EditBakeAccumulator> accmPool = new Stack<EditBakeAccumulator>();
+        private static readonly Stack<EditBakeChunkData> chunkPool = new Stack<EditBakeChunkData>();
 
+        // -- Map --
         private byte sceneIndex = 0;
         private ConcurrentDictionary<int, EditMapGridData> map;
-
+        
+        
         public void Bake()
         {
             Debug.Log($"Start Bake Map");
 
             var instance = Object.FindFirstObjectByType<EditMapSamplingComponent>();
-            if (instance == null) return;
+            if (false == instance)
+            {
+                return;
+            }
 
             var instanceTransform = instance.transform;
             sceneIndex = instance.SceneIndex;
@@ -92,17 +63,17 @@ namespace Script.Map.Provider
             int length = tiles.Length;
             Allocator allocationType = Allocator.TempJob;
 
-            var nativeSceneIndex = new NativeArray<byte>(length, allocationType);
+            var nativeSceneIndex  = new NativeArray<byte>(length, allocationType);
             var nativeRenderLayer = new NativeArray<ushort>(length, allocationType);
-            var nativePosition = new NativeArray<float3>(length, allocationType);
-            var nativeHeights = new NativeArray<ulong>(length, allocationType);
-            var nativeResult = new NativeArray<EditMapTileData>(length, allocationType);
+            var nativePosition    = new NativeArray<float3>(length, allocationType);
+            var nativeHeights     = new NativeArray<ulong>(length, allocationType);
+            var nativeResult      = new NativeArray<EditMapTileData>(length, allocationType);
 
             for (int i = 0; i < tiles.Length; ++i)
             {
                 EditMapTileComponent tileComponent = tiles[i];
 
-                nativeSceneIndex[i] = sceneIndex;
+                nativeSceneIndex[i]  = sceneIndex;
                 nativeRenderLayer[i] = tileComponent.RenderLayer;
 
                 int x = Mathf.FloorToInt(tileComponent.transform.position.x);
@@ -131,11 +102,11 @@ namespace Script.Map.Provider
             for (int i = 0; i < nativeResult.Length; ++i)
             {
                 MapCoordUtil.ComputeKey(nativeResult[i].ID, out int gridKey, out int tileKey);
+                
+                computedGridKeys[i] = gridKey;                
                 naviMask = nativeResult[i].NaviMask;
                 renderIndex = nativeResult[i].RenderIndex;
-
-                computedGridKeys[i] = gridKey;
-
+                
                 if (false == map.ContainsKey(gridKey))
                 {
                     map.TryAdd(gridKey, new EditMapGridData(gridKey));
@@ -143,19 +114,19 @@ namespace Script.Map.Provider
 
                 EditMapTileData tileData = new EditMapTileData()
                 {
-                    ID = nativeResult[i].ID,
-                    NaviMask = naviMask,
-                    LinkMask = default,
+                    ID          = nativeResult[i].ID,
+                    NaviMask    = naviMask,
+                    LinkMask    = 0, //LinkTiles(map);에서 처리 예정
                     RenderIndex = renderIndex
                 };
                 map[gridKey].TryAdd(tileKey, tileData);
             }
 
-            nativeSceneIndex.Dispose();
+            nativeSceneIndex .Dispose();
             nativeRenderLayer.Dispose();
-            nativePosition.Dispose();
-            nativeHeights.Dispose();
-            nativeResult.Dispose();
+            nativePosition   .Dispose();
+            nativeHeights    .Dispose();
+            nativeResult     .Dispose();
 
             LinkTiles(map);
             CombineAndRegister(map, tiles, computedGridKeys, sceneIndex, "MapRender");
@@ -198,22 +169,25 @@ namespace Script.Map.Provider
         private void LinkTiles(ConcurrentDictionary<int, EditMapGridData> map)
         {
             List<EditMapTileData> allTiles = new List<EditMapTileData>();
-            foreach (var grid in map.Values)
+            foreach (EditMapGridData grid in map.Values)
             {
-                foreach (var tile in grid.Data.Values)
+                foreach (EditMapTileData tile in grid.Data.Values)
                 {
                     allTiles.Add(tile);
                 }
             }
 
             int count = allTiles.Count;
-            if (0 == count) return;
+            if (0 == count)
+            {
+                return;
+            }
 
             var allocType = Allocator.TempJob;
-            var keyArray = new NativeArray<long>(count, allocType);
-            var tileMap = new NativeHashMap<long, EditMapTileData>(count, allocType);
-            var linkDirs = new NativeArray<float2>(LINK_DIR, allocType);
-            var diffYs = new NativeArray<float>(DIFF_Y, allocType);
+            var keyArray  = new NativeArray<long>(count, allocType);
+            var tileMap   = new NativeHashMap<long, EditMapTileData>(count, allocType);
+            var linkDirs  = new NativeArray<float2>(LINK_DIR, allocType);
+            var diffYs    = new NativeArray<float>(DIFF_Y, allocType);
             var jobResult = new NativeArray<EditMapTileData>(count, allocType);
 
             for (int i = 0; i < count; ++i)
@@ -225,10 +199,10 @@ namespace Script.Map.Provider
             EditMapLinkJobUtil linkJob = new EditMapLinkJobUtil
             {
                 KeyArray = keyArray,
-                Map = tileMap,
-                Results = jobResult,
+                Map      = tileMap,
+                Results  = jobResult,
                 LinkDirs = linkDirs,
-                DiffYs = diffYs
+                DiffYs   = diffYs
             };
             JobHandle handle = linkJob.Schedule(count, 64);
             handle.Complete();
@@ -238,39 +212,51 @@ namespace Script.Map.Provider
                 EditMapTileData resultTile = jobResult[i];
                 MapCoordUtil.ComputeKey(resultTile.ID, out int gKey, out int tKey);
 
-                if (true == map.TryGetValue(gKey, out var gridData))
+                if (true == map.TryGetValue(gKey, out EditMapGridData gridData))
                 {
                     gridData.Data[tKey] = resultTile;
                 }
             }
 
-            keyArray.Dispose();
-            tileMap.Dispose();
-            linkDirs.Dispose();
-            diffYs.Dispose();
+            keyArray .Dispose();
+            tileMap  .Dispose();
+            linkDirs .Dispose();
+            diffYs   .Dispose();
             jobResult.Dispose();
 
             Debug.Log($"LinkTiles Job Completed: {count} tiles processed.");
         }
 
         public static void CombineAndRegister(ConcurrentDictionary<int, EditMapGridData> map,
-            EditMapTileComponent[] tiles,
-            int[] gridKeys,
-            int sceneIndex,
-            string adderessableGroupName)
+                                              EditMapTileComponent[] tiles,
+                                              int[] gridKeys,
+                                              int sceneIndex,
+                                              string adderessableGroupName)
         {
-            if (null == tiles || 0 == tiles.Length) return;
+            if (null == tiles || 0 == tiles.Length)
+            {
+                return;                
+            }
 
-            if (AssetDatabase.IsValidFolder(SAVE_PATH_ROOT)) AssetDatabase.DeleteAsset(SAVE_PATH_ROOT);
-            if (!System.IO.Directory.Exists(SAVE_PATH_ROOT)) System.IO.Directory.CreateDirectory(SAVE_PATH_ROOT);
-
+            if (true == AssetDatabase.IsValidFolder(SAVE_PATH_ROOT))
+            {
+                AssetDatabase.DeleteAsset(SAVE_PATH_ROOT);
+            }
+            if (false == System.IO.Directory.Exists(SAVE_PATH_ROOT))
+            {
+                System.IO.Directory.CreateDirectory(SAVE_PATH_ROOT);                
+            }
             AssetDatabase.Refresh();
 
-            if (null == cachedContext) cachedContext = new EditBakeContext();
+            if (null == cachedContext)
+            {
+                cachedContext = new EditBakeContext();
+            }
             cachedContext.Setup(sceneIndex, map, adderessableGroupName);
 
-            var accumulators = new Dictionary<BakeGroupKey, BakeAccumulator>();
+            var accumulators = new Dictionary<EditBakeGroupKey, EditBakeAccumulator>();
             int totalTiles = tiles.Length;
+            float totalTiles_recip = 1 / totalTiles;
             bool userCancelled = false;
 
             try
@@ -279,26 +265,36 @@ namespace Script.Map.Provider
                 List<int> batchIndices = new List<int>();
                 while (start < totalTiles)
                 {
-                    if (EditorUtility.DisplayCancelableProgressBar(PROGRESS_BAR_TITLE, $"Processing {start}/{totalTiles}", (float)start / totalTiles))
+                    if (true == EditorUtility.DisplayCancelableProgressBar("Bake Map - Combining Meshes", 
+                                                                    $"Processing {start}/{totalTiles}", 
+                                                                    (float)start * totalTiles_recip))
                     {
                         userCancelled = true;
                         break;
                     }
 
                     batchIndices.Clear();
-                    int currentBatchVertex = 0;
+                    int currentBatchVertexCount = 0;
                     int idx = start;
 
-                    while (idx < totalTiles && batchIndices.Count < BATCH_TILE_LIMIT)
+                    while (idx < totalTiles
+                           && batchIndices.Count < BATCH_TILE_LIMIT)
                     {
                         EditMapTileComponent tile = tiles[idx];
-                        int vc = 0;
-                        if (tile.TryGetSharedMesh(out Mesh tileMesh)) vc = tileMesh.vertexCount;
+                        int vertexCount = 0;
+                        if (true == tile.TryGetSharedMesh(out Mesh tileMesh))
+                        {
+                            vertexCount = tileMesh.vertexCount;
+                        }
 
-                        if (BATCH_VERTEX_TARGET < currentBatchVertex + vc && 0 < batchIndices.Count) break;
-
+                        if (BATCH_VERTEX_TARGET < currentBatchVertexCount + vertexCount
+                            && 0 < batchIndices.Count)
+                        {
+                            break;
+                        }
+                        
                         batchIndices.Add(idx);
-                        currentBatchVertex += vc;
+                        currentBatchVertexCount += vertexCount;
                         ++idx;
                     }
 
@@ -313,8 +309,8 @@ namespace Script.Map.Provider
 
             foreach (var kv in accumulators)
             {
-                BakeGroupKey key = kv.Key;
-                BakeAccumulator accm = kv.Value;
+                EditBakeGroupKey key = kv.Key;
+                EditBakeAccumulator accm = kv.Value;
 
                 while (0 < accm.Tiles.Count)
                 {
@@ -335,23 +331,28 @@ namespace Script.Map.Provider
         }
 
         private static void ProcessBatch(EditBakeContext ctx, EditMapTileComponent[] tilesInGrid, int[] gridKeys,
-            List<int> indices, Dictionary<BakeGroupKey, BakeAccumulator> accums)
+            List<int> indices, Dictionary<EditBakeGroupKey, EditBakeAccumulator> accums)
         {
             foreach (int i in indices)
             {
                 EditMapTileComponent tile = tilesInGrid[i];
-                if (!tile.TryGetSharedMesh(out Mesh mesh)) continue;
-
+                if (false == tile.TryGetSharedMesh(out Mesh mesh))
+                {
+                    continue;                    
+                }
+                
                 int vc = mesh.vertexCount;
-                if (vc == 0) continue;
+                if (vc == 0)
+                {
+                    continue;
+                }
 
                 int correctGridKey = gridKeys[i];
 
-                string topAtlasName = tile.TopAtlasTexture != null ? tile.TopAtlasTexture.name : "None";
-                string sideAtlasName = tile.SideAtlasTexture != null ? tile.SideAtlasTexture.name : "None";
+                string topAtlasName = (true == tile.TopAtlasTexture) ? tile.TopAtlasTexture.name : "None";
+                string sideAtlasName = (true == tile.SideAtlasTexture) ? tile.SideAtlasTexture.name : "None";
 
-                // [핵심 변경] 머티리얼 자동 생성을 위해 원본 텍스처 참조를 GroupKey에 담아 전달합니다.
-                BakeGroupKey key = new BakeGroupKey
+                EditBakeGroupKey key = new EditBakeGroupKey
                 {
                     RenderLayer = tile.RenderLayer,
                     GridKey = correctGridKey,
@@ -361,22 +362,24 @@ namespace Script.Map.Provider
                     SideTexRef = tile.SideAtlasTexture
                 };
 
-                BakeChunkData chunkData = (0 < chunkPool.Count) ? chunkPool.Pop() : new BakeChunkData();
-                chunkData.Instance = new CombineInstance { mesh = mesh, transform = tile.transform.localToWorldMatrix };
+                EditBakeChunkData chunkData = (0 < chunkPool.Count) ? chunkPool.Pop() : new EditBakeChunkData();
+                chunkData.Instance = new CombineInstance
+                {
+                    mesh = mesh, 
+                    transform = tile.transform.localToWorldMatrix
+                };
                 chunkData.VertexCount = vc;
                 chunkData.RenderLayer = tile.RenderLayer;
                 chunkData.GridKey = correctGridKey;
-
                 chunkData.TopTextureIndex = tile.TopTextureIndex;
                 chunkData.SideTextureIndex = tile.SideTextureIndex;
 
-                if (!accums.TryGetValue(key, out BakeAccumulator acc))
+                if (false == accums.TryGetValue(key, out EditBakeAccumulator acc))
                 {
-                    acc = 0 < accmPool.Count ? accmPool.Pop() : new BakeAccumulator();
+                    acc = (0 < accmPool.Count) ? accmPool.Pop() : new EditBakeAccumulator();
                     acc.Clear();
                     accums[key] = acc;
                 }
-
                 acc.Tiles.Enqueue(chunkData);
                 acc.VertexSum += vc;
 
@@ -387,9 +390,12 @@ namespace Script.Map.Provider
             }
         }
 
-        private static void FlushAccumulatorPart(EditBakeContext ctx, BakeGroupKey key, BakeAccumulator acc)
+        private static void FlushAccumulatorPart(EditBakeContext ctx, EditBakeGroupKey key, EditBakeAccumulator acc)
         {
-            if (0 == acc.Tiles.Count) return;
+            if (0 == acc.Tiles.Count)
+            {
+                return;
+            }
 
             List<CombineInstance> takeInstances = new List<CombineInstance>();
             List<Mesh> tempMeshes = new List<Mesh>();
@@ -397,15 +403,18 @@ namespace Script.Map.Provider
             int tilesConsumed = 0;
             float uvStep = 1f / 8f;
 
-            foreach (BakeChunkData chunk in acc.Tiles)
+            foreach (EditBakeChunkData chunk in acc.Tiles)
             {
-                if (0 < takenVerts && VERTEX_LIMIT < takenVerts + chunk.VertexCount) break;
-
-                Mesh tempMesh = Object.Instantiate(chunk.Instance.mesh);
-                int vc = tempMesh.vertexCount;
-
-                Vector2[] uv2 = new Vector2[vc];
-                Vector2[] uv3 = new Vector2[vc];
+                if (0 < takenVerts
+                    && VERTEX_LIMIT < takenVerts + chunk.VertexCount)
+                {
+                    break;                    
+                }
+                
+                Mesh tempMesh   = Object.Instantiate(chunk.Instance.mesh);
+                int vertexCount = tempMesh.vertexCount;
+                Vector2[] uv2   = new Vector2[vertexCount];
+                Vector2[] uv3   = new Vector2[vertexCount];
 
                 int tLocal = chunk.TopTextureIndex % 64;
                 Vector2 tOffset = new Vector2((tLocal % 8) * uvStep, 1.0f - ((tLocal / 8 + 1) * uvStep));
@@ -413,7 +422,7 @@ namespace Script.Map.Provider
                 int sLocal = chunk.SideTextureIndex % 64;
                 Vector2 sOffset = new Vector2((sLocal % 8) * uvStep, 1.0f - ((sLocal / 8 + 1) * uvStep));
 
-                for (int j = 0; j < vc; j++)
+                for (int j = 0; j < vertexCount; j++)
                 {
                     uv2[j] = tOffset;
                     uv3[j] = sOffset;
@@ -430,13 +439,19 @@ namespace Script.Map.Provider
                 takenVerts += chunk.VertexCount;
                 ++tilesConsumed;
 
-                if (VERTEX_LIMIT < takenVerts) break;
+                if (VERTEX_LIMIT < takenVerts)
+                {
+                    break;
+                }
             }
 
             SaveMeshAsset(ctx, key, acc.PartIndex, takeInstances.ToArray());
 
-            foreach (var tm in tempMeshes) Object.DestroyImmediate(tm);
-
+            foreach (var tm in tempMeshes)
+            {
+                Object.DestroyImmediate(tm);
+            }
+            
             for (int i = 0; i < tilesConsumed; ++i)
             {
                 var removed = acc.Tiles.Dequeue();
@@ -447,26 +462,23 @@ namespace Script.Map.Provider
             ++acc.PartIndex;
         }
 
-        private static void SaveMeshAsset(EditBakeContext ctx, BakeGroupKey key, int partIdx, CombineInstance[] instances)
+        private static void SaveMeshAsset(EditBakeContext ctx, EditBakeGroupKey key, int partIdx, CombineInstance[] instances)
         {
-            // =================================================================================
-            // [나으리 아이디어 구현부] 머티리얼(Material) 에셋 자동 생성 및 등록
-            // =================================================================================
+            // Material 에셋 자동 생성 및 등록
             string matName = $"Mat_{key.TopAtlas}_{key.SideAtlas}";
             string matPath = $"{SAVE_PATH_ROOT}/{matName}.mat";
 
             Material mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
-            if (mat == null)
+            if (false == mat)
             {
                 Shader shader = Shader.Find("Custom/WorldSpaceAtlasShader_v4");
-                if (shader != null)
+                if (true == shader)
                 {
                     mat = new Material(shader);
-                    if (key.TopTexRef != null) mat.SetTexture("_TopAtlas", key.TopTexRef);
-                    if (key.SideTexRef != null) mat.SetTexture("_SideAtlas", key.SideTexRef);
+                    if (key.TopTexRef) mat.SetTexture("_TopAtlas", key.TopTexRef);
+                    if (key.SideTexRef) mat.SetTexture("_SideAtlas", key.SideTexRef);
 
                     AssetDatabase.CreateAsset(mat, matPath);
-                    // 생성된 머티리얼도 Addressable 시스템에 자동 등록시킵니다.
                     ctx.CreatedAssets.Add((matPath, matName));
                 }
                 else
@@ -475,9 +487,7 @@ namespace Script.Map.Provider
                 }
             }
 
-            // =================================================================================
             // 메쉬 저장 (기존 유지)
-            // =================================================================================
             string assetName = $"MapRender_{ctx.SceneIndex}_G{key.GridKey}_L{key.RenderLayer}_{key.TopAtlas}_{key.SideAtlas}_{partIdx}";
             string path = $"{SAVE_PATH_ROOT}/{assetName}.asset";
 
@@ -485,14 +495,20 @@ namespace Script.Map.Provider
             try
             {
                 int totalVerts = 0;
-                foreach (var ci in instances) totalVerts += ci.mesh.vertexCount;
+                foreach (var ci in instances)
+                {
+                    totalVerts += ci.mesh.vertexCount;
+                }
 
-                if (VERTEX_LIMIT < totalVerts) combinedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+                if (VERTEX_LIMIT < totalVerts)
+                {
+                    combinedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+                }
 
                 combinedMesh.CombineMeshes(instances, true, true);
                 MeshUtility.Optimize(combinedMesh);
 
-                if (null != AssetDatabase.LoadAssetAtPath<Mesh>(path)) AssetDatabase.DeleteAsset(path);
+                if (AssetDatabase.LoadAssetAtPath<Mesh>(path)) AssetDatabase.DeleteAsset(path);
                 AssetDatabase.CreateAsset(combinedMesh, path);
 
                 if (null != ctx.Map)
@@ -513,17 +529,26 @@ namespace Script.Map.Provider
         private static void RegisterAddressables(EditBakeContext ctx)
         {
             AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
-            if (null == settings || 0 == ctx.CreatedAssets.Count) return;
-
+            if (false == settings || 0 == ctx.CreatedAssets.Count)
+            {
+                return;
+            }
+            
             AddressableAssetGroup group = settings.FindGroup(ctx.AddressableGroupName);
-            if (null == group) return;
-
+            if (false == group)
+            {
+                return;
+            }
+            
             List<AddressableAssetEntry> entries = new List<AddressableAssetEntry>();
             foreach ((string path, string assetName) in ctx.CreatedAssets)
             {
                 string guid = AssetDatabase.AssetPathToGUID(path);
-                if (true == string.IsNullOrEmpty(guid)) continue;
-
+                if (true == string.IsNullOrEmpty(guid))
+                {
+                    continue;
+                }
+                
                 var entry = settings.CreateOrMoveEntry(guid, group, false, false);
                 entry.SetAddress(assetName);
                 entries.Add(entry);

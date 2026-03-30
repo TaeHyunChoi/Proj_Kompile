@@ -15,7 +15,7 @@ namespace Script.Map.Data
 
         public void Dispose()
         {
-            if (NativeMap.IsCreated)
+            if (true == NativeMap.IsCreated)
             {
                 NativeMap.Dispose();
             }

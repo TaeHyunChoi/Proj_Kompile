@@ -15,13 +15,18 @@ MonoBehaviour:
   m_GroupName: MapRender
   m_GUID: aead3c2cf363bb645ae30ad8c22b2f3f
   m_SerializeEntries:
-  - m_GUID: 5b5b258d6281b84499b3d6314c1eda0a
-    m_Address: MapRender_0_G0_L0_0
+  - m_GUID: 4a7b97013b4a243478eaac89d7d98500
+    m_Address: MapRender_0_G0_L0_merged-test_merged-test_1
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e03468cee1b042e40a9c56fec731a769
-    m_Address: MapRender_0_G0_L1_0
+  - m_GUID: a248fa78a979c407badc2d1eddc43c88
+    m_Address: MapRender_0_G0_L0_None_None_1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f0f743f3011d242c58568c4c0dfec670
+    m_Address: MapRender_0_G0_L0_merged-test_2_merged-test_2_1
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

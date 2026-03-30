@@ -63,7 +63,7 @@ namespace Script.Map.Manager
             foreach (var kvp in gridData.layerMeshAssets)
             {
                 // kvp.Value는 해당 레이어에 속한 메쉬 이름들의 리스트입니다.
-                foreach (string meshAssetName in kvp.Value)
+                foreach (string meshAssetName in kvp.assets)
                 {
                     // 방금 전 우리가 만들었던 RenderProvider에 이름을 넘겨줍니다!
                     renderTasks.Add(_renderProvider.LoadMapChunkAsync(meshAssetName));

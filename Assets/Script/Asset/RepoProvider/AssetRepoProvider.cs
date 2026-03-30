@@ -219,7 +219,7 @@ namespace Script.Asset.Provider
             if (handle.Status != AsyncOperationStatus.Succeeded || textAsset == null)
             {
                 if (handle.IsValid()) Addressables.Release(handle);
-                throw new FileNotFoundException($"[AssetProvider] Binary file not found: {key.Value}");
+                throw new FileNotFoundException($"[AssetProvider] Binary file not found: {key}");
             }
 
             try

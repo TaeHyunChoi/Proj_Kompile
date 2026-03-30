@@ -22,12 +22,7 @@ namespace Script.Map.Data
         [Key(3)]
         public List<MapGridLayerData> LayerMeshAssets = new List<MapGridLayerData>();
 
-        // [Framework] Manager가 아닌 Data에서 인스턴스를 제어할 수 없으므로 
-        // 아키텍처 규칙 위반 방지 및 MessagePack 직렬화 오류를 막기 위해 제외 처리
-        [IgnoreMember]
-        public UnityEngine.GameObject gameObject;
-
-        // MessagePack 역직렬화 시 사용할 기본 생성자를 명확히 지정 (오류 해결의 핵심)
+        // MessagePack 역직렬화 시 사용할 기본 생성자를 명확히 지정
         [SerializationConstructor]
         public EditMapGridData() { }
 

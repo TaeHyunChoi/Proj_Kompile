@@ -5,9 +5,7 @@ namespace Script.Map.Utility
     using Unity.Mathematics;
     using System.Collections.Generic;
 
-    /// <summary>
-    /// [Framework] Mesh Generator Utility: 데이터를 기반으로 실제 Unity Mesh를 직조합니다.
-    /// </summary>
+    /// <summary> 데이터를 기반으로 실제 Unity Mesh를 직조합니다. </summary>
     public static class MapMeshUtil
     {
         public const float HeightStep = 0.125f; // 층간 고도 차이
@@ -44,38 +42,31 @@ namespace Script.Map.Utility
             }
         }
 
-        /// <summary>
-        /// [고도화] neighborHeights(길이 16)를 참조하여 맞닿는 구간만 부분 클리핑합니다.
+        /// <summary> neighborHeights(길이 16)를 참조하여 맞닿는 구간만 부분 클리핑합니다.
         /// 이웃 타일과의 단차뿐만 아니라, 타일 내부에서 지워진 정점(-1)으로 인해 발생하는 모든 내부 절벽 단면까지 완벽하게 채워줍니다.
         /// </summary>
         public static Mesh GenerateMesh(MapTileHeightsData data, sbyte[] neighborHeights = null)
         {
             Mesh mesh = new Mesh { name = "Generated3DBlockMesh" };
 
-            // 내부 절벽이 얼마나 생길지 모르므로 List로 유연하게 관리합니다.
             List<Vector3> vertices = new List<Vector3>(64);
             List<Vector2> uvs = new List<Vector2>(64);
             List<int> dynamicTriangles = new List<int>(64);
 
-            // ==========================================
             // 1. 기본 13개 정점 윗면(Top) 위치 세팅
-            // ==========================================
             for (int i = 0; i < 13; i++)
             {
                 sbyte h = data[i];
-                // height가 -1이면 0층 바닥으로 취급합니다.
-                float y = (h == -1) ? 0f : h * HeightStep;
+                float y = (h == -1) ? 0f : h * HeightStep;  // height가 -1이면 0층 바닥으로 취급합니다.
+                
                 vertices.Add(new Vector3(PointCoords[i].x, y, PointCoords[i].y));
-                // UV는 평면 좌표 그대로 매핑 (윗면 텍스처 용도)
                 uvs.Add(new Vector2(PointCoords[i].x, PointCoords[i].y));
             }
 
             // 노출된 외곽선(절벽 면)을 추출하기 위한 방향성 엣지 세트
             HashSet<(int, int)> exposedEdges = new HashSet<(int, int)>();
 
-            // ==========================================
             // 2. 윗면(Top) 삼각형 직조
-            // ==========================================
             for (int i = 0; i < TriangleIndices.Length; i += 3)
             {
                 int v0 = TriangleIndices[i];
@@ -83,7 +74,10 @@ namespace Script.Map.Utility
                 int v2 = TriangleIndices[i + 2];
 
                 // 버텍스 하나라도 지워져 있으면 해당 삼각형은 그리지 않습니다. (구멍 뚫기)
-                if (data[v0] == -1 || data[v1] == -1 || data[v2] == -1) continue;
+                if (data[v0] == -1 || data[v1] == -1 || data[v2] == -1)
+                {
+                    continue;
+                }
 
                 dynamicTriangles.Add(v0);
                 dynamicTriangles.Add(v1);
@@ -95,9 +89,7 @@ namespace Script.Map.Utility
                 AddDirectedEdge(exposedEdges, v2, v0);
             }
 
-            // ==========================================
             // 3. 단면(절벽 Side) 생성: 노출된 엣지를 바닥으로 내립니다.
-            // ==========================================
             int[] perimeter = { 0, 1, 2, 7, 12, 11, 10, 5 }; // 타일 제일 바깥쪽 정점 순서
 
             // 상쇄되고 살아남은 엣지들은 모두 "절벽을 만들어야 할 노출된 단면"입니다.
@@ -135,7 +127,11 @@ namespace Script.Map.Utility
                     }
                 }
 
-                if (floorY1 == float.MaxValue) continue; // 벽 생성 스킵
+                // 벽 생성 스킵
+                if (floorY1 == float.MaxValue) 
+                {
+                    continue;
+                }
 
                 // 절벽 면(Quad)의 새 버텍스 인덱스 시작점
                 int vIdx = vertices.Count;
@@ -153,23 +149,20 @@ namespace Script.Map.Utility
                 uvs.Add(new Vector2(1, 0));
                 uvs.Add(new Vector2(0, 0));
 
-                // [핵심 변경] 절벽 면의 삼각형 방향을 뒤집어 노말이 바깥을 향하게 직조합니다. (A -> B 방향 기준)
-                // 직전 코드: dynamicTriangles.Add(vIdx); dynamicTriangles.Add(vIdx + 1); dynamicTriangles.Add(vIdx + 2);
+                // 절벽 면의 삼각형 방향을 뒤집어 노말이 바깥을 향하게 직조합니다. (A -> B 방향 기준)
                 dynamicTriangles.Add(vIdx); dynamicTriangles.Add(vIdx + 2); dynamicTriangles.Add(vIdx + 1);
-
-                // 직전 코드: dynamicTriangles.Add(vIdx + 1); dynamicTriangles.Add(vIdx + 3); dynamicTriangles.Add(vIdx + 2);
                 dynamicTriangles.Add(vIdx + 1); dynamicTriangles.Add(vIdx + 2); dynamicTriangles.Add(vIdx + 3);
             }
 
-            // ==========================================
             // 4. 최종 메쉬 구성 및 최적화
-            // ==========================================
             mesh.vertices = vertices.ToArray();
             mesh.triangles = dynamicTriangles.ToArray();
             mesh.uv = uvs.ToArray();
+
             // RecalculateNormals()가 뒤집힌 정점 방향에 맞춰 노말을 바깥쪽으로 예쁘게 뽑아줍니다.
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
+            
             return mesh;
         }
     }

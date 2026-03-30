@@ -4,9 +4,7 @@ namespace Script.Map.Data
     using System;
     using UnityEngine;
 
-    /// <summary>
-    /// [Framework] Data: 타일의 13개 포인트에 대한 높이 데이터를 관리합니다.
-    /// </summary>
+    /// <summary> 타일의 13개 포인트에 대한 높이 데이터를 관리 </summary>
     [Serializable]
     public struct MapTileHeightsData
     {
