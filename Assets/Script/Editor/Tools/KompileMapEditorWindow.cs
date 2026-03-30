@@ -84,42 +84,28 @@ namespace Script.Map.Editor
             ClearAllTilesFocusState();
         }
 
-        private void LoadAllAtlases()
+private void LoadAllAtlases()
         {
             _atlasPages.Clear();
             _selectedAtlasPageIndex = 0;
 
-            if (false == Directory.Exists(ROOT_INPUT_PATH))
-            {
-                return;
-            }
-            
+            if (!Directory.Exists(ROOT_INPUT_PATH)) return;
+
             string[] directories = Directory.GetDirectories(ROOT_INPUT_PATH);
-            foreach (string dir in directories)
+
+            foreach (var dir in directories)
             {
                 string folderName = new DirectoryInfo(dir).Name;
                 string tablePath = $"{dir}/MapTextureTable.asset";
-                MapTextureTable textureTable = AssetDatabase.LoadAssetAtPath<MapTextureTable>(tablePath);
-
+                Script.Map.Data.MapTextureTable textureTable = AssetDatabase.LoadAssetAtPath<Script.Map.Data.MapTextureTable>(tablePath);
+                
                 if (false == textureTable)
                 {
-                    Debug.LogWarning($"[Framework] {folderName} 폴더에 MapTextureTable 에셋이 없습니다. 병합을 먼저 실행해주세요.");
+                    Debug.LogWarning($"[Framework] {folderName} 폴더에 MapTextureTable 에셋이 없습니다. 병합기를 먼저 실행해주세요.");
                     continue;
                 }
 
-                string[] allFiles = Directory.GetFiles(dir, "*.png");
-                List<string> filteredFiles = new List<string>();
-
-                foreach (string f in allFiles)
-                {
-                    string fileName = Path.GetFileName(f);
-    
-                    // "merged-"로 시작하지 않는 파일만 추가
-                    if (!fileName.StartsWith("merged-"))
-                    {
-                        filteredFiles.Add(f);
-                    }
-                }
+                var allFiles = Directory.GetFiles(dir, "*.png").Where(f => !Path.GetFileName(f).StartsWith("merged-")).ToList();
 
                 Dictionary<int, string> validFiles = new Dictionary<int, string>();
                 foreach (string file in allFiles)
@@ -132,9 +118,10 @@ namespace Script.Map.Editor
                     }
                 }
 
-                var groupedFiles = validFiles.GroupBy(kvp => kvp.Key >> 6)
-                                                                .OrderBy(g => g.Key)
-                                                                .ToList();
+                var groupedFiles = validFiles.GroupBy(kvp => kvp.Key / 64)
+                                                            .OrderBy(g => g.Key)
+                                                            .ToList();
+
                 foreach (var group in groupedFiles)
                 {
                     int atlasPageNum = group.Key;
@@ -144,37 +131,44 @@ namespace Script.Map.Editor
                     Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPath);
                     if (true == tex)
                     {
-                        AtlasPage page = new AtlasPage
-                        {
-                            PageName = $"{folderName}{suffix}", 
-                            Texture = tex
-                        };
-                        for (int j = 0; j < 64; j++)
-                        {
-                            page.GlobalIndices[j] = -1;
-                        }
-                        
+                        AtlasPage page = new AtlasPage { PageName = $"{folderName}{suffix}", Texture = tex };
+                        for (int j = 0; j < 64; j++) page.GlobalIndices[j] = -1;
+
                         foreach (var kvp in group)
                         {
                             int localIndex = kvp.Key % 64;
                             page.GlobalIndices[localIndex] = kvp.Key;
                         }
                         _atlasPages.Add(page);
+                    }
+                }
+            }
 
-                        if (false == _brushTopAtlas)
-                        {
-                            _brushTopAtlas = tex;                            
-                        }
-
-                        if (false == _brushSideAtlas)
-                        {
-                            _brushSideAtlas = tex;
-                        }
+            // [기본값 설정 추가] 아틀라스 로드가 끝나면, 브러시 기본값을 무조건 세팅합니다.
+            if (_atlasPages.Count > 0)
+            {
+                if (false == _brushTopAtlas)
+                {
+                    _brushTopAtlas = _atlasPages[0].Texture;
+                    // 첫 번째 페이지에서 -1이 아닌 유효한 첫 번째 인덱스를 찾습니다. (없으면 0)
+                    _brushTopIndex = _atlasPages[0].GlobalIndices.FirstOrDefault(idx => idx != -1);
+                    if (_brushTopIndex == -1)
+                    {
+                        _brushTopIndex = 0;
+                    }
+                }
+                
+                if (false == _brushSideAtlas)
+                {
+                    _brushSideAtlas = _atlasPages[0].Texture;
+                    _brushSideIndex = _atlasPages[0].GlobalIndices.FirstOrDefault(idx => idx != -1);
+                    if (_brushSideIndex == -1)
+                    {
+                        _brushSideIndex = 0;
                     }
                 }
             }
         }
-
         private void RefreshTileCache()
         {
             _cachedTiles.Clear();
