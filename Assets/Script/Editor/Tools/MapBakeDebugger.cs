@@ -125,6 +125,7 @@ namespace Script.Map.Editor
             EditorGUI.indentLevel++;
             if (grid.layerMeshAssets != null && grid.layerMeshAssets.Count > 0)
             {
+                // [수정 완료] Dictionary 순회에서 List<MapGridLayerData> 객체 순회로 일치
                 foreach (MapGridLayerData layerData in grid.layerMeshAssets)
                 {
                     string assets = (layerData.assets != null) ? string.Join(", ", layerData.assets) : "None";
@@ -149,29 +150,29 @@ namespace Script.Map.Editor
             GUILayout.Label("Tile Key", GUILayout.Width(80));
             GUILayout.Label("Layer", GUILayout.Width(50));
             GUILayout.Label("Navi Mask (64-bit)", GUILayout.Width(500));
-            GUILayout.Label("Link Mask (8-bit)", GUILayout.ExpandWidth(true));
+            GUILayout.Label("Link Mask (16-bit)", GUILayout.ExpandWidth(true));
             EditorGUILayout.EndHorizontal();
 
             _tileScrollPos = EditorGUILayout.BeginScrollView(_tileScrollPos);
 
-            // 성능을 위해 딕셔너리를 순회하며 데이터 출력
+            // [수정 완료] EditMapTileData가 아닌 MessagePack용 런타임 MapTileData로 순회 처리
             foreach (var kvp in grid.NaviTileDict)
             {
                 int tileKey = kvp.Key;
-                EditMapTileData tileData = kvp.Value;
+                MapTileData tileData = kvp.Value;
 
                 EditorGUILayout.BeginHorizontal();
                 
-                // 타일 키 & 레이어
+                // 타일 키 & 레이어 마스크 (RenderIndex 프로퍼티 제거에 따른 대응)
                 GUILayout.Label(tileKey.ToString(), GUILayout.Width(80));
-                GUILayout.Label(tileData.RenderIndex.ToString(), GUILayout.Width(50));
+                GUILayout.Label(tileData.LayerMask.ToString(), GUILayout.Width(50));
 
                 // NaviMask (64비트를 보기 좋게 8자리씩 끊어서 출력)
                 string naviBin = FormatBinaryString((long)tileData.NaviMask, 64);
                 GUILayout.Label(naviBin, EditorStyles.wordWrappedMiniLabel, GUILayout.Width(500));
 
-                // LinkMask (8방향을 의미하므로 8비트만 출력)
-                string linkBin = FormatBinaryString((long)tileData.LinkMask, 8);
+                // LinkMask는 구조체 정의에 따라 ushort(16비트)로 출력합니다.
+                string linkBin = FormatBinaryString((long)tileData.LinkMask, 16);
                 GUILayout.Label(linkBin, EditorStyles.boldLabel, GUILayout.ExpandWidth(true));
 
                 EditorGUILayout.EndHorizontal();
