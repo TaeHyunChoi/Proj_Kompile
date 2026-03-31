@@ -22,23 +22,16 @@ namespace Script.Map.Utility
             const int TILE_MASK_VAL = (1 << TILE_BITS) - 1; // 63 (0x3F)
 
             // 1. 0.25f 단위 인덱스 -> 1.0f 단위 타일 좌표 변환
-            // 설명: 0.25f는 1/4이므로 4로 나눕니다.
-            // 비트 연산(>> 2)은 양수/음수 모두에서 '내림(Floor)'과 유사하게 작동하여 
-            // Mathf.FloorToInt(worldPos)와 동일한 결과를 보장합니다.
             int absTx = pInt.x >> 3;
             int absTy = pInt.y >> 3;
             int absTz = pInt.z >> 3;
 
             // 2. 그룹(Chunk) 좌표 계산 (Grid Size = 64)
-            // 64는 2^6이므로 >> 6 연산으로 나눗셈을 대체합니다.
-            // 음수 좌표에서도 정확하게 그룹 인덱스를 찾아갑니다.
             int gX = absTx >> 6;
             int gY = absTy >> 6;
             int gZ = absTz >> 6;
 
             // 3. 그룹 내 로컬 타일 좌표 계산 (Modulo 64)
-            // 기존 코드의 "tX = absTx - gX * GRID_SIZE" 및 "if (tX < 0)..." 로직 전체를 대체합니다.
-            // 비트 마스크(& 63)는 음수에서도 항상 양수(0~63)인 순환 인덱스를 반환합니다.
             int tX = absTx & TILE_MASK_VAL;
             int tY = absTy & TILE_MASK_VAL;
             int tZ = absTz & TILE_MASK_VAL;
@@ -58,17 +51,20 @@ namespace Script.Map.Utility
 
             return (((long)gKey) << 32) | tKey;
         }
+
         [BurstCompile]
         public static void ComputeID(int gKey, int tKey, out long outID)
         {
             const int SHFIT = 32;
             outID = ((long)gKey << SHFIT) | (uint)tKey;
         }
+
         public static void ComputeWorldPosition(long id, out float3 outWorldPos)
         {
             ComputeWorldPositionInt(id, out int3 absPos);
             outWorldPos = new float3(absPos.x, absPos.y, absPos.z);
         }
+
         [BurstCompile]
         public static void ComputeWorldPositionInt(long id, out int3 outWorldPosInt)
         {
@@ -88,6 +84,7 @@ namespace Script.Map.Utility
                 gy * GRID_SIZE + ty,
                 gz * GRID_SIZE + tz);
         }
+
         [BurstCompile]
         public static void ComputeKey(in float3 worldPos, out int outGKey, out int outTKey)
         {
@@ -117,6 +114,7 @@ namespace Script.Map.Utility
 
             outGKey = ((bX << 16) | (bY << 8) | bZ);
         }
+
         [BurstCompile]
         public static int ComputeGridKey(in float3 worldPos)
         {
@@ -130,31 +128,14 @@ namespace Script.Map.Utility
 
             return (bX << 16) | (bY << 8) | bZ;
         }
-        // public static int ComputeGridKey(int gridKey, int3 offset)
-        // {
-        //     int3 target = GetGridPivot(gridKey) + new int3(offset.x, offset.y, offset.z);
-        //
-        //     byte bX = (byte)(sbyte)target.x;
-        //     byte bY = (byte)(sbyte)target.y;
-        //     byte bZ = (byte)(sbyte)target.z;
-        //
-        //     return (bX << 16) | bY << 8 | bZ;
-        // }
-        
-        // public static int3 GetGridPivot(int gridKey)
-        // {
-        //     int x = (sbyte)((gridKey >> 16) & 0xFF);
-        //     int y = (sbyte)((gridKey >> 8) & 0xFF);
-        //     int z = (sbyte)((gridKey >> 0) & 0xFF);
-        //
-        //     return new int3(x, y, z);
-        // }
+
         [BurstCompile]
         public static void ComputeKey(long id, out int outGKey, out int outTKey)
         {
             ComputeWorldPosition(id, out float3 position);
             ComputeKey(position, out outGKey, out outTKey);
         }
+
         [BurstCompile]
         public static long ComputeTileID(in float3 worldPos)
         {
@@ -185,6 +166,17 @@ namespace Script.Map.Utility
 
             uint gKey = (uint)((bX << 16) | (bY << 8) | bZ);
             return (((long)gKey) << 32) | tKey;
+        }
+
+        // =========================================================================
+        // [신규 추가] Grid Key와 Tile Key를 받아 월드 Pivot 좌표(float3)를 반환합니다.
+        // =========================================================================
+        [BurstCompile]
+        public static float3 GetPivot(int gKey, int tKey)
+        {
+            long id = ((long)gKey << 32) | (uint)tKey;
+            ComputeWorldPositionInt(id, out int3 absPos);
+            return new float3(absPos.x, absPos.y, absPos.z);
         }
     }
 }

@@ -2,6 +2,7 @@
 namespace Script.Map.Editor
 {
     using Script.Map.Data;
+    using Script.Map.Utility; // MapCoordUtil 사용을 위해 추가
     using Script.Asset.Provider;
     using UnityEditor;
     using UnityEngine;
@@ -11,7 +12,7 @@ namespace Script.Map.Editor
     using System.Linq;
 
     /// <summary>
-    /// [Framework] Utility: Bake()된 바이너리 맵 데이터를 읽어와 구조와 비트마스크를 분석하는 전용 뷰어 창입니다.
+    /// [Framework] Utility: Bake()된 바이너리 맵 데이터를 읽어와 구조와 비트마스크를 직관적으로 분석하는 전용 뷰어 창입니다.
     /// </summary>
     public class MapBakeDebugger : EditorWindow
     {
@@ -85,7 +86,7 @@ namespace Script.Map.Editor
             // =========================================================================
             // 좌측 패널: 구역(Grid) 리스트
             // =========================================================================
-            EditorGUILayout.BeginVertical("box", GUILayout.Width(200));
+            EditorGUILayout.BeginVertical("box", GUILayout.Width(150));
             GUILayout.Label("Grid List", EditorStyles.boldLabel);
             _gridScrollPos = EditorGUILayout.BeginScrollView(_gridScrollPos);
 
@@ -103,7 +104,7 @@ namespace Script.Map.Editor
             EditorGUILayout.EndVertical();
 
             // =========================================================================
-            // 우측 패널: 선택된 Grid의 상세 데이터 (Navi, Link 마스크 확인)
+            // 우측 패널: 선택된 Grid의 상세 데이터
             // =========================================================================
             EditorGUILayout.BeginVertical("box");
             if (_loadedGrids.TryGetValue(_selectedGridKey, out MapGridData selectedGrid))
@@ -120,12 +121,10 @@ namespace Script.Map.Editor
             GUILayout.Label($"Grid [{grid.Key}] Details", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
-            // 1. 조립해야 할 메쉬 에셋 정보
             EditorGUILayout.LabelField("📦 Required Mesh Assets", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
             if (grid.layerMeshAssets != null && grid.layerMeshAssets.Count > 0)
             {
-                // [수정 완료] Dictionary 순회에서 List<MapGridLayerData> 객체 순회로 일치
                 foreach (MapGridLayerData layerData in grid.layerMeshAssets)
                 {
                     string assets = (layerData.assets != null) ? string.Join(", ", layerData.assets) : "None";
@@ -139,23 +138,21 @@ namespace Script.Map.Editor
             EditorGUI.indentLevel--;
             EditorGUILayout.Space();
 
-            // 2. 타일 논리 데이터 (NaviMask, LinkMask)
             EditorGUILayout.LabelField($"🟩 Tile Logical Data (Total: {grid.NaviTileDict?.Count ?? 0})", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("NaviMask: 상위 비트(Layer) + 하위 비트(13정점 높이)\nLinkMask: 8방향 이웃 타일과의 이동 가능 여부 비트", MessageType.Info);
+            EditorGUILayout.HelpBox("Pivot: Grid/Tile Key를 변환한 월드 좌표\nNavi: 13개 정점의 높이 배열 (-1 ~ 8)\nLink: 8방향 이웃 타일과의 Y 단차 (0, 1, -1)", MessageType.Info);
             
             if (grid.NaviTileDict == null || grid.NaviTileDict.Count == 0) return;
 
             // 표 헤더
             EditorGUILayout.BeginHorizontal("toolbar");
-            GUILayout.Label("Tile Key", GUILayout.Width(80));
-            GUILayout.Label("Layer", GUILayout.Width(50));
-            GUILayout.Label("Navi Mask (64-bit)", GUILayout.Width(500));
-            GUILayout.Label("Link Mask (16-bit)", GUILayout.ExpandWidth(true));
+            GUILayout.Label("Tile Key", GUILayout.Width(70));
+            GUILayout.Label("Pivot (X, Y, Z)", GUILayout.Width(120));
+            GUILayout.Label("Navi Mask (Heights)", GUILayout.Width(250));
+            GUILayout.Label("Link Mask (Diff Y)", GUILayout.ExpandWidth(true));
             EditorGUILayout.EndHorizontal();
 
             _tileScrollPos = EditorGUILayout.BeginScrollView(_tileScrollPos);
 
-            // [수정 완료] EditMapTileData가 아닌 MessagePack용 런타임 MapTileData로 순회 처리
             foreach (var kvp in grid.NaviTileDict)
             {
                 int tileKey = kvp.Key;
@@ -163,17 +160,31 @@ namespace Script.Map.Editor
 
                 EditorGUILayout.BeginHorizontal();
                 
-                // 타일 키 & 레이어 마스크 (RenderIndex 프로퍼티 제거에 따른 대응)
-                GUILayout.Label(tileKey.ToString(), GUILayout.Width(80));
-                GUILayout.Label(tileData.LayerMask.ToString(), GUILayout.Width(50));
+                // 1. 타일 키
+                GUILayout.Label(tileKey.ToString(), GUILayout.Width(70));
 
-                // NaviMask (64비트를 보기 좋게 8자리씩 끊어서 출력)
-                string naviBin = FormatBinaryString((long)tileData.NaviMask, 64);
-                GUILayout.Label(naviBin, EditorStyles.wordWrappedMiniLabel, GUILayout.Width(500));
+                // 2. Pivot (X, Y, Z) 추출
+                // 💡 프로젝트 내 MapCoordUtil의 좌표 추출 함수 이름에 맞게 수정해주세요. (예: GetPosition, GetPivot 등)
+                string pivotStr = "Unknown";
+                try
+                {
+                    // [Framework] 관례상 ComputeKey의 반대 기능을 수행하는 함수를 호출합니다.
+                    Vector3 pivot = MapCoordUtil.GetPivot(grid.Key, tileKey); 
+                    pivotStr = $"({pivot.x:F1}, {pivot.y:F1}, {pivot.z:F1})";
+                }
+                catch
+                {
+                    pivotStr = "Func Mismatch";
+                }
+                GUILayout.Label(pivotStr, GUILayout.Width(120));
 
-                // LinkMask는 구조체 정의에 따라 ushort(16비트)로 출력합니다.
-                string linkBin = FormatBinaryString((long)tileData.LinkMask, 16);
-                GUILayout.Label(linkBin, EditorStyles.boldLabel, GUILayout.ExpandWidth(true));
+                // 3. Navi Mask 파싱 (13개 정점의 높이값)
+                string naviParsed = ParseNaviMask((long)tileData.NaviMask);
+                GUILayout.Label(naviParsed, EditorStyles.wordWrappedMiniLabel, GUILayout.Width(250));
+
+                // 4. Link Mask 파싱 (8방향의 Y 단차)
+                string linkParsed = ParseLinkMask(tileData.LinkMask);
+                GUILayout.Label(linkParsed, EditorStyles.boldLabel, GUILayout.ExpandWidth(true));
 
                 EditorGUILayout.EndHorizontal();
             }
@@ -182,22 +193,43 @@ namespace Script.Map.Editor
         }
 
         /// <summary>
-        /// 정수 값을 이진수 문자열로 변환하고, 가독성을 위해 8비트 단위로 띄어쓰기를 삽입합니다.
+        /// NaviMask의 하위 52비트를 파싱하여 13개 정점의 높이 배열로 반환합니다.
+        /// (각 정점당 4비트, 15(0xF)는 -1(삭제됨)로 취급)
         /// </summary>
-        private string FormatBinaryString(long value, int totalBits)
+        private string ParseNaviMask(long naviMask)
         {
-            string bin = Convert.ToString(value, 2).PadLeft(totalBits, '0');
-            var sb = new System.Text.StringBuilder();
-            
-            for (int i = 0; i < bin.Length; i++)
+            List<int> heights = new List<int>(13);
+            for (int i = 0; i < 13; i++)
             {
-                if (i > 0 && (bin.Length - i) % 8 == 0)
-                {
-                    sb.Append(" "); // 8비트마다 공백
-                }
-                sb.Append(bin[i]);
+                // 4비트 단위로 값을 추출
+                int h = (int)((naviMask >> (i * 4)) & 0xF);
+                // 0xF (15)는 삭제된 버텍스인 -1로 복원
+                heights.Add(h == 15 ? -1 : h); 
             }
-            return sb.ToString();
+            return $"[{string.Join(", ", heights)}]";
+        }
+
+        /// <summary>
+        /// LinkMask의 16비트를 파싱하여 8방향의 단차 배열로 반환합니다.
+        /// </summary>
+        private string ParseLinkMask(ushort linkMask)
+        {
+            List<string> diffYs = new List<string>(8);
+            for (int i = 0; i < 8; i++)
+            {
+                int val = (linkMask >> (i * 2)) & 0x3;
+                
+                string parsedVal = val switch
+                {
+                    0 => "0",   // LINK_ZERO
+                    1 => "1",   // LINK_UP
+                    2 => "-1",  // LINK_DOWN
+                    3 => "X",   // LINK_NONE (연결 끊김)
+                    _ => "?"
+                };
+                diffYs.Add(parsedVal);
+            }
+            return $"[{string.Join(", ", diffYs)}]";
         }
     }
 }
