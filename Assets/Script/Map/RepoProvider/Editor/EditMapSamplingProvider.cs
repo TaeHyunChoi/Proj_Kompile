@@ -152,7 +152,7 @@ namespace Script.Map.Provider
                     NaviTileDict = grid.Value.ParseData(),
                     layerMeshAssets = grid.Value.LayerMeshAssets
                 };
-
+                
                 AssetRepoProvider.WriteBinaryFile<MapGridData>(
                     data: mapGridData,
                     relativePath: MAP_NAVI_DATA_PATH,

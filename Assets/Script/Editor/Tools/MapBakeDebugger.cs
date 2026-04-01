@@ -47,7 +47,7 @@ namespace Script.Map.Editor
                 if (file.EndsWith(".meta")) continue;
 
                 string fileName = Path.GetFileNameWithoutExtension(file);
-                MapGridData gridData = await AssetRepoProvider.LoadBinaryDataAsync<MapGridData>(fileName);
+                MapGridData gridData = await AssetRepoProvider.ReadBinaryDataAsync<MapGridData>(fileName);
 
                 if (gridData != null)
                 {

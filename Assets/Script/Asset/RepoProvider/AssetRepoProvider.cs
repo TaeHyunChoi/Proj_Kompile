@@ -211,7 +211,7 @@ namespace Script.Asset.Provider
             }
         }
 
-        public static async Awaitable<T> LoadBinaryDataAsync<T>(string key)
+        public static async Awaitable<T> ReadBinaryDataAsync<T>(string key)
         {
             var handle = Addressables.LoadAssetAsync<TextAsset>(key);
             TextAsset textAsset = await handle.Task;
