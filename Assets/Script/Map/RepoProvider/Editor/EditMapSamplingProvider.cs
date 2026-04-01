@@ -471,7 +471,7 @@ namespace Script.Map.Provider
             Material mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
             if (false == mat)
             {
-                Shader shader = Shader.Find("Custom/WorldSpaceAtlasShader_v4");
+                Shader shader = Shader.Find("Custom/WorldSpaceAtlasShader_v3");
                 if (true == shader)
                 {
                     mat = new Material(shader);
@@ -483,10 +483,18 @@ namespace Script.Map.Provider
                 }
                 else
                 {
-                    Debug.LogWarning($"[Framework] 'Custom/WorldSpaceAtlasShader_v4' 쉐이더를 찾을 수 없어 {matName} 생성을 건너뜁니다.");
+                    Debug.LogWarning($"[Framework] 'Custom/WorldSpaceAtlasShader_v3' 쉐이더를 찾을 수 없어 {matName} 생성을 건너뜁니다.");
                 }
             }
+            // ⚠️ 추가/수정된 핵심 부분: 머티리얼이 새로 생성되었든 기존에 있었든 무조건 텍스처 갱신
+            if (mat != null)
+            {
+                if (key.TopTexRef) mat.SetTexture("_TopAtlas", key.TopTexRef);
+                if (key.SideTexRef) mat.SetTexture("_SideAtlas", key.SideTexRef);
 
+                // 변경 사항을 에셋에 강제로 저장
+                EditorUtility.SetDirty(mat);
+            }
             // 메쉬 저장 (기존 유지)
             string assetName = $"MapRender_{ctx.SceneIndex}_G{key.GridKey}_L{key.RenderLayer}_{key.TopAtlas}_{key.SideAtlas}_{partIdx}";
             string path = $"{SAVE_PATH_ROOT}/{assetName}.asset";
