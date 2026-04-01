@@ -1,4 +1,4 @@
-Shader "Custom/WorldSpaceAtlasShader_v3"
+Shader "Custom/WorldSpaceAtlasShader"
 {
     Properties
     {

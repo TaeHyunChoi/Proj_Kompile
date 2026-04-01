@@ -20,9 +20,10 @@ namespace Script.Map.Provider
     public partial class EditMapSamplingRepoProvider // main;
     {
         // -- Path --
-        private const string SAVE_PATH_ROOT = "Assets/Rcs/MapRender";        
-        private readonly string MAP_NAVI_DATA_PATH = "Rcs\\Bytes\\MapNavi";
-        
+        private const string SAVE_PATH_ROOT     = "Assets/Rcs/MapRender";        
+        private const string MAP_NAVI_DATA_PATH = "Rcs\\Bytes\\MapNavi";
+        private const string SHADER_PATH        = "Custom/WorldSpaceAtlasShader";
+
         // -- Height, Link -- 
         private readonly float[] DIFF_Y = new float[] { 0, 1, -1 };
         private readonly float2[] LINK_DIR = new float2[]
@@ -471,7 +472,7 @@ namespace Script.Map.Provider
             Material mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
             if (false == mat)
             {
-                Shader shader = Shader.Find("Custom/WorldSpaceAtlasShader_v3");
+                Shader shader = Shader.Find(SHADER_PATH);
                 if (true == shader)
                 {
                     mat = new Material(shader);
@@ -483,7 +484,7 @@ namespace Script.Map.Provider
                 }
                 else
                 {
-                    Debug.LogWarning($"[Framework] 'Custom/WorldSpaceAtlasShader_v3' 쉐이더를 찾을 수 없어 {matName} 생성을 건너뜁니다.");
+                    Debug.LogWarning($"[Framework] '{SHADER_PATH}' 쉐이더를 찾을 수 없어 {matName} 생성을 건너뜁니다.");
                 }
             }
             // ⚠️ 추가/수정된 핵심 부분: 머티리얼이 새로 생성되었든 기존에 있었든 무조건 텍스처 갱신
