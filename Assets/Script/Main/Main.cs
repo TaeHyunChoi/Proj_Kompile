@@ -7,11 +7,18 @@ namespace Script
     {
         private FieldManager _fieldMgr;
 
+
+
         private Transform _mapRoot;
         public Transform MapRoot => _mapRoot;
 
+        private Camera _cam;
+        public Camera Cam => _cam;
+
         private void Awake()
         {
+            _cam = transform.GetComponentInChildren<Camera>();
+
             // scene을 건드리기 싫어서 동적 생성;
             _mapRoot = new GameObject("Map").transform;
             _mapRoot.SetParent(this.transform);
@@ -21,8 +28,7 @@ namespace Script
         }
         private async void Start()
         {
-            Vector3 example_point = new Vector3(1.5f, 0f, 1f);
-            await _fieldMgr.Map_InitializeAsync(example_point);
+            await _fieldMgr.Map_InitializeAsync(_cam.transform);
         }
 
         // 다시 일괄 update()를 생각한다면...

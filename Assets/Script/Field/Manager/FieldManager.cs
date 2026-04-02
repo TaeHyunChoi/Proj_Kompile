@@ -13,9 +13,9 @@ namespace Script.Field.Manager
             _mapMgr = new MapManager(main.MapRoot);
         }
 
-        public async Awaitable Map_InitializeAsync(Vector3 pos)
+        public async Awaitable Map_InitializeAsync(Transform camTransform)
         {
-            await _mapMgr.InitializeAsync(pos);
+            await _mapMgr.InitializeAsync(camTransform);
         }
 
         public async Awaitable UpdateLayer(int layer)
