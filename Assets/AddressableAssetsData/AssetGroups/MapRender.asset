@@ -30,6 +30,21 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ba1c72d0424295f44a803bb871ef2fc6
+    m_Address: MapRender_0_G65535_L1_merged-test_2_merged-test_2_0
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bb2e491d52245d74dab2ccf936a6d8d7
+    m_Address: MapRender_0_G255_L1_merged-test_2_merged-test_2_0
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d53634adbce664c44ae049c6be2f7137
+    m_Address: MapRender_0_G16711680_L0_merged-test_merged-test_0
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ffd12078576a63646955de4986552c7b
     m_Address: MapRender_0_G0_L0_merged-test_merged-test_0
     m_ReadOnly: 0
