@@ -105,6 +105,7 @@ namespace Script.Map.Data
             propertyBlock.SetVector("_TopUVScale", topUVScale);
             propertyBlock.SetVector("_SideUVOffset", sideUVOffset);
             propertyBlock.SetVector("_SideUVScale", sideUVScale);
+            propertyBlock.SetFloat("_IsBaked", 0f);
 
             // [핵심 변경] 커스텀 쉐이더가 윗면과 옆면 아틀라스를 따로 받을 수 있도록 2개의 프로퍼티에 텍스처를 주입합니다.
             // 💡 주의: 나으리의 커스텀 쉐이더 내부에 _TopAtlas, _SideAtlas 프로퍼티가 정의되어 있어야 완벽하게 동작합니다!

@@ -172,11 +172,11 @@ namespace Script.Map.Utility
         // [신규 추가] Grid Key와 Tile Key를 받아 월드 Pivot 좌표(float3)를 반환합니다.
         // =========================================================================
         [BurstCompile]
-        public static float3 GetPivot(int gKey, int tKey)
+        public static void GetPivot(int gKey, int tKey, out float3 pivot)
         {
             long id = ((long)gKey << 32) | (uint)tKey;
             ComputeWorldPositionInt(id, out int3 absPos);
-            return new float3(absPos.x, absPos.y, absPos.z);
+            pivot = new float3(absPos.x, absPos.y, absPos.z);
         }
     }
 }

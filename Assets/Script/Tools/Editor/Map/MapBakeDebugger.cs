@@ -6,7 +6,7 @@ namespace Script.Map.Editor
     using Script.Asset.Provider;
     using UnityEditor;
     using UnityEngine;
-    using System;
+    using Unity.Mathematics;
     using System.IO;
     using System.Collections.Generic;
     using System.Linq;
@@ -169,7 +169,7 @@ namespace Script.Map.Editor
                 try
                 {
                     // [Framework] 관례상 ComputeKey의 반대 기능을 수행하는 함수를 호출합니다.
-                    Vector3 pivot = MapCoordUtil.GetPivot(grid.Key, tileKey); 
+                    MapCoordUtil.GetPivot(grid.Key, tileKey, out float3 pivot); 
                     pivotStr = $"({pivot.x:F1}, {pivot.y:F1}, {pivot.z:F1})";
                 }
                 catch
