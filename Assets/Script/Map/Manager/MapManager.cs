@@ -17,8 +17,14 @@ namespace Script.Map.Manager
         // --- Streaming State ---
         private readonly HashSet<int> _activeGrids;     // 로드 완료된 그리드 키
         private readonly HashSet<int> _loadingGrids;    // 현재 로딩 프로세스 중인 그리드 키
-        private readonly List<int>    _gridsToRemove;      // 언로드 계산용 임시 리스트 (GC 방지)
+        private readonly List<int> _gridsToRemove;   // 언로드 계산용 임시 리스트 (GC 방지)
         private readonly HashSet<int> _keepGrids;       // 언로드 방지용 임시 셋 (GC 방지)
+        private readonly HashSet<int> _invalidGrids;    // 존재하지 않는 맵(팬텀 그리드) 블랙리스트 (GC 및 예외 방지)
+
+        // --- Optimization Caches (GC 최소화) ---
+        private readonly Dictionary<string, string> _materialAddressCache; // 매테리얼 주소 캐싱
+        private readonly Dictionary<int, string> _gridKeyAddressCache;     // Addressables 키 문자열 캐싱
+        private readonly List<MapChunkContext> _animatingChunksCache;      // 애니메이션 루프용 1차원 평탄화 리스트
 
         // --- Rendering & Visuals ---
         private readonly MaterialPropertyBlock _propBlock;
@@ -30,7 +36,7 @@ namespace Script.Map.Manager
         private bool _isStreamingActive = false;
 
         private const float PRELOAD_RADIUS = 10f;  // 로드 시작 반경 (Far 5 + 여유 5)
-        private const float UNLOAD_RADIUS  = 20f;   // 언로드 시작 반경 (Preload + 10)
+        private const float UNLOAD_RADIUS = 20f;  // 언로드 시작 반경 (Preload + 10)
         private const float CHECK_INTERVAL = 0.5f; // 스트리밍 검사 주기 (초)
 
         public MapManager(Transform root)
@@ -41,6 +47,11 @@ namespace Script.Map.Manager
             _loadingGrids = new HashSet<int>();
             _gridsToRemove = new List<int>(16);
             _keepGrids = new HashSet<int>();
+            _invalidGrids = new HashSet<int>();
+
+            _materialAddressCache = new Dictionary<string, string>();
+            _gridKeyAddressCache = new Dictionary<int, string>();
+            _animatingChunksCache = new List<MapChunkContext>(128);
 
             _rootTransform = root;
             _propBlock = new MaterialPropertyBlock();
@@ -71,43 +82,49 @@ namespace Script.Map.Manager
 
         private async Awaitable StartGridStreamingLoopAsync()
         {
+            float yStep = 32f;
+            float yRadius = 64f;
+            float step = 5f;
+
+            // 반복 연산을 피하기 위해 루프 밖에서 미리 제곱값 계산
+            float unloadRadSq = UNLOAD_RADIUS * UNLOAD_RADIUS;
+            float preloadRadSq = PRELOAD_RADIUS * PRELOAD_RADIUS;
+
             while (_isStreamingActive && _cameraTransform != null)
             {
                 Vector3 camPos = _cameraTransform.position;
+                float camX = camPos.x;
+                float camY = camPos.y;
+                float camZ = camPos.z;
+
                 _keepGrids.Clear();
 
-                // 1. Preload & Keep 영역 동시 계산 (판정 기준 통일)
-
-                float yStep = 32f; // Y축은 평면보다 넓게 스텝을 잡아 연산량을 줄이는 것을 권장합니다.
-                float yRadius = 64f; // 위아래로 탐색할 고도 반경 (기획에 맞게 조절)
-
-                float step = 5f; // 그리드 크기(Grid Size)보다 작거나 같아야 누락이 없습니다.
-
-                for (float y = -yRadius; y <= yRadius; y += yStep)
+                // 1. Preload & Keep 영역 동시 계산 (원통형 반경 탐색 최적화)
+                for (float x = -UNLOAD_RADIUS; x <= UNLOAD_RADIUS; x += step)
                 {
-                    for (float x = -UNLOAD_RADIUS; x <= UNLOAD_RADIUS; x += step)
+                    float xSq = x * x;
+                    for (float z = -UNLOAD_RADIUS; z <= UNLOAD_RADIUS; z += step)
                     {
-                        for (float z = -UNLOAD_RADIUS; z <= UNLOAD_RADIUS; z += step)
-                        {
-                            // ★ 수정됨: y*y를 제거하여 수평(수직 기둥) 반경만 체크합니다!
-                            float distSq = x * x + z * z;
+                        float distSq = xSq + z * z;
 
-                            // 수평 거리가 UNLOAD 반경 밖이면 무시
-                            if (distSq > UNLOAD_RADIUS * UNLOAD_RADIUS)
+                        // 수평 거리가 UNLOAD 반경 밖이면 하위 Y루프 전체를 무시
+                        if (distSq > unloadRadSq)
+                            continue;
+
+                        bool isPreloadRange = distSq <= preloadRadSq;
+
+                        for (float y = -yRadius; y <= yRadius; y += yStep)
+                        {
+                            int targetGridKey = MapCoordUtil.ComputeGridKey(new Unity.Mathematics.float3(camX + x, camY + y, camZ + z));
+
+                            // ★ 블랙리스트 필터링: 존재하지 않는다고 판명된 키는 아예 로직을 진행하지 않음
+                            if (_invalidGrids.Contains(targetGridKey))
                                 continue;
 
-                            Vector3 checkPos = camPos + new Vector3(x, y, z);
-                            int targetGridKey = MapCoordUtil.ComputeGridKey(new Unity.Mathematics.float3(checkPos.x, checkPos.y, checkPos.z));
-
-                            // UNLOAD 반경 안에 걸친 그리드는 파괴 방지 목록에 등록
                             _keepGrids.Add(targetGridKey);
 
-                            // PRELOAD 반경 안에 들어오면 로드 시도
-                            if (distSq <= PRELOAD_RADIUS * PRELOAD_RADIUS)
+                            if (isPreloadRange)
                             {
-                                // ★ 이제 거리에 걸러지지 않고 하층(y=-32, -64)의 65535가 정상적으로 찍힙니다!
-                                Debug.Log($"[TEST] y offset: {y} => checkPos.y: {checkPos.y} => target_grid_key: {targetGridKey}");
-
                                 if (!_activeGrids.Contains(targetGridKey) && !_loadingGrids.Contains(targetGridKey))
                                 {
                                     _loadingGrids.Add(targetGridKey);
@@ -117,11 +134,11 @@ namespace Script.Map.Manager
                         }
                     }
                 }
-                // 2. Unload: Keep 반경을 벗어난 그리드 식별 (Pivot 기준 거리 계산 제거)
+
+                // 2. Unload: Keep 반경을 벗어난 그리드 식별
                 _gridsToRemove.Clear();
                 foreach (int loadedGridKey in _activeGrids)
                 {
-                    // 파괴 방지 목록에 없는 그리드만 언로드 대상으로 선정
                     if (!_keepGrids.Contains(loadedGridKey))
                     {
                         _gridsToRemove.Add(loadedGridKey);
@@ -142,9 +159,21 @@ namespace Script.Map.Manager
         {
             try
             {
-                MapGridData gridData = await AssetRepoProvider.ReadBinaryDataAsync<MapGridData>($"MapNavi_{gridKey}");
+                // 문자열 보간 캐싱으로 GC Alloc 방지
+                if (!_gridKeyAddressCache.TryGetValue(gridKey, out string addressKey))
+                {
+                    addressKey = $"MapNavi_{gridKey}";
+                    _gridKeyAddressCache[gridKey] = addressKey;
+                }
+
+                MapGridData gridData = await AssetRepoProvider.ReadBinaryDataAsync<MapGridData>(addressKey);
+
                 if (gridData == null)
+                {
+                    // ★ 핵심 방어: Addressables에 존재하지 않는 그리드는 블랙리스트에 영구 등록
+                    _invalidGrids.Add(gridKey);
                     return;
+                }
 
                 _mapGridDataDic[gridKey] = gridData;
 
@@ -181,7 +210,7 @@ namespace Script.Map.Manager
             {
                 string meshAddress = layerData.assets[i];
                 Mesh bakedMesh = await AssetRepoProvider.LoadAssetAsync<Mesh>(meshAddress);
-                if (bakedMesh == null) 
+                if (bakedMesh == null)
                     continue;
 
                 string matAddress = GetMaterialAddress(meshAddress);
@@ -231,8 +260,6 @@ namespace Script.Map.Manager
 
             _mapGridDataDic.Remove(gridKey);
             _activeGrids.Remove(gridKey);
-
-            // AssetRepoProvider의 정책에 따라 Addressable 에셋 해제 로직 추가 가능
         }
 
         // ===================================================================================
@@ -248,9 +275,12 @@ namespace Script.Map.Manager
             Color dimColor = new Color(0.1f, 0.1f, 0.1f, 1f);
             Color hideColor = new Color(0f, 0f, 0f, 0f);
 
-            // 목표 설정
-            foreach (var gridChunks in _spawnedMapObjects.Values)
+            // 매 프레임 Dictionary를 순회하지 않도록 애니메이션 대상만 1차원 리스트로 캐싱
+            _animatingChunksCache.Clear();
+
+            foreach (var kvp in _spawnedMapObjects)
             {
+                List<MapChunkContext> gridChunks = kvp.Value;
                 for (int i = 0; i < gridChunks.Count; i++)
                 {
                     MapChunkContext chunk = gridChunks[i];
@@ -266,10 +296,12 @@ namespace Script.Map.Manager
                         chunk.TargetColor = hideInsteadOfDim ? hideColor : dimColor;
                         if (!chunk.Renderer.enabled && !hideInsteadOfDim) chunk.Renderer.enabled = true;
                     }
+
+                    _animatingChunksCache.Add(chunk);
                 }
             }
 
-            // 보간 루프
+            // 보간 루프 (메인 스레드 부하 최소화)
             float elapsed = 0f;
             while (elapsed < duration)
             {
@@ -278,41 +310,40 @@ namespace Script.Map.Manager
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
 
-                foreach (var gridChunks in _spawnedMapObjects.Values)
+                // 평탄화된 1차원 리스트만 순회
+                for (int i = 0; i < _animatingChunksCache.Count; i++)
                 {
-                    for (int i = 0; i < gridChunks.Count; i++)
-                    {
-                        MapChunkContext chunk = gridChunks[i];
-                        chunk.CurrentColor = Color.Lerp(chunk.StartColor, chunk.TargetColor, t);
+                    MapChunkContext chunk = _animatingChunksCache[i];
+                    chunk.CurrentColor = Color.Lerp(chunk.StartColor, chunk.TargetColor, t);
 
-                        chunk.Renderer.GetPropertyBlock(_propBlock);
-                        _propBlock.SetColor(ColorPropID, chunk.CurrentColor);
-                        chunk.Renderer.SetPropertyBlock(_propBlock);
-                    }
+                    chunk.Renderer.GetPropertyBlock(_propBlock);
+                    _propBlock.SetColor(ColorPropID, chunk.CurrentColor);
+                    chunk.Renderer.SetPropertyBlock(_propBlock);
                 }
+
                 await Awaitable.NextFrameAsync();
             }
 
             // 최종 상태 확정
             if (_layerTransitionToken != currentToken) return;
 
-            foreach (var gridChunks in _spawnedMapObjects.Values)
+            for (int i = 0; i < _animatingChunksCache.Count; i++)
             {
-                for (int i = 0; i < gridChunks.Count; i++)
+                MapChunkContext chunk = _animatingChunksCache[i];
+                chunk.CurrentColor = chunk.TargetColor;
+
+                chunk.Renderer.GetPropertyBlock(_propBlock);
+                _propBlock.SetColor(ColorPropID, chunk.CurrentColor);
+                chunk.Renderer.SetPropertyBlock(_propBlock);
+
+                if (chunk.Layer != currentLayer && hideInsteadOfDim)
                 {
-                    MapChunkContext chunk = gridChunks[i];
-                    chunk.CurrentColor = chunk.TargetColor;
-
-                    chunk.Renderer.GetPropertyBlock(_propBlock);
-                    _propBlock.SetColor(ColorPropID, chunk.CurrentColor);
-                    chunk.Renderer.SetPropertyBlock(_propBlock);
-
-                    if (chunk.Layer != currentLayer && hideInsteadOfDim)
-                    {
-                        chunk.Renderer.enabled = false;
-                    }
+                    chunk.Renderer.enabled = false;
                 }
             }
+
+            // 참조 해제 (메모리 릭 방지)
+            _animatingChunksCache.Clear();
         }
 
         // ===================================================================================
@@ -321,7 +352,12 @@ namespace Script.Map.Manager
 
         private string GetMaterialAddress(string meshName)
         {
-            // 4번째 '_'와 마지막 '_' 사이의 아틀라스 명칭 추출 (언더바 포함 대응)
+            // 캐싱을 통해 무거운 Substring 연산과 문자열 보간을 최초 1회로 제한
+            if (_materialAddressCache.TryGetValue(meshName, out string cachedMatAddress))
+            {
+                return cachedMatAddress;
+            }
+
             int lastUnderScore = meshName.LastIndexOf('_');
             if (lastUnderScore == -1) return "Mat_Default";
 
@@ -341,13 +377,15 @@ namespace Script.Map.Manager
                 }
             }
 
+            string resultMatAddress = "Mat_Default";
             if (prefixEndIndex != -1 && lastUnderScore > prefixEndIndex)
             {
                 string atlases = meshName.Substring(prefixEndIndex + 1, lastUnderScore - prefixEndIndex - 1);
-                return $"Mat_{atlases}";
+                resultMatAddress = $"Mat_{atlases}";
             }
 
-            return "Mat_Default";
+            _materialAddressCache[meshName] = resultMatAddress;
+            return resultMatAddress;
         }
     }
 }

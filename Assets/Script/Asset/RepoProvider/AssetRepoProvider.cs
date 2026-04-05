@@ -1,7 +1,7 @@
 namespace Script.Asset.Provider
 {
     using MessagePack;
-    using System.Collections.Concurrent;
+    using System.Collections.Generic; // 일반 Dictionary 사용 최적화
     using System.IO;
     using System.Threading.Tasks;
     using UnityEngine;
@@ -16,18 +16,26 @@ namespace Script.Asset.Provider
     /// </summary>
     public static partial class AssetRepoProvider
     {
-        // 생성된 게임 오브젝트(InstanceEntry) 관리 (Key: AssetKey 구조체 사용으로 할당 방지)
-        private static ConcurrentDictionary<AssetKey, InstanceEntry> _gameObjectInstances;
+        // 일반 Dictionary 사용 (메모리 절약 및 속도 향상)
+        private static Dictionary<AssetKey, InstanceEntry> _gameObjectInstances;
+        private static Dictionary<int, AsyncOperationHandle> _nonGameObjectInstances;
 
-        // 일반 에셋(ScriptableObject, Texture 등) 핸들 관리 (Key: InstanceID)
-        private static ConcurrentDictionary<int, AsyncOperationHandle> _nonGameObjectInstances;
+        // MessagePack 옵션 정적 캐싱 (GC 방지)
+        private static readonly MessagePackSerializerOptions _msgPackOptions =
+            MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+
+        // typeof(T).Name 호출 시 발생하는 string 할당(GC) 방지 캐시
+        private static class TypeNameCache<T> where T : Component
+        {
+            public static readonly string Name = typeof(T).Name;
+        }
 
         public static void Initialize()
         {
-            _gameObjectInstances = new ConcurrentDictionary<AssetKey, InstanceEntry>();
-            _nonGameObjectInstances = new ConcurrentDictionary<int, AsyncOperationHandle>();
+            _gameObjectInstances = new Dictionary<AssetKey, InstanceEntry>();
+            _nonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
 
-            Debug.Log("[AssetProvider] Initialized. (Data-Driven & Type-Inference Mode)");
+            Debug.Log("[AssetProvider] Initialized. (Data-Driven & Type-Inference Mode Optimized)");
         }
 
         #region Game Object (Instance & Pooling)
@@ -36,12 +44,7 @@ namespace Script.Asset.Provider
         // Track 1. Data-Driven 방식 (콘텐츠 에셋용)
         // =========================================================================
 
-        /// <summary>
-        /// AssetKey를 통해 인스턴스를 비동기로 획득합니다.
-        /// 데이터 테이블(Excel/CSV)에서 읽어온 문자열을 자동 변환하여 전달할 때 사용합니다.
-        /// </summary>
-        public static async Task<GameObject> GetOrNewInstanceAsync(AssetKey addressKey, Transform parent = null,
-            bool usePooling = true)
+        public static async Task<GameObject> GetOrNewInstanceAsync(AssetKey addressKey, Transform parent = null, bool usePooling = true)
         {
             if (false == addressKey.IsValid)
             {
@@ -52,9 +55,6 @@ namespace Script.Asset.Provider
             return await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
         }
 
-        /// <summary>
-        /// AssetKey를 통해 인스턴스를 반환하여 풀에 넣거나 해제합니다.
-        /// </summary>
         public static void ReleaseInstance(AssetKey addressKey, GameObject instance, bool forcedDestroy = false)
         {
             ReleaseInstanceInternal(addressKey, instance, forcedDestroy);
@@ -65,14 +65,9 @@ namespace Script.Asset.Provider
         // Track 2. Type-Inference 방식 (시스템 및 고유 UI 에셋용)
         // =========================================================================
 
-        /// <summary>
-        /// 클래스 타입(T)을 기반으로 Addressable 주소를 추론하여 비동기로 획득합니다.
-        /// 프리팹의 Addressable 주소가 해당 클래스명(typeof(T).Name)과 일치해야 합니다.
-        /// </summary>
-        public static async Task<T> GetOrNewInstanceAsync<T>(Transform parent = null, bool usePooling = true)
-            where T : Component
+        public static async Task<T> GetOrNewInstanceAsync<T>(Transform parent = null, bool usePooling = true) where T : Component
         {
-            AssetKey addressKey = new AssetKey(typeof(T).Name);
+            AssetKey addressKey = new AssetKey(TypeNameCache<T>.Name);
             GameObject instance = await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
 
             if (instance != null)
@@ -83,12 +78,9 @@ namespace Script.Asset.Provider
             return null;
         }
 
-        /// <summary>
-        /// 클래스 타입(T)을 기반으로 인스턴스를 반환하여 풀에 넣거나 해제합니다.
-        /// </summary>
         public static void ReleaseInstance<T>(GameObject instance, bool forcedDestroy = false) where T : Component
         {
-            AssetKey addressKey = new AssetKey(typeof(T).Name);
+            AssetKey addressKey = new AssetKey(TypeNameCache<T>.Name);
             ReleaseInstanceInternal(addressKey, instance, forcedDestroy);
         }
 
@@ -97,12 +89,10 @@ namespace Script.Asset.Provider
         // Internal Logic (공통 코어 로직)
         // =========================================================================
 
-        private static async Task<GameObject> GetOrNewInstanceInternalAsync(AssetKey key, Transform parent,
-            bool usePooling)
+        private static async Task<GameObject> GetOrNewInstanceInternalAsync(AssetKey key, Transform parent, bool usePooling)
         {
             if (!_gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
             {
-                // AssetKey는 암시적 변환으로 인해 Addressables API의 문자열 매개변수에 호환됨
                 var handle = Addressables.LoadAssetAsync<GameObject>(key.Value);
                 await handle.Task;
 
@@ -155,7 +145,7 @@ namespace Script.Asset.Provider
             if (entry.ShouldRelease())
             {
                 Addressables.Release(entry.Handle);
-                _gameObjectInstances.TryRemove(key, out _);
+                _gameObjectInstances.Remove(key);
             }
         }
 
@@ -190,11 +180,7 @@ namespace Script.Asset.Provider
 
             try
             {
-                byte[] bytes = textAsset.bytes;
-                var options =
-                    MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers
-                        .ContractlessStandardResolver.Instance);
-                return MessagePackSerializer.Deserialize<T>(bytes, options);
+                return MessagePackSerializer.Deserialize<T>(textAsset.bytes, _msgPackOptions);
             }
             finally
             {
@@ -204,7 +190,7 @@ namespace Script.Asset.Provider
 
         public static void ReleaseAsset(int instanceID)
         {
-            if (_nonGameObjectInstances.TryRemove(instanceID, out var handle))
+            if (_nonGameObjectInstances.Remove(instanceID, out var handle))
             {
                 Addressables.Release(handle);
             }
@@ -212,16 +198,19 @@ namespace Script.Asset.Provider
 
         public static async Awaitable<T> ReadBinaryDataAsync<T>(string key)
         {
-            // 1. 해당 키가 존재하는지 위치 정보 먼저 확인
-            var locations = await Addressables.LoadResourceLocationsAsync(key).Task;
+            // ★ 복구됨: Addressables 예외(Exception)를 막기 위한 안전장치.
+            // Manager의 블랙리스트 처리 덕분에 없는 키에 대해서는 단 1회만 호출되므로 최적화가 보장됩니다.
+            var locHandle = Addressables.LoadResourceLocationsAsync(key);
+            var locations = await locHandle.Task;
 
             if (locations == null || locations.Count == 0)
             {
-                Debug.LogWarning($"[AssetProvider] Key not found in Addressables: {key}");
-                return default;
+                if (locHandle.IsValid()) Addressables.Release(locHandle);
+                return default; // null 반환 시 Manager가 블랙리스트에 등록함
             }
+            if (locHandle.IsValid()) Addressables.Release(locHandle);
 
-            // 2. 실제 에셋 로드
+            // 2. 실제 에셋 로드 (안전하게 호출됨)
             var handle = Addressables.LoadAssetAsync<TextAsset>(key);
             TextAsset textAsset = await handle.Task;
 
@@ -232,15 +221,12 @@ namespace Script.Asset.Provider
                     return default;
                 }
 
-                byte[] bytes = textAsset.bytes;
-                var options = MessagePackSerializerOptions.Standard
-                    .WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-
-                return MessagePackSerializer.Deserialize<T>(bytes, options);
+                // 정적으로 캐싱된 옵션 사용
+                return MessagePackSerializer.Deserialize<T>(textAsset.bytes, _msgPackOptions);
             }
             finally
             {
-                if (handle.IsValid()) 
+                if (handle.IsValid())
                     Addressables.Release(handle);
             }
         }
