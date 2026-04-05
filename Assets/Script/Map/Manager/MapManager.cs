@@ -29,8 +29,8 @@ namespace Script.Map.Manager
         private Transform _cameraTransform;
         private bool _isStreamingActive = false;
 
-        private const float PRELOAD_RADIUS = 15f;  // 로드 시작 반경 (Far 10 + 여유 5)
-        private const float UNLOAD_RADIUS = 25f;   // 언로드 시작 반경 (Preload + 10)
+        private const float PRELOAD_RADIUS = 10f;  // 로드 시작 반경 (Far 5 + 여유 5)
+        private const float UNLOAD_RADIUS  = 20f;   // 언로드 시작 반경 (Preload + 10)
         private const float CHECK_INTERVAL = 0.5f; // 스트리밍 검사 주기 (초)
 
         public MapManager(Transform root)
@@ -77,33 +77,46 @@ namespace Script.Map.Manager
                 _keepGrids.Clear();
 
                 // 1. Preload & Keep 영역 동시 계산 (판정 기준 통일)
+
+                float yStep = 32f; // Y축은 평면보다 넓게 스텝을 잡아 연산량을 줄이는 것을 권장합니다.
+                float yRadius = 64f; // 위아래로 탐색할 고도 반경 (기획에 맞게 조절)
+
                 float step = 5f; // 그리드 크기(Grid Size)보다 작거나 같아야 누락이 없습니다.
-                for (float x = -UNLOAD_RADIUS; x <= UNLOAD_RADIUS; x += step)
+
+                for (float y = -yRadius; y <= yRadius; y += yStep)
                 {
-                    for (float z = -UNLOAD_RADIUS; z <= UNLOAD_RADIUS; z += step)
+                    for (float x = -UNLOAD_RADIUS; x <= UNLOAD_RADIUS; x += step)
                     {
-                        float distSq = x * x + z * z;
-                        // UNLOAD 반경 밖은 무시
-                        if (distSq > UNLOAD_RADIUS * UNLOAD_RADIUS) continue;
-
-                        Vector3 checkPos = camPos + new Vector3(x, 0, z);
-                        int targetGridKey = MapCoordUtil.ComputeGridKey(new Unity.Mathematics.float3(checkPos.x, 0, checkPos.z));
-
-                        // UNLOAD 반경 안에 걸친 그리드는 파괴 방지 목록에 등록
-                        _keepGrids.Add(targetGridKey);
-
-                        // PRELOAD 반경 안에 들어오면 로드 시도
-                        if (distSq <= PRELOAD_RADIUS * PRELOAD_RADIUS)
+                        for (float z = -UNLOAD_RADIUS; z <= UNLOAD_RADIUS; z += step)
                         {
-                            if (!_activeGrids.Contains(targetGridKey) && !_loadingGrids.Contains(targetGridKey))
+                            // ★ 수정됨: y*y를 제거하여 수평(수직 기둥) 반경만 체크합니다!
+                            float distSq = x * x + z * z;
+
+                            // 수평 거리가 UNLOAD 반경 밖이면 무시
+                            if (distSq > UNLOAD_RADIUS * UNLOAD_RADIUS)
+                                continue;
+
+                            Vector3 checkPos = camPos + new Vector3(x, y, z);
+                            int targetGridKey = MapCoordUtil.ComputeGridKey(new Unity.Mathematics.float3(checkPos.x, checkPos.y, checkPos.z));
+
+                            // UNLOAD 반경 안에 걸친 그리드는 파괴 방지 목록에 등록
+                            _keepGrids.Add(targetGridKey);
+
+                            // PRELOAD 반경 안에 들어오면 로드 시도
+                            if (distSq <= PRELOAD_RADIUS * PRELOAD_RADIUS)
                             {
-                                _loadingGrids.Add(targetGridKey);
-                                _ = LoadGridDataAsync(targetGridKey); // Fire and forget
+                                // ★ 이제 거리에 걸러지지 않고 하층(y=-32, -64)의 65535가 정상적으로 찍힙니다!
+                                Debug.Log($"[TEST] y offset: {y} => checkPos.y: {checkPos.y} => target_grid_key: {targetGridKey}");
+
+                                if (!_activeGrids.Contains(targetGridKey) && !_loadingGrids.Contains(targetGridKey))
+                                {
+                                    _loadingGrids.Add(targetGridKey);
+                                    _ = LoadGridDataAsync(targetGridKey); // Fire and forget
+                                }
                             }
                         }
                     }
                 }
-
                 // 2. Unload: Keep 반경을 벗어난 그리드 식별 (Pivot 기준 거리 계산 제거)
                 _gridsToRemove.Clear();
                 foreach (int loadedGridKey in _activeGrids)
@@ -130,7 +143,8 @@ namespace Script.Map.Manager
             try
             {
                 MapGridData gridData = await AssetRepoProvider.ReadBinaryDataAsync<MapGridData>($"MapNavi_{gridKey}");
-                if (gridData == null) return;
+                if (gridData == null)
+                    return;
 
                 _mapGridDataDic[gridKey] = gridData;
 
@@ -167,7 +181,8 @@ namespace Script.Map.Manager
             {
                 string meshAddress = layerData.assets[i];
                 Mesh bakedMesh = await AssetRepoProvider.LoadAssetAsync<Mesh>(meshAddress);
-                if (bakedMesh == null) continue;
+                if (bakedMesh == null) 
+                    continue;
 
                 string matAddress = GetMaterialAddress(meshAddress);
                 Material mat = await AssetRepoProvider.LoadAssetAsync<Material>(matAddress);

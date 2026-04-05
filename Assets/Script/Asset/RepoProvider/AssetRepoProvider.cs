@@ -212,29 +212,38 @@ namespace Script.Asset.Provider
 
         public static async Awaitable<T> ReadBinaryDataAsync<T>(string key)
         {
+            // 1. 해당 키가 존재하는지 위치 정보 먼저 확인
+            var locations = await Addressables.LoadResourceLocationsAsync(key).Task;
+
+            if (locations == null || locations.Count == 0)
+            {
+                Debug.LogWarning($"[AssetProvider] Key not found in Addressables: {key}");
+                return default;
+            }
+
+            // 2. 실제 에셋 로드
             var handle = Addressables.LoadAssetAsync<TextAsset>(key);
             TextAsset textAsset = await handle.Task;
 
-            if (handle.Status != AsyncOperationStatus.Succeeded || textAsset == null)
-            {
-                if (handle.IsValid()) Addressables.Release(handle);
-                throw new FileNotFoundException($"[AssetProvider] Binary file not found: {key}");
-            }
-
             try
             {
+                if (handle.Status != AsyncOperationStatus.Succeeded || textAsset == null)
+                {
+                    return default;
+                }
+
                 byte[] bytes = textAsset.bytes;
-                var options =
-                    MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers
-                        .ContractlessStandardResolver.Instance);
+                var options = MessagePackSerializerOptions.Standard
+                    .WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+
                 return MessagePackSerializer.Deserialize<T>(bytes, options);
             }
             finally
             {
-                Addressables.Release(handle);
+                if (handle.IsValid()) 
+                    Addressables.Release(handle);
             }
         }
-
         #endregion
     }
 }
