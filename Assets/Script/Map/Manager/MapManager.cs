@@ -2,15 +2,11 @@ namespace Script.Map.Manager
 {
     using Script.Map.Utility;
     using Script.Map.Data;
-    using Script.Map.Entity;
     using Script.Asset.Provider;
     using UnityEngine;
     using System.Collections.Generic;
 
-    /// <summary>
-    /// [Framework] Manager 계층
-    /// 인게임 맵 그리드의 동적 스트리밍, 레이어 시각적 제어, 실시간 인스턴스 관리를 전담합니다.
-    /// </summary>
+    /// <summary> 인게임 맵 그리드의 동적 스트리밍, 레이어 시각적 제어, 실시간 인스턴스 관리를 전담 </summary>
     public class MapManager
     {
         // --- Manager State (Instance-Centric) ---
@@ -19,10 +15,10 @@ namespace Script.Map.Manager
         private readonly Transform _rootTransform;
 
         // --- Streaming State ---
-        private readonly HashSet<int> _activeGrids;      // 로드 완료된 그리드 키
-        private readonly HashSet<int> _loadingGrids;     // 현재 로딩 프로세스 중인 그리드 키
-        private readonly List<int> _gridsToRemove;    // 언로드 계산용 임시 리스트 (GC 방지)
-        private readonly HashSet<int> _keepGrids;        // 언로드 방지용 임시 셋 (GC 방지)
+        private readonly HashSet<int> _activeGrids;     // 로드 완료된 그리드 키
+        private readonly HashSet<int> _loadingGrids;    // 현재 로딩 프로세스 중인 그리드 키
+        private readonly List<int>    _gridsToRemove;      // 언로드 계산용 임시 리스트 (GC 방지)
+        private readonly HashSet<int> _keepGrids;       // 언로드 방지용 임시 셋 (GC 방지)
 
         // --- Rendering & Visuals ---
         private readonly MaterialPropertyBlock _propBlock;

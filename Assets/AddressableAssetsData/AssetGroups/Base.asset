@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6f99cac27966cb149a539c9a070b6ca1
+    m_Address: FieldUnitPrefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 70fbb103688cbb6468c8786d84d31ff1
     m_Address: Assets/Rcs/Prefab/UI/UI_TitleMenuObject.prefab
     m_ReadOnly: 0
