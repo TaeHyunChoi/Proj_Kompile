@@ -3,7 +3,6 @@ namespace Script.Asset.Provider
     using MessagePack;
     using System.Collections.Concurrent;
     using System.IO;
-    using System.Threading;
     using System.Threading.Tasks;
     using UnityEngine;
     using UnityEngine.AddressableAssets;
@@ -44,7 +43,7 @@ namespace Script.Asset.Provider
         public static async Task<GameObject> GetOrNewInstanceAsync(AssetKey addressKey, Transform parent = null,
             bool usePooling = true)
         {
-            if (!addressKey.IsValid)
+            if (false == addressKey.IsValid)
             {
                 Debug.LogError("[AssetProvider] Addressable Key is null or empty!");
                 return null;

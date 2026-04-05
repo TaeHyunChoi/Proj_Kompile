@@ -42,6 +42,7 @@ namespace Script.Map.Utility
             }
         }
 
+#if UNITY_EDITOR
         /// <summary> neighborHeights(길이 16)를 참조하여 맞닿는 구간만 부분 클리핑합니다.
         /// 이웃 타일과의 단차뿐만 아니라, 타일 내부에서 지워진 정점(-1)으로 인해 발생하는 모든 내부 절벽 단면까지 완벽하게 채워줍니다.
         /// </summary>
@@ -165,5 +166,6 @@ namespace Script.Map.Utility
             
             return mesh;
         }
+#endif
     }
 }
