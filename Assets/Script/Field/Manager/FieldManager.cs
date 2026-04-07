@@ -1,6 +1,6 @@
 namespace Script.Field.Manager
 {
-    using Script;
+    using Script.Main;
     using Script.Map.Manager;
     using UnityEngine;
 
@@ -15,12 +15,21 @@ namespace Script.Field.Manager
             _unitMgr = new FieldUnitManager(main.UnitRoot);
         }
 
+        public async Awaitable InitializeAsync(MainManager main)
+        {
+            var init_unit = _unitMgr.SpawnUnitAsync("unit_prefab", Vector3.zero, Data.UnitType.Player);
+            var init_map  = _mapMgr.InitializeAsync(main.Cam.transform);
+
+            await init_unit;
+            await init_map;
+        }
+
         // --- map ---
         public async Awaitable Map_InitializeAsync(Transform camTransform)
         {
             await _mapMgr.InitializeAsync(camTransform);
         }
-        public async Awaitable UpdateLayer(int layer)
+        public async Awaitable UpdateLayerAsync(int layer)
         {
             await _mapMgr.UpdateLayerVisibilityAsync(layer, false, 0.10f);
         }

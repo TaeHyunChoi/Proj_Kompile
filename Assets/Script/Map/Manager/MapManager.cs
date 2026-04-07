@@ -68,7 +68,7 @@ namespace Script.Map.Manager
             _isStreamingActive = true;
 
             // 배경 스트리밍 루프 시작
-            _ = StartGridStreamingLoopAsync();
+            await StartGridStreamingLoopAsync();
         }
 
         public void StopStreaming()

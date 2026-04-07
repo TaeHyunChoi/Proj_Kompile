@@ -16,13 +16,14 @@ namespace Script.Asset.Provider
     /// </summary>
     public static partial class AssetRepoProvider
     {
-        // 일반 Dictionary 사용 (메모리 절약 및 속도 향상)
-        private static Dictionary<AssetKey, InstanceEntry> _gameObjectInstances;
-        private static Dictionary<int, AsyncOperationHandle> _nonGameObjectInstances;
+        private static Dictionary<AssetKey, InstanceEntry> 
+            _gameObjectInstances;
 
-        // MessagePack 옵션 정적 캐싱 (GC 방지)
-        private static readonly MessagePackSerializerOptions _msgPackOptions =
-            MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        private static Dictionary<int, AsyncOperationHandle> 
+            _nonGameObjectInstances;
+
+        private static readonly MessagePackSerializerOptions 
+            _msgPackOptions = MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
         // typeof(T).Name 호출 시 발생하는 string 할당(GC) 방지 캐시
         private static class TypeNameCache<T> where T : Component
@@ -32,18 +33,13 @@ namespace Script.Asset.Provider
 
         public static void Initialize()
         {
-            _gameObjectInstances = new Dictionary<AssetKey, InstanceEntry>();
+            _gameObjectInstances    = new Dictionary<AssetKey, InstanceEntry>();
             _nonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
-
-            Debug.Log("[AssetProvider] Initialized. (Data-Driven & Type-Inference Mode Optimized)");
         }
 
         #region Game Object (Instance & Pooling)
 
-        // =========================================================================
         // Track 1. Data-Driven 방식 (콘텐츠 에셋용)
-        // =========================================================================
-
         public static async Task<GameObject> GetOrNewInstanceAsync(AssetKey addressKey, Transform parent = null, bool usePooling = true)
         {
             if (false == addressKey.IsValid)
@@ -54,17 +50,13 @@ namespace Script.Asset.Provider
 
             return await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
         }
-
         public static void ReleaseInstance(AssetKey addressKey, GameObject instance, bool forcedDestroy = false)
         {
             ReleaseInstanceInternal(addressKey, instance, forcedDestroy);
         }
 
 
-        // =========================================================================
         // Track 2. Type-Inference 방식 (시스템 및 고유 UI 에셋용)
-        // =========================================================================
-
         public static async Task<T> GetOrNewInstanceAsync<T>(Transform parent = null, bool usePooling = true) where T : Component
         {
             AssetKey addressKey = new AssetKey(TypeNameCache<T>.Name);
@@ -77,7 +69,6 @@ namespace Script.Asset.Provider
 
             return null;
         }
-
         public static void ReleaseInstance<T>(GameObject instance, bool forcedDestroy = false) where T : Component
         {
             AssetKey addressKey = new AssetKey(TypeNameCache<T>.Name);
@@ -85,10 +76,7 @@ namespace Script.Asset.Provider
         }
 
 
-        // =========================================================================
         // Internal Logic (공통 코어 로직)
-        // =========================================================================
-
         private static async Task<GameObject> GetOrNewInstanceInternalAsync(AssetKey key, Transform parent, bool usePooling)
         {
             if (!_gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
@@ -120,7 +108,6 @@ namespace Script.Asset.Provider
             entry.AddReference();
             return instance;
         }
-
         private static void ReleaseInstanceInternal(AssetKey key, GameObject instance, bool forcedDestroy)
         {
             if (!key.IsValid || !_gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
@@ -230,6 +217,7 @@ namespace Script.Asset.Provider
                     Addressables.Release(handle);
             }
         }
+
         #endregion
     }
 }

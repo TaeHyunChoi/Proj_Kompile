@@ -20,11 +20,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 0d388db74e59eba4f9f4e8a1de7d63c5
-    m_Address: Assets/Rcs/Prefab/Field/MapGridPrefab.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 521d1b4efc84af74f9a61607db6928ed
     m_Address: Assets/Rcs/Prefab/UI/UI_Battle_MenuSlot.prefab
     m_ReadOnly: 0
@@ -32,11 +27,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 65310418ef126ee49ba65e58ccdacfa2
     m_Address: unit_prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6f99cac27966cb149a539c9a070b6ca1
-    m_Address: FieldUnitPrefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -52,11 +42,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ded9f80618747f2429f51a1cc4a829d9
     m_Address: Assets/Rcs/Prefab/UI/UI_Battle.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: df5219d63a5e2b548ba99f3184f490db
-    m_Address: Assets/Rcs/Prefab/Field/MapGridLayerPrefab.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

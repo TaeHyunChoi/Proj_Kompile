@@ -1,4 +1,4 @@
-namespace Script
+namespace Script.Main
 {
     using UnityEngine;
     using Script.Field.Manager;
@@ -39,17 +39,17 @@ namespace Script
         }
         private async void Start()
         {
-            await _fieldMgr.Map_InitializeAsync(_cam.transform);
+            await _fieldMgr.InitializeAsync(this);
         }
 
 
-        private void Update()
+        private async void Update()
         {
 #if UNITY_EDITOR
             if (true == Input.GetKeyDown(KeyCode.Space))
             {
                 _editLayerIndex = (_editLayerIndex + 1) % 2;
-                _fieldMgr.UpdateLayer(_editLayerIndex);
+                await _fieldMgr.UpdateLayerAsync(_editLayerIndex);
             }
 #endif
         }

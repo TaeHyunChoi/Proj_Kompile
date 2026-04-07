@@ -8,11 +8,11 @@ namespace Script.Field.Entity
     /// </summary>
     public class UnitMoveComponent : MonoBehaviour
     {
-        private FieldPlayerEntity _ownerEntity;
+        private FieldUnitEntity _ownerEntity;
         private Vector3 _targetPosition;
         private bool _isMoving = false;
 
-        public void Initialize(FieldPlayerEntity owner)
+        public void Initialize(FieldUnitEntity owner)
         {
             _ownerEntity = owner;
         }
