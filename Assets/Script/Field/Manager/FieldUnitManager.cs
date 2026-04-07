@@ -3,7 +3,6 @@ namespace Script.Field.Manager
     using Script.Asset.Provider;
     using Script.Field.Entity;
     using Script.Field.Data;
-    using Script.Field.Component; // IUnitBrainComponent가 있는 네임스페이스
     using Script.Main.Manager.Collection;
     using System.Collections.Generic;
     using UnityEngine;
@@ -106,28 +105,29 @@ namespace Script.Field.Manager
 
             IUnitBrainComponent newBrain = null;
 
-            switch (brainType)
-            {
-                case FieldBrainType.PlayerControl:
-                    newBrain = entity.gameObject.AddComponent<PlayerControlBrainComponent>();
-                    break;
-                case FieldBrainType.PartyFollower:
-                    newBrain = entity.gameObject.AddComponent<PartyFollowerBrainComponent>();
-                    break;
-                case FieldBrainType.NpcShop:
-                    newBrain = entity.gameObject.AddComponent<ShopNpcBrainComponent>();
-                    break;
-                case FieldBrainType.NpcInn:
-                    newBrain = entity.gameObject.AddComponent<InnNpcBrainComponent>();
-                    break;
-                case FieldBrainType.EnemyWanderEncounter:
-                    newBrain = entity.gameObject.AddComponent<EnemyWanderEncounterBrainComponent>();
-                    break;
-                default:
-                    // 기본값 혹은 NpcIdle
-                    newBrain = entity.gameObject.AddComponent<IdleBrainComponent>();
-                    break;
-            }
+            // 아직 개별 클래스를 구현하기 이전;
+            // switch (brainType)
+            // {
+            //     case FieldBrainType.PlayerControl:
+            //         newBrain = entity.gameObject.AddComponent<PlayerControlBrainComponent>();
+            //         break;
+            //     case FieldBrainType.PartyFollower:
+            //         newBrain = entity.gameObject.AddComponent<PartyFollowerBrainComponent>();
+            //         break;
+            //     case FieldBrainType.NpcShop:
+            //         newBrain = entity.gameObject.AddComponent<ShopNpcBrainComponent>();
+            //         break;
+            //     case FieldBrainType.NpcInn:
+            //         newBrain = entity.gameObject.AddComponent<InnNpcBrainComponent>();
+            //         break;
+            //     case FieldBrainType.EnemyWanderEncounter:
+            //         newBrain = entity.gameObject.AddComponent<EnemyWanderEncounterBrainComponent>();
+            //         break;
+            //     default:
+            //         // 기본값 혹은 NpcIdle
+            //         newBrain = entity.gameObject.AddComponent<IdleBrainComponent>();
+            //         break;
+            // }
 
             newBrain?.Initialize(entity);
         }

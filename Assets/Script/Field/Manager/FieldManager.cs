@@ -1,3 +1,5 @@
+using Script.Field.Data;
+
 namespace Script.Field.Manager
 {
     using Script.Main;
@@ -17,7 +19,7 @@ namespace Script.Field.Manager
 
         public async Awaitable InitializeAsync(MainManager main)
         {
-            var init_unit = _unitMgr.SpawnUnitAsync("unit_prefab", Vector3.zero, Data.UnitType.Player);
+            var init_unit = _unitMgr.SpawnUnitAsync("unit_prefab", Vector3.zero, Data.UnitType.Player, FieldBrainType.PlayerControl);
             var init_map  = _mapMgr.InitializeAsync(main.Cam.transform);
 
             await init_unit;
