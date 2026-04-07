@@ -8,25 +8,27 @@ namespace Script.Field.Data
         NPC,
         Enemy
     }
-
-    /// <summary> Entity의 현재 상태 정보만을 담는 순수 데이터 클래스 </summary>
+    /// <summary> 필드 내 유닛의 상세 행동 패턴을 정의합니다. </summary>
+    public enum FieldBrainType
+    {
+        PlayerControl,        // 유저 조작
+        PartyFollower,        // 플레이어 뒤를 졸졸 따라다니는 파티원
+        NpcIdle,              // 제자리에서 대기하는 일반 NPC
+        NpcShop,              // 상점 UI를 호출하는 NPC
+        NpcInn,               // 여관 UI 및 회복 이벤트를 발생시키는 NPC
+        EnemyWanderEncounter, // 주변을 배회하다가 플레이어가 닿으면 전투 진입
+        EnemyStandEncounter   // 길목을 막고 서 있다가 플레이어가 닿으면 전투 진입
+    }
+    
     public class UnitRuntimeContext
     {
-        // --- Identity / Classification ---
-        // 생성 시점에 부여되어 Manager의 분류 기준이 되는 타입 정보
         public UnitType Type { get; private set; }
+        public FieldBrainType BrainType { get; private set; } // 상세 분류 추가
 
-        // --- Status ---
-        public int MaxHp = 100;
-        public int CurrentHp = 100;
-        public bool IsDead = false;
-
-        /// <summary>
-        /// Manager에서 인스턴스를 발급할 때 논리적 타입을 지정하여 생성합니다.
-        /// </summary>
-        public UnitRuntimeContext(UnitType type)
+        public UnitRuntimeContext(UnitType type, FieldBrainType brainType)
         {
             Type = type;
+            BrainType = brainType;
         }
     }
 }
