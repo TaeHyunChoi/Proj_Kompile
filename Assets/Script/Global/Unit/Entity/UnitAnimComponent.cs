@@ -1,4 +1,4 @@
-namespace Script.Field.Entity
+namespace Script.Global.Unit.Entity
 {
     using UnityEngine;
 
@@ -6,7 +6,7 @@ namespace Script.Field.Entity
     [RequireComponent(typeof(Animator), typeof(SpriteRenderer))]
     public class UnitAnimComponent : MonoBehaviour
     {
-        private FieldUnitEntity _ownerEntity;
+        private UnitEntityBase _ownerEntity;
 
         [SerializeField] private Animator _animator;
 
@@ -18,7 +18,7 @@ namespace Script.Field.Entity
         private static readonly int HashDead = Animator.StringToHash("Dead");
         private static readonly int HashAtk = Animator.StringToHash("Attack");
 
-        public void Initialize(FieldUnitEntity owner)
+        public void Initialize(UnitEntityBase owner)
         {
             _ownerEntity = owner;
 

@@ -1,11 +1,11 @@
-namespace Script.Asset.Provider
+namespace Script.Global.Asset.Provider
 {
     using UnityEngine;
     using UnityEngine.ResourceManagement.AsyncOperations;
     using System.Collections.Concurrent;
     using System.Threading;
 
-    public static partial class AssetRepoProvider // InstanceEntry
+    public static partial class AssetProvider // InstanceEntry
     {
         /// <summary>
         /// 프리팹 원본 핸들과 풀링된 인스턴스들을 관리하는 내부 클래스입니다.

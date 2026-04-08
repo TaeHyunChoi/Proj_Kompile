@@ -1,13 +1,9 @@
 namespace Script.Main
 {
     using UnityEngine;
-    using Script.Field.Manager;
 
     public class MainManager : MonoBehaviour
     {
-        private FieldManager _fieldMgr;
-
-
         private Transform _mapRoot;
         private Transform _unitRoot;
 
@@ -35,23 +31,6 @@ namespace Script.Main
             _unitRoot.SetParent(this.transform);
             _unitRoot.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 
-            _fieldMgr = new FieldManager(this);
-        }
-        private async void Start()
-        {
-            await _fieldMgr.InitializeAsync(this);
-        }
-
-
-        private async void Update()
-        {
-#if UNITY_EDITOR
-            if (true == Input.GetKeyDown(KeyCode.Space))
-            {
-                _editLayerIndex = (_editLayerIndex + 1) % 2;
-                await _fieldMgr.UpdateLayerAsync(_editLayerIndex);
-            }
-#endif
         }
     }
 }

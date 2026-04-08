@@ -3,7 +3,7 @@ namespace Script.Map.Editor
 {
     using Script.Map.Data;
     using Script.Map.Utility; // MapCoordUtil 사용을 위해 추가
-    using Script.Asset.Provider;
+    using Script.Global.Asset.Provider;
     using UnityEditor;
     using UnityEngine;
     using Unity.Mathematics;
@@ -47,7 +47,7 @@ namespace Script.Map.Editor
                 if (file.EndsWith(".meta")) continue;
 
                 string fileName = Path.GetFileNameWithoutExtension(file);
-                MapGridData gridData = await AssetRepoProvider.ReadBinaryDataAsync<MapGridData>(fileName);
+                MapGridData gridData = await AssetProvider.ReadBinaryDataAsync<MapGridData>(fileName);
 
                 if (gridData != null)
                 {

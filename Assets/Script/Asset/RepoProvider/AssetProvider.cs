@@ -1,4 +1,4 @@
-namespace Script.Asset.Provider
+namespace Script.Global.Asset.Provider
 {
     using MessagePack;
     using System.Collections.Generic; // 일반 Dictionary 사용 최적화
@@ -14,7 +14,7 @@ namespace Script.Asset.Provider
     /// 에셋과 데이터의 비동기 로드, 캐싱, 풀링을 전담하는 순수 공급자 클래스입니다.
     /// Enum 기반의 맵핑 테이블을 제거하고 Data-Driven(AssetKey) 및 Type 추론 방식을 사용합니다.
     /// </summary>
-    public static partial class AssetRepoProvider
+    public static partial class AssetProvider
     {
         private static Dictionary<AssetKey, InstanceEntry> 
             _gameObjectInstances;

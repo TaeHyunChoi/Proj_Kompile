@@ -2,7 +2,7 @@ namespace Script.Map.Manager
 {
     using Script.Map.Utility;
     using Script.Map.Data;
-    using Script.Asset.Provider;
+    using Script.Global.Asset.Provider;
     using UnityEngine;
     using System.Collections.Generic;
 
@@ -63,7 +63,7 @@ namespace Script.Map.Manager
 
         public async Awaitable InitializeAsync(Transform cameraTransform)
         {
-            AssetRepoProvider.Initialize();
+            AssetProvider.Initialize();
             _cameraTransform = cameraTransform;
             _isStreamingActive = true;
 
@@ -166,7 +166,7 @@ namespace Script.Map.Manager
                     _gridKeyAddressCache[gridKey] = addressKey;
                 }
 
-                MapGridData gridData = await AssetRepoProvider.ReadBinaryDataAsync<MapGridData>(addressKey);
+                MapGridData gridData = await AssetProvider.ReadBinaryDataAsync<MapGridData>(addressKey);
 
                 if (gridData == null)
                 {
@@ -209,12 +209,12 @@ namespace Script.Map.Manager
             for (int i = 0; i < layerData.assets.Count; i++)
             {
                 string meshAddress = layerData.assets[i];
-                Mesh bakedMesh = await AssetRepoProvider.LoadAssetAsync<Mesh>(meshAddress);
+                Mesh bakedMesh = await AssetProvider.LoadAssetAsync<Mesh>(meshAddress);
                 if (bakedMesh == null)
                     continue;
 
                 string matAddress = GetMaterialAddress(meshAddress);
-                Material mat = await AssetRepoProvider.LoadAssetAsync<Material>(matAddress);
+                Material mat = await AssetProvider.LoadAssetAsync<Material>(matAddress);
 
                 // 오브젝트 조립
                 GameObject chunkObj = new GameObject(meshAddress);

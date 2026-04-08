@@ -154,7 +154,7 @@ namespace Script.Map.Provider
                     layerMeshAssets = grid.Value.LayerMeshAssets
                 };
                 
-                AssetRepoProvider.WriteBinaryFile<MapGridData>(
+                AssetProvider.WriteBinaryFile<MapGridData>(
                     data: mapGridData,
                     relativePath: MAP_NAVI_DATA_PATH,
                     fileName: $"MapNavi_{mapGridData.Key}",

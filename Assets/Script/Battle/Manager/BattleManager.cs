@@ -3,7 +3,7 @@ namespace Script.Battle.Manager
     using System.Collections.Generic;
     using UnityEngine;
     using Script.Battle.Data;
-    using Script.Battle.Entity;
+    using Script.Global.Unit.Entity;
     using Script.Battle.RepoProvider;
     using Script.Battle.Utility;
 
@@ -16,7 +16,7 @@ namespace Script.Battle.Manager
         private BattleTimelineManager   _timelineManager;
         private BattleSkillRepoProvider _skillProvider;
 
-        private Dictionary<long, BattleUnitEntity>  _units    = new Dictionary<long, BattleUnitEntity>();
+        private Dictionary<long, UnitEntityBase>  _units    = new Dictionary<long, UnitEntityBase>();
         private Dictionary<long, BattleUnitContext> _contexts = new Dictionary<long, BattleUnitContext>();
 
         private long _unitIDCounter     = 0;
@@ -50,10 +50,10 @@ namespace Script.Battle.Manager
 
         private void UpdateVisuals(int currentFrame)
         {
-            foreach (var unit in _units.Values)
-            {
-                unit.Animation.Sample(currentFrame, FRAMES_PER_TICK);
-            }
+            // foreach (var unit in _units.Values)
+            // {
+            //     unit.Animation.Sample(currentFrame, FRAMES_PER_TICK);
+            // }
         }
 
         private void ProcessBattleLogic()
@@ -104,11 +104,11 @@ namespace Script.Battle.Manager
             context.Phase = BattlePhase.Action;
             context.ActionDistance = 1500f;
             
-            if (_units.TryGetValue(unitID, out var unit))
-            {
-                var cmd = _skillProvider.GetSkillCommand(interruptSkillID, _timelineManager.TotalFrames);
-                unit.Animation.Play(cmd);
-            }
+            // if (_units.TryGetValue(unitID, out var unit))
+            // {
+            //     var cmd = _skillProvider.GetSkillCommand(interruptSkillID, _timelineManager.TotalFrames);
+            //     unit.Animation.Play(cmd);
+            // }
         }
 
         private void OnUnitWaitPhaseEnded(BattleUnitContext context)
@@ -131,14 +131,14 @@ namespace Script.Battle.Manager
             context.RemainingDistance = TARGET_DISTANCE;
         }
 
-        public void RegisterUnit(BattleUnitEntity unit, int baseSpeed)
-        {
-            long newID = ++_unitIDCounter;
-            unit.EntityID = newID;
-            _units.Add(newID, unit);
-            _contexts.Add(newID, new BattleUnitContext(newID, baseSpeed));
-            unit.Animation.Init();
-        }
+        // public void RegisterUnit(BattleUnitEntity unit, int baseSpeed)
+        // {
+        //     long newID = ++_unitIDCounter;
+        //     unit.EntityID = newID;
+        //     _units.Add(newID, unit);
+        //     _contexts.Add(newID, new BattleUnitContext(newID, baseSpeed));
+        //     unit.Animation.Init();
+        // }
 
         public void OnTargetFrameReached()
         {

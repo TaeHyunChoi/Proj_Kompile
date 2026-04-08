@@ -1,4 +1,4 @@
-namespace Script.Field.Entity
+namespace Script.Global.Unit.Entity
 {
     using UnityEngine;
 
@@ -8,11 +8,11 @@ namespace Script.Field.Entity
     /// </summary>
     public class UnitMoveComponent : MonoBehaviour
     {
-        private FieldUnitEntity _ownerEntity;
+        private UnitEntityBase _ownerEntity;
         private Vector3 _targetPosition;
         private bool _isMoving = false;
 
-        public void Initialize(FieldUnitEntity owner)
+        public void Initialize(UnitEntityBase owner)
         {
             _ownerEntity = owner;
         }
