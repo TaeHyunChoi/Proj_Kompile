@@ -347,6 +347,25 @@ namespace Script.Map.Manager
         }
 
         // ===================================================================================
+        // 데이터 접근 (Field 레이어 → IMapQueryService 경유)
+        // ===================================================================================
+
+        /// <summary>
+        /// 월드 좌표를 받아 해당 위치의 MapTileData를 반환합니다.
+        /// 그리드가 로드되지 않았거나 타일이 없으면 false를 반환합니다.
+        /// </summary>
+        public bool TryGetTileData(in Unity.Mathematics.float3 worldPos, out MapTileData tileData)
+        {
+            MapCoordUtil.ComputeKey(worldPos, out int gKey, out int tKey);
+            if (_mapGridDataDic.TryGetValue(gKey, out MapGridData gridData))
+            {
+                return gridData.TryGetTileData(tKey, out tileData);
+            }
+            tileData = default;
+            return false;
+        }
+
+        // ===================================================================================
         // 유틸리티
         // ===================================================================================
 

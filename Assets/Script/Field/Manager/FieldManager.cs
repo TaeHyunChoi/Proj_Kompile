@@ -2,14 +2,16 @@ using Script.Global.Unit.Entity;
 
 namespace Script.Field.Manager
 {
+    using Script.Field.Data;
+    using Script.Field.Entity;
     using Script.Global.Asset.Data;
     using Script.Global.Asset.Provider;
     using Script.Global.Unit.Data;
-    using Script.Main.Manager.Collection; // FastPool<T> (가정)
+    using Script.Main.Manager.Collection;
     using System.Collections.Generic;
     using UnityEngine;
 
-    /// <summary> 
+    /// <summary>
     /// Instance-Centric 자료구조(Dictionary)를 사용하여 유닛 객체를 식별하고 제어하는 조립 공장.
     /// </summary>
     public class FieldUnitManager
@@ -17,13 +19,15 @@ namespace Script.Field.Manager
         private readonly Dictionary<long, UnitEntityBase> _activeUnits;
         private readonly Dictionary<string, FastPool<UnitEntityBase>> _unitPools;
         private readonly Transform _unitRoot;
+        private readonly IMapQueryService _mapQueryService;
         private long _instanceIdCounter = 1;
 
-        public FieldUnitManager(Transform root)
+        public FieldUnitManager(Transform root, IMapQueryService mapQueryService)
         {
             _activeUnits = new Dictionary<long, UnitEntityBase>(128);
             _unitPools = new Dictionary<string, FastPool<UnitEntityBase>>();
             _unitRoot = root;
+            _mapQueryService = mapQueryService;
         }
 
         /// <summary>
@@ -37,11 +41,10 @@ namespace Script.Field.Manager
                 return null;
             }
 
-            // 내부 스폰 로직 호출
             UnitEntityBase spawnedEntity = await SpawnUnitInternalAsync(
-                tableData.AssetAddress, 
-                position, 
-                tableData.Type, 
+                tableData.AssetAddress,
+                position,
+                tableData.Type,
                 tableData.BrainType
             );
 
@@ -75,11 +78,17 @@ namespace Script.Field.Manager
             // 3. ID 발급 및 Runtime Context(상태 데이터) 초기화
             long newId = _instanceIdCounter++;
             UnitRuntimeContext newContext = new UnitRuntimeContext(type, brainType);
-            
+
             entity.Initialize(newId, newContext);
             _activeUnits.Add(newId, entity);
 
-            // 4. 순수 C# Brain 컴포넌트 조립 (AddComponent 오버헤드 제로)
+            // 4. FieldPlayerEntity라면 IMapQueryService 주입
+            if (entity is FieldPlayerEntity fieldPlayer)
+            {
+                fieldPlayer.SetMapQuery(_mapQueryService);
+            }
+
+            // 5. 순수 C# Brain 컴포넌트 조립 (AddComponent 오버헤드 제로)
             AttachSpecificBrain(entity, brainType);
 
             return entity;
@@ -107,8 +116,7 @@ namespace Script.Field.Manager
             if (_activeUnits.TryGetValue(instanceId, out UnitEntityBase entity))
             {
                 string address = entity.AssetAddress;
-                
-                // Clear 호출 시 내부의 C# Brain도 함께 Clear됨
+
                 entity.Clear();
                 entity.gameObject.SetActive(false);
 

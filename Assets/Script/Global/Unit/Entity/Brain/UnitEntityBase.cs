@@ -19,21 +19,22 @@ namespace Script.Global.Unit.Entity
         }
         public void SetBrain(IUnitBrain newBrain)
         {
-            _brain.Clear();
-            
+            _brain?.Clear();
+
             if (null != newBrain)
             {
                 _brain = newBrain;
-                _brain.Initialize(this);                
+                _brain.Initialize(this);
             }
         }
+
         public void Clear()
         {
             IsInitalized = false;
             InstanceID = 0;
             Context = default(UnitRuntimeContext);
-            
-            _brain.Clear();
+
+            _brain?.Clear();
             _brain = null;
         }
 
