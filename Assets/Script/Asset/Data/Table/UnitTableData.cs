@@ -9,8 +9,10 @@ namespace Script.Global.Asset.Data
     public struct UnitTableData
     {
         public int ID;
-        public FixedBytes16 AssetAddress; 
+        public FixedString32Bytes AssetAddress; 
         public UnitType Type;
         public UnitBrainType BrainType;
+
+        public string Address => AssetAddress.ToString();
     }
 }

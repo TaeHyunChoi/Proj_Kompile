@@ -43,7 +43,7 @@ namespace Script.Global.Unit.Manager
             }
 
             UnitEntityBase spawnedEntity = await SpawnUnitInternalAsync(
-                tableData.AssetAddress,
+                tableData.Address,
                 position,
                 tableData.Type,
                 tableData.BrainType
