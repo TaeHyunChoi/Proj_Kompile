@@ -23,12 +23,12 @@ namespace Script.Global.Asset.Provider
             while (left < right)
             {
                 int mid = left + Mathf.FloorToInt((right - left) * 0.5f);
-                if (unitID == _tableData[mid].UnitID)
+                if (unitID == _tableData[mid].ID)
                 {
                     return ref _tableData[mid];
                 }
 
-                if (unitID < _tableData[mid].UnitID)
+                if (unitID < _tableData[mid].ID)
                 {
                     left = mid + 1;
                 }

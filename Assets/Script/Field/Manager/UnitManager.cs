@@ -37,7 +37,7 @@ namespace Script.Global.Unit.Manager
         public async Awaitable<UnitEntityBase> SpawnUnitByIDAsync(int unitId, Vector3 position)
         {
             UnitTableData tableData = UnitTableProvider.GetUnitData(unitId);
-            if (tableData.UnitID == 0)
+            if (tableData.ID == 0)
             {
                 return null;
             }
