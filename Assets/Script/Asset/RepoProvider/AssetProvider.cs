@@ -1,7 +1,9 @@
+using UnityEngine.ResourceManagement.ResourceLocations;
+
 namespace Script.Global.Asset.Provider
 {
     using MessagePack;
-    using System.Collections.Generic; // 일반 Dictionary 사용 최적화
+    using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
     using UnityEngine;
@@ -16,10 +18,10 @@ namespace Script.Global.Asset.Provider
     public static partial class AssetProvider
     {
         private static readonly Dictionary<AssetKey, InstanceEntry> 
-            _gameObjectInstances = new Dictionary<AssetKey, InstanceEntry>();
+            GameObjectInstances = new Dictionary<AssetKey, InstanceEntry>();
 
         private static readonly Dictionary<int, AsyncOperationHandle> 
-            _nonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
+            NonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
 
         private static readonly MessagePackSerializerOptions 
             MsgPackOptions = MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
@@ -35,13 +37,14 @@ namespace Script.Global.Asset.Provider
         // Track 1. Data-Driven 방식 (콘텐츠 에셋용)
         public static async Task<GameObject> GetOrNewInstanceAsync(AssetKey addressKey, Transform parent = null, bool usePooling = true)
         {
-            if (false == addressKey.IsValid)
+            if (addressKey.IsValid)
             {
-                Debug.LogError("[AssetProvider] Addressable Key is null or empty!");
-                return null;
+                return await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
             }
 
-            return await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
+            Debug.LogError("[AssetProvider] Addressable Key is null or empty!");
+            return null;
+
         }
         public static void ReleaseInstance(AssetKey addressKey, GameObject instance, bool forcedDestroy = false)
         {
@@ -55,12 +58,7 @@ namespace Script.Global.Asset.Provider
             AssetKey addressKey = new AssetKey(TypeNameCache<T>.Name);
             GameObject instance = await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
 
-            if (instance != null)
-            {
-                return instance.GetComponent<T>();
-            }
-
-            return null;
+            return instance ? instance.GetComponent<T>() : null;
         }
         public static void ReleaseInstance<T>(GameObject instance, bool forcedDestroy = false) where T : Component
         {
@@ -72,7 +70,7 @@ namespace Script.Global.Asset.Provider
         // Internal Logic (공통 코어 로직)
         private static async Task<GameObject> GetOrNewInstanceInternalAsync(AssetKey key, Transform parent, bool usePooling)
         {
-            if (!_gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
+            if (!GameObjectInstances.TryGetValue(key, out InstanceEntry entry))
             {
                 var handle = Addressables.LoadAssetAsync<GameObject>(key.Value);
                 await handle.Task;
@@ -84,7 +82,7 @@ namespace Script.Global.Asset.Provider
                 }
 
                 entry = new InstanceEntry(handle, usePooling);
-                _gameObjectInstances.TryAdd(key, entry);
+                GameObjectInstances.TryAdd(key, entry);
             }
 
             if (entry.TryGetPooledInstance(out GameObject instance))
@@ -94,7 +92,7 @@ namespace Script.Global.Asset.Provider
             }
             else
             {
-                var instHandle = Addressables.InstantiateAsync(key.Value, parent);
+                AsyncOperationHandle<GameObject> instHandle = Addressables.InstantiateAsync(key.Value, parent);
                 instance = await instHandle.Task;
             }
 
@@ -103,9 +101,13 @@ namespace Script.Global.Asset.Provider
         }
         private static void ReleaseInstanceInternal(AssetKey key, GameObject instance, bool forcedDestroy)
         {
-            if (!key.IsValid || !_gameObjectInstances.TryGetValue(key, out InstanceEntry entry))
+            if (!key.IsValid || !GameObjectInstances.TryGetValue(key, out InstanceEntry entry))
             {
-                if (instance != null) Addressables.ReleaseInstance(instance);
+                if (instance)
+                {
+                    Addressables.ReleaseInstance(instance);
+                }
+                
                 return;
             }
 
@@ -122,11 +124,13 @@ namespace Script.Global.Asset.Provider
 
             entry.RemoveReference();
 
-            if (entry.ShouldRelease())
+            if (!entry.ShouldRelease())
             {
-                Addressables.Release(entry.Handle);
-                _gameObjectInstances.Remove(key);
+                return;
             }
+
+            Addressables.Release(entry.Handle);
+            GameObjectInstances.Remove(key);
         }
 
         #endregion
@@ -135,26 +139,32 @@ namespace Script.Global.Asset.Provider
 
         public static async Task<T> LoadAssetAsync<T>(AssetKey key) where T : UnityEngine.Object
         {
-            var handle = Addressables.LoadAssetAsync<T>(key.Value);
+            AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(key.Value);
             T result = await handle.Task;
 
-            if (handle.Status == AsyncOperationStatus.Succeeded)
+            if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                _nonGameObjectInstances.TryAdd(result.GetInstanceID(), handle);
-                return result;
+                return null;
             }
 
-            return null;
+            NonGameObjectInstances.TryAdd(result.GetInstanceID(), handle);
+            return result;
+
         }
 
         public static async Task<T> LoadBinaryDataAsync<T>(AssetKey key)
         {
-            var handle = Addressables.LoadAssetAsync<TextAsset>(key.Value);
+            AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(key.Value);
             TextAsset textAsset = await handle.Task;
 
-            if (handle.Status != AsyncOperationStatus.Succeeded || textAsset == null)
+            if (handle.Status != AsyncOperationStatus.Succeeded 
+                || !textAsset)
             {
-                if (handle.IsValid()) Addressables.Release(handle);
+                if (handle.IsValid())
+                {
+                    Addressables.Release(handle);                    
+                }
+                
                 throw new FileNotFoundException($"[AssetProvider] Binary file not found: {key.Value}");
             }
 
@@ -170,7 +180,7 @@ namespace Script.Global.Asset.Provider
 
         public static void ReleaseAsset(int instanceID)
         {
-            if (_nonGameObjectInstances.Remove(instanceID, out var handle))
+            if (NonGameObjectInstances.Remove(instanceID, out var handle))
             {
                 Addressables.Release(handle);
             }
@@ -180,23 +190,32 @@ namespace Script.Global.Asset.Provider
         {
             // ★ 복구됨: Addressables 예외(Exception)를 막기 위한 안전장치.
             // Manager의 블랙리스트 처리 덕분에 없는 키에 대해서는 단 1회만 호출되므로 최적화가 보장됩니다.
-            var locHandle = Addressables.LoadResourceLocationsAsync(key);
-            var locations = await locHandle.Task;
+            AsyncOperationHandle<IList<IResourceLocation>> locHandle = Addressables.LoadResourceLocationsAsync(key);
+            IList<IResourceLocation> locations = await locHandle.Task;
 
-            if (locations == null || locations.Count == 0)
+            if (locations == null 
+                || locations.Count == 0)
             {
-                if (locHandle.IsValid()) Addressables.Release(locHandle);
+                if (locHandle.IsValid())
+                {
+                    Addressables.Release(locHandle);                    
+                }
+                
                 return default; // null 반환 시 Manager가 블랙리스트에 등록함
             }
-            if (locHandle.IsValid()) Addressables.Release(locHandle);
 
+            if (locHandle.IsValid())
+            {
+                Addressables.Release(locHandle);                
+            }
+            
             // 2. 실제 에셋 로드 (안전하게 호출됨)
-            var handle = Addressables.LoadAssetAsync<TextAsset>(key);
+            AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(key);
             TextAsset textAsset = await handle.Task;
 
             try
             {
-                if (handle.Status != AsyncOperationStatus.Succeeded || textAsset == null)
+                if (handle.Status != AsyncOperationStatus.Succeeded || !textAsset)
                 {
                     return default;
                 }
@@ -207,7 +226,9 @@ namespace Script.Global.Asset.Provider
             finally
             {
                 if (handle.IsValid())
-                    Addressables.Release(handle);
+                {
+                    Addressables.Release(handle);                    
+                }
             }
         }
 

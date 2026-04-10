@@ -62,7 +62,7 @@ namespace Script.Map.Manager
         // 시스템 제어 인터페이스
         // ===================================================================================
 
-        public async Awaitable InitializeAsync(Transform cameraTransform)
+        public async Awaitable PlayStreamingAsync(Transform cameraTransform)
         {
             _cameraTransform = cameraTransform;
             _isStreamingActive = true;

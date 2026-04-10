@@ -34,7 +34,7 @@ namespace Script.Global.Unit.Manager
         /// <summary>
         /// [진입점] 기획 ID를 통해 원본 데이터를 로드하고 유닛을 조립 및 스폰합니다.
         /// </summary>
-        public async Awaitable<UnitEntityBase> SpawnUnitByIdAsync(int unitId, Vector3 position)
+        public async Awaitable<UnitEntityBase> SpawnUnitByIDAsync(int unitId, Vector3 position)
         {
             UnitTableData tableData = UnitTableProvider.GetUnitData(unitId);
             if (tableData.UnitID == 0)

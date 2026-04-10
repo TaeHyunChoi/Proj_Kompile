@@ -12,6 +12,7 @@ namespace Script.Global.Asset.Provider
         public static void Initialize()
         {
             //AssetProvider에 뭐가 있을걸?...
+            //여기서 테이블 여차저차 해야 하는구나? 코드 다 날렸나?
         }
 
         public static ref readonly UnitTableData GetUnitData(int unitID)

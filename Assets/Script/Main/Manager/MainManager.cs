@@ -41,9 +41,9 @@ namespace Script.Main
         {
             // _cam.SetPosition();
 
-            _ = _mapManager.InitializeAsync(_cam.transform);
-            // _ = _unitManager.Spanwn();
-            // 식으로 여러 개를 비동기로 돌리는 방법이 있겠구나
+            _ = _mapManager.PlayStreamingAsync(_cam.transform);
+            _ = _unitManager.SpawnUnitByIDAsync(1, Vector3.zero);
+            // 여러 개를 비동기로 돌리는 방법이 있겠구나
         }
 
         // 정리 목적으로 함수로 나누어 작성..
