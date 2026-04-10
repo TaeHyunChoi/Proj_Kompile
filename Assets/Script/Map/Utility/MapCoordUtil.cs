@@ -12,6 +12,8 @@ namespace Script.Map.Utility
         private const int TILE_MASK = (1 << TILE_BITS) - 1;
         private const int TILE_BITS = 6;
 
+        private const float GRID_SIZE_RECIP = 1f / GRID_SIZE;
+
         /// <summary>
         /// 0.25f 단위의 정수 인덱스(indexX, indexY, indexZ)를 받아 TileID를 생성합니다.
         /// 부동소수점 연산과 분기문(if)을 제거하여 매우 빠릅니다.
@@ -92,9 +94,9 @@ namespace Script.Map.Utility
             int absTy = Mathf.FloorToInt(worldPos.y);
             int absTz = Mathf.FloorToInt(worldPos.z);
 
-            int gX = Mathf.FloorToInt((float)absTx / GRID_SIZE);
-            int gY = Mathf.FloorToInt((float)absTy / GRID_SIZE);
-            int gZ = Mathf.FloorToInt((float)absTz / GRID_SIZE);
+            int gX = Mathf.FloorToInt((float)absTx * GRID_SIZE_RECIP);
+            int gY = Mathf.FloorToInt((float)absTy * GRID_SIZE_RECIP);
+            int gZ = Mathf.FloorToInt((float)absTz * GRID_SIZE_RECIP);
 
             int tX = absTx - gX * GRID_SIZE;
             int tY = absTy - gY * GRID_SIZE;
@@ -118,9 +120,9 @@ namespace Script.Map.Utility
         [BurstCompile]
         public static int ComputeGridKey(in float3 worldPos)
         {
-            int gx = Mathf.FloorToInt(worldPos.x / GRID_SIZE);
-            int gy = Mathf.FloorToInt(worldPos.y / GRID_SIZE);
-            int gz = Mathf.FloorToInt(worldPos.z / GRID_SIZE);
+            int gx = Mathf.FloorToInt(worldPos.x * GRID_SIZE_RECIP);
+            int gy = Mathf.FloorToInt(worldPos.y * GRID_SIZE_RECIP);
+            int gz = Mathf.FloorToInt(worldPos.z * GRID_SIZE_RECIP);
 
             byte bX = (byte)(sbyte)gx;
             byte bY = (byte)(sbyte)gy;
@@ -143,9 +145,9 @@ namespace Script.Map.Utility
             int absTy = Mathf.FloorToInt(worldPos.y);
             int absTz = Mathf.FloorToInt(worldPos.z);
 
-            int gX = Mathf.FloorToInt((float)absTx / GRID_SIZE);
-            int gY = Mathf.FloorToInt((float)absTy / GRID_SIZE);
-            int gZ = Mathf.FloorToInt((float)absTz / GRID_SIZE);
+            int gX = Mathf.FloorToInt((float)absTx * GRID_SIZE_RECIP);
+            int gY = Mathf.FloorToInt((float)absTy * GRID_SIZE_RECIP);
+            int gZ = Mathf.FloorToInt((float)absTz * GRID_SIZE_RECIP);
 
             int tX = absTx - gX * GRID_SIZE;
             int tY = absTy - gY * GRID_SIZE;

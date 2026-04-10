@@ -4,7 +4,7 @@ namespace Script.Map.Provider
     using Script.Map.Data;
     using Script.Map.Utility;
     using Script.Map.Entity;
-    using Script.Asset.Provider;
+    using Script.Global.Asset.Provider;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;

@@ -10,31 +10,24 @@ namespace Script.Global.Asset.Provider
     using Script.Asset.Data;
 
     /// <summary>
-    /// [Framework] Provider 계층
-    /// 에셋과 데이터의 비동기 로드, 캐싱, 풀링을 전담하는 순수 공급자 클래스입니다.
-    /// Enum 기반의 맵핑 테이블을 제거하고 Data-Driven(AssetKey) 및 Type 추론 방식을 사용합니다.
+    /// 에셋과 데이터의 비동기 로드, 캐싱, 풀링을 전담하는 순수 공급자 클래스.<br/>
+    /// Enum 기반의 맵핑 테이블을 제거하고 Data-Driven(AssetKey) 및 Type 추론 방식을 사용
     /// </summary>
     public static partial class AssetProvider
     {
-        private static Dictionary<AssetKey, InstanceEntry> 
-            _gameObjectInstances;
+        private static readonly Dictionary<AssetKey, InstanceEntry> 
+            _gameObjectInstances = new Dictionary<AssetKey, InstanceEntry>();
 
-        private static Dictionary<int, AsyncOperationHandle> 
-            _nonGameObjectInstances;
+        private static readonly Dictionary<int, AsyncOperationHandle> 
+            _nonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
 
         private static readonly MessagePackSerializerOptions 
-            _msgPackOptions = MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            MsgPackOptions = MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
         // typeof(T).Name 호출 시 발생하는 string 할당(GC) 방지 캐시
         private static class TypeNameCache<T> where T : Component
         {
             public static readonly string Name = typeof(T).Name;
-        }
-
-        public static void Initialize()
-        {
-            _gameObjectInstances    = new Dictionary<AssetKey, InstanceEntry>();
-            _nonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
         }
 
         #region Game Object (Instance & Pooling)
@@ -167,7 +160,7 @@ namespace Script.Global.Asset.Provider
 
             try
             {
-                return MessagePackSerializer.Deserialize<T>(textAsset.bytes, _msgPackOptions);
+                return MessagePackSerializer.Deserialize<T>(textAsset.bytes, MsgPackOptions);
             }
             finally
             {
@@ -209,7 +202,7 @@ namespace Script.Global.Asset.Provider
                 }
 
                 // 정적으로 캐싱된 옵션 사용
-                return MessagePackSerializer.Deserialize<T>(textAsset.bytes, _msgPackOptions);
+                return MessagePackSerializer.Deserialize<T>(textAsset.bytes, MsgPackOptions);
             }
             finally
             {

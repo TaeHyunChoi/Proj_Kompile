@@ -5,6 +5,7 @@ namespace Script.Map.Manager
     using Script.Global.Asset.Provider;
     using UnityEngine;
     using System.Collections.Generic;
+    using Unity.Mathematics;
 
     /// <summary> 인게임 맵 그리드의 동적 스트리밍, 레이어 시각적 제어, 실시간 인스턴스 관리를 전담 </summary>
     public class MapManager
@@ -63,7 +64,6 @@ namespace Script.Map.Manager
 
         public async Awaitable InitializeAsync(Transform cameraTransform)
         {
-            AssetProvider.Initialize();
             _cameraTransform = cameraTransform;
             _isStreamingActive = true;
 
@@ -90,47 +90,54 @@ namespace Script.Map.Manager
             float unloadRadSq = UNLOAD_RADIUS * UNLOAD_RADIUS;
             float preloadRadSq = PRELOAD_RADIUS * PRELOAD_RADIUS;
 
-            while (_isStreamingActive && _cameraTransform != null)
+            while (true == _isStreamingActive 
+                   && true == _cameraTransform)
             {
                 Vector3 camPos = _cameraTransform.position;
                 float camX = camPos.x;
                 float camY = camPos.y;
                 float camZ = camPos.z;
 
+                // keep grids: 지금'도' 들고 있어야 하는 grid 모음;
                 _keepGrids.Clear();
 
                 // 1. Preload & Keep 영역 동시 계산 (원통형 반경 탐색 최적화)
                 for (float x = -UNLOAD_RADIUS; x <= UNLOAD_RADIUS; x += step)
                 {
-                    float xSq = x * x;
                     for (float z = -UNLOAD_RADIUS; z <= UNLOAD_RADIUS; z += step)
                     {
-                        float distSq = xSq + z * z;
+                        float distSq = (x * x) + (z * z);
 
-                        // 수평 거리가 UNLOAD 반경 밖이면 하위 Y루프 전체를 무시
+                        // 수평 거리가 UN-LOAD 반경 밖이면 하위 Y루프 전체를 무시
                         if (distSq > unloadRadSq)
+                        {
+                            continue;                            
+                        }
+                        // 수평 거리가 PRE-LOAD 반경 밖이면 하위 Y루프 전체를 무시
+                        if (distSq > preloadRadSq)
+                        {
                             continue;
-
-                        bool isPreloadRange = distSq <= preloadRadSq;
-
+                        }
+                        
                         for (float y = -yRadius; y <= yRadius; y += yStep)
                         {
-                            int targetGridKey = MapCoordUtil.ComputeGridKey(new Unity.Mathematics.float3(camX + x, camY + y, camZ + z));
+                            int targetGridKey = MapCoordUtil.ComputeGridKey(new float3(camX + x, camY + y, camZ + z));
 
                             // ★ 블랙리스트 필터링: 존재하지 않는다고 판명된 키는 아예 로직을 진행하지 않음
                             if (_invalidGrids.Contains(targetGridKey))
-                                continue;
-
-                            _keepGrids.Add(targetGridKey);
-
-                            if (isPreloadRange)
                             {
-                                if (!_activeGrids.Contains(targetGridKey) && !_loadingGrids.Contains(targetGridKey))
-                                {
-                                    _loadingGrids.Add(targetGridKey);
-                                    _ = LoadGridDataAsync(targetGridKey); // Fire and forget
-                                }
+                                continue;                                
                             }
+                            // 유효한 그리드라고 판면되면 일단 기억;
+                            _keepGrids.Add(targetGridKey);
+                            
+                            if (_activeGrids.Contains(targetGridKey) 
+                                || !_loadingGrids.Add(targetGridKey))
+                            {
+                                continue;
+                            }
+
+                            _ = LoadGridDataAsync(targetGridKey); // Fire and forget
                         }
                     }
                 }
@@ -139,14 +146,16 @@ namespace Script.Map.Manager
                 _gridsToRemove.Clear();
                 foreach (int loadedGridKey in _activeGrids)
                 {
+                    // 지금 들고 있지(keep grids) 않다면(!)
                     if (!_keepGrids.Contains(loadedGridKey))
                     {
+                        // 이제 지워라;
                         _gridsToRemove.Add(loadedGridKey);
                     }
                 }
 
                 // 3. 실제 언로드 처리
-                for (int i = 0; i < _gridsToRemove.Count; i++)
+                for (int i = 0; i < _gridsToRemove.Count; ++i)
                 {
                     UnloadGridData(_gridsToRemove[i]);
                 }
@@ -210,9 +219,11 @@ namespace Script.Map.Manager
             {
                 string meshAddress = layerData.assets[i];
                 Mesh bakedMesh = await AssetProvider.LoadAssetAsync<Mesh>(meshAddress);
-                if (bakedMesh == null)
-                    continue;
-
+                if (!bakedMesh)
+                {
+                    continue;                    
+                }
+                
                 string matAddress = GetMaterialAddress(meshAddress);
                 Material mat = await AssetProvider.LoadAssetAsync<Material>(matAddress);
 
@@ -221,11 +232,11 @@ namespace Script.Map.Manager
                 chunkObj.transform.SetParent(_rootTransform);
                 chunkObj.transform.position = Vector3.zero;
 
-                var filter = chunkObj.AddComponent<MeshFilter>();
+                MeshFilter filter = chunkObj.AddComponent<MeshFilter>();
                 filter.sharedMesh = bakedMesh;
 
-                var renderer = chunkObj.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = mat != null ? mat : new Material(Shader.Find("Standard"));
+                MeshRenderer renderer = chunkObj.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = mat ? mat : new Material(Shader.Find("Standard"));
 
                 // MapChunk 엔티티 생성 및 관리 리스트 추가
                 MapChunkContext chunk = new MapChunkContext
@@ -249,11 +260,14 @@ namespace Script.Map.Manager
 
         private void UnloadGridData(int gridKey)
         {
-            if (_spawnedMapObjects.TryGetValue(gridKey, out var chunks))
+            if (_spawnedMapObjects.TryGetValue(gridKey, out List<MapChunkContext> chunks))
             {
-                for (int i = 0; i < chunks.Count; i++)
+                for (int i = 0; i < chunks.Count; ++i)
                 {
-                    if (chunks[i].Obj != null) Object.Destroy(chunks[i].Obj);
+                    if (chunks[i].Obj)
+                    {
+                        Object.Destroy(chunks[i].Obj);
+                    }
                 }
                 _spawnedMapObjects.Remove(gridKey);
             }

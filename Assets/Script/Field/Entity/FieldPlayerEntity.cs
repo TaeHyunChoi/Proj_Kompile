@@ -22,8 +22,6 @@ namespace Script.Field.Entity
             // mapQuery는 FieldUnitManager가 SetMapQuery()로 나중에 주입
             _moveComponent.Initialize(this, null);
             _animComponent.Initialize(this);
-
-            IsInitalized = true;
         }
 
         /// <summary>
