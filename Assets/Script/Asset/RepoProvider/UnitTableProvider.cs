@@ -1,4 +1,6 @@
+using Script.Asset.Data;
 using UnityEngine;
+using System.Threading.Tasks;
 
 namespace Script.Global.Asset.Provider
 {
@@ -7,38 +9,45 @@ namespace Script.Global.Asset.Provider
     /// <summary> 유닛 기획 데이터를 보관하는 Provider; (Value-Centric을 지향) </summary>
     public static class UnitTableProvider
     {
-        private static UnitTableData[] _tableData;
+        private static UnitTableData[] Sheets;
 
-        public static void Initialize()
+        public static async Task InitializeAsync()
         {
-            //AssetProvider에 뭐가 있을걸?...
-            //여기서 테이블 여차저차 해야 하는구나? 코드 다 날렸나?
+            // Context 없이 배열 타입 자체로 곧바로 로드합니다.
+            Sheets = await AssetProvider.LoadBinaryDataAsync<UnitTableData[]>(new AssetKey("UnitTable"));
+            
+            if (Sheets == null)
+            {
+                Debug.LogError("[UnitTableProvider] 데이터 로드 실패!");
+            }
         }
 
         public static ref readonly UnitTableData GetUnitData(int unitID)
         {
             int left = 0;
-            int right = _tableData.Length;
+            int right = Sheets.Length - 1; // 길이-1이 안전한 초기 인덱스입니다.
 
-            while (left < right)
+            while (left <= right) // 조건 교정: <= 로 해야 마지막 요소까지 탐색합니다.
             {
-                int mid = left + Mathf.FloorToInt((right - left) * 0.5f);
-                if (unitID == _tableData[mid].ID)
+                int mid = left + (right - left) / 2; // 오버플로우 방지형 중간값 계산
+
+                if (unitID == Sheets[mid].ID)
                 {
-                    return ref _tableData[mid];
+                    return ref Sheets[mid];
                 }
 
-                if (unitID < _tableData[mid].ID)
+                // 오름차순 이진 탐색의 올바른 분기
+                if (unitID < Sheets[mid].ID)
                 {
-                    left = mid + 1;
+                    right = mid - 1; // 타겟이 작으면 왼쪽 절반을 탐색
                 }
                 else
                 {
-                    right = mid - 1;
+                    left = mid + 1;  // 타겟이 크면 오른쪽 절반을 탐색
                 }
             }
 
-            throw new System.Exception("데이터 없음;");
+            throw new System.Exception($"[UnitTableProvider] 데이터 없음; ID: {unitID}");
         }
     }
 }

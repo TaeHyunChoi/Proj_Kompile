@@ -4,5 +4,7 @@ namespace Script.Global.Unit.Data
     public enum UnitBrainType
     {
         PlayerControl,
+        Ataho,
+        E_Monkey
     }
 }
