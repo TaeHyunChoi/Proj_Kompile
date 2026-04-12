@@ -1,6 +1,6 @@
-namespace Script.Global.Unit.Data
+namespace Script.Unit.Data
 {
-    using Script.Global.Asset.Data;
+    using Script.Asset.Data;
     
     public struct UnitRuntimeContext
     {

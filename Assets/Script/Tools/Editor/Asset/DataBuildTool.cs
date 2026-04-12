@@ -5,81 +5,148 @@ using UnityEngine.Networking;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using MessagePack;
 using Unity.Collections;
-using Script.Global.Asset.Data;
-using Script.Global.Unit.Data;
+using Script.Asset.Data;
+using Script.Unit.Data;
+using Script.Global.Utility;
 
 public class DataBuildTool : EditorWindow
 {
     // ====================================================================
-    // [1. 경로 및 API 설정]
+    // [1. 설정 및 테이블 정의]
     // ====================================================================
 
-    // 로컬 디렉토리 경로
-    private const string CsvDirectory = "Assets/Editor/Data/CSV";
-    private const string SaveDirectory = "Assets/Rcs/Bytes/Table";
+    private const string CsvDirectory = "Assets/Editor/DataSources";
+    private const string SaveDirectory = "Assets/DataBinary";
 
-    // 💡 구글 시트 보안 연동 (Apps Script) 설정 💡
-    // Apps Script 배포 후 얻은 웹 앱 URL을 아래에 입력하세요.
+    // 구글 시트 보안 설정 (Apps Script)
     private const string WebAppUrl = "https://script.google.com/macros/s/AKfycbxGpber8YHl_X76nm-hIjaud2kpm40-ncWfBy5C9zIRLJ6YNoggPMpCRBoWDERnQbT04w/exec";
-    
-    // Apps Script 코드에 작성한 SECRET_TOKEN과 동일하게 입력하세요.
     private const string SecretToken = "KOMPILE_PRIVATE_5013!"; 
 
-    // 테이블별 GID 매핑 (구글 시트 URL 끝에 있는 gid 번호)
-    private const string UnitTableGID = "0"; 
-
-
-    // ====================================================================
-    // [2. 메뉴 1: 구글 시트 동기화 및 전체 빌드 (자동)]
-    // ====================================================================
-
-    [MenuItem("Tools/Data/Sync & Build All Tables (Google Sheets)")]
-    public static async void SyncAndBuildAllTables()
+    // 테이블 관리 구조체
+    private struct TableInfo
     {
-        Directory.CreateDirectory(CsvDirectory);
-        Directory.CreateDirectory(SaveDirectory);
+        public string Name;
+        public string Gid;
+        public TableInfo(string name, string gid) { Name = name; Gid = gid; }
+    }
 
-        Debug.Log("[DataBuildTool] 구글 시트 동기화 시작...");
+    // 💡 동기화할 테이블 리스트 (새 테이블 추가 시 여기에만 등록하면 GUI에 자동 반영됩니다)
+    private static readonly List<TableInfo> TargetTables = new List<TableInfo>
+    {
+        new TableInfo("UnitTable", "0"),
+        // new TableInfo("ItemTable", "12345678"),
+        // new TableInfo("SkillTable", "98765432"),
+    };
 
+    private int _selectedTableIndex = 0;
+    private bool _isProcessing = false;
+
+    // ====================================================================
+    // [2. Editor Window UI 구성]
+    // ====================================================================
+
+    [MenuItem("Tools/Data/Open Data Build Window")]
+    public static void ShowWindow()
+    {
+        GetWindow<DataBuildTool>("Data Build Tool");
+    }
+
+    private void OnGUI()
+    {
+        GUILayout.Label("Data Table Synchronizer", EditorStyles.boldLabel);
+        EditorGUILayout.Space();
+
+        // 테이블 선택 섹션
+        EditorGUILayout.BeginVertical("box");
+        GUILayout.Label("Select Table to Sync", EditorStyles.miniBoldLabel);
+        
+        string[] tableNames = TargetTables.ConvertAll(t => t.Name).ToArray();
+        _selectedTableIndex = EditorGUILayout.Popup("Target Table", _selectedTableIndex, tableNames);
+        
+        EditorGUILayout.Space();
+
+        // 버튼 섹션
+        EditorGUI.BeginDisabledGroup(_isProcessing);
+        
+        if (GUILayout.Button($"Sync & Build [{TargetTables[_selectedTableIndex].Name}]", GUILayout.Height(30)))
+        {
+            SyncSelectedTableTask();
+        }
+
+        EditorGUILayout.Space();
+
+        if (GUILayout.Button("Sync & Build ALL Tables", GUILayout.Height(20)))
+        {
+            SyncAllTablesTask();
+        }
+
+        EditorGUI.EndDisabledGroup();
+        EditorGUILayout.EndVertical();
+
+        if (_isProcessing)
+        {
+            EditorGUILayout.HelpBox("Processing... Please wait.", MessageType.Info);
+        }
+    }
+
+    // ====================================================================
+    // [3. 실행 로직 (Task Wrapper)]
+    // ====================================================================
+
+    private async void SyncSelectedTableTask()
+    {
+        _isProcessing = true;
+        var target = TargetTables[_selectedTableIndex];
+        
+        bool success = await DownloadAndBuildTable(target.Name, target.Gid);
+        
+        if (success) AssetDatabase.Refresh();
+        _isProcessing = false;
+        
+        Debug.Log($"[DataBuildTool] {target.Name} 동기화 완료");
+    }
+
+    private async void SyncAllTablesTask()
+    {
+        _isProcessing = true;
         int successCount = 0;
 
-        // UnitTable 다운로드 및 빌드
-        if (await DownloadAndBuildTable("UnitTable", UnitTableGID)) 
+        foreach (var target in TargetTables)
         {
-            successCount++;
+            if (await DownloadAndBuildTable(target.Name, target.Gid)) successCount++;
         }
-        
-        // 향후 테이블이 추가되면 아래에 줄을 추가하십시오.
-        // if (await DownloadAndBuildTable("CharacterTable", "123456789")) successCount++;
 
-        // 에셋 데이터베이스 단 1회 갱신
         AssetDatabase.Refresh();
-        Debug.Log($"[DataBuildTool] 전체 파이프라인 완료! ({successCount}개 테이블 성공)");
+        _isProcessing = false;
+        
+        Debug.Log($"[DataBuildTool] 일괄 동기화 완료 ({successCount}/{TargetTables.Count})");
     }
+
+    // ====================================================================
+    // [4. 핵심 다운로드 및 파싱 로직 (기존과 동일)]
+    // ====================================================================
 
     private static async Task<bool> DownloadAndBuildTable(string tableName, string gid)
     {
         string url = $"{WebAppUrl}?token={SecretToken}&gid={gid}";
-        
-        string csvSavePath = Path.Combine(CsvDirectory, $"{tableName}.csv").Replace("\\", "/");
-        string binSavePath = Path.Combine(SaveDirectory, $"{tableName}.bin").Replace("\\", "/");
-
-        // 1. 웹에서 CSV 텍스트 비동기 다운로드
         string csvText = await FetchCsvFromWebAsync(url);
         
-        // 인증 실패 또는 에러 처리
         if (string.IsNullOrEmpty(csvText) || csvText.StartsWith("Unauthorized") || csvText.StartsWith("Error"))
         {
             Debug.LogError($"[DataBuildTool] {tableName} 다운로드 실패! 사유: {csvText}");
             return false;
         }
 
-        // 2. 로컬에 CSV 원본 저장 (버전 관리용)
+        string csvSavePath = Path.Combine(CsvDirectory, $"{tableName}.csv").Replace("\\", "/");
+        string binSavePath = Path.Combine(SaveDirectory, $"{tableName}.bin").Replace("\\", "/");
+
+        Directory.CreateDirectory(CsvDirectory);
+        Directory.CreateDirectory(SaveDirectory);
         File.WriteAllText(csvSavePath, csvText);
 
-        // 3. 파싱 및 바이너리 빌드
         return ProcessTable(tableName, csvSavePath, binSavePath);
     }
 
@@ -88,132 +155,99 @@ public class DataBuildTool : EditorWindow
         using (UnityWebRequest req = UnityWebRequest.Get(url))
         {
             var operation = req.SendWebRequest();
-
-            while (!operation.isDone)
-            {
-                await Task.Yield();
-            }
-
-            if (req.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError($"[DataBuildTool] Network Error: {req.error}");
-                return null;
-            }
-
-            return req.downloadHandler.text;
+            while (!operation.isDone) await Task.Yield();
+            return req.result != UnityWebRequest.Result.Success ? null : req.downloadHandler.text;
         }
     }
 
-
-    // ====================================================================
-    // [3. 메뉴 2: 로컬 CSV 전체 빌드 (오프라인 수동용)]
-    // ====================================================================
-
-    [MenuItem("Tools/Data/Build All Tables (Local CSV Only)")]
-    public static void BuildAllTables()
-    {
-        if (!Directory.Exists(CsvDirectory))
-        {
-            Debug.LogError($"[DataBuildTool] Source directory not found: {CsvDirectory}");
-            return;
-        }
-
-        Directory.CreateDirectory(SaveDirectory);
-
-        string[] csvFiles = Directory.GetFiles(CsvDirectory, "*.csv");
-        int successCount = 0;
-
-        foreach (string csvPath in csvFiles)
-        {
-            string fileName = Path.GetFileNameWithoutExtension(csvPath);
-            string savePath = Path.Combine(SaveDirectory, $"{fileName}.bin").Replace("\\", "/");
-
-            bool success = ProcessTable(fileName, csvPath, savePath);
-            if (success) 
-            {
-                successCount++;
-            }
-        }
-
-        AssetDatabase.Refresh();
-        Debug.Log($"[DataBuildTool] Local Batch Build Complete! ({successCount}/{csvFiles.Length} tables built.)");
-    }
-
-
-    // ====================================================================
-    // [4. 핵심 파서 및 라우팅 로직]
-    // ====================================================================
-
-    /// <summary>
-    /// 파일명에 따라 적합한 파서(Parser)로 라우팅하는 역할
-    /// </summary>
     private static bool ProcessTable(string tableName, string csvPath, string savePath)
     {
         try
         {
             switch (tableName)
             {
-                case "UnitTable":
-                    return ParseAndSaveUnitTable(csvPath, savePath);
-                
-                // 향후 새로운 테이블이 추가되면 여기에 case를 추가하십시오.
-                // case "CharacterTable":
-                //     return ParseAndSaveCharacterTable(csvPath, savePath);
-
-                default:
-                    Debug.LogWarning($"[DataBuildTool] Parser for '{tableName}' is not defined. Skipping.");
-                    return false;
+                case "UnitTable": return ParseAndSaveUnitTable(csvPath, savePath);
+                default: return false;
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[DataBuildTool] Failed to build '{tableName}'. Exception: {ex.Message}");
+            Debug.LogError($"[DataBuildTool] {tableName} 빌드 에러: {ex.Message}");
             return false;
         }
     }
 
-    #region Specific Table Parsers
-    
+#region Specific Table Parsers
+
+    // 기존의 UnitTable 파서도 CsvParserUtil을 사용하도록 업그레이드!
     private static bool ParseAndSaveUnitTable(string csvPath, string savePath)
     {
-        string[] lines = File.ReadAllLines(csvPath);
+        // 변경점: ReadAllLines 대신 ReadAllText 사용 후 CsvParserUtil 호출
+        string csvText = File.ReadAllText(csvPath);
+        List<string[]> rows = CsvParserUtil.Parse(csvText);
         
-        // 1. 임시 List 할당
-        System.Collections.Generic.List<UnitTableData> sheetList = new System.Collections.Generic.List<UnitTableData>();
+        var sheetList = new List<UnitTableData>();
 
-        for (int i = 1; i < lines.Length; i++)
+        // i = 1 (헤더 건너뛰기)
+        for (int i = 1; i < rows.Count; i++)
         {
-            if (string.IsNullOrWhiteSpace(lines[i])) continue;
+            string[] values = rows[i];
+            if (values.Length < 4 || string.IsNullOrWhiteSpace(values[0])) continue;
 
-            string[] values = lines[i].Split(',');
-
-            sheetList.Add(new UnitTableData
-            {
+            sheetList.Add(new UnitTableData {
                 ID = int.Parse(values[0]),
                 AssetAddress = new FixedString32Bytes(values[1]),
-                Type = (UnitType)System.Enum.Parse(typeof(UnitType), values[2]),
-                BrainType = (UnitBrainType)System.Enum.Parse(typeof(UnitBrainType), values[3])
+                Type = (UnitType)Enum.Parse(typeof(UnitType), values[2]),
+                BrainType = (UnitBrainType)Enum.Parse(typeof(UnitBrainType), values[3])
             });
         }
 
-        // 💡 중요: Provider의 이진 탐색(Binary Search)이 완벽히 작동하도록 ID 기준으로 오름차순 정렬
+        // 정렬 및 직렬화 (기존과 동일)
         sheetList.Sort((a, b) => a.ID.CompareTo(b.ID));
+        var finalSheets = sheetList.ToArray();
 
-        // 2. 최종 구조체 배열(Array)로 변환
-        UnitTableData[] finalSheets = sheetList.ToArray();
-
-        // 3. MessagePack Custom Resolver 세팅
         var resolver = MessagePack.Resolvers.CompositeResolver.Create(
             new MessagePack.Formatters.IMessagePackFormatter[] { new FixedString32BytesFormatter() },
             new MessagePack.IFormatterResolver[] { MessagePack.Resolvers.ContractlessStandardResolver.Instance }
         );
         var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
-        // 4. 배열 자체를 직렬화하여 저장
-        byte[] byteArray = MessagePackSerializer.Serialize(finalSheets, options);
-        File.WriteAllBytes(savePath, byteArray);
+        File.WriteAllBytes(savePath, MessagePackSerializer.Serialize(finalSheets, options));
+        return true;
+    }
+
+    // 💡 새로운 로컬라이제이션(대사) 파서 추가
+    private static bool ParseAndSaveLocalizationTable(string csvPath, string savePath)
+    {
+        string csvText = File.ReadAllText(csvPath);
+        List<string[]> rows = CsvParserUtil.Parse(csvText);
         
-        Debug.Log($"[DataBuildTool] Built: {System.IO.Path.GetFileName(savePath)} ({byteArray.Length} bytes)");
+        var sheetList = new List<LocalizationTableData>();
+
+        for (int i = 1; i < rows.Count; i++)
+        {
+            string[] values = rows[i];
+            if (values.Length < 4 || string.IsNullOrWhiteSpace(values[0])) continue;
+
+            sheetList.Add(new LocalizationTableData {
+                ID = int.Parse(values[0]),
+                Key = new FixedString32Bytes(values[1]),
+                KR = values[2],  // 쉼표나 줄바꿈이 있어도 안전하게 통째로 들어옵니다!
+                EN = values[3]
+            });
+        }
+
+        sheetList.Sort((a, b) => a.ID.CompareTo(b.ID));
+        var finalSheets = sheetList.ToArray();
+
+        var resolver = MessagePack.Resolvers.CompositeResolver.Create(
+            new MessagePack.Formatters.IMessagePackFormatter[] { new FixedString32BytesFormatter() },
+            new MessagePack.IFormatterResolver[] { MessagePack.Resolvers.ContractlessStandardResolver.Instance }
+        );
+        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+
+        File.WriteAllBytes(savePath, MessagePackSerializer.Serialize(finalSheets, options));
+        Debug.Log($"[DataBuildTool] Localization 빌드 완료 ({savePath})");
         return true;
     }
 

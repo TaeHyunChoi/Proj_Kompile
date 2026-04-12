@@ -1,7 +1,7 @@
 namespace Script.Global.Unit.Entity
 {
     using Script.Global.Entity.Data; // Entity 클래스가 있는 네임스페이스
-    using Script.Global.Unit.Data;
+    using Script.Unit.Data;
     
     /// <summary>
     /// [Framework] Entity 상속: 

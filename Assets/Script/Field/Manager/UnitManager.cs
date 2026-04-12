@@ -5,9 +5,9 @@ namespace Script.Global.Unit.Manager
 {
     using Script.Field.Data;
     using Script.Field.Entity;
-    using Script.Global.Asset.Data;
-    using Script.Global.Asset.Provider;
-    using Script.Global.Unit.Data;
+    using Script.Asset.Data;
+    using Script.Asset.Provider;
+    using Script.Unit.Data;
     using Script.Main.Manager.Collection;
     using System.Collections.Generic;
     using UnityEngine;

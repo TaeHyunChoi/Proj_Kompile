@@ -2,9 +2,9 @@ using Script.Asset.Data;
 using UnityEngine;
 using System.Threading.Tasks;
 
-namespace Script.Global.Asset.Provider
+namespace Script.Asset.Provider
 {
-    using Script.Global.Asset.Data;
+    using Script.Asset.Data;
     
     /// <summary> 유닛 기획 데이터를 보관하는 Provider; (Value-Centric을 지향) </summary>
     public static class UnitTableProvider

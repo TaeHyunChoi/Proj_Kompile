@@ -1,6 +1,6 @@
 using UnityEngine.ResourceManagement.ResourceLocations;
 
-namespace Script.Global.Asset.Provider
+namespace Script.Asset.Provider
 {
     using MessagePack;
     using System.Collections.Generic;

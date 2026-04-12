@@ -1,4 +1,4 @@
-namespace Script.Global.Asset.Data
+namespace Script.Asset.Data
 {
     using MessagePack;
     using MessagePack.Formatters;

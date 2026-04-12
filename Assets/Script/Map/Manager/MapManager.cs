@@ -2,7 +2,7 @@ namespace Script.Map.Manager
 {
     using Script.Map.Utility;
     using Script.Map.Data;
-    using Script.Global.Asset.Provider;
+    using Script.Asset.Provider;
     using UnityEngine;
     using System.Collections.Generic;
     using Unity.Mathematics;

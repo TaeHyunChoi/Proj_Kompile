@@ -2,7 +2,7 @@ namespace Script.Field.Entity
 {
     using Script.Field.Data;
     using Script.Global.Unit.Entity;
-    using Script.Global.Unit.Data;
+    using Script.Unit.Data;
     using UnityEngine;
 
     [RequireComponent(typeof(UnitMoveComponent), typeof(UnitAnimComponent))]

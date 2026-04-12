@@ -2,8 +2,8 @@
 namespace Script.Map.Editor
 {
     using Script.Map.Data;
-    using Script.Map.Utility; // MapCoordUtil 사용을 위해 추가
-    using Script.Global.Asset.Provider;
+    using Script.Map.Utility;
+    using Script.Asset.Provider;
     using UnityEditor;
     using UnityEngine;
     using Unity.Mathematics;
