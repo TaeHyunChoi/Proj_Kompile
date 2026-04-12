@@ -1,22 +1,20 @@
-using Script.Asset.Data;
-using UnityEngine;
-using System.Threading.Tasks;
-
 namespace Script.Asset.Provider
 {
     using Script.Asset.Data;
+    using UnityEngine;
     
     /// <summary> 유닛 기획 데이터를 보관하는 Provider; (Value-Centric을 지향) </summary>
     public static class UnitTableProvider
     {
         private static UnitTableData[] Sheets;
 
-        public static async Task InitializeAsync()
+        public static async Awaitable InitializeAsync()
         {
-            // Context 없이 배열 타입 자체로 곧바로 로드합니다.
-            Sheets = await AssetProvider.LoadBinaryDataAsync<UnitTableData[]>(new AssetKey("UnitTable"));
+            AssetKey key = new AssetKey(AssetConst.UNIT_TABLE);
+            Sheets = await AssetProvider.LoadBinaryDataAsync<UnitTableData[]>(key);
             
-            if (Sheets == null)
+            if (null == Sheets
+                || 0 == Sheets.Length)
             {
                 Debug.LogError("[UnitTableProvider] 데이터 로드 실패!");
             }

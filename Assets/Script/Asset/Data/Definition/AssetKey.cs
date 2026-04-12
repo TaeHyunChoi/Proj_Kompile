@@ -1,6 +1,5 @@
 namespace Script.Asset.Data
 {
-
     using System;
 
     /// <summary>

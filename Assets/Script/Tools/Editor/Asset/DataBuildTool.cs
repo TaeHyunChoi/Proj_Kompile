@@ -36,7 +36,7 @@ public class DataBuildTool : EditorWindow
     // 💡 동기화할 테이블 리스트 (새 테이블 추가 시 여기에만 등록하면 GUI에 자동 반영됩니다)
     private static readonly List<TableInfo> TargetTables = new List<TableInfo>
     {
-        new TableInfo("UnitTable", "0"),
+        new TableInfo(AssetConst.UNIT_TABLE, "0"),
         // new TableInfo("ItemTable", "12345678"),
         // new TableInfo("SkillTable", "98765432"),
     };
