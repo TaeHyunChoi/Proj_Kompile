@@ -9,6 +9,7 @@ namespace Script.Asset.Provider
     using UnityEngine.ResourceManagement.AsyncOperations;
     using UnityEngine.ResourceManagement.ResourceLocations;
     using Script.Asset.Data;
+    using Script.Asset.Utility;
 
     /// <summary>
     /// 에셋과 데이터의 비동기 로드, 캐싱, 풀링을 전담하는 순수 공급자 클래스.<br/>
@@ -16,8 +17,8 @@ namespace Script.Asset.Provider
     /// </summary>
     public static partial class AssetProvider
     {
-        private static readonly Dictionary<AssetKey, InstanceEntry> 
-            GameObjectInstances = new Dictionary<AssetKey, InstanceEntry>();
+        private static readonly Dictionary<AssetKey, InstanceEntryContext> 
+            GameObjectInstances = new Dictionary<AssetKey, InstanceEntryContext>();
 
         private static readonly Dictionary<int, AsyncOperationHandle> 
             NonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
@@ -74,7 +75,7 @@ namespace Script.Asset.Provider
         // Internal Logic (공통 코어 로직)
         private static async Task<GameObject> GetOrNewInstanceInternalAsync(AssetKey key, Transform parent, bool usePooling)
         {
-            if (!GameObjectInstances.TryGetValue(key, out InstanceEntry entry))
+            if (!GameObjectInstances.TryGetValue(key, out InstanceEntryContext entry))
             {
                 var handle = Addressables.LoadAssetAsync<GameObject>(key.Value);
                 await handle.Task;
@@ -85,7 +86,7 @@ namespace Script.Asset.Provider
                     return null;
                 }
 
-                entry = new InstanceEntry(handle, usePooling);
+                entry = new InstanceEntryContext(handle, usePooling);
                 GameObjectInstances.TryAdd(key, entry);
             }
 
@@ -105,7 +106,7 @@ namespace Script.Asset.Provider
         }
         private static void ReleaseInstanceInternal(AssetKey key, GameObject instance, bool forcedDestroy)
         {
-            if (!key.IsValid || !GameObjectInstances.TryGetValue(key, out InstanceEntry entry))
+            if (!key.IsValid || !GameObjectInstances.TryGetValue(key, out InstanceEntryContext entry))
             {
                 if (instance)
                 {

@@ -1,6 +1,6 @@
 namespace Script.Map.Provider
 {
-    using Script.Asset.Data;
+    using Script.Asset.Utility;
     using Script.Map.Data;
     using Script.Map.Utility;
     using System.Collections.Generic;

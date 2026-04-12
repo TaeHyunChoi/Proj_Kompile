@@ -2,7 +2,7 @@ namespace Script.Map.Entity
 {
     using System.Collections.Generic;
     using UnityEngine;
-    using Script.Global.Entity.Data;
+    using Script.Entity.Data;
 
     /// <summary>
     /// [Framework] 핵심 계층: Entity

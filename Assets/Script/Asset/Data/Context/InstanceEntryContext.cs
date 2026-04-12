@@ -7,10 +7,8 @@ namespace Script.Asset.Provider
 
     public static partial class AssetProvider // InstanceEntry
     {
-        /// <summary>
-        /// 프리팹 원본 핸들과 풀링된 인스턴스들을 관리하는 내부 클래스입니다.
-        /// </summary>
-        private class InstanceEntry
+        /// <summary> 프리팹 원본 핸들과 풀링된 인스턴스들을 관리하는 내부 클래스 </summary>
+        private class InstanceEntryContext
         {
             public AsyncOperationHandle Handle { get; }
             public bool UsePooling { get; }
@@ -18,7 +16,7 @@ namespace Script.Asset.Provider
             private int _referenceCount;
             private readonly ConcurrentQueue<GameObject> _pool;
 
-            public InstanceEntry(AsyncOperationHandle handle, bool usePooling)
+            public InstanceEntryContext(AsyncOperationHandle handle, bool usePooling)
             {
                 Handle = handle;
                 UsePooling = usePooling;
@@ -54,7 +52,6 @@ namespace Script.Asset.Provider
 
             public void AddReference() => Interlocked.Increment(ref _referenceCount);
             public void RemoveReference() => Interlocked.Decrement(ref _referenceCount);
-
             public bool ShouldRelease() => _referenceCount <= 0 && (!UsePooling || _pool.IsEmpty);
         }
     }

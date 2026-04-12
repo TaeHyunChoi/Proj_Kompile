@@ -11,8 +11,8 @@ using System.Collections.Generic;
 using MessagePack;
 using Unity.Collections;
 using Script.Asset.Data;
+using Script.Asset.Utility;
 using Script.Unit.Data;
-using Script.Global.Utility;
 
 public class DataBuildTool : EditorWindow
 {

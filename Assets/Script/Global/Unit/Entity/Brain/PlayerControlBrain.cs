@@ -2,8 +2,8 @@ namespace Script.Unit.Entity
 {
     using UnityEngine;
     using Script.Field.Entity;
-    using Script.Global.Input.Provider;
-    using static Script.Global.Input.Data.Definition;
+    using Script.Input.Provider;
+    using static Script.Input.Data.Definition;
     
     /// <summary>
     /// 플레이어 입력을 읽어 FieldPlayerEntity에 이동 벡터를 전달하는 Brain입니다.

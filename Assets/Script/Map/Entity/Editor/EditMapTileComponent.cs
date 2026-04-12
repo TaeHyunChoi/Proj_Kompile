@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
-namespace Script.Map.Data
+namespace Script.Map.Entity
 {
+    using Script.Map.Data;
     using Script.Map.Utility;
     using System;
     using System.Collections.Generic;

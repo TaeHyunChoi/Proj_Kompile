@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 namespace Script.Map.Editor
 {
-    using Script.Map.Data;
     using Script.Map.Entity;
     using UnityEditor;
     using UnityEngine;
@@ -773,7 +772,7 @@ private void LoadAllAtlases()
 
         private void ExecuteBake()
         {
-            var rootComponent = UnityEngine.Object.FindFirstObjectByType<Data.EditMapTileComponent>();
+            var rootComponent = UnityEngine.Object.FindFirstObjectByType<EditMapTileComponent>();
             if (false == rootComponent)
             {
                 return;
@@ -781,7 +780,7 @@ private void LoadAllAtlases()
 
             try
             {
-                Provider.EditMapSamplingRepoProvider baker = new Provider.EditMapSamplingRepoProvider();
+                EditMapSamplingProvider baker = new EditMapSamplingProvider();
                 baker.Bake();
             }
             catch (System.Exception e)

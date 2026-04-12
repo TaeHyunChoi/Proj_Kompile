@@ -1,4 +1,4 @@
-namespace Script.Global.Utility
+namespace Script.Asset.Utility
 {
     using System.Collections.Generic;
     using System.Text;

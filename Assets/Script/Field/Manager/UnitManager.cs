@@ -1,4 +1,4 @@
-namespace Script.Global.Unit.Manager
+namespace Script.Unit.Manager
 {
     using Script.Field.Data;
     using Script.Field.Entity;
@@ -6,7 +6,7 @@ namespace Script.Global.Unit.Manager
     using Script.Asset.Provider;
     using Script.Unit.Data;
     using Script.Unit.Entity;
-    using Script.Main.Manager.Collection;
+    using Script.Main.Manager;
     using System.Collections.Generic;
     using UnityEngine;
 

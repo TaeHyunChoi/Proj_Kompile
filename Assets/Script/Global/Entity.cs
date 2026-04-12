@@ -1,4 +1,4 @@
-namespace Script.Global.Entity.Data
+namespace Script.Entity.Data
 {
     using UnityEngine;
     using Script.Asset.Data;

@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace Script.Global.Asset.Provider
+namespace Script.Asset.Provider
 {
     using MessagePack;
     using System.IO;

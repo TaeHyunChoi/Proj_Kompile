@@ -1,11 +1,9 @@
-using Script.Asset.Data;
-using System;
-
-namespace Script.Main
+namespace Script.Main.Manager
 {
     using UnityEngine;
+    using System;
     using Script.Field.Data;
-    using Script.Global.Unit.Manager;
+    using Script.Unit.Manager;
     using Script.Map.Manager;
     using Script.Asset.Provider;
     
