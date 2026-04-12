@@ -6,15 +6,17 @@ namespace Script.Asset.Provider
     /// <summary> 유닛 기획 데이터를 보관하는 Provider; (Value-Centric을 지향) </summary>
     public static class UnitTableProvider
     {
-        private static UnitTableData[] Sheets;
+        private static UnitTableData[] _sheets;
 
+        public static UnitTableData[] Sheets => _sheets;
+        
         public static async Awaitable InitializeAsync()
         {
             AssetKey key = new AssetKey(AssetConst.UNIT_TABLE);
-            Sheets = await AssetProvider.LoadBinaryDataAsync<UnitTableData[]>(key);
+            _sheets = await AssetProvider.LoadBinaryDataAsync<UnitTableData[]>(key);
             
-            if (null == Sheets
-                || 0 == Sheets.Length)
+            if (null == _sheets
+                || 0 == _sheets.Length)
             {
                 Debug.LogError("[UnitTableProvider] 데이터 로드 실패!");
             }
@@ -23,19 +25,19 @@ namespace Script.Asset.Provider
         public static ref readonly UnitTableData GetUnitData(int unitID)
         {
             int left = 0;
-            int right = Sheets.Length - 1; // 길이-1이 안전한 초기 인덱스입니다.
+            int right = _sheets.Length - 1; // 길이-1이 안전한 초기 인덱스입니다.
 
             while (left <= right) // 조건 교정: <= 로 해야 마지막 요소까지 탐색합니다.
             {
                 int mid = left + (right - left) / 2; // 오버플로우 방지형 중간값 계산
 
-                if (unitID == Sheets[mid].ID)
+                if (unitID == _sheets[mid].ID)
                 {
-                    return ref Sheets[mid];
+                    return ref _sheets[mid];
                 }
 
                 // 오름차순 이진 탐색의 올바른 분기
-                if (unitID < Sheets[mid].ID)
+                if (unitID < _sheets[mid].ID)
                 {
                     right = mid - 1; // 타겟이 작으면 왼쪽 절반을 탐색
                 }

@@ -1,3 +1,4 @@
+using Script.Asset.Data;
 using System;
 
 namespace Script.Main
@@ -6,6 +7,7 @@ namespace Script.Main
     using Script.Field.Data;
     using Script.Global.Unit.Manager;
     using Script.Map.Manager;
+    using Script.Asset.Provider;
     
     public class MainManager : MonoBehaviour
     {
@@ -27,12 +29,13 @@ namespace Script.Main
         private int _editLayerIndex = 0;
 #endif
 
-        private void Awake()
+        private async void Awake()
         {
             _cam = transform.GetComponentInChildren<Camera>();
 
             IMapQueryService dummy = new FieldMapQueryService(_mapManager);
-            
+
+            _ = InitSettingAsync_Table();
             InitSetting_Map();
             InitSetting_Unit(dummy);
         }
@@ -43,10 +46,23 @@ namespace Script.Main
 
             _ = _mapManager.PlayStreamingAsync(_cam.transform);
             _ = _unitManager.SpawnUnitByIDAsync(1, Vector3.zero);
-            // 여러 개를 비동기로 돌리는 방법이 있겠구나
         }
 
         // 정리 목적으로 함수로 나누어 작성..
+        private async Awaitable InitSettingAsync_Table()
+        {
+            try
+            {
+                await UnitTableProvider.InitializeAsync();
+                // 테이블을 하나씩 추가하면 되려나? 
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+
         private void InitSetting_Map()
         {
             _mapRoot = new GameObject("Map").transform;

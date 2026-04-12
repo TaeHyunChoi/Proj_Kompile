@@ -1,5 +1,3 @@
-using UnityEngine.ResourceManagement.ResourceLocations;
-
 namespace Script.Asset.Provider
 {
     using MessagePack;
@@ -9,6 +7,7 @@ namespace Script.Asset.Provider
     using UnityEngine;
     using UnityEngine.AddressableAssets;
     using UnityEngine.ResourceManagement.AsyncOperations;
+    using UnityEngine.ResourceManagement.ResourceLocations;
     using Script.Asset.Data;
 
     /// <summary>
@@ -23,9 +22,14 @@ namespace Script.Asset.Provider
         private static readonly Dictionary<int, AsyncOperationHandle> 
             NonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
 
-        private static readonly MessagePackSerializerOptions 
-            MsgPackOptions = MessagePackSerializerOptions.Standard.WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-
+// 💡 커스텀 포매터가 포함된 CompositeResolver로 교체
+        private static readonly MessagePackSerializerOptions MsgPackOptions = 
+            MessagePackSerializerOptions.Standard.WithResolver(
+                MessagePack.Resolvers.CompositeResolver.Create(
+                    new MessagePack.Formatters.IMessagePackFormatter[] { new FixedString32BytesFormatter() },
+                    new MessagePack.IFormatterResolver[] { MessagePack.Resolvers.ContractlessStandardResolver.Instance }
+                )
+            );
         // typeof(T).Name 호출 시 발생하는 string 할당(GC) 방지 캐시
         private static class TypeNameCache<T> where T : Component
         {
@@ -152,26 +156,34 @@ namespace Script.Asset.Provider
 
         }
 
-        public static async Task<T> LoadBinaryDataAsync<T>(AssetKey key)
+        public static async Awaitable<T> LoadBinaryDataAsync<T>(AssetKey key)
         {
             AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(key.Value);
-            TextAsset textAsset = await handle.Task;
-
-            if (handle.Status != AsyncOperationStatus.Succeeded 
-                || !textAsset)
-            {
-                if (handle.IsValid())
-                {
-                    Addressables.Release(handle);                    
-                }
-                
-                throw new FileNotFoundException($"[AssetProvider] Binary file not found: {key.Value}");
-            }
-
             try
             {
+                TextAsset textAsset = await handle.Task;
+
+                if (handle.Status != AsyncOperationStatus.Succeeded 
+                    || !textAsset)
+                {
+                    if (handle.IsValid())
+                    {
+                        Addressables.Release(handle);                    
+                    }
+                
+                    throw new FileNotFoundException($"[AssetProvider] Binary file not found: {key.Value}");
+                }
+                
                 return MessagePackSerializer.Deserialize<T>(textAsset.bytes, MsgPackOptions);
             }
+#if UNITY_EDITOR
+            catch (System.Exception ex) // 💡 핵심 추가: 에러를 낚아채서 원인을 출력합니다.
+            {
+                Debug.LogError(
+                    $"[AssetProvider] MessagePack 파싱 실패 (Key: {key.Value})\n사유: {ex.Message}\n{ex.StackTrace}");
+                return default; // 에러가 나면 null(default)을 반환하여 이후 로직이 중단점을 타도록 유도
+            }
+#endif
             finally
             {
                 Addressables.Release(handle);
