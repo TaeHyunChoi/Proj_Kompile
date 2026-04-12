@@ -35,26 +35,27 @@ namespace Script.Main
 
             IMapQueryService dummy = new FieldMapQueryService(_mapManager);
 
-            _ = InitSettingAsync_Table();
-            InitSetting_Map();
-            InitSetting_Unit(dummy);
+            _ = InitializeAsync_DataTable();
+            Initialize_Map();
+            Initialize_Unit(dummy);
         }
 
         private void Start()
         {
+            // settings for text;
+            
             // _cam.SetPosition();
 
             _ = _mapManager.PlayStreamingAsync(_cam.transform);
             _ = _unitManager.SpawnUnitByIDAsync(1, Vector3.zero);
         }
 
-        // 정리 목적으로 함수로 나누어 작성..
-        private async Awaitable InitSettingAsync_Table()
+        private async Awaitable InitializeAsync_DataTable()
         {
             try
             {
                 await UnitTableProvider.InitializeAsync();
-                // 테이블을 하나씩 추가하면 되려나? 
+                // 테이블을 하나씩 추가
             }
             catch (Exception e)
             {
@@ -62,8 +63,7 @@ namespace Script.Main
                 throw;
             }
         }
-
-        private void InitSetting_Map()
+        private void Initialize_Map()
         {
             _mapRoot = new GameObject("Map").transform;
             _mapRoot.SetParent(this.transform);
@@ -71,13 +71,13 @@ namespace Script.Main
             
             _mapManager = new MapManager(_mapRoot);
         }
-        private void InitSetting_Unit(IMapQueryService servie)
+        private void Initialize_Unit(IMapQueryService service)
         {
             _unitRoot = new GameObject("Unit").transform;
             _unitRoot.SetParent(this.transform);
             _unitRoot.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             
-            _unitManager = new UnitManager(_unitRoot, servie);
+            _unitManager = new UnitManager(_unitRoot, service);
         }
     }
 }
