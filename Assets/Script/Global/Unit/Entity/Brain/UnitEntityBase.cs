@@ -1,4 +1,4 @@
-namespace Script.Global.Unit.Entity
+namespace Script.Unit.Entity
 {
     using Script.Global.Entity.Data; // Entity 클래스가 있는 네임스페이스
     using Script.Unit.Data;

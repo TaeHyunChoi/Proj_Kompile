@@ -1,5 +1,3 @@
-using Unity.Mathematics;
-
 namespace Script.Map.Entity
 {
     using UnityEngine;

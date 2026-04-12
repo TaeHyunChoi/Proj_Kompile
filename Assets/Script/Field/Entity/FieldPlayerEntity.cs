@@ -1,7 +1,7 @@
 namespace Script.Field.Entity
 {
     using Script.Field.Data;
-    using Script.Global.Unit.Entity;
+    using Script.Unit.Entity;
     using Script.Unit.Data;
     using UnityEngine;
 

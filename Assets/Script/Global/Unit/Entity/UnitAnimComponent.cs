@@ -1,4 +1,4 @@
-namespace Script.Global.Unit.Entity
+namespace Script.Unit.Entity
 {
     using UnityEngine;
 

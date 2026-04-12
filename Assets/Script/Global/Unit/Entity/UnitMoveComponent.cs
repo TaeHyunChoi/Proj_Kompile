@@ -1,4 +1,4 @@
-namespace Script.Global.Unit.Entity
+namespace Script.Unit.Entity
 {
     using Script.Field.Data;
     using Script.Map.Data;

@@ -1,6 +1,3 @@
-using Script.Asset.Data;
-using Script.Global.Unit.Entity;
-
 namespace Script.Global.Unit.Manager
 {
     using Script.Field.Data;
@@ -8,6 +5,7 @@ namespace Script.Global.Unit.Manager
     using Script.Asset.Data;
     using Script.Asset.Provider;
     using Script.Unit.Data;
+    using Script.Unit.Entity;
     using Script.Main.Manager.Collection;
     using System.Collections.Generic;
     using UnityEngine;

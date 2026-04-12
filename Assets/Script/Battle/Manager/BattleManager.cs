@@ -3,7 +3,7 @@ namespace Script.Battle.Manager
     using System.Collections.Generic;
     using UnityEngine;
     using Script.Battle.Data;
-    using Script.Global.Unit.Entity;
+    using Script.Unit.Entity;
     using Script.Battle.RepoProvider;
     using Script.Battle.Utility;
 
