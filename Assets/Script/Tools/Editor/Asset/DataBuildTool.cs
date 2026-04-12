@@ -18,8 +18,8 @@ public class DataBuildTool : EditorWindow
     // [1. 설정 및 테이블 정의]
     // ====================================================================
 
-    private const string CsvDirectory = "Assets/Editor/DataSources";
-    private const string SaveDirectory = "Assets/DataBinary";
+    private const string CsvDirectory = "Assets/Rcs/Bytes/Table/Editor";
+    private const string SaveDirectory = "Assets/Rcs/Bytes/Table";
 
     // 구글 시트 보안 설정 (Apps Script)
     private const string WebAppUrl = "https://script.google.com/macros/s/AKfycbxGpber8YHl_X76nm-hIjaud2kpm40-ncWfBy5C9zIRLJ6YNoggPMpCRBoWDERnQbT04w/exec";
@@ -102,8 +102,12 @@ public class DataBuildTool : EditorWindow
         var target = TargetTables[_selectedTableIndex];
         
         bool success = await DownloadAndBuildTable(target.Name, target.Gid);
+
+        if (success)
+        {
+            AssetDatabase.Refresh();
+        }
         
-        if (success) AssetDatabase.Refresh();
         _isProcessing = false;
         
         Debug.Log($"[DataBuildTool] {target.Name} 동기화 완료");
@@ -129,7 +133,7 @@ public class DataBuildTool : EditorWindow
     // [4. 핵심 다운로드 및 파싱 로직 (기존과 동일)]
     // ====================================================================
 
-    private static async Task<bool> DownloadAndBuildTable(string tableName, string gid)
+    private static async Awaitable<bool> DownloadAndBuildTable(string tableName, string gid)
     {
         string url = $"{WebAppUrl}?token={SecretToken}&gid={gid}";
         string csvText = await FetchCsvFromWebAsync(url);
