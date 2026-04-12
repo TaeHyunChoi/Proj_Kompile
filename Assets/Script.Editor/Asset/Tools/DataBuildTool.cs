@@ -1,7 +1,3 @@
-using MessagePack;
-using MessagePack.Formatters;
-using MessagePack.Resolvers;
-
 #if UNITY_EDITOR
 namespace  Kompile.Asset.Editor.Tools
 {
@@ -15,6 +11,8 @@ namespace  Kompile.Asset.Editor.Tools
     using System.Threading.Tasks;
     using System.Collections.Generic;
     using MessagePack;
+    using MessagePack.Formatters;
+    using MessagePack.Resolvers;
     using Unity.Collections;
     using Script.Asset.Data;
     using Script.Asset.Utility;
