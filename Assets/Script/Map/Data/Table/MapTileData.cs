@@ -12,10 +12,10 @@ namespace Script.Map.Data
         [ReadOnly, Key(2)] public ushort LayerMask; // TODO: 추후에 추가 예정
         
 #if UNITY_EDITOR
-        public MapTileData(EditMapTileData edited)
+        public MapTileData(long naviMask, ushort linkMask)
         {
-            NaviMask  = edited.NaviMask;
-            LinkMask  = edited.LinkMask;
+            NaviMask  = naviMask;
+            LinkMask  = linkMask;
             LayerMask = 0;
         }
 #endif

@@ -1,13 +1,11 @@
-namespace Script.Map.Utility
-{
-    using Unity.Mathematics;
-    using UnityEngine;
-    using Unity.Burst;
+using Unity.Mathematics;
+using UnityEngine;
+using Unity.Burst;
 
-    [BurstCompile]
-    public static class MapCoordUtil
-    {
-        private const int GRID_SIZE = 64;
+[BurstCompile]
+public static class EditMapCoordUtil
+{
+private const int GRID_SIZE = 64;
         private const int TILE_MASK = (1 << TILE_BITS) - 1;
         private const int TILE_BITS = 6;
 
@@ -169,15 +167,11 @@ namespace Script.Map.Utility
             return (((long)gKey) << 32) | tKey;
         }
 
-        // =========================================================================
-        // [신규 추가] Grid Key와 Tile Key를 받아 월드 Pivot 좌표(float3)를 반환합니다.
-        // =========================================================================
         [BurstCompile]
         public static void GetPivot(int gKey, int tKey, out float3 pivot)
         {
             long id = ((long)gKey << 32) | (uint)tKey;
             ComputeWorldPositionInt(id, out int3 absPos);
             pivot = new float3(absPos.x, absPos.y, absPos.z);
-        }
-    }
+        }    
 }
