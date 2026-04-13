@@ -1,9 +1,9 @@
-namespace Script.Map.Utility
+namespace Kompile.Map.Utility
 {
     using Unity.Burst;
     using Unity.Mathematics;
-    using Script.Map.Data;
-    using static Script.Map.Data.MapConsts;
+    using Kompile.Map.Data;
+    using static Kompile.Map.Data.MapConsts;
 
     [BurstCompile]
     public static class MapNaviTileUtil

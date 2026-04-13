@@ -1,14 +1,13 @@
 #if UNITY_EDITOR
-namespace Script.Asset.Provider
+namespace Kompile.Asset.Editor.Provider
 {
     using MessagePack;
-    using System.IO;
     using UnityEngine;
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
 
-    public static partial class AssetProvider
+    public static class EditAssetProvider
     {
         /// <summary>
         /// 데이터를 바이너리로 직렬화하여 저장하고 어드레서블에 등록합니다.

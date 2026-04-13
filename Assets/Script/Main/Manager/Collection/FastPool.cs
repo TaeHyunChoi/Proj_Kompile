@@ -1,4 +1,4 @@
-namespace Script.Main.Manager
+namespace Kompile.Main.Manager
 {
     using UnityEngine;
 

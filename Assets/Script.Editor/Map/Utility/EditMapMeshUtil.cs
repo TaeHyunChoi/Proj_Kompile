@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 namespace Kompile.Map.Editor.Utility
 {
-    using Script.Map.Data;
+    using Kompile.Map.Data;
     using UnityEngine;
     using Unity.Mathematics;
     using System.Collections.Generic;

@@ -1,8 +1,8 @@
-namespace Script.Map.Entity
+namespace Kompile.Map.Entity
 {
     using System.Collections.Generic;
     using UnityEngine;
-    using Script.Entity.Data;
+    using Kompile.Entity.Data;
 
     /// <summary>
     /// [Framework] 핵심 계층: Entity

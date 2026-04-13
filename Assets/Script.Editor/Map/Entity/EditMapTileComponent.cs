@@ -1,13 +1,13 @@
 namespace Kompile.Map.Editor.Entity
 {
-    using Script.Map.Data;
-    using Script.Map.Utility;
+    using Kompile.Map.Data;
+    using Kompile.Map.Utility;
     using Kompile.Map.Editor.Utility;
     using System;
     using System.Collections.Generic;
     using UnityEditor;
     using UnityEngine;
-    using static Script.Map.Data.MapConsts;
+    using static Kompile.Map.Data.MapConsts;
 
     [Serializable]
     [ExecuteInEditMode]

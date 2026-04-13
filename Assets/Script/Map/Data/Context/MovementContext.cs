@@ -1,7 +1,6 @@
-namespace Script.Map.Data
+namespace Kompile.Map.Data
 {
     using Unity.Mathematics;
-    using System.Collections.Generic;
     
     public class MovementContext
     {

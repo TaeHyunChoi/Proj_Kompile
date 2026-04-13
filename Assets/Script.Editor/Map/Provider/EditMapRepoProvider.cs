@@ -6,7 +6,7 @@ namespace Kompile.Map.Editor.Provider
     using UnityEditor;
     using UnityEngine;
     using Kompile.Map.Editor.Data;
-    using Script.Map.Data;
+    using Kompile.Map.Data;
     
     /// <summary>
     /// [Framework] System 분류: [MapSampling]에 필요한 네이티브 캐시 자원을 관리하고 제공함

@@ -1,6 +1,6 @@
-namespace Script.Field.Data
+namespace Kompile.Field.Data
 {
-    using Script.Map.Data;
+    using Kompile.Map.Data;
     using Unity.Mathematics;
 
     /// <summary>

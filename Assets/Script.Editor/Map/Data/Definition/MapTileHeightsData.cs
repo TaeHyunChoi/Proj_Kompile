@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace Script.Map.Data
+namespace Kompile.Map.Data
 {
     using System;
     using UnityEngine;

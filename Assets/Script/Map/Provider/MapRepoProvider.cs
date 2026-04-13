@@ -1,8 +1,8 @@
-namespace Script.Map.Provider
+namespace Kompile.Map.Provider
 {
-    using Script.Asset.Utility;
-    using Script.Map.Data;
-    using Script.Map.Utility;
+    using Kompile.Asset.Utility;
+    using Kompile.Map.Data;
+    using Kompile.Map.Utility;
     using System.Collections.Generic;
     using Unity.Collections;
     using Unity.Mathematics;

@@ -1,8 +1,7 @@
-namespace Script.Map.Data
+namespace Kompile.Map.Data
 {
     using UnityEngine;
-    using Script.Map.Data;
-    using Script.Map.Entity;
+    using Kompile.Map.Entity;
     
     public class MapGridContext
     {

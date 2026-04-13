@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
 namespace Kompile.Map.Editor.Tools
 {
-    using Script.Map.Data;
-    using Script.Map.Utility;
-    using Script.Asset.Provider;
+    using Kompile.Map.Data;
+    using Kompile.Map.Utility;
+    using Kompile.Asset.Provider;
     using UnityEditor;
     using UnityEngine;
     using Unity.Mathematics;

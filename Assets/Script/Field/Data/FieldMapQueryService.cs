@@ -1,7 +1,7 @@
-namespace Script.Field.Data
+namespace Kompile.Field.Data
 {
-    using Script.Map.Data;
-    using Script.Map.Manager;
+    using Kompile.Map.Data;
+    using Kompile.Map.Manager;
     using Unity.Mathematics;
 
     /// <summary>

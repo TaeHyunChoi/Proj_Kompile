@@ -1,6 +1,5 @@
-namespace Script.Map.Data
+namespace Kompile.Map.Data
 {
-    using Script.Map.Data;
     using MessagePack;
     using Unity.Collections;
 

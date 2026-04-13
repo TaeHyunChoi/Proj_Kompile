@@ -1,7 +1,5 @@
-namespace Script.Unit.Data
+namespace Kompile.Unit.Data
 {
-    using Script.Asset.Data;
-    
     public struct UnitRuntimeContext
     {
         public UnitType Type { get; private set; }

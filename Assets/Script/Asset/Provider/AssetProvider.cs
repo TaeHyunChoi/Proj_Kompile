@@ -1,4 +1,4 @@
-namespace Script.Asset.Provider
+namespace Kompile.Asset.Provider
 {
     using MessagePack;
     using System.Collections.Generic;
@@ -8,8 +8,8 @@ namespace Script.Asset.Provider
     using UnityEngine.AddressableAssets;
     using UnityEngine.ResourceManagement.AsyncOperations;
     using UnityEngine.ResourceManagement.ResourceLocations;
-    using Script.Asset.Data;
-    using Script.Asset.Utility;
+    using Kompile.Asset.Data;
+    using Kompile.Asset.Utility;
 
     /// <summary>
     /// 에셋과 데이터의 비동기 로드, 캐싱, 풀링을 전담하는 순수 공급자 클래스.<br/>

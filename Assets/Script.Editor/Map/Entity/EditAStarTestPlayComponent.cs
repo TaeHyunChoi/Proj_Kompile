@@ -5,8 +5,8 @@ namespace Kompile.Map.Editor.Entity
 {
     using MessagePack;
     using MessagePack.Resolvers;
-    using Script.Map.Data;
-    using Script.Map.Utility;
+    using Kompile.Map.Data;
+    using Kompile.Map.Utility;
     using Kompile.Map.Editor.Provider;
     using System.Collections.Generic;
     using Unity.Mathematics;

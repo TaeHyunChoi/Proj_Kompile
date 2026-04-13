@@ -3,7 +3,7 @@ namespace Kompile.Map.Editor.Tools
 {
     using UnityEditor;
     using UnityEngine;
-    using Script.Map.Data;
+    using Kompile.Map.Data;
 
     [CustomEditor(typeof(TileSetDefinition))]
     [CanEditMultipleObjects]

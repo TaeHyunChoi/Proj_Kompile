@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
 namespace Kompile.Map.Editor.Provider
 {
-    using Script.Map.Data;
-    using Script.Map.Utility;
-    using Script.Asset.Provider;
+    using Kompile.Map.Data;
+    using Kompile.Map.Utility;
+    using Kompile.Asset.Provider;
     using Kompile.Map.Editor.Data; 
     using Kompile.Map.Editor.Entity;
     using Kompile.Map.Editor.Utility;
@@ -157,7 +157,7 @@ namespace Kompile.Map.Editor.Provider
                     layerMeshAssets = grid.Value.LayerMeshAssets
                 };
 
-                AssetProvider.WriteBinaryFile<MapGridData>(
+                Kompile.Asset.Editor.Provider.EditAssetProvider.WriteBinaryFile<MapGridData>(
                     data: mapGridData,
                     relativePath: MAP_NAVI_DATA_PATH,
                     fileName: $"MapNavi_{mapGridData.Key}",

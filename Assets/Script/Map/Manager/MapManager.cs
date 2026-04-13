@@ -1,8 +1,8 @@
-namespace Script.Map.Manager
+namespace Kompile.Map.Manager
 {
-    using Script.Map.Utility;
-    using Script.Map.Data;
-    using Script.Asset.Provider;
+    using Kompile.Map.Utility;
+    using Kompile.Map.Data;
+    using Kompile.Asset.Provider;
     using UnityEngine;
     using System.Collections.Generic;
     using Unity.Mathematics;

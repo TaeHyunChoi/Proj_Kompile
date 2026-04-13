@@ -1,7 +1,7 @@
-namespace Script.Entity.Data
+namespace Kompile.Entity.Data
 {
     using UnityEngine;
-    using Script.Asset.Data;
+    using Kompile.Asset.Data;
 
     /// <summary>
     /// [Framework] 핵심 계층: Entity

@@ -1,4 +1,4 @@
-namespace Script.Unit.Entity
+namespace Kompile.Unit.Entity
 {
     /// <summary> 
     /// 유닛의 의사결정(키보드 조작, AI 상태머신 등)을 전담하는 컴포넌트 인터페이스.

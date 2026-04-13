@@ -1,4 +1,4 @@
-namespace Script.Map.Utility
+namespace Kompile.Map.Utility
 {
     using Unity.Mathematics;
     using UnityEngine;

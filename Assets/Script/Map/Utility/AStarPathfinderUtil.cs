@@ -1,4 +1,4 @@
-namespace Script.Map.Utility
+namespace Kompile.Map.Utility
 {
     using System.Collections.Generic;
     using Unity.Collections;

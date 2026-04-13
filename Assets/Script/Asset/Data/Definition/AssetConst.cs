@@ -1,4 +1,4 @@
-namespace Script.Asset.Data
+namespace Kompile.Asset.Data
 {
     public class AssetConst
     {

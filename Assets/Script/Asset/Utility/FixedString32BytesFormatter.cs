@@ -1,4 +1,4 @@
-namespace Script.Asset.Utility
+namespace Kompile.Asset.Utility
 {
     using MessagePack;
     using MessagePack.Formatters;

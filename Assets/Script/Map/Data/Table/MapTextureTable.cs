@@ -1,9 +1,9 @@
-using UnityEngine;
-using System;
-using System.Collections.Generic;
-
-namespace Script.Map.Data
+namespace Kompile.Map.Data
 {
+    using UnityEngine;
+    using System;
+    using System.Collections.Generic;
+    
     [Serializable]
     public class MapTextureData
     {

@@ -1,12 +1,12 @@
-namespace Script.Unit.Manager
+namespace Kompile.Unit.Manager
 {
-    using Script.Field.Data;
-    using Script.Field.Entity;
-    using Script.Asset.Data;
-    using Script.Asset.Provider;
-    using Script.Unit.Data;
-    using Script.Unit.Entity;
-    using Script.Main.Manager;
+    using Kompile.Field.Data;
+    using Kompile.Field.Entity;
+    using Kompile.Asset.Data;
+    using Kompile.Asset.Provider;
+    using Kompile.Unit.Data;
+    using Kompile.Unit.Entity;
+    using Kompile.Main.Manager;
     using System.Collections.Generic;
     using UnityEngine;
 

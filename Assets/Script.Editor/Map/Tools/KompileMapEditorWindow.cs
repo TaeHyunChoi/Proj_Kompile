@@ -97,8 +97,8 @@ namespace Kompile.Map.Editor.Tools
             {
                 string folderName = new DirectoryInfo(dir).Name;
                 string tablePath = $"{dir}/MapTextureTable.asset";
-                Script.Map.Data.MapTextureTable textureTable =
-                    AssetDatabase.LoadAssetAtPath<Script.Map.Data.MapTextureTable>(tablePath);
+                Kompile.Map.Data.MapTextureTable textureTable =
+                    AssetDatabase.LoadAssetAtPath<Kompile.Map.Data.MapTextureTable>(tablePath);
 
                 if (false == textureTable)
                 {

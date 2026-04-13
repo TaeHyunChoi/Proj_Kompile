@@ -14,9 +14,9 @@ namespace  Kompile.Asset.Editor.Tools
     using MessagePack.Formatters;
     using MessagePack.Resolvers;
     using Unity.Collections;
-    using Script.Asset.Data;
-    using Script.Asset.Utility;
-    using Script.Unit.Data;
+    using Kompile.Asset.Data;
+    using Kompile.Asset.Utility;
+    using Kompile.Unit.Data;
 
     public class DataBuildTool : EditorWindow
     {

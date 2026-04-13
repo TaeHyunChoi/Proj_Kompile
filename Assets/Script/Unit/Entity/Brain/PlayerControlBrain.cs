@@ -1,7 +1,7 @@
-namespace Script.Unit.Entity
+namespace Kompile.Unit.Entity
 {
     using UnityEngine;
-    using Script.Field.Entity;
+    using Kompile.Field.Entity;
     using Script.Input.Provider;
     using static Script.Input.Data.Definition;
     

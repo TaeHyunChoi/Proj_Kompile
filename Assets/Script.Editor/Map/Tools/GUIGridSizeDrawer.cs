@@ -2,7 +2,7 @@
 namespace Kompile.Map.Editor.Tools
 {
     using UnityEngine;
-    using static Script.Map.Data.MapConsts;
+    using static Kompile.Map.Data.MapConsts;
 
     public class GUIGridSizeDrawer : MonoBehaviour
     {

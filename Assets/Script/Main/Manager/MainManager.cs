@@ -1,11 +1,11 @@
-namespace Script.Main.Manager
+namespace Kompile.Main.Manager
 {
     using UnityEngine;
     using System;
-    using Script.Field.Data;
-    using Script.Unit.Manager;
-    using Script.Map.Manager;
-    using Script.Asset.Provider;
+    using Kompile.Field.Data;
+    using Kompile.Unit.Manager;
+    using Kompile.Map.Manager;
+    using Kompile.Asset.Provider;
     
     public class MainManager : MonoBehaviour
     {

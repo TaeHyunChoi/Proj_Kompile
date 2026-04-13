@@ -1,8 +1,8 @@
-namespace Script.Field.Entity
+namespace Kompile.Field.Entity
 {
-    using Script.Field.Data;
-    using Script.Unit.Entity;
-    using Script.Unit.Data;
+    using Kompile.Field.Data;
+    using Kompile.Unit.Entity;
+    using Kompile.Unit.Data;
     using UnityEngine;
 
     [RequireComponent(typeof(UnitMoveComponent), typeof(UnitAnimComponent))]

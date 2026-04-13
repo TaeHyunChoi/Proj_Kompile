@@ -3,9 +3,9 @@ namespace Kompile.Map.Editor.Tools
 {
     using MessagePack;
     using MessagePack.Resolvers;
-    using Script.Map.Data;
+    using Kompile.Map.Data;
     using Kompile.Map.Editor.Provider;
-    using Script.Map.Utility;
+    using Kompile.Map.Utility;
     using Unity.Mathematics;
     using UnityEditor;
     using UnityEngine;

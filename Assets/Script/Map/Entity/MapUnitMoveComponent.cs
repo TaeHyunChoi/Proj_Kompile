@@ -1,9 +1,9 @@
-namespace Script.Map.Entity
+namespace Kompile.Map.Entity
 {
     using UnityEngine;
     using Unity.Mathematics;
-    using Script.Map.Data;
-    using Script.Map.Utility;
+    using Kompile.Map.Data;
+    using Kompile.Map.Utility;
     
     public class MapUnitMoveComponent : MonoBehaviour
     {

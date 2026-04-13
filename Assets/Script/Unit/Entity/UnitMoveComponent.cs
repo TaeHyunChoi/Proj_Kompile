@@ -1,8 +1,8 @@
-namespace Script.Unit.Entity
+namespace Kompile.Unit.Entity
 {
-    using Script.Field.Data;
-    using Script.Map.Data;
-    using Script.Map.Utility;
+    using Kompile.Field.Data;
+    using Kompile.Map.Data;
+    using Kompile.Map.Utility;
     using Unity.Mathematics;
     using UnityEngine;
 

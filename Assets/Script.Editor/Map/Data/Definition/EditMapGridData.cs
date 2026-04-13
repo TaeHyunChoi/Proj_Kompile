@@ -5,7 +5,7 @@ namespace Kompile.Map.Editor.Data
     using System.Collections.Generic;
     using System.Collections.Concurrent;
     using MessagePack;
-    using Script.Map.Data;
+    using Kompile.Map.Data;
 
     // Data: 정보의 상태, 구조, 가공 형태 및 자료형 정의 (Value-Centric)
     [MessagePackObject]

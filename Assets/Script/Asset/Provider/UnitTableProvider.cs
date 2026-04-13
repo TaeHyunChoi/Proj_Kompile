@@ -1,6 +1,6 @@
-namespace Script.Asset.Provider
+namespace Kompile.Asset.Provider
 {
-    using Script.Asset.Data;
+    using Kompile.Asset.Data;
     using UnityEngine;
     
     /// <summary> 유닛 기획 데이터를 보관하는 Provider; (Value-Centric을 지향) </summary>

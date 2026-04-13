@@ -1,4 +1,4 @@
-namespace Script.Map.Provider
+namespace Kompile.Map.Provider
 {
     using UnityEngine;
     using UnityEngine.AddressableAssets;

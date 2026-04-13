@@ -1,4 +1,4 @@
-namespace Script.Asset.Provider
+namespace Kompile.Asset.Provider
 {
     using UnityEngine;
     using UnityEngine.ResourceManagement.AsyncOperations;

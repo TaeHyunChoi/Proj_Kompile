@@ -1,7 +1,7 @@
-namespace Script.Unit.Entity
+namespace Kompile.Unit.Entity
 {
-    using Script.Entity.Data; // Entity 클래스가 있는 네임스페이스
-    using Script.Unit.Data;
+    using Kompile.Entity.Data; // Entity 클래스가 있는 네임스페이스
+    using Kompile.Unit.Data;
     
     /// <summary>
     /// [Framework] Entity 상속: 
