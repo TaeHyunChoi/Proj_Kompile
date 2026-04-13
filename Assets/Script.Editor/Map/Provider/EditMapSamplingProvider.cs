@@ -3,23 +3,23 @@ namespace Kompile.Map.Editor.Provider
 {
     using Kompile.Map.Data;
     using Kompile.Map.Utility;
-    using Kompile.Asset.Provider;
+    using Kompile.Map.Entity;
     using Kompile.Map.Editor.Data; 
-    using Kompile.Map.Editor.Entity;
     using Kompile.Map.Editor.Utility;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using UnityEngine;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
     using UnityEditor;
     using UnityEditor.AddressableAssets;
     using UnityEditor.AddressableAssets.Settings;
-    using UnityEngine;
+
     using Object = UnityEngine.Object;
 
-    public partial class EditMapSamplingProvider // main;
+    public partial class EditMapSamplingProvider // main
     {
         // -- Path --
         private const string SAVE_PATH_ROOT = "Assets/Rcs/MapRender";
@@ -98,8 +98,6 @@ namespace Kompile.Map.Editor.Provider
             JobHandle jobHandle = job.Schedule(tiles.Length, 64);
             jobHandle.Complete();
 
-            ushort renderIndex;
-            long naviMask;
             int[] computedGridKeys = new int[length];
 
             map = new ConcurrentDictionary<int, EditMapGridData>();
@@ -108,8 +106,8 @@ namespace Kompile.Map.Editor.Provider
                 MapCoordUtil.ComputeKey(nativeResult[i].ID, out int gridKey, out int tileKey);
 
                 computedGridKeys[i] = gridKey;
-                naviMask = nativeResult[i].NaviMask;
-                renderIndex = nativeResult[i].RenderIndex;
+                long naviMask = nativeResult[i].NaviMask;
+                ushort renderIndex = nativeResult[i].RenderIndex;
 
                 if (false == map.ContainsKey(gridKey))
                 {
@@ -247,7 +245,7 @@ namespace Kompile.Map.Editor.Provider
                 AssetDatabase.DeleteAsset(SAVE_PATH_ROOT);
             }
 
-            if (false == System.IO.Directory.Exists(SAVE_PATH_ROOT))
+            if (!System.IO.Directory.Exists(SAVE_PATH_ROOT))
             {
                 System.IO.Directory.CreateDirectory(SAVE_PATH_ROOT);
             }
@@ -289,9 +287,11 @@ namespace Kompile.Map.Editor.Provider
                     {
                         EditMapTileComponent tile = tiles[idx];
                         int vertexCount = 0;
-                        if (true == tile.TryGetSharedMesh(out Mesh tileMesh))
+                        
+                        // [수정 포인트] TryGetSharedMesh 대신 MeshFilter 직접 접근으로 변경
+                        if (tile.MeshFilter != null && tile.MeshFilter.sharedMesh != null)
                         {
-                            vertexCount = tileMesh.vertexCount;
+                            vertexCount = tile.MeshFilter.sharedMesh.vertexCount;
                         }
 
                         if (BATCH_VERTEX_TARGET < currentBatchVertexCount + vertexCount
@@ -343,11 +343,14 @@ namespace Kompile.Map.Editor.Provider
             foreach (int i in indices)
             {
                 EditMapTileComponent tile = tilesInGrid[i];
-                if (false == tile.TryGetSharedMesh(out Mesh mesh))
+                
+                // [수정 포인트] TryGetSharedMesh 대신 MeshFilter 직접 접근으로 변경
+                if (tile.MeshFilter == null || tile.MeshFilter.sharedMesh == null)
                 {
                     continue;
                 }
 
+                Mesh mesh = tile.MeshFilter.sharedMesh;
                 int vc = mesh.vertexCount;
                 if (vc == 0)
                 {
@@ -493,7 +496,7 @@ namespace Kompile.Map.Editor.Provider
             }
 
             // ⚠️ 추가/수정된 핵심 부분: 머티리얼이 새로 생성되었든 기존에 있었든 무조건 텍스처 갱신
-            if (mat != null)
+            if (mat)
             {
                 if (key.TopTexRef) mat.SetTexture("_TopAtlas", key.TopTexRef);
                 if (key.SideTexRef) mat.SetTexture("_SideAtlas", key.SideTexRef);

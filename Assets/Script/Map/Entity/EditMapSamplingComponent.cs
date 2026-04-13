@@ -1,4 +1,4 @@
-namespace Kompile.Map.Editor.Entity
+namespace Kompile.Map.Entity
 {
     using UnityEngine;
 
