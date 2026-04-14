@@ -9,17 +9,39 @@ namespace Kompile.Map.Editor.Provider
     using System.Collections.Generic;
     using static Kompile.Map.Data.MapConsts;
 
+    [InitializeOnLoad] // 에디터 로드 시 실행 보장
     public static class EditMapTileOperator
     {
+        // [새로 추가] 컴포넌트의 신호(Undo 발생 등)를 감지하여 메쉬를 자동 갱신합니다.
+        static EditMapTileOperator()
+        {
+            EditMapTileComponent.OnEditorDataChanged = (tile) =>
+            {
+                if (tile == null) return;
+
+                // 유니티 내부 사이클 충돌을 방지하기 위해 한 프레임 뒤에 안전하게 실행
+                EditorApplication.delayCall += () =>
+                {
+                    if (tile == null) return;
+                    RefreshMesh(tile);
+                    tile.UpdateMaterialProperties();
+                    EditorUtility.SetDirty(tile);
+                };
+            };
+        }
+        
         public static void RefreshMesh(EditMapTileComponent tile, sbyte[] neighborHeights = null)
         {
             if (!tile.MeshFilter) return;
-            Mesh newMesh = EditMapMeshUtil.GenerateMesh(tile.HeightData, neighborHeights);
-            newMesh.name = "Generated3DBlockMesh";
+            var mesh = EditMapMeshUtil.GenerateMesh(tile.HeightData, neighborHeights);
+            mesh.name = "Generated3DBlockMesh";
+            
             if (tile.MeshFilter.sharedMesh && tile.MeshFilter.sharedMesh.name == "Generated3DBlockMesh")
                 Object.DestroyImmediate(tile.MeshFilter.sharedMesh, true);
-            tile.MeshFilter.sharedMesh = newMesh;
-            if (tile.TryGetComponent<MeshCollider>(out var mc)) mc.sharedMesh = newMesh;
+                
+            tile.MeshFilter.sharedMesh = mesh;
+            if (tile.TryGetComponent<MeshCollider>(out var mc)) mc.sharedMesh = mesh;
+            
             EditorUtility.SetDirty(tile);
         }
 
@@ -40,10 +62,18 @@ namespace Kompile.Map.Editor.Provider
         public static void ModifyHeightIndex(EditMapTileComponent tile, int pointIndex, int delta)
         {
             Undo.RecordObject(tile, "Modify Height");
-            
-            // [해결] 리플렉션 없이 Setter 사용
+
             MapTileHeightsData data = tile.HeightData;
-            data[pointIndex] = (sbyte)Mathf.Clamp(data[pointIndex] + delta, -1, 8);
+            data.EnsureInitialized();
+            
+            // [핵심 해결] C# 구조체 내의 배열은 참조 타입입니다.
+            // 기존 배열을 그대로 수정하면 Undo 시스템이 복구를 포기합니다.
+            // Clone()을 통해 완전히 새로운 배열로 교체하여 참조를 끊어줍니다!
+            sbyte[] newArray = (sbyte[])data.PointHeights.Clone();
+            newArray[pointIndex] = (sbyte)Mathf.Clamp(newArray[pointIndex] + delta, -1, 8);
+            data.PointHeights = newArray;
+
+            // 수정된 데이터 덮어쓰기
             tile.HeightData = data; 
 
             UpdateHeightMask(tile);
@@ -88,7 +118,7 @@ namespace Kompile.Map.Editor.Provider
 
         public static float GetPointLocalY(EditMapTileComponent tile, int index)
         {
-            return (tile.HeightData[index] == -1) ? 0f : (tile.HeightData[index] * 0.25f);
+            return (tile.HeightData[index] == -1) ? 0f : (tile.HeightData[index] * EditMapMeshUtil.HeightStep);
         }
     }
 }
