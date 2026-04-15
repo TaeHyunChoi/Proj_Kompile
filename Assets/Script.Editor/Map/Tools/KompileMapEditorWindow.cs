@@ -6,8 +6,8 @@ namespace Kompile.Map.Editor.Tools
     using System.IO;
     using System.Linq;
     using System.Collections.Generic;
+    using Kompile.Map.Data;
     using Kompile.Map.Entity;           
-    using Kompile.Map.Data;             
     using Kompile.Map.Editor.Provider;  
 
     /// <summary>
@@ -72,7 +72,7 @@ namespace Kompile.Map.Editor.Tools
             RefreshTileCache();
             UpdateTilesFocusState();
 
-            if (_samplingRoot == null)
+            if (!_samplingRoot)
             {
                 _samplingRoot = UnityEngine.Object.FindFirstObjectByType<EditMapSamplingComponent>();
             }
@@ -86,25 +86,23 @@ namespace Kompile.Map.Editor.Tools
             ClearAllTilesFocusState();
         }
 
-        // [새로 추가] Ctrl+Z(실행 취소) 또는 Ctrl+Y(다시 실행)가 눌렸을 때 자동으로 호출됩니다.
-        // OnEnable()에서 Undo.undoRedoPerformed += OnUndoRedo; 로 연결해두어야 작동합니다.
+        /// <summary> Ctrl+Z(실행 취소) 또는 Ctrl+Y(다시 실행)가 눌렸을 때 자동으로 호출 </summary>
         private void OnUndoRedo()
         {
-            // 1. Erase로 지웠던 타일이 살아났거나 Add로 추가한 타일이 사라졌을 수 있으므로 캐시 목록을 다시 가져옵니다.
+            // Erase로 지웠던 타일이 살아났거나 Add로 추가한 타일이 사라졌을 수 있으므로 캐시 목록을 다시 가져옵니다.
             RefreshTileCache();
 
-            // 2. 복구된 과거의 데이터를 바탕으로 씬 뷰의 메쉬와 텍스처를 강제로 다시 갱신합니다.
-            // OnValidate가 모든 상황을 커버하지 못할 수 있으므로, 윈도우 차원에서 확실하게 한 번 더 밀어줍니다.
-            foreach (var tile in _cachedTiles)
+            // 복구된 과거의 데이터를 바탕으로 씬 뷰의 메쉬와 텍스처를 강제로 다시 갱신합니다.
+            foreach (EditMapTileComponent tile in _cachedTiles)
             {
-                if (tile != null)
+                if (tile)
                 {
                     EditMapTileOperator.RefreshMesh(tile);
                     tile.UpdateMaterialProperties();
                 }
             }
 
-            // 3. 포커스 레이어 상태를 맞추고 씬 뷰를 즉시 다시 그립니다.
+            // 포커스 레이어 상태를 맞추고 씬 뷰를 즉시 다시 그립니다.
             UpdateTilesFocusState();
             SceneView.RepaintAll();
             Repaint();
@@ -114,57 +112,85 @@ namespace Kompile.Map.Editor.Tools
             _atlasPages.Clear();
             _selectedAtlasPageIndex = 0;
 
-            if (!Directory.Exists(ROOT_INPUT_PATH)) return;
+            if (!Directory.Exists(ROOT_INPUT_PATH))
+            {
+                return;
+            }
 
             string[] directories = Directory.GetDirectories(ROOT_INPUT_PATH);
-
-            foreach (var dir in directories)
+            foreach (string dir in directories)
             {
                 string folderName = new DirectoryInfo(dir).Name;
                 string tablePath = $"{dir}/MapTextureTable.asset";
                 
-                Kompile.Map.Data.MapTextureTable textureTable = AssetDatabase.LoadAssetAtPath<Kompile.Map.Data.MapTextureTable>(tablePath);
-                
-                if (false == textureTable)
+                MapTextureTable textureTable = AssetDatabase.LoadAssetAtPath<MapTextureTable>(tablePath);
+                if (!textureTable)
                 {
                     Debug.LogWarning($"[Framework] {folderName} 폴더에 MapTextureTable 에셋이 없습니다. 병합기를 먼저 실행해주세요.");
                     continue;
                 }
 
-                var allFiles = Directory.GetFiles(dir, "*.png").Where(f => !Path.GetFileName(f).StartsWith("merged-")).ToList();
+                string[] files = Directory.GetFiles(dir, "*.png");
+                List<string> allFiles = new List<string>(files.Length);
+                foreach (string file in files)
+                {
+                    if (!Path.GetFileName(file).StartsWith("merged-"))
+                    {
+                        allFiles.Add(file);
+                    }
+                }
 
                 Dictionary<int, string> validFiles = new Dictionary<int, string>();
                 foreach (string file in allFiles)
                 {
                     string fileNameNoExt = Path.GetFileNameWithoutExtension(file);
-                    var existingData = textureTable.TextureList.Find(x => x.TextureName.Equals(fileNameNoExt, System.StringComparison.OrdinalIgnoreCase));
-                    if (existingData != null)
+                    
+                    for (int i = 0; i < textureTable.TextureList.Count; i++)
                     {
-                        validFiles[existingData.GlobalIndex] = file;                        
+                        MapTextureData textureData = textureTable.TextureList[i];
+                        if (textureData.TextureName.Equals(fileNameNoExt, System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            validFiles[textureData.GlobalIndex] = file;
+                            break; // Find()와 동일하게 첫 번째로 조건을 만족하면 탐색 종료
+                        }
                     }
                 }
 
-                var groupedFiles = validFiles.GroupBy(kvp => kvp.Key / 64)
-                                             .OrderBy(g => g.Key)
-                                             .ToList();
-
-                foreach (var group in groupedFiles)
+                List<FileGroup> groupedFiles = GetGroupFiles(validFiles);
+                for (int i = 0; i < groupedFiles.Count; i++)
                 {
-                    int atlasPageNum = group.Key;
+                    FileGroup group = groupedFiles[i];
+    
+                    // IGrouping.Key 대신 FileGroup.GroupId를 참조
+                    int atlasPageNum = group.GroupId;
                     string suffix = (atlasPageNum == 0) ? "" : $"-{atlasPageNum}";
                     string atlasPath = $"{dir}/merged-{folderName}{suffix}.png";
 
                     Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPath);
-                    if (true == tex)
+                    if (tex) 
                     {
-                        AtlasPage page = new AtlasPage { PageName = $"{folderName}{suffix}", Texture = tex };
-                        for (int j = 0; j < 64; j++) page.GlobalIndices[j] = -1;
-
-                        foreach (var kvp in group)
+                        AtlasPage page = new AtlasPage
                         {
-                            int localIndex = kvp.Key % 64;
+                            PageName = $"{folderName}{suffix}", 
+                            Texture = tex
+                        };
+        
+                        for (int j = 0; j < 64; j++) 
+                        {
+                            page.GlobalIndices[j] = -1;
+                        }
+
+                        // IGrouping 자체를 순회하던 것을 FileGroup.Files 리스트 순회로 변경
+                        List<KeyValuePair<int, string>> groupFiles = group.Files;
+                        for (int k = 0; k < groupFiles.Count; k++)
+                        {
+                            var kvp = groupFiles[k];
+            
+                            // 최적화: % 64 대신 비트 연산(& 63) 사용 (64는 2의 6승이므로 63(00111111)과 AND 연산하면 나머지 값과 동일)
+                            int localIndex = kvp.Key & 0b_0011_1111; 
                             page.GlobalIndices[localIndex] = kvp.Key;
                         }
+        
                         _atlasPages.Add(page);
                     }
                 }
@@ -172,27 +198,73 @@ namespace Kompile.Map.Editor.Tools
 
             if (_atlasPages.Count > 0)
             {
-                if (false == _brushTopAtlas)
+                if (!_brushTopAtlas)
                 {
                     _brushTopAtlas = _atlasPages[0].Texture;
                     _brushTopIndex = _atlasPages[0].GlobalIndices.FirstOrDefault(idx => idx != -1);
-                    if (_brushTopIndex == -1) _brushTopIndex = 0;
+                    if (_brushTopIndex == -1)
+                    {
+                        _brushTopIndex = 0;
+                    }
                 }
                 
-                if (false == _brushSideAtlas)
+                if (!_brushSideAtlas)
                 {
                     _brushSideAtlas = _atlasPages[0].Texture;
                     _brushSideIndex = _atlasPages[0].GlobalIndices.FirstOrDefault(idx => idx != -1);
-                    if (_brushSideIndex == -1) _brushSideIndex = 0;
+                    if (_brushSideIndex == -1)
+                    {
+                        _brushSideIndex = 0;
+                    }
                 }
             }
+        }
+
+        // LINQ의 IGrouping<TKey, TElement>를 대체할 가벼운 구조체 정의
+        public struct FileGroup
+        {
+            public int GroupId;
+            public List<KeyValuePair<int, string>> Files;
+        }
+        private List<FileGroup> GetGroupFiles(Dictionary<int, string> validFiles)
+        {
+            // 1. 그룹핑 (버킷팅) 과정 - GroupBy 대체
+            Dictionary<int, List<KeyValuePair<int, string>>> buckets = new Dictionary<int, List<KeyValuePair<int, string>>>();
+            foreach (KeyValuePair<int, string> kvp in validFiles)
+            {
+                // 최적화: / 64 대신 비트 시프트 연산(>> 6) 사용
+                int groupId = kvp.Key >> 6;
+
+                if (!buckets.TryGetValue(groupId, out List<KeyValuePair<int, string>> list))
+                {
+                    list = new List<KeyValuePair<int, string>>();
+                    buckets.Add(groupId, list);
+                }
+
+                list.Add(kvp);
+            }
+
+            // 2. 키 추출 및 정렬 - OrderBy 대체
+            List<int> sortedGroupIds = new List<int>(buckets.Keys);
+            sortedGroupIds.Sort(); // LINQ 없이 내부 배열에서 직접 정렬 (추가 GC 할당 없음)
+
+            // 3. 최종 리스트 생성 - ToList 대체
+            List<FileGroup> groupedFiles = new List<FileGroup>(sortedGroupIds.Count);
+            for (int i = 0; i < sortedGroupIds.Count; i++)
+            {
+                int id = sortedGroupIds[i];
+                groupedFiles.Add(new FileGroup { GroupId = id, Files = buckets[id] });
+            }
+
+            return groupedFiles;
         }
 
         private void RefreshTileCache()
         {
             _cachedTiles.Clear();
-            var allTiles = UnityEngine.Object.FindObjectsByType<EditMapTileComponent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            foreach (var t in allTiles)
+            
+            EditMapTileComponent[] allTiles = FindObjectsByType<EditMapTileComponent>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            foreach (EditMapTileComponent t in allTiles)
             {
                 _cachedTiles.Add(t);                
             }
@@ -202,20 +274,21 @@ namespace Kompile.Map.Editor.Tools
         {
             foreach (EditMapTileComponent tile in _cachedTiles)
             {
-                if (true == tile)
+                if (tile)
                 {
-                    bool dim = (true == _focusSelectedLayer) && (tile.RenderLayer != _targetRenderLayer);
+                    bool dim = _focusSelectedLayer && (tile.RenderLayer != _targetRenderLayer);
                     tile.SetVisualDimmed(dim);                    
                 }
             }
+            
             SceneView.RepaintAll();
         }
 
         private void ClearAllTilesFocusState()
         {
-            foreach (var tile in _cachedTiles)
+            foreach (EditMapTileComponent tile in _cachedTiles)
             {
-                if (true == tile)
+                if (tile)
                 {
                     tile.SetVisualDimmed(false);                    
                 }
@@ -285,11 +358,15 @@ namespace Kompile.Map.Editor.Tools
 
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button("Optimize Visible Sides (옆면 최적화)", GUILayout.Height(30))) ExecuteOptimizeMesh();
+            if (GUILayout.Button("Optimize Visible Sides (옆면 최적화)", GUILayout.Height(30)))
+            {
+                ExecuteOptimizeMesh();
+            }
 
             if (GUILayout.Button("Bake Map (Combine Meshes)", GUILayout.Height(40)))
             {
                 ExecuteOptimizeMesh();
+                
                 if (EditorUtility.DisplayDialog("Bake Map", "맵 데이터를 구우시겠습니까?", "Bake", "Cancel"))
                 {
                     ExecuteBake();
@@ -331,13 +408,14 @@ namespace Kompile.Map.Editor.Tools
             GUI.DrawTexture(atlasRect, currentPage.Texture, ScaleMode.ScaleToFit);
 
             Event e = Event.current;
-            float cellSize = atlasSize / 8f;
+            float cellSize = atlasSize * 0.125f; // == / 8
             int hoveredIndex = -1;
             int hoveredGlobalIndex = -1;
 
             if (atlasRect.Contains(e.mousePosition))
             {
                 float cellSize_recip = 1 / cellSize;
+                
                 int col = Mathf.FloorToInt((e.mousePosition.x - atlasRect.x) * cellSize_recip);
                 int row = Mathf.FloorToInt((e.mousePosition.y - atlasRect.y) * cellSize_recip);
                 hoveredIndex = row * 8 + col;
@@ -381,8 +459,11 @@ namespace Kompile.Map.Editor.Tools
                     }
                     if (globalIndex == _brushSideIndex && _brushSideAtlas == currentPage.Texture)
                     {
-                        EditorGUI.DrawRect(new Rect(cellRect.x, cellRect.y + cellSize / 2, cellSize, cellSize / 2), new Color(0, 0.5f, 1, 0.4f));
-                        GUI.Label(new Rect(cellRect.x, cellRect.y + cellSize - 15, cellSize, 15), " S", EditorStyles.whiteMiniLabel);
+                        EditorGUI.DrawRect(
+                            new Rect(cellRect.x, cellRect.y + cellSize * 0.5f, cellSize, cellSize * 0.5f),
+                            new Color(0, 0.5f, 1, 0.4f));
+                        GUI.Label(new Rect(cellRect.x, cellRect.y + cellSize - 15, cellSize, 15), " S",
+                            EditorStyles.whiteMiniLabel);
                     }
 
                     if (localIndex == hoveredIndex && globalIndex != -1)
@@ -430,15 +511,21 @@ namespace Kompile.Map.Editor.Tools
             GUILayout.Label($"Idx: {index}", EditorStyles.centeredGreyMiniLabel);
 
             Rect rect = GUILayoutUtility.GetRect(64, 64, GUILayout.ExpandWidth(false));
-            rect.x += (80 - 64) / 2f;
+            rect.x += (80 - 64) * 0.5f;
             EditorGUI.DrawRect(rect, new Color(0.15f, 0.15f, 0.15f, 1f));
 
-            if (true == atlas)
+            if (atlas is not null)
             {
-                int localIndex = index % 64;
-                int col = localIndex % 8;
-                int row = localIndex / 8;
-                Rect uvRect = new Rect(col / 8f, 1f - ((row + 1) / 8f), 1f / 8f, 1f / 8f);
+                // 정수 나눗셈과 나머지 연산을 비트 연산으로 교체
+                int localIndex = index & 63;  // index % 64
+                int col = localIndex & 7;     // localIndex % 8
+                int row = localIndex >> 3;    // localIndex / 8
+
+                const float CellSize = 0.125f; // 1 / 8 = 0.125
+                float uvX = col * CellSize;
+                float uvY = 1f - ((row + 1) * CellSize);
+
+                Rect uvRect = new Rect(uvX, uvY, CellSize, CellSize);
                 GUI.DrawTextureWithTexCoords(rect, atlas, uvRect);
             }
             else
@@ -485,11 +572,20 @@ private void OnSceneGUI(SceneView sceneView)
 
                 foreach (var tile in _cachedTiles)
                 {
-                    if (false == tile) continue;                        
-                    
-                    if (_focusSelectedLayer && tile.RenderLayer != _targetRenderLayer) continue;
+                    if (!tile)
+                    {
+                        continue;
+                    }
 
-                    if (false == _isAltPressed && Mathf.Abs(tile.transform.position.y - _targetY) > 0.1f) continue;
+                    if (_focusSelectedLayer && tile.RenderLayer != _targetRenderLayer)
+                    {
+                        continue;
+                    }
+
+                    if (!_isAltPressed && Mathf.Abs(tile.transform.position.y - _targetY) > 0.1f)
+                    {
+                        continue;
+                    }
 
                     for (int i = 0; i < 13; i++)
                     {
@@ -522,19 +618,19 @@ private void OnSceneGUI(SceneView sceneView)
             {
                 HandleAddMode(ray, e);
             }
-            else if (true == hitTile)
+            else if (hitTile)
             {
-                if (_currentMode == EditMode.Paint)
+                switch (_currentMode)
                 {
-                    HandlePaintMode(hitTile, e, controlID);
-                }
-                else if (_currentMode == EditMode.Erase)
-                {
-                    HandleEraseMode(hitTile, e, controlID);
-                }
-                else if (_currentMode == EditMode.Height)
-                {
-                    HandleHeightMode(hitTile, ray, e, controlID);
+                    case EditMode.Paint:
+                        HandlePaintMode(hitTile, e, controlID);
+                        break;
+                    case EditMode.Erase:
+                        HandleEraseMode(hitTile, e, controlID);
+                        break;
+                    case EditMode.Height:
+                        HandleHeightMode(hitTile, ray, e, controlID);
+                        break;
                 }
             }
 
@@ -545,24 +641,30 @@ private void OnSceneGUI(SceneView sceneView)
         }
         private void HandleAddMode(Ray ray, Event e)
         {
-            if (false == _tilePrefab) return;
+            if (!_tilePrefab)
+            {
+                return;
+            }
 
             Plane p = new Plane(Vector3.up, new Vector3(0, _targetY, 0));
-            if (false == p.Raycast(ray, out float enter)) return;
+            if (!p.Raycast(ray, out float enter))
+            {
+                return;
+            }
 
             Vector3 spawnPos = new Vector3(Mathf.Round(ray.GetPoint(enter).x), _targetY, Mathf.Round(ray.GetPoint(enter).z));
-            
             if (e.type == EventType.Repaint)
             {
                 DrawCustomGrid(spawnPos);
                 Vector3 visualCenter = spawnPos + new Vector3(0.5f, 0.5f, 0.5f);
 
                 bool isOccupied = false;
-                foreach (var t in _cachedTiles)
+                foreach (EditMapTileComponent t in _cachedTiles)
                 {
-                    if (t != null && Vector3.Distance(t.transform.position, spawnPos) < 0.1f)
+                    if (t && Vector3.Distance(t.transform.position, spawnPos) < 0.1f)
                     {
-                        isOccupied = true; break;
+                        isOccupied = true; 
+                        break;
                     }
                 }
 
@@ -577,7 +679,7 @@ private void OnSceneGUI(SceneView sceneView)
                 if (!Physics.OverlapBox(spawnPos + Vector3.one * 0.5f, Vector3.one * 0.4f).Any())
                 {
                     GameObject newTile;
-                    if (true == _samplingRoot)
+                    if (_samplingRoot)
                     {
                         newTile = (GameObject)PrefabUtility.InstantiatePrefab(_tilePrefab, _samplingRoot.transform);
                     }
@@ -589,8 +691,8 @@ private void OnSceneGUI(SceneView sceneView)
 
                     newTile.transform.position = spawnPos;
 
-                    var comp = newTile.GetComponent<EditMapTileComponent>();
-                    if (true == comp)
+                    EditMapTileComponent comp = newTile.GetComponent<EditMapTileComponent>();
+                    if (comp)
                     {
                         comp.SetRenderLayer(_targetRenderLayer);
                         comp.SetVisualDimmed(false);
@@ -603,7 +705,7 @@ private void OnSceneGUI(SceneView sceneView)
 
                     Undo.RegisterCreatedObjectUndo(newTile, "Add Tile");
                     e.Use();
-                    SceneView.RepaintAll(); // [추가]
+                    SceneView.RepaintAll();
                 }
             }
         }
@@ -630,7 +732,7 @@ private void OnSceneGUI(SceneView sceneView)
                     _brushSideIndex = tile.SideTextureIndex;
                     _brushSideAtlas = tile.SideAtlasTexture;
 
-                    if (_brushTopAtlas != null)
+                    if (_brushTopAtlas)
                     {
                         for (int i = 0; i < _atlasPages.Count; i++)
                         {
@@ -648,7 +750,10 @@ private void OnSceneGUI(SceneView sceneView)
                 return;
             }
 
-            if (input.button != 0) return;
+            if (input.button != 0)
+            {
+                return;
+            }
 
             if (input.type == EventType.MouseDown || (input.type == EventType.MouseDrag && GUIUtility.hotControl == controlID))
             {
@@ -675,27 +780,30 @@ private void OnSceneGUI(SceneView sceneView)
                 Handles.DrawWireCube(tile.transform.position + new Vector3(0.5f, 0.5f, 0.5f), Vector3.one);
             }
 
-            if (e.button != 0 || e.alt) return;
+            if (e.button != 0 || e.alt)
+            {
+                return;
+            }
 
-            if (e.type == EventType.MouseDown)
+            switch (e.type)
             {
-                GUIUtility.hotControl = controlID; 
-                _cachedTiles.Remove(tile); 
-                Undo.DestroyObjectImmediate(tile.gameObject); 
-                e.Use();
-                SceneView.RepaintAll(); // [추가]
-            }
-            else if (e.type == EventType.MouseDrag && GUIUtility.hotControl == controlID)
-            {
-                _cachedTiles.Remove(tile); 
-                Undo.DestroyObjectImmediate(tile.gameObject); 
-                e.Use();
-                SceneView.RepaintAll(); // [추가]
-            }
-            else if (e.type == EventType.MouseUp)
-            {
-                GUIUtility.hotControl = 0; 
-                e.Use();
+                case EventType.MouseDown:
+                    GUIUtility.hotControl = controlID; 
+                    _cachedTiles.Remove(tile); 
+                    Undo.DestroyObjectImmediate(tile.gameObject); 
+                    e.Use();
+                    SceneView.RepaintAll();
+                    break;
+                case EventType.MouseDrag when GUIUtility.hotControl == controlID:
+                    _cachedTiles.Remove(tile); 
+                    Undo.DestroyObjectImmediate(tile.gameObject); 
+                    e.Use();
+                    SceneView.RepaintAll();
+                    break;
+                case EventType.MouseUp:
+                    GUIUtility.hotControl = 0; 
+                    e.Use();
+                    break;
             }
         }
 
@@ -718,44 +826,48 @@ private void HandleHeightMode(EditMapTileComponent tile, Ray ray, Event e, int c
                 }
             }
 
-            if (e.type == EventType.Repaint)
+            switch (e.type)
             {
-                DrawCustomGrid(tile.transform.position);
+                case EventType.Repaint:
+                    {
+                        DrawCustomGrid(tile.transform.position);
 
-                if (nearIdx != -1 && _currentSelection == SelectionMode.Vertex)
-                {
-                    float localY = EditMapTileOperator.GetPointLocalY(tile, nearIdx);
-                    Vector3 pPos = tile.transform.TransformPoint(new Vector3(PointOffsets[nearIdx].x, localY, PointOffsets[nearIdx].y));
+                        if (nearIdx != -1 && _currentSelection == SelectionMode.Vertex)
+                        {
+                            float localY = EditMapTileOperator.GetPointLocalY(tile, nearIdx);
+                            Vector3 pPos = tile.transform.TransformPoint(new Vector3(PointOffsets[nearIdx].x, localY, PointOffsets[nearIdx].y));
                     
-                    Handles.color = Color.yellow;
-                    Handles.SphereHandleCap(0, pPos, Quaternion.identity, 0.12f, EventType.Repaint);
-                }
-            }
+                            Handles.color = Color.yellow;
+                            Handles.SphereHandleCap(0, pPos, Quaternion.identity, 0.12f, EventType.Repaint);
+                        }
 
-            if (e.type == EventType.MouseDown && e.button == 0 && !e.alt && nearIdx != -1)
-            {
-                GUIUtility.hotControl = controlID;
-                int delta = e.shift ? -1 : 1;
+                        break;
+                    }
+                case EventType.MouseDown when e.button == 0 && !e.alt && nearIdx != -1:
+                    {
+                        GUIUtility.hotControl = controlID;
+                        int delta = e.shift ? -1 : 1;
                 
-                // [핵심 해결] Face 모드일 때 13개의 정점을 한 번의 Undo로 되돌리기 위해 액션을 그룹화합니다.
-                Undo.SetCurrentGroupName("Adjust Height");
-                int undoGroup = Undo.GetCurrentGroup();
+                        // [핵심 해결] Face 모드일 때 13개의 정점을 한 번의 Undo로 되돌리기 위해 액션을 그룹화합니다.
+                        Undo.SetCurrentGroupName("Adjust Height");
+                        int undoGroup = Undo.GetCurrentGroup();
 
-                foreach (int idx in (_currentSelection == SelectionMode.Vertex ? new int[] { nearIdx } : Enumerable.Range(0, 13)))
-                {
-                    EditMapTileOperator.ModifyHeightIndex(tile, idx, delta);
-                }
+                        foreach (int idx in (_currentSelection == SelectionMode.Vertex ? new int[] { nearIdx } : Enumerable.Range(0, 13)))
+                        {
+                            EditMapTileOperator.ModifyHeightIndex(tile, idx, delta);
+                        }
                 
-                // 생성된 여러 개의 Undo 액션을 하나로 병합!
-                Undo.CollapseUndoOperations(undoGroup);
+                        // 생성된 여러 개의 Undo 액션을 하나로 병합!
+                        Undo.CollapseUndoOperations(undoGroup);
                 
-                e.Use();
-                SceneView.RepaintAll();
-            }
-            else if (e.type == EventType.MouseUp)
-            {
-                GUIUtility.hotControl = 0;
-                e.Use();
+                        e.Use();
+                        SceneView.RepaintAll();
+                        break;
+                    }
+                case EventType.MouseUp:
+                    GUIUtility.hotControl = 0;
+                    e.Use();
+                    break;
             }
         }
 
@@ -773,29 +885,38 @@ private void HandleHeightMode(EditMapTileComponent tile, Ray ray, Event e, int c
         private void ExecuteOptimizeMesh()
         {
             Dictionary<Vector2Int, EditMapTileComponent> tileMap = new Dictionary<Vector2Int, EditMapTileComponent>();
-            foreach (var t in _cachedTiles)
+            foreach (EditMapTileComponent t in _cachedTiles)
             {
-                if (false == t) continue;
+                if (false == t)
+                {
+                    continue;
+                }
 
                 Vector2Int gridPos = new Vector2Int(Mathf.RoundToInt(t.transform.position.x), Mathf.RoundToInt(t.transform.position.z));
-                if (!tileMap.ContainsKey(gridPos)) tileMap.Add(gridPos, t);
+                tileMap.TryAdd(gridPos, t);
             }
 
-            foreach (var t in _cachedTiles)
+            foreach (EditMapTileComponent t in _cachedTiles)
             {
-                if (false == t) continue;
+                if (!t)
+                {
+                    continue;
+                }
 
                 Undo.RecordObject(t, "Optimize Side Mesh");
                 EditMapTileOperator.OptimizeSides(t, tileMap);
             }
             Debug.Log($"[Framework] {_cachedTiles.Count}개 타일의 메쉬 최적화가 완료되었습니다.");
-            SceneView.RepaintAll(); // [추가]
+            SceneView.RepaintAll();
         }
 
         private void ExecuteBake()
         {
-            var rootComponent = UnityEngine.Object.FindFirstObjectByType<EditMapSamplingComponent>();
-            if (false == rootComponent) return;
+            EditMapSamplingComponent rootComponent = UnityEngine.Object.FindFirstObjectByType<EditMapSamplingComponent>();
+            if (!rootComponent)
+            {
+                return;
+            }
 
             try
             {
