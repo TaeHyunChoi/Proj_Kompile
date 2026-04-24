@@ -4,7 +4,6 @@ namespace Kompile.Map.Editor.Tools
     using UnityEditor;
     using UnityEngine;
     using System.IO;
-    using System.Linq;
     using System.Collections.Generic;
     using Kompile.Map.Data;
     using Kompile.Map.Entity;           
@@ -201,20 +200,28 @@ namespace Kompile.Map.Editor.Tools
                 if (!_brushTopAtlas)
                 {
                     _brushTopAtlas = _atlasPages[0].Texture;
-                    _brushTopIndex = _atlasPages[0].GlobalIndices.FirstOrDefault(idx => idx != -1);
-                    if (_brushTopIndex == -1)
+                    _brushTopIndex = 0;
+                    for (int fi = 0; fi < _atlasPages[0].GlobalIndices.Length; fi++)
                     {
-                        _brushTopIndex = 0;
+                        if (_atlasPages[0].GlobalIndices[fi] != -1)
+                        {
+                            _brushTopIndex = _atlasPages[0].GlobalIndices[fi];
+                            break;
+                        }
                     }
                 }
-                
+
                 if (!_brushSideAtlas)
                 {
                     _brushSideAtlas = _atlasPages[0].Texture;
-                    _brushSideIndex = _atlasPages[0].GlobalIndices.FirstOrDefault(idx => idx != -1);
-                    if (_brushSideIndex == -1)
+                    _brushSideIndex = 0;
+                    for (int fi = 0; fi < _atlasPages[0].GlobalIndices.Length; fi++)
                     {
-                        _brushSideIndex = 0;
+                        if (_atlasPages[0].GlobalIndices[fi] != -1)
+                        {
+                            _brushSideIndex = _atlasPages[0].GlobalIndices[fi];
+                            break;
+                        }
                     }
                 }
             }
@@ -393,7 +400,11 @@ namespace Kompile.Map.Editor.Tools
                 return;
             }
 
-            string[] pageNames = _atlasPages.Select(p => $"[{p.PageName}] Atlas").ToArray();
+            string[] pageNames = new string[_atlasPages.Count];
+            for (int i = 0; i < _atlasPages.Count; i++)
+            {
+                pageNames[i] = $"[{_atlasPages[i].PageName}] Atlas";
+            }
             _selectedAtlasPageIndex = EditorGUILayout.Popup("Select Theme", _selectedAtlasPageIndex, pageNames);
             EditorGUILayout.Space();
 
@@ -582,7 +593,7 @@ private void OnSceneGUI(SceneView sceneView)
                         continue;
                     }
 
-                    if (!_isAltPressed && Mathf.Abs(tile.transform.position.y - _targetY) > 0.1f)
+                    if (Mathf.Abs(tile.transform.position.y - _targetY) > 0.1f)
                     {
                         continue;
                     }
@@ -676,7 +687,7 @@ private void OnSceneGUI(SceneView sceneView)
 
             if (e.type == EventType.MouseDown && e.button == 0 && !e.alt)
             {
-                if (!Physics.OverlapBox(spawnPos + Vector3.one * 0.5f, Vector3.one * 0.4f).Any())
+                if (Physics.OverlapBox(spawnPos + Vector3.one * 0.5f, Vector3.one * 0.4f).Length == 0)
                 {
                     GameObject newTile;
                     if (_samplingRoot)
@@ -852,9 +863,16 @@ private void HandleHeightMode(EditMapTileComponent tile, Ray ray, Event e, int c
                         Undo.SetCurrentGroupName("Adjust Height");
                         int undoGroup = Undo.GetCurrentGroup();
 
-                        foreach (int idx in (_currentSelection == SelectionMode.Vertex ? new int[] { nearIdx } : Enumerable.Range(0, 13)))
+                        if (_currentSelection == SelectionMode.Vertex)
                         {
-                            EditMapTileOperator.ModifyHeightIndex(tile, idx, delta);
+                            EditMapTileOperator.ModifyHeightIndex(tile, nearIdx, delta);
+                        }
+                        else
+                        {
+                            for (int idx = 0; idx < 13; idx++)
+                            {
+                                EditMapTileOperator.ModifyHeightIndex(tile, idx, delta);
+                            }
                         }
                 
                         // 생성된 여러 개의 Undo 액션을 하나로 병합!
