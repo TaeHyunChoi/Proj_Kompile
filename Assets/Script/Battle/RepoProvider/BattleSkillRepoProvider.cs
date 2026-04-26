@@ -1,8 +1,8 @@
-namespace Script.Battle.RepoProvider
+namespace Kompile.Battle.RepoProvider
 {
     using System.Collections.Generic;
     using UnityEngine;
-    using Script.Battle.Data;
+    using Kompile.Battle.Data;
 
     public class BattleSkillRepoProvider
     {
@@ -16,7 +16,16 @@ namespace Script.Battle.RepoProvider
 
         public BattleAnimationCommand GetSkillCommand(int skillID, int currentTotalFrames)
         {
-            int index = _skillDatas.FindIndex(x => x.ID == skillID);
+            int index = -1;
+            for (int i = 0; i < _skillDatas.Count; i++)
+            {
+                if (_skillDatas[i].ID == skillID)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
             if (index < 0)
             {
                 return new BattleAnimationCommand { StartFrame = currentTotalFrames };

@@ -1,3 +1,5 @@
+using System;
+
 namespace Kompile.Unit.Manager
 {
     using Kompile.Field.Data;
@@ -13,6 +15,7 @@ namespace Kompile.Unit.Manager
     /// <summary>
     /// [Framework] Instance-Centric 자료구조(Dictionary)를 사용하여 유닛 객체를 식별하고 제어하는 조립 공장.
     /// </summary>
+    [Obsolete]
     public class UnitManager
     {
         private readonly Dictionary<long, UnitEntityBase> _activeUnits;

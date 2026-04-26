@@ -1,7 +1,7 @@
-namespace Script.Battle.Entity
+namespace Kompile.Battle.Entity
 {
     using UnityEngine;
-    using Script.Battle.Data;
+    using Kompile.Battle.Data;
 
     [RequireComponent(typeof(Animator))]
     public class BattleUnitAnimationComponent : MonoBehaviour

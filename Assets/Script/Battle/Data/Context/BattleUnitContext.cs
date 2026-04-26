@@ -1,4 +1,4 @@
-namespace Script.Battle.Data
+namespace Kompile.Battle.Data
 {
     using UnityEngine;
 

@@ -1,8 +1,8 @@
-namespace Script.Battle.Utility
+namespace Kompile.Battle.Utility
 {
     using UnityEngine;
     using Unity.Burst;
-    using Script.Battle.Data;
+    using Kompile.Battle.Data;
 
     /// <summary> 전투 관련한 수학 연산 및 판정을 담당 (상태값을 가지지 않는다) </summary>
     [BurstCompile]
@@ -11,7 +11,7 @@ namespace Script.Battle.Utility
         public const float ORDER_PER_TICK = 10.0f;
 
         [BurstCompile]
-        public static int CalculatorOrderToFrames(float orderDistance, int framePerTick)
+        public static int CalculateOrderToFrames(float orderDistance, int framePerTick)
         {
             float ticks = orderDistance / ORDER_PER_TICK;
             return Mathf.CeilToInt(ticks * framePerTick);

@@ -1,10 +1,9 @@
-using Script.Battle.Data;
+using Kompile.Battle.Data;
 
-namespace Script.Battle.Manager
+namespace Kompile.Battle.Manager
 {
-    using System;
     using UnityEngine;
-    using Script.Battle.Utility;
+    using Kompile.Battle.Utility;
 
     /// <summary> 현실 시간(deltaTime)을 누적해 논리 프레임을 굴리는 구동(Engine) 매니저 </summary>
     public class BattleTimelineManager

@@ -1,13 +1,12 @@
-namespace Script.Battle.Manager
+namespace Kompile.Battle.Manager
 {
     using System.Collections.Generic;
-    using UnityEngine;
-    using Script.Battle.Data;
+    using Kompile.Battle.Data;
     using Kompile.Unit.Entity;
-    using Script.Battle.RepoProvider;
-    using Script.Battle.Utility;
+    using Kompile.Battle.RepoProvider;
+    using Kompile.Battle.Utility;
 
-    public class BattleManager : MonoBehaviour, ITimelineHandler
+    public class BattleManager : ITimelineHandler
     {
         public const int   TARGET_FPS      = 24;
         public const int   FRAMES_PER_TICK = 6;
@@ -16,7 +15,7 @@ namespace Script.Battle.Manager
         private BattleTimelineManager   _timelineManager;
         private BattleSkillRepoProvider _skillProvider;
 
-        private Dictionary<long, UnitEntityBase>  _units    = new Dictionary<long, UnitEntityBase>();
+        private Dictionary<long, UnitEntityBase>    _units    = new Dictionary<long, UnitEntityBase>();
         private Dictionary<long, BattleUnitContext> _contexts = new Dictionary<long, BattleUnitContext>();
 
         private long _unitIDCounter     = 0;
@@ -24,16 +23,16 @@ namespace Script.Battle.Manager
         private long _activeAttackerID  = -1;
         private bool _isWaitingForCombo = false;
 
-        private void Awake()
+        public BattleManager()
         {
             _timelineManager = new BattleTimelineManager(this, TARGET_FPS, FRAMES_PER_TICK);
             _skillProvider   = new BattleSkillRepoProvider();
             _timelineManager.Play();
         }
 
-        private void Update()
+        public void Update(float deltaTime)
         {
-            if (true == _timelineManager.OnUpdateTick(Time.deltaTime))
+            if (true == _timelineManager.OnUpdateTick(deltaTime))
             {
                 int currentFrame = _timelineManager.TotalFrames;
 
@@ -68,7 +67,7 @@ namespace Script.Battle.Manager
             {
                 context = kvp.Value;
                 float progress = BattleUtil.CalculateProgressPerTick(context.CurrentSpeed);
-                
+
                 if (context.Phase == BattlePhase.Wait)
                 {
                     context.RemainingDistance -= progress;
@@ -81,7 +80,7 @@ namespace Script.Battle.Manager
                 else if (context.Phase == BattlePhase.Action)
                 {
                     context.ActionDistance -= progress;
-                    
+
                     if (context.ActionDistance <= 0f)
                     {
                         context.ActionDistance = 0f;
@@ -99,11 +98,11 @@ namespace Script.Battle.Manager
             _activeAttackerID = unitID;
             _isInterrupting = true;
 
-            // 2. 강제로 행동 페이즈 전환
+            // 강제로 행동 페이즈 전환
             context.RemainingDistance = 0f;
             context.Phase = BattlePhase.Action;
             context.ActionDistance = 1500f;
-            
+
             // if (_units.TryGetValue(unitID, out var unit))
             // {
             //     var cmd = _skillProvider.GetSkillCommand(interruptSkillID, _timelineManager.TotalFrames);
@@ -113,7 +112,7 @@ namespace Script.Battle.Manager
 
         private void OnUnitWaitPhaseEnded(BattleUnitContext context)
         {
-            _activeAttackerID = context.EntityID; 
+            _activeAttackerID = context.EntityID;
             context.Phase = BattlePhase.Action;
             context.ActionDistance = 2000f;
         }
@@ -124,7 +123,6 @@ namespace Script.Battle.Manager
             {
                 _isInterrupting = false;
                 _activeAttackerID = -1;
-                // Debug.Log($"[Interrupt] {context.EntityID}의 인터럽트 종료. 시간 재개.");
             }
 
             context.Phase = BattlePhase.Wait;
