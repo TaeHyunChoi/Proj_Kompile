@@ -3,6 +3,7 @@ namespace Kompile.Unit.Component
     using Kompile.Field.Data;
     using Kompile.Map.Data;
     using Kompile.Map.Utility;
+    using Kompile.Unit.Data;
     using Kompile.Unit.Entity;
     using Unity.Mathematics;
     using UnityEngine;
@@ -44,28 +45,22 @@ namespace Kompile.Unit.Component
             _mapQuery = mapQuery;
         }
 
-        // ── 입력 ─────────────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// PlayerControlBrain → FieldPlayerEntity → 이 메서드 순으로 호출됩니다.
-        /// input.x = 좌우(world X), input.y = 앞뒤(world Z)
-        /// </summary>
-        public void SetMoveInput(Vector2 input)
-        {
-            _moveInput = input;
-        }
-
         // ── 업데이트 ──────────────────────────────────────────────────────────────
 
-        public void ManualUpdate()
+        /// <summary>
+        /// Entity.Update()에서 UnitIntent를 수신하여 호출합니다.
+        /// intent.MoveInput.x = 좌우(world X), intent.MoveInput.y = 앞뒤(world Z)
+        /// </summary>
+        public void Update_(in UnitIntent intent)
         {
+            _moveInput = intent.MoveInput;
             if (_moveInput == Vector2.zero) return;
 
             // step 10: 대각선 이동 속도 정규화 (크기 > 1이면 normalize)
             Vector2 dir = _moveInput.sqrMagnitude > 1f ? _moveInput.normalized : _moveInput;
 
             Vector3 currentPos = _ownerEntity.transform.position;
-            Vector3 delta = new Vector3(dir.x, 0f, dir.y) * MOVE_SPEED * Time.deltaTime;
+            Vector3 delta = (MOVE_SPEED * Time.deltaTime) * new Vector3(dir.x, 0f, dir.y);
             Vector3 newPos = currentPos + delta;
 
             if (CheckWalkable(newPos))

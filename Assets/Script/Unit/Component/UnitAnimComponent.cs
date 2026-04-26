@@ -1,6 +1,7 @@
 namespace Kompile.Unit.Component
 {
     using UnityEngine;
+    using Kompile.Unit.Data;
     using Kompile.Unit.Entity;
 
     /// <summary> GameObject에 부착되어 유닛의 애니메이션(Animator 상태 및 스프라이트 제어)을 전담 </summary>
@@ -29,10 +30,31 @@ namespace Kompile.Unit.Component
             }
         }
 
-        public void ManualUpdate()
+        /// <summary>
+        /// Entity.Update()에서 UnitIntent를 수신하여 호출합니다.
+        /// 루프 상태(Idle/Walk)는 MoveInput 크기로 판단하고,
+        /// 트리거성 명령(Attack/Hit/Dead)은 AnimCommand로 처리합니다.
+        /// </summary>
+        public void Update_(in UnitIntent intent)
         {
-            // 애니메이션 상태를 매 프레임 내부적으로 갱신해야 할 일이 있다면 처리합니다.
-            // 보통은 MoveComponent 등에서 명시적으로 UpdateMovementAnim을 호출하는 구조를 선호합니다.
+            float speed = intent.MoveInput.magnitude;
+            Vector3 dir = new Vector3(intent.MoveInput.x, 0f, intent.MoveInput.y);
+            UpdateMovementAnim(speed, dir);
+
+            ApplyAnimCommand(intent.AnimCommand);
+        }
+
+        private void ApplyAnimCommand(UnitAnimCmd cmd)
+        {
+            switch (cmd)
+            {
+                case UnitAnimCmd.Attack: PlayAttackAnimation(); break;
+                case UnitAnimCmd.Hit:    PlayHitAnimation();    break;
+                case UnitAnimCmd.Dead:   PlayDeathAnimation();  break;
+                case UnitAnimCmd.None:
+                default:
+                    break;
+            }
         }
 
         // ===================================================================================

@@ -4,8 +4,6 @@ namespace Kompile.Unit.Data
     {
         public UnitType Type { get; private set; }
         public UnitBrainType BrainType { get; private set; }
-
-        public bool IsDead;
         
         // 스탯
         // public int MaxHP;
@@ -15,7 +13,6 @@ namespace Kompile.Unit.Data
         {
             Type = type;
             BrainType =  brainType;
-            IsDead = false;
         }
     }
 }

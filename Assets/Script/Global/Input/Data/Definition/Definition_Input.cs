@@ -1,4 +1,4 @@
-namespace Script.Input.Data
+namespace Kompile.Input.Data
 {
     using System;
 
