@@ -68,7 +68,7 @@ namespace Kompile.Map.Manager
             _isStreamingActive = true;
 
             // 배경 스트리밍 루프 시작
-            await StartGridStreamingLoopAsync();
+            await PlayGridStreamingLoopAsync();
         }
 
         public void StopStreaming()
@@ -76,62 +76,114 @@ namespace Kompile.Map.Manager
             _isStreamingActive = false;
         }
 
+        /// <summary>
+        /// 로드된 모든 그리드·청크 오브젝트를 즉시 해제하고 내부 상태를 초기화 => StopStreaming() 호출 이후에 사용하십시오.
+        /// </summary>
+        private void DisposeAll()
+        {
+            // 활성화된 청크 오브젝트 전체 파괴
+            foreach (var kvp in _spawnedMapObjects)
+            {
+                List<MapChunkContext> chunks = kvp.Value;
+                for (int i = 0; i < chunks.Count; ++i)
+                {
+                    if (chunks[i].Obj)
+                    {
+                        Object.Destroy(chunks[i].Obj);
+                    }
+                }
+            }
+
+            _spawnedMapObjects.Clear();
+            _mapGridDataDic.Clear();
+            _activeGrids.Clear();
+            _loadingGrids.Clear();
+            _invalidGrids.Clear();
+            _gridsToRemove.Clear();
+            _keepGrids.Clear();
+            _animatingChunksCache.Clear();
+        }
+
         // ===================================================================================
         // [핵심] 그리드 스트리밍 로직 (Hysteresis & Background Loop)
         // ===================================================================================
 
-        private async Awaitable StartGridStreamingLoopAsync()
+        private async Awaitable PlayGridStreamingLoopAsync()
         {
-            float yStep = 32f;
-            float yRadius = 64f;
-            float step = 5f;
+            const float GRID_SIZE = 64f;
+            const float Y_RADIUS  = 64f;
 
             // 반복 연산을 피하기 위해 루프 밖에서 미리 제곱값 계산
-            float unloadRadSq = UNLOAD_RADIUS * UNLOAD_RADIUS;
+            float unloadRadSq  = UNLOAD_RADIUS * UNLOAD_RADIUS;
             float preloadRadSq = PRELOAD_RADIUS * PRELOAD_RADIUS;
 
-            while (true == _isStreamingActive 
-                   && true == _cameraTransform)
+            // 검사할 그리드 셀 범위: 반경 ÷ 그리드 크기 + 여유 1칸
+            // PRELOAD_RADIUS(10) < GRID_SIZE(64)이므로 현재 상수 기준 keepRange=2, yRange=1
+            int keepRange = Mathf.CeilToInt(UNLOAD_RADIUS / GRID_SIZE) + 1;
+            int yRange    = Mathf.CeilToInt(Y_RADIUS / GRID_SIZE);
+
+            while (_isStreamingActive)
             {
                 Vector3 camPos = _cameraTransform.position;
                 float camX = camPos.x;
                 float camY = camPos.y;
                 float camZ = camPos.z;
 
-                // keep grids: 지금'도' 들고 있어야 하는 grid 모음;
+                // 카메라가 속한 그리드 좌표
+                int camGx = Mathf.FloorToInt(camX / GRID_SIZE);
+                int camGy = Mathf.FloorToInt(camY / GRID_SIZE);
+                int camGz = Mathf.FloorToInt(camZ / GRID_SIZE);
+
                 _keepGrids.Clear();
 
-                // 1. Preload & Keep 영역 동시 계산 (원통형 반경 탐색 최적화)
-                for (float x = -UNLOAD_RADIUS; x <= UNLOAD_RADIUS; x += step)
+                // 1. 이웃 그리드 셀을 직접 열거하여 Preload·Keep 판정
+                //    월드 좌표 샘플링 방식은 그리드 경계 근처에서 탐지 누락이 발생하므로,
+                //    그리드 AABB ↔ 카메라 수평 최단 거리로 판정한다.
+                for (int dy = -yRange; dy <= yRange; dy++)
                 {
-                    for (float z = -UNLOAD_RADIUS; z <= UNLOAD_RADIUS; z += step)
+                    for (int dx = -keepRange; dx <= keepRange; dx++)
                     {
-                        float distSq = (x * x) + (z * z);
+                        for (int dz = -keepRange; dz <= keepRange; dz++)
+                        {
+                            int gx = camGx + dx;
+                            int gy = camGy + dy;
+                            int gz = camGz + dz;
 
-                        // 수평 거리가 UN-LOAD 반경 밖이면 하위 Y루프 전체를 무시
-                        if (distSq > unloadRadSq)
-                        {
-                            continue;                            
-                        }
-                        // 수평 거리가 PRE-LOAD 반경 밖이면 하위 Y루프 전체를 무시
-                        if (distSq > preloadRadSq)
-                        {
-                            continue;
-                        }
-                        
-                        for (float y = -yRadius; y <= yRadius; y += yStep)
-                        {
-                            int targetGridKey = MapCoordUtil.ComputeGridKey(new float3(camX + x, camY + y, camZ + z));
+                            // 그리드 AABB에서 카메라까지의 수평 최단 거리 계산
+                            float nearX  = Mathf.Clamp(camX, gx * GRID_SIZE, (gx + 1) * GRID_SIZE);
+                            float nearZ  = Mathf.Clamp(camZ, gz * GRID_SIZE, (gz + 1) * GRID_SIZE);
+                            float ddx    = camX - nearX;
+                            float ddz    = camZ - nearZ;
+                            float distSq = ddx * ddx + ddz * ddz;
 
-                            // ★ 블랙리스트 필터링: 존재하지 않는다고 판명된 키는 아예 로직을 진행하지 않음
-                            if (_invalidGrids.Contains(targetGridKey))
+                            // Unload 반경 밖 → 완전 무시
+                            if (distSq > unloadRadSq)
                             {
                                 continue;                                
                             }
-                            // 유효한 그리드라고 판면되면 일단 기억;
-                            _keepGrids.Add(targetGridKey);
                             
-                            if (_activeGrids.Contains(targetGridKey) 
+                            // 그리드 키 계산 (MapCoordUtil.ComputeGridKey와 동일한 패킹)
+                            byte bX = (byte)(sbyte)gx;
+                            byte bY = (byte)(sbyte)gy;
+                            byte bZ = (byte)(sbyte)gz;
+                            int targetGridKey = (bX << 16) | (bY << 8) | bZ;
+
+                            // ★ 블랙리스트 필터링
+                            if (_invalidGrids.Contains(targetGridKey))
+                            {
+                                continue;
+                            }
+
+                            // Unload 반경 내 → Keep (히스테리시스 구간 포함)
+                            _keepGrids.Add(targetGridKey);
+
+                            // Preload 반경 밖 → 유지는 하되 신규 로드는 안 함
+                            if (distSq > preloadRadSq)
+                            {
+                                continue;
+                            }
+
+                            if (_activeGrids.Contains(targetGridKey)
                                 || !_loadingGrids.Add(targetGridKey))
                             {
                                 continue;
@@ -146,10 +198,8 @@ namespace Kompile.Map.Manager
                 _gridsToRemove.Clear();
                 foreach (int loadedGridKey in _activeGrids)
                 {
-                    // 지금 들고 있지(keep grids) 않다면(!)
                     if (!_keepGrids.Contains(loadedGridKey))
                     {
-                        // 이제 지워라;
                         _gridsToRemove.Add(loadedGridKey);
                     }
                 }
@@ -162,6 +212,8 @@ namespace Kompile.Map.Manager
 
                 await Awaitable.WaitForSecondsAsync(CHECK_INTERVAL);
             }
+
+            DisposeAll();
         }
 
         private async Awaitable LoadGridDataAsync(int gridKey)
@@ -303,14 +355,20 @@ namespace Kompile.Map.Manager
                     if (chunk.Layer == currentLayer)
                     {
                         chunk.TargetColor = normalColor;
-                        if (!chunk.Renderer.enabled) chunk.Renderer.enabled = true;
+                        if (!chunk.Renderer.enabled)
+                        {
+                            chunk.Renderer.enabled = true;                            
+                        }
                     }
                     else
                     {
                         chunk.TargetColor = hideInsteadOfDim ? hideColor : dimColor;
-                        if (!chunk.Renderer.enabled && !hideInsteadOfDim) chunk.Renderer.enabled = true;
+                        if (!chunk.Renderer.enabled && !hideInsteadOfDim)
+                        {
+                            chunk.Renderer.enabled = true;                            
+                        }
                     }
-
+                    
                     _animatingChunksCache.Add(chunk);
                 }
             }
@@ -339,8 +397,11 @@ namespace Kompile.Map.Manager
             }
 
             // 최종 상태 확정
-            if (_layerTransitionToken != currentToken) return;
-
+            if (_layerTransitionToken != currentToken)
+            {
+                return;                
+            }
+            
             for (int i = 0; i < _animatingChunksCache.Count; i++)
             {
                 MapChunkContext chunk = _animatingChunksCache[i];
@@ -368,13 +429,14 @@ namespace Kompile.Map.Manager
         /// 월드 좌표를 받아 해당 위치의 MapTileData를 반환합니다.
         /// 그리드가 로드되지 않았거나 타일이 없으면 false를 반환합니다.
         /// </summary>
-        public bool TryGetTileData(in Unity.Mathematics.float3 worldPos, out MapTileData tileData)
+        public bool TryGetTileData(in float3 worldPos, out MapTileData tileData)
         {
             MapCoordUtil.ComputeKey(worldPos, out int gKey, out int tKey);
             if (_mapGridDataDic.TryGetValue(gKey, out MapGridData gridData))
             {
                 return gridData.TryGetTileData(tKey, out tileData);
             }
+            
             tileData = default;
             return false;
         }

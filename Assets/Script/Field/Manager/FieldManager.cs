@@ -37,14 +37,14 @@ namespace Kompile.Field.Manager
             _isFieldActive = true;
             _ = _mapManager.PlayStreamingAsync(cameraTransform); // fire and forgot
         }
-        public void StopField()
+        public void Update()
         {
-            _isFieldActive = false;
-            _mapManager.StopStreaming();
+            // TODO: 하위 Manager·Service Update 순차 호출 (향후 추가)
         }
         public void Dispose()
         {
             _mapManager.StopStreaming();
+            _isFieldActive = false;
         }
         
         // --- Layer Control ----

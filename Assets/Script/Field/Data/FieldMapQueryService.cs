@@ -4,8 +4,7 @@ namespace Kompile.Field.Data
     using Kompile.Map.Manager;
     using Unity.Mathematics;
 
-    /// <summary>
-    /// [Adapter] MapManager의 그리드 데이터를 IMapQueryService 인터페이스로 노출합니다.
+    /// <summary> MapManager의 그리드 데이터를 IMapQueryService 인터페이스로 노출 <br/>
     /// FieldUnitManager → FieldPlayerEntity → UnitMoveComponent 체인에 주입됩니다.
     /// </summary>
     public class FieldMapQueryService : IMapQueryService
