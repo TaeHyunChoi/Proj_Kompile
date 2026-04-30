@@ -1,3 +1,5 @@
+using UnityEditor.SceneManagement;
+
 #if UNITY_EDITOR
 namespace Kompile.Map.Editor.Tools
 {
@@ -7,8 +9,8 @@ namespace Kompile.Map.Editor.Tools
     using System.Collections.Generic;
     using Kompile.Map.Data;
     using Kompile.Map.Entity;           
-    using Kompile.Map.Editor.Provider;  
-
+    using Kompile.Map.Editor.Provider;
+    
     /// <summary>
     /// Editor Manager: 멀티 아틀라스 팔레트, 스포이드, Focus Mode를 지원하는 통합 맵 에디터.
     /// </summary>
@@ -941,6 +943,15 @@ private void HandleHeightMode(EditMapTileComponent tile, Ray ray, Event e, int c
             {
                 EditMapSamplingProvider baker = new EditMapSamplingProvider();
                 baker.Bake();
+                
+                if (EditorSceneManager.SaveOpenScenes())
+                {
+                    Debug.Log("나으리, 모든 활성 씬이 무사히 저장되었습니다.");
+                }
+                else
+                {
+                    Debug.LogWarning("저장 중에 문제가 발생했습니다.");
+                }
             }
             catch (System.Exception e)
             {

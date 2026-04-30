@@ -345,7 +345,7 @@ namespace Kompile.Map.Editor.Provider
                 EditMapTileComponent tile = tilesInGrid[i];
                 
                 // [수정 포인트] TryGetSharedMesh 대신 MeshFilter 직접 접근으로 변경
-                if (tile.MeshFilter == null || tile.MeshFilter.sharedMesh == null)
+                if (!tile.MeshFilter || !tile.MeshFilter.sharedMesh)
                 {
                     continue;
                 }
