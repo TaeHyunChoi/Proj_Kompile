@@ -68,7 +68,7 @@ namespace Kompile.Map.Manager
             _isStreamingActive = true;
 
             // 배경 스트리밍 루프 시작
-            await StartGridStreamingLoopAsync();
+            await PlayGridStreamingLoopAsync();
         }
 
         public void StopStreaming()
@@ -77,10 +77,9 @@ namespace Kompile.Map.Manager
         }
 
         /// <summary>
-        /// 로드된 모든 그리드·청크 오브젝트를 즉시 해제하고 내부 상태를 초기화합니다.
-        /// StopStreaming() 호출 이후에 사용하십시오.
+        /// 로드된 모든 그리드·청크 오브젝트를 즉시 해제하고 내부 상태를 초기화 => StopStreaming() 호출 이후에 사용하십시오.
         /// </summary>
-        public void DisposeAll()
+        private void DisposeAll()
         {
             // 활성화된 청크 오브젝트 전체 파괴
             foreach (var kvp in _spawnedMapObjects)
@@ -109,7 +108,7 @@ namespace Kompile.Map.Manager
         // [핵심] 그리드 스트리밍 로직 (Hysteresis & Background Loop)
         // ===================================================================================
 
-        private async Awaitable StartGridStreamingLoopAsync()
+        private async Awaitable PlayGridStreamingLoopAsync()
         {
             const float GRID_SIZE = 64f;
             const float Y_RADIUS  = 64f;
@@ -123,8 +122,7 @@ namespace Kompile.Map.Manager
             int keepRange = Mathf.CeilToInt(UNLOAD_RADIUS / GRID_SIZE) + 1;
             int yRange    = Mathf.CeilToInt(Y_RADIUS / GRID_SIZE);
 
-            while (true == _isStreamingActive
-                   && true == _cameraTransform)
+            while (_isStreamingActive)
             {
                 Vector3 camPos = _cameraTransform.position;
                 float camX = camPos.x;
@@ -159,8 +157,11 @@ namespace Kompile.Map.Manager
                             float distSq = ddx * ddx + ddz * ddz;
 
                             // Unload 반경 밖 → 완전 무시
-                            if (distSq > unloadRadSq) continue;
-
+                            if (distSq > unloadRadSq)
+                            {
+                                continue;                                
+                            }
+                            
                             // 그리드 키 계산 (MapCoordUtil.ComputeGridKey와 동일한 패킹)
                             byte bX = (byte)(sbyte)gx;
                             byte bY = (byte)(sbyte)gy;
@@ -168,13 +169,19 @@ namespace Kompile.Map.Manager
                             int targetGridKey = (bX << 16) | (bY << 8) | bZ;
 
                             // ★ 블랙리스트 필터링
-                            if (_invalidGrids.Contains(targetGridKey)) continue;
+                            if (_invalidGrids.Contains(targetGridKey))
+                            {
+                                continue;
+                            }
 
                             // Unload 반경 내 → Keep (히스테리시스 구간 포함)
                             _keepGrids.Add(targetGridKey);
 
                             // Preload 반경 밖 → 유지는 하되 신규 로드는 안 함
-                            if (distSq > preloadRadSq) continue;
+                            if (distSq > preloadRadSq)
+                            {
+                                continue;
+                            }
 
                             if (_activeGrids.Contains(targetGridKey)
                                 || !_loadingGrids.Add(targetGridKey))
@@ -205,6 +212,8 @@ namespace Kompile.Map.Manager
 
                 await Awaitable.WaitForSecondsAsync(CHECK_INTERVAL);
             }
+
+            DisposeAll();
         }
 
         private async Awaitable LoadGridDataAsync(int gridKey)
@@ -346,14 +355,20 @@ namespace Kompile.Map.Manager
                     if (chunk.Layer == currentLayer)
                     {
                         chunk.TargetColor = normalColor;
-                        if (!chunk.Renderer.enabled) chunk.Renderer.enabled = true;
+                        if (!chunk.Renderer.enabled)
+                        {
+                            chunk.Renderer.enabled = true;                            
+                        }
                     }
                     else
                     {
                         chunk.TargetColor = hideInsteadOfDim ? hideColor : dimColor;
-                        if (!chunk.Renderer.enabled && !hideInsteadOfDim) chunk.Renderer.enabled = true;
+                        if (!chunk.Renderer.enabled && !hideInsteadOfDim)
+                        {
+                            chunk.Renderer.enabled = true;                            
+                        }
                     }
-
+                    
                     _animatingChunksCache.Add(chunk);
                 }
             }
@@ -382,8 +397,11 @@ namespace Kompile.Map.Manager
             }
 
             // 최종 상태 확정
-            if (_layerTransitionToken != currentToken) return;
-
+            if (_layerTransitionToken != currentToken)
+            {
+                return;                
+            }
+            
             for (int i = 0; i < _animatingChunksCache.Count; i++)
             {
                 MapChunkContext chunk = _animatingChunksCache[i];
@@ -411,13 +429,14 @@ namespace Kompile.Map.Manager
         /// 월드 좌표를 받아 해당 위치의 MapTileData를 반환합니다.
         /// 그리드가 로드되지 않았거나 타일이 없으면 false를 반환합니다.
         /// </summary>
-        public bool TryGetTileData(in Unity.Mathematics.float3 worldPos, out MapTileData tileData)
+        public bool TryGetTileData(in float3 worldPos, out MapTileData tileData)
         {
             MapCoordUtil.ComputeKey(worldPos, out int gKey, out int tKey);
             if (_mapGridDataDic.TryGetValue(gKey, out MapGridData gridData))
             {
                 return gridData.TryGetTileData(tKey, out tileData);
             }
+            
             tileData = default;
             return false;
         }

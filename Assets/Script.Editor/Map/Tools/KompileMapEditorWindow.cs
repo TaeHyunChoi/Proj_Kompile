@@ -32,8 +32,8 @@ namespace Kompile.Map.Editor.Tools
             new Vector2(0.0f, 1.0f),   new Vector2(0.5f, 1.0f),   new Vector2(1.0f, 1.0f)
         };
 
-        private EditMapSamplingComponent _samplingRoot;
-        private GameObject _tilePrefab;
+        [SerializeField] private EditMapSamplingComponent _samplingRoot;
+        [SerializeField] private GameObject _tilePrefab;
         
         private float _targetY = 0f;
         private ushort _targetRenderLayer = 0;
@@ -70,13 +70,14 @@ namespace Kompile.Map.Editor.Tools
             LoadAllAtlases();
             RefreshTileCache();
             UpdateTilesFocusState();
-
+            Undo.undoRedoPerformed += OnUndoRedo;
+            
             if (!_samplingRoot)
             {
                 _samplingRoot = UnityEngine.Object.FindFirstObjectByType<EditMapSamplingComponent>();
             }
         }
-
+        
         private void OnDisable()
         {
             SceneView.duringSceneGui -= OnSceneGUI;

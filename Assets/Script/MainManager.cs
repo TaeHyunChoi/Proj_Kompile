@@ -17,9 +17,9 @@ namespace Kompile
         private void Awake()
         {
             // Field 루트 오브젝트 생성
-            var fieldGo = new GameObject("Field");
-            fieldGo.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            _fieldRoot = fieldGo.transform;
+            GameObject fieldRootObj = new GameObject("Field");
+            fieldRootObj.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _fieldRoot = fieldRootObj.transform;
 
             // 콘텐츠 Manager 일괄 생성·초기화
             _fieldManager = new FieldManager(_fieldRoot);
@@ -34,7 +34,7 @@ namespace Kompile
         private void Update()
         {
             // 하위 Manager Update 순차 호출 (호출 순서 고정)
-            _fieldManager.Update();
+            // _fieldManager.Update();
         }
 
         private void OnDestroy()

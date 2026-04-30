@@ -37,11 +37,6 @@ namespace Kompile.Field.Manager
             _isFieldActive = true;
             _ = _mapManager.PlayStreamingAsync(cameraTransform); // fire and forgot
         }
-        public void StopField()
-        {
-            _isFieldActive = false;
-            _mapManager.StopStreaming();
-        }
         public void Update()
         {
             // TODO: 하위 Manager·Service Update 순차 호출 (향후 추가)
@@ -49,7 +44,6 @@ namespace Kompile.Field.Manager
         public void Dispose()
         {
             _mapManager.StopStreaming();
-            _mapManager.DisposeAll();
             _isFieldActive = false;
         }
         
