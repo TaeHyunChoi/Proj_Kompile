@@ -8,14 +8,14 @@ namespace Kompile.Map.Data
     {
         [ReadOnly, Key(0)] public long NaviMask;
         [ReadOnly, Key(1)] public ushort LinkMask;
-        [ReadOnly, Key(2)] public ushort LayerMask; // TODO: 추후에 추가 예정
-        
+        [ReadOnly, Key(2)] public ushort LayerMask;
+
 #if UNITY_EDITOR
-        public MapTileData(long naviMask, ushort linkMask)
+        public MapTileData(long naviMask, ushort linkMask, ushort layerMask)
         {
             NaviMask  = naviMask;
             LinkMask  = linkMask;
-            LayerMask = 0;
+            LayerMask = layerMask;
         }
 #endif
     }

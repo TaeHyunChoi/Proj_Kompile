@@ -30,7 +30,8 @@ namespace Kompile.Map.Manager
         // --- Rendering & Visuals ---
         private readonly MaterialPropertyBlock _propBlock;
         private static readonly int ColorPropID = Shader.PropertyToID("_Color");
-        private int _layerTransitionToken = 0; // 레이어 전환 애니메이션 중첩 방지 토큰
+        private int _layerTransitionToken = 0;   // 레이어 전환 애니메이션 중첩 방지 토큰
+        private ushort _lastLayerMask = ushort.MaxValue; // 이전 LayerMask (MaxValue = 미초기화 sentinel)
 
         // --- Camera & Streaming Config ---
         private Transform _cameraTransform;
@@ -331,6 +332,27 @@ namespace Kompile.Map.Manager
         // ===================================================================================
         // [핵심] 레이어 시각적 제어 (Async Fade)
         // ===================================================================================
+
+        /// <summary>
+        /// 플레이어 월드 좌표의 타일 LayerMask를 확인하여, 직전 값과 다를 때만 레이어 시각 갱신을 트리거합니다.
+        /// 이동 이벤트 또는 주기적으로 호출하십시오.
+        /// </summary>
+        public async Awaitable UpdateLayerFromTileAsync(float3 playerWorldPos, float fadeDuration = 1.0f)
+        {
+            if (!TryGetTileData(in playerWorldPos, out MapTileData tileData))
+            {
+                return;
+            }
+
+            ushort newLayerMask = tileData.LayerMask;
+            if (newLayerMask == _lastLayerMask)
+            {
+                return;
+            }
+
+            _lastLayerMask = newLayerMask;
+            await UpdateLayerVisibilityAsync(newLayerMask, false, fadeDuration);
+        }
 
         public async Awaitable UpdateLayerVisibilityAsync(int currentLayer, bool hideInsteadOfDim = false, float duration = 1.0f)
         {

@@ -20,6 +20,9 @@ namespace Kompile.Map.Editor.Data
 
         [Key(3)]
         public ushort RenderIndex; // enum 이나 flag가 아니므로 '단일값'이라고 가정함
+
+        [Key(4)]
+        public ushort LayerMask;
     }
 }
 #endif

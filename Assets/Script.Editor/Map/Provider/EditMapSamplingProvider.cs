@@ -116,10 +116,11 @@ namespace Kompile.Map.Editor.Provider
 
                 EditMapTileData tileData = new EditMapTileData()
                 {
-                    ID = nativeResult[i].ID,
-                    NaviMask = naviMask,
-                    LinkMask = 0, //LinkTiles(map);에서 처리 예정
-                    RenderIndex = renderIndex
+                    ID          = nativeResult[i].ID,
+                    NaviMask    = naviMask,
+                    LinkMask    = 0, //LinkTiles(map);에서 처리 예정
+                    RenderIndex = renderIndex,
+                    LayerMask   = nativeRenderLayer[i]
                 };
                 map[gridKey].TryAdd(tileKey, tileData);
             }

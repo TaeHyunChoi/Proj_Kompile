@@ -36,8 +36,7 @@ namespace Kompile.Map.Editor.Data
 
             foreach (var kvp in Data)
             {
-                var value = kvp.Value;
-                data.TryAdd(kvp.Key, new MapTileData(kvp.Value.NaviMask, kvp.Value.LinkMask));
+                data.TryAdd(kvp.Key, new MapTileData(kvp.Value.NaviMask, kvp.Value.LinkMask, kvp.Value.LayerMask));
             }
 
             return data;
