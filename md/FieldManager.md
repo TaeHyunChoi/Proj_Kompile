@@ -81,13 +81,25 @@ public void StopStreaming()
 ### 3.3 레이어 시각 제어
 
 ```csharp
+// 플레이어 위치에서 타일 LayerMask를 읽어 직전 값과 다를 때만 페이드 트리거
+public async Awaitable UpdateLayerFromTileAsync(float3 playerWorldPos, float fadeDuration = 1.0f)
+
+// 레이어를 직접 지정하여 페이드 실행 (UpdateLayerFromTileAsync가 내부 호출)
 public async Awaitable UpdateLayerVisibilityAsync(int currentLayer, bool hideInsteadOfDim = false, float duration = 1.0f)
 ```
 
+**`UpdateLayerFromTileAsync`** (신규):
+- `playerWorldPos` 위치의 `MapTileData.LayerMask`를 읽는다.
+- 내부 `_lastLayerMask`와 비교하여 값이 같으면 즉시 return (불필요한 갱신 방지).
+- 값이 달라지면 `_lastLayerMask`를 갱신하고 `UpdateLayerVisibilityAsync`를 호출한다.
+- 외부 호출자는 이 단일 메서드만 호출하면 된다.
+
+**`UpdateLayerVisibilityAsync`**:
 - 로드된 모든 그리드의 청크(`MapChunkContext`)를 대상으로 레이어 페이드 애니메이션을 실행한다.
 - 내부 `_layerTransitionToken` 증가로 중첩 전환 자동 취소된다.
 - 대상 레이어(`currentLayer`)의 청크: `Color.white`로 복원.
 - 그 외 청크: `hideInsteadOfDim == false`이면 `Color(0.1, 0.1, 0.1, 1)` (Dim), `true`이면 `Color(0, 0, 0, 0)` 후 `Renderer.enabled = false`.
+- dim 효과는 `WorldSpaceAtlasShader`의 `_Color` 프로퍼티를 `MaterialPropertyBlock`으로 제어한다.
 
 ### 3.4 타일 데이터 접근
 
@@ -209,7 +221,7 @@ MainManager.Update()
     ↓
 FieldManager.Update()
     // 현재 빈 메서드. 향후 하위 Manager·Service Update 순차 호출 추가 예정
-    // (미구현) _mapLayerService.CheckAndUpdateLayer(worldPos)  ← InputProvider 설계 시 확정
+    // (미구현) _ = _mapManager.UpdateLayerFromTileAsync(playerWorldPos)  ← 호출자(InputProvider 또는 이동 처리 시스템) 확정 필요
     // (미설계) _playerEntity?.Update()
     // (미설계) _eventManager.Update()
 ```
@@ -331,76 +343,52 @@ LoadGridDataAsync → 풀에 동일 구조의 청크가 있으면 꺼내서 SetA
 
 ---
 
-## 7. 레이어 시각 제어 — FieldMapLayerService [설계]
+## 7. 레이어 시각 제어 — MapManager 통합 구현 [구현완료]
 
-레이어 감지 및 전환 호출은 `FieldManager`가 직접 담당하지 않고 `FieldMapLayerService`에 위임한다.
+레이어 감지 및 전환 로직은 `MapManager.UpdateLayerFromTileAsync`에 통합되어 있다.  
+별도 `FieldMapLayerService` 클래스는 불필요하다.
 
-### 7.1 설계 의도
-
-`MapTileData.LayerMask`(ushort) 값이 이전 값과 달라지는 시점을 감지하여 MapManager의 레이어 페이드를 트리거한다.
+### 7.1 동작 흐름 [구현완료]
 
 사용 시나리오: 플레이어가 건물 밖(LayerMask = A)에서 건물 안(LayerMask = B)으로 이동  
-→ LayerMask 변화 감지 → `MapManager.UpdateLayerVisibilityAsync()` 호출 → 페이드 인/아웃 실행
-
-> **주의**: `MapTileData.LayerMask`(ushort)는 현재 항상 `0`으로 초기화된 미구현 필드다 (MapTileData.md 기준).  
-> `LayerMask` 값과 `MapManager.UpdateLayerVisibilityAsync(int currentLayer)`의 `int currentLayer` 간 변환 방식은 미결정이다. (→ 항목 10 참고)
-
-### 7.2 FieldMapLayerService 구조 [설계]
+→ `UpdateLayerFromTileAsync(playerPos)` 호출 → 내부에서 LayerMask 변화 감지 → 페이드 인/아웃 실행
 
 ```
-파일 경로: Assets/Script/Field/Data/FieldMapLayerService.cs   [설계]
-네임스페이스: Kompile.Field.Data                              [설계]
-아키텍처 레이어: Field/Data (Service)
-```
-
-```csharp
-public class FieldMapLayerService
-{
-    private readonly MapManager      _mapManager;       // UpdateLayerVisibilityAsync 호출
-    private readonly IMapQueryService _mapQueryService;  // MapTileData.LayerMask 조회
-
-    private ushort _previousLayerMask;
-
-    public FieldMapLayerService(MapManager mapManager, IMapQueryService mapQueryService)
-    {
-        _mapManager      = mapManager;
-        _mapQueryService = mapQueryService;
-        _previousLayerMask = 0;
-    }
-
-    // 위치 변화가 감지될 때에만 호출. 호출자는 InputProvider 또는 이동 처리 시스템 — 입력 설계 시 확정   [설계]
-    public void CheckAndUpdateLayer(in float3 worldPos) { ... }
-}
-```
-
-### 7.3 레이어 감지 흐름 [설계]
-
-```
-CheckAndUpdateLayer(worldPos)
+MapManager.UpdateLayerFromTileAsync(float3 playerWorldPos)
     ↓
-_mapQueryService.TryGetTileData(worldPos, out MapTileData tile)
+TryGetTileData(playerWorldPos, out MapTileData tileData)
     ↓ (성공 시)
-currentLayerMask = tile.LayerMask
+newLayerMask = tileData.LayerMask
     ↓
-currentLayerMask != _previousLayerMask ?
-    ↓ Yes
-_previousLayerMask = currentLayerMask
-_ = _mapManager.UpdateLayerVisibilityAsync(currentLayer, ...)  ← Fire and forget
+newLayerMask == _lastLayerMask ?  → return (변화 없음)
+    ↓ No
+_lastLayerMask = newLayerMask
+await UpdateLayerVisibilityAsync(newLayerMask, false, fadeDuration)
 ```
 
-### 7.4 MapManager.UpdateLayerVisibilityAsync 동작 (MapManager.cs 기준)
-
-`FieldMapLayerService`가 최종적으로 호출하는 MapManager API:
+### 7.2 MapManager 레이어 관련 필드/API (MapManager.cs 기준)
 
 ```csharp
+// 필드
+private ushort _lastLayerMask = ushort.MaxValue; // 미초기화 sentinel
+
+// API
+public async Awaitable UpdateLayerFromTileAsync(float3 playerWorldPos, float fadeDuration = 1.0f)
 public async Awaitable UpdateLayerVisibilityAsync(int currentLayer, bool hideInsteadOfDim = false, float duration = 1.0f)
 ```
 
+**`UpdateLayerVisibilityAsync` 내부 동작**:
 - 내부 `_layerTransitionToken` 증가 → 이전 전환 자동 취소
 - 평탄화된 `_animatingChunksCache` 리스트 순회로 매 프레임 Dictionary 순회 비용 제거
 - `MaterialPropertyBlock`(`_Color`)으로 색상 보간
 - 대상 레이어(`currentLayer`) 청크: `Color.white` 복원
 - 그 외 청크: `hideInsteadOfDim == false` → Dim(`Color(0.1, 0.1, 0.1, 1)`), `true` → `Renderer.enabled = false`
+- dim 효과 구현: `WorldSpaceAtlasShader`의 `_Color` 프로퍼티를 `MaterialPropertyBlock`으로 제어
+
+### 7.3 외부 호출자 [미확정]
+
+`UpdateLayerFromTileAsync(playerWorldPos)`의 호출 시점은 InputProvider 또는 이동 처리 시스템 설계 시 확정한다.  
+위치 변화가 감지되는 시점에만 호출하는 것으로 방향 확정.
 
 ---
 
@@ -478,8 +466,7 @@ UnitEntity는 별도 UnitManager 없이 FieldManager가 `AssetProvider.GetOrNewI
 
 | 항목 | 내용 |
 |------|------|
-| LayerMask → currentLayer 변환 | `MapTileData.LayerMask`(ushort, 현재 항상 0)에서 `UpdateLayerVisibilityAsync(int currentLayer)`의 `int`로 변환하는 방식 미결정. `LayerMask` 구현 시 함께 정의 필요 |
-| CheckAndUpdateLayer 호출자 | 위치 변화 감지 시에만 호출하는 것으로 확정. **호출자(InputProvider 또는 이동 처리 시스템)는 InputProvider 설계 시 확정 필요** |
+| UpdateLayerFromTileAsync 호출자 | 위치 변화 감지 시에만 호출하는 것으로 확정. **호출자(InputProvider 또는 이동 처리 시스템)는 InputProvider 설계 시 확정 필요** |
 
 ---
 
@@ -491,10 +478,10 @@ UnitEntity는 별도 UnitManager 없이 FieldManager가 `AssetProvider.GetOrNewI
 | `FieldManager.cs` | Manager | **이 문서의 설계 대상 (신규)** |
 | `MapManager.cs` | Manager | 그리드 스트리밍·렌더링·레이어 제어, `TryGetTileData` 제공 |
 | `MapGridData.cs` | Data/Table | 64×64×64 타일 묶음, `NaviTileDict` + `layerMeshAssets` |
-| `MapTileData.cs` | Data/Table | 타일 1개의 내비게이션 데이터 (`NaviMask`, `LinkMask`) |
+| `MapTileData.cs` | Data/Table | 타일 1개의 내비게이션 데이터 (`NaviMask`, `LinkMask`, `LayerMask`) |
 | `MapChunkContext.cs` | Data/Context | 렌더링 청크 상태 (`Layer`, `Renderer`, `CurrentColor` 등) |
 | `MapCoordUtil.cs` | Utility | `gridKey`, `tileKey` 좌표 계산 (Burst) |
 | `IMapQueryService.cs` | Field/Data | `TryGetTileData(worldPos)` 인터페이스 |
 | `FieldMapQueryService.cs` | Field/Data (`Kompile.Field.Data`) | `IMapQueryService` 구현체. 생성자에서 `MapManager`를 직접 주입받아 `TryGetTileData` 위임 |
-| `FieldMapLayerService.cs` | Field/Data (`Kompile.Field.Data`) | **신규 [설계]** `MapTileData.LayerMask` 변화 감지 → `MapManager.UpdateLayerVisibilityAsync` 호출 |
+| `FieldMapLayerService.cs` | Field/Data (`Kompile.Field.Data`) | ~~[설계 폐기]~~ 역할이 `MapManager.UpdateLayerFromTileAsync`로 통합됨 |
 | `AssetProvider.cs` | Asset/Provider (`Kompile.Asset.Provider`) | GameObject 인스턴스 생성·풀링·해제. `GetOrNewInstanceAsync<T>()` 로 UnitEntity 생성 (`Task` 반환 → 향후 `Awaitable` 교체 예정) |

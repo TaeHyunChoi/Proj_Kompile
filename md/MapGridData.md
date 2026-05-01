@@ -233,7 +233,7 @@ public class MapGridEntity : Entity
 | `MapGridEntity.cs` | Entity | 레이어별 메시 GameObject 계층 관리 |
 | **에디터** | | |
 | `EditMapGridData.cs` | Editor/Data | 에디터용 그리드 (`ParseData()`로 런타임 타입 변환) |
-| `EditMapTileData.cs` | Editor/Data | 에디터용 타일 (EditMapGridData.Data의 Value) |
+| `EditMapTileData.cs` | Editor/Data | 에디터용 타일 (EditMapGridData.Data의 Value, `LayerMask` 포함) |
 
 ---
 
@@ -299,6 +299,7 @@ EditMapGridData(int targetGridKey)  ← 에디터 툴에서 생성
     assetFiles = new List<string>()
     ↓
 EditMapTileJobUtil / EditMapLinkJobUtil 결과를 TryAdd(key, EditMapTileData)로 적재
+    - EditMapTileData.LayerMask = nativeRenderLayer[i]  ← EditMapSamplingProvider.Bake()에서 할당
     ↓
 AddMeshAsset(int layer, string fileName)
     - 동일 layer의 MapGridLayerData가 있으면 assets.Add(fileName)
@@ -306,7 +307,7 @@ AddMeshAsset(int layer, string fileName)
     ↓
 EditMapGridData.ParseData()
     foreach kvp in Data:
-        new MapTileData(kvp.Value.NaviMask, kvp.Value.LinkMask)
+        new MapTileData(kvp.Value.NaviMask, kvp.Value.LinkMask, kvp.Value.LayerMask)
     → ConcurrentDictionary<int, MapTileData>
     ↓
 new MapGridData
@@ -326,6 +327,6 @@ Addressables 에셋 "MapNavi_{gridKey}" 저장
 | EditMapGridData 필드 | MapGridData 필드 | 변환 |
 |----------------------|-----------------|------|
 | `gridKey (int)` | `Key (int)` | 그대로 |
-| `Data: ConcurrentDictionary<int, EditMapTileData>` | `NaviTileDict: ConcurrentDictionary<int, MapTileData>` | `ParseData()` |
+| `Data: ConcurrentDictionary<int, EditMapTileData>` | `NaviTileDict: ConcurrentDictionary<int, MapTileData>` | `ParseData()` (NaviMask, LinkMask, LayerMask 전달) |
 | `LayerMeshAssets: List<MapGridLayerData>` | `layerMeshAssets: List<MapGridLayerData>` | 그대로 |
 | `assetFiles: List<string>` | (없음) | 에디터 전용, 런타임 미포함 |

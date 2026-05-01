@@ -14,8 +14,7 @@
 
 - **이동 판정 / 높이 샘플링**: 캐릭터가 타일 위를 이동할 때 지형 높이를 계산하고, 서브타일 단위 충돌을 판정한다.
 - **경로 탐색 (A\*)**: 인접 타일과의 연결 가능 여부와 높이 단차를 결정한다.
-
-`LayerMask` 필드는 미래 구현을 위해 예약된 필드로, 현재 항상 0이다.
+- **레이어 시각 제어**: `LayerMask` 값을 기반으로 동일 레이어 타일만 강조하고 나머지를 어둡게(dim) 처리한다.
 
 ```
 파일 경로: Assets/Script/Map/Data/Table/MapTileData.cs
@@ -34,12 +33,12 @@ public struct MapTileData
 {
     [ReadOnly, Key(0)] public long   NaviMask;   // 타일 내 13개 정점의 높이값 (4비트 × 13)
     [ReadOnly, Key(1)] public ushort LinkMask;   // 인접 8방향 높이 단차 (2비트 × 8)
-    [ReadOnly, Key(2)] public ushort LayerMask;  // 렌더링 레이어 (TODO: 미구현, 항상 0)
+    [ReadOnly, Key(2)] public ushort LayerMask;  // 렌더링 레이어 (에디터 RenderLayer와 1:1 대응)
 }
 ```
 
 - 모든 필드가 `[ReadOnly]`이며, 런타임에서 **값 변경이 불가능한 불변 구조체**다.
-- 에디터 전용 생성자(`#if UNITY_EDITOR`)를 통해서만 생성된다.
+- 에디터 전용 생성자(`#if UNITY_EDITOR`, 파라미터: `naviMask`, `linkMask`, `layerMask`)를 통해서만 생성된다.
 - 총 크기: `8 + 2 + 2 = 12바이트`
 
 ---
@@ -161,8 +160,14 @@ v00(0, 0) ──────── v01(0.5, 0) ─────── v02(1, 0)
 
 ## 5. LayerMask (ushort, 16비트)
 
-- **현재 미구현 (TODO)**: 항상 `0`으로 초기화된다.
-- 에디터 베이크 시 사용되는 레이어 값(`EditMapTileData.RenderIndex`)은 `NaviMask`의 상위 비트([63:52])에 패킹되며, 이 `LayerMask` 필드와는 무관하다.
+에디터에서 타일에 지정한 **렌더링 레이어 번호**를 저장한다.
+
+- 베이크 시 `EditMapTileComponent.RenderLayer`(ushort) 값을 그대로 복사한다.
+- 런타임에서 `MapManager.UpdateLayerFromTileAsync(float3 playerWorldPos)`가 이 값을 읽어, 직전 값과 달라지면 `UpdateLayerVisibilityAsync(currentLayer)`를 호출한다.
+  - 동일 `LayerMask` 값의 레이어: 정상 표시 (`_Color = white`)
+  - 다른 `LayerMask` 값의 레이어: dim 처리 (`_Color = (0.1, 0.1, 0.1, 1)`)
+  - dim 효과는 `WorldSpaceAtlasShader`의 `_Color` 프로퍼티를 `MaterialPropertyBlock`으로 제어한다.
+- `NaviMask` 상위 비트([63:52])에 패킹되는 에디터 레이어 값(`EditMapTileJobUtil`)과는 별개의 독립 필드다.
 
 ---
 
@@ -214,7 +219,7 @@ Utility Layer       MapNaviTileUtil      (NaviMask 비트 연산, Burst)
 | `AStarPathfinderUtil.cs` | Utility | `AStarBatchJobUtil` 디스패처 (`RequestPathsBatch`) |
 | `MapNaviSteeringUtil.cs` | Utility | `CalculateSteering`, `GetSpriteDirection8` |
 | **에디터** | | |
-| `EditMapTileData.cs` | Editor/Data | 에디터용 타일 데이터 (`ID`, `NaviMask`, `LinkMask`, `RenderIndex`) |
+| `EditMapTileData.cs` | Editor/Data | 에디터용 타일 데이터 (`ID`, `NaviMask`, `LinkMask`, `RenderIndex`, `LayerMask`) |
 | `EditMapGridData.cs` | Editor/Data | 에디터용 그리드 (`ParseData()`로 런타임 타입 변환) |
 | `EditMapRepoProvider.cs` | Editor/Provider | 에디터 내 A* 테스트용 `NativeHashMap` 캐시 |
 | `EditMapTileJobUtil.cs` | Editor/Utility | 높이값 4비트 패킹 → `NaviMask` 생성 Job |
@@ -325,13 +330,16 @@ EditMapTileJobUtil (IJobParallelFor)
     - naviMask  = (long)(layerMask | heightMask)
     - → EditMapTileData { ID, NaviMask, LinkMask=default, RenderIndex }
         ↓
+EditMapSamplingProvider.Bake() — EditMapTileData 조립
+    - EditMapTileData.LayerMask = nativeRenderLayer[i]  ← RenderLayer를 직접 저장
+        ↓
 EditMapLinkJobUtil (IJobParallelFor)
     - 인접 타일 간 높이 단차 계산
     - → LinkMask 2비트 × 8방향 패킹
         ↓
 EditMapGridData.ParseData()
     - foreach EditMapTileData:
-        new MapTileData(NaviMask, LinkMask)
+        new MapTileData(NaviMask, LinkMask, LayerMask)
     - → ConcurrentDictionary<int, MapTileData>
         ↓
 MapGridData { Key, NaviTileDict, layerMeshAssets }
@@ -368,9 +376,9 @@ Burst Compiler가 요구하는 Blittable 타입 조건을 완전히 충족하여
 
 ### 10.5 에디터/런타임 분리
 
-- `EditMapTileData`: 에디터 전용. `ID`와 `RenderIndex`를 포함하며, 베이크 과정의 중간 데이터로 사용된다.
-- `MapTileData`: 런타임 전용. `ID` 없이 `NaviMask`/`LinkMask`만 포함한다.
-- 변환은 `EditMapGridData.ParseData()`에서 명시적으로 이루어진다.
+- `EditMapTileData`: 에디터 전용. `ID`, `RenderIndex`, `LayerMask`를 포함하며, 베이크 과정의 중간 데이터로 사용된다.
+- `MapTileData`: 런타임 전용. `ID` 없이 `NaviMask`/`LinkMask`/`LayerMask`를 포함한다.
+- 변환은 `EditMapGridData.ParseData()`에서 명시적으로 이루어진다. (`LayerMask` 포함)
 
 ---
 
