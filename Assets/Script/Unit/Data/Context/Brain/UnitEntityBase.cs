@@ -38,10 +38,12 @@ namespace Kompile.Unit.Entity
             _brain = null;
         }
 
-        public abstract void Initialize(long instanceID, UnitRuntimeContext context);
+        public abstract void Initialize(UnitRuntimeContext context);
 
         protected void SetBrain()
         {
+            _instanceID = GetInstanceID();
+            
             _brain = _context.BrainType switch
             {
                 UnitBrainType.PlayerControl => new PlayerControlBrain(),
@@ -49,6 +51,6 @@ namespace Kompile.Unit.Entity
             };
         }
 
-        public abstract void Update(); // Manager에 의해 호출될 업데이트 수동 제어
+        public abstract void UpdateManual(); // Manager에 의해 호출될 업데이트 수동 제어
     }
 }

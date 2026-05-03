@@ -12,9 +12,8 @@ namespace Kompile.Field.Entity
         private UnitMoveComponent _moveComponent;
         private UnitAnimComponent _animComponent;
 
-        public override void Initialize(long instanceID, UnitRuntimeContext context)
+        public override void Initialize(UnitRuntimeContext context)
         {
-            _instanceID = instanceID;
             _context = context;
             SetBrain();
 
@@ -26,7 +25,7 @@ namespace Kompile.Field.Entity
             _animComponent.Initialize(this);
         }
 
-        public override void Update()
+        public override void UpdateManual()
         {
             // Brain이 한 프레임의 의사결정 결과(UnitIntent)를 반환하고,
             // Entity가 이를 각 Component에 배분하는 오케스트레이터 역할을 한다.

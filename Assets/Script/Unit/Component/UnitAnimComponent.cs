@@ -8,10 +8,10 @@ namespace Kompile.Unit.Component
     [RequireComponent(typeof(Animator), typeof(SpriteRenderer))]
     public class UnitAnimComponent : MonoBehaviour
     {
-        private UnitEntityBase _ownerEntity;
-
         [SerializeField] private Animator _animator;
 
+        private UnitEntityBase _ownerEntity;
+        
         // 문자열 캐싱을 통한 가비지(GC) 할당 방지 및 탐색 속도 최적화
         private static readonly int HashSpeed = Animator.StringToHash("Speed");
         private static readonly int HashDirX = Animator.StringToHash("DirX");
@@ -23,17 +23,12 @@ namespace Kompile.Unit.Component
         public void Initialize(UnitEntityBase owner)
         {
             _ownerEntity = owner;
-
-            if (_animator == null)
-            {
-                _animator = GetComponentInChildren<Animator>();
-            }
+            _animator = GetComponentInChildren<Animator>();
         }
 
         /// <summary>
         /// Entity.Update()에서 UnitIntent를 수신하여 호출합니다.
-        /// 루프 상태(Idle/Walk)는 MoveInput 크기로 판단하고,
-        /// 트리거성 명령(Attack/Hit/Dead)은 AnimCommand로 처리합니다.
+        /// 루프 상태(Idle/Walk)는 MoveInput 크기로 판단하고, 트리거성 명령(Attack/Hit/Dead)은 AnimCommand로 처리합니다.
         /// </summary>
         public void Update_(in UnitIntent intent)
         {
@@ -65,9 +60,7 @@ namespace Kompile.Unit.Component
         /// 이동 속도와 2.5D 환경에 맞춘 바라보는 방향을 업데이트합니다.
         /// </summary>
         public void UpdateMovementAnim(float speed, Vector3 direction)
-        {
-            if (_animator == null) return;
-
+        {   
             _animator.SetFloat(HashSpeed, speed);
 
             // 속도가 있을 때만 방향 파라미터 업데이트 (2.5D 8방향/4방향 블렌드 트리 대응)
@@ -80,26 +73,17 @@ namespace Kompile.Unit.Component
 
         public void PlayAttackAnimation()
         {
-            if (_animator != null)
-            {
-                _animator.SetTrigger(HashAtk);
-            }
+            _animator.SetTrigger(HashAtk);
         }
 
         public void PlayHitAnimation()
         {
-            if (_animator != null)
-            {
-                _animator.SetTrigger(HashHit);
-            }
+            _animator.SetTrigger(HashHit);
         }
 
         public void PlayDeathAnimation()
         {
-            if (_animator != null)
-            {
-                _animator.SetBool(HashDead, true);
-            }
+            _animator.SetBool(HashDead, true);
         }
 
         // ===================================================================================
@@ -111,7 +95,8 @@ namespace Kompile.Unit.Component
         /// </summary>
         public void OnAttackStrikeEvent()
         {
-            if (_ownerEntity == null) return;
+            if (!_ownerEntity) 
+                return;
 
             // 예시: Entity를 통해 Manager에게 공격이 적중했음을 알리거나 데미지 계산을 트리거합니다.
             // _ownerEntity.ExecuteAttackHitLogic(); 

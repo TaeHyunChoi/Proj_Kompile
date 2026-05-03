@@ -1,3 +1,6 @@
+using Kompile.Unit.Data;
+using Kompile.Unit.Entity;
+
 namespace Kompile.Asset.Provider
 {
     using MessagePack;
@@ -40,7 +43,7 @@ namespace Kompile.Asset.Provider
         #region Game Object (Instance & Pooling)
 
         // Track 1. Data-Driven 방식 (콘텐츠 에셋용)
-        public static async Task<GameObject> GetOrNewInstanceAsync(AssetKey addressKey, Transform parent = null, bool usePooling = true)
+        public static async Awaitable<GameObject> GetOrNewInstanceAsync(AssetKey addressKey, Transform parent = null, bool usePooling = true)
         {
             if (addressKey.IsValid)
             {
@@ -51,6 +54,28 @@ namespace Kompile.Asset.Provider
             return null;
 
         }
+
+        public static async Awaitable<TEntity> GetorNewUnitInstanceAsync<TEntity>(int key, Transform root)
+            where TEntity : UnitEntityBase
+        {
+            AssetKey prefabKey = new AssetKey(AssetConst.UNIT_PREFAB);
+            GameObject go = await AssetProvider.GetOrNewInstanceAsync(prefabKey, root);
+            if (!go)
+            {
+                Debug.LogError("[FieldManager] 플레이어 유닛 프리팹 로드 실패");
+                return null;
+            }
+
+            TEntity entity = go.AddComponent<TEntity>();
+            entity.SetAssetKey(prefabKey);
+
+            UnitTableData tableData = UnitTableProvider.GetUnitData(1);
+            UnitRuntimeContext ctx = new UnitRuntimeContext(tableData.Type, default);
+            entity.Initialize(ctx);
+            
+            return entity;
+        }
+
         public static void ReleaseInstance(AssetKey addressKey, GameObject instance, bool forcedDestroy = false)
         {
             ReleaseInstanceInternal(addressKey, instance, forcedDestroy);
@@ -73,11 +98,11 @@ namespace Kompile.Asset.Provider
 
 
         // Internal Logic (공통 코어 로직)
-        private static async Task<GameObject> GetOrNewInstanceInternalAsync(AssetKey key, Transform parent, bool usePooling)
+        private static async Awaitable<GameObject> GetOrNewInstanceInternalAsync(AssetKey key, Transform parent, bool usePooling)
         {
             if (!GameObjectInstances.TryGetValue(key, out InstanceEntryContext entry))
             {
-                var handle = Addressables.LoadAssetAsync<GameObject>(key.Value);
+                AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(key.Value);
                 await handle.Task;
 
                 if (handle.Status != AsyncOperationStatus.Succeeded)

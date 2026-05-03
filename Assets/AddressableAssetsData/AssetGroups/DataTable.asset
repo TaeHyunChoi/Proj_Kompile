@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: DataTable
   m_GUID: 41bd4541d5dec4415bd1f9e7fdf513aa
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 7d4b2c7c924ab450387261698c83b6d9
+    m_Address: UnitTable
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}
   m_SchemaSet:

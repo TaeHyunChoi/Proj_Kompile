@@ -1,5 +1,10 @@
 using Kompile.Field.Data;
+using Kompile.Field.Entity;
 using Kompile.Map.Manager;
+using Kompile.Asset.Provider;
+using Kompile.Asset.Data;
+using Kompile.Unit.Data;
+using System;
 
 namespace Kompile.Field.Manager
 {
@@ -7,51 +12,82 @@ namespace Kompile.Field.Manager
 
     public class FieldManager
     {
-        private MapManager _mapManager;
-        private FieldMapQueryService _mapQueryService;
+        private readonly MapManager _mapManager;
+        private readonly FieldMapQueryService _mapQueryService;
 
         private readonly Transform _fieldRoot;
-        private readonly Transform _mapRoot;
+        private readonly Transform _unitRoot;
+        private FieldPlayerEntity _playerEntity;
 
         private bool _isFieldActive;
-        
+
         public IMapQueryService MapQueryService => _mapQueryService;
-        
-        // --- Constructor --
+
+        // --- Constructor ---
         public FieldManager(Transform fieldRoot)
         {
             _fieldRoot = fieldRoot;
 
-            _mapRoot = new GameObject("Map").transform;
-            _mapRoot.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            _mapRoot.SetParent(fieldRoot);
-            _mapManager = new MapManager(_mapRoot);
-            
+            Transform mapRoot = new GameObject("Map").transform;
+            mapRoot.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            mapRoot.SetParent(fieldRoot);
+            _mapManager = new MapManager(mapRoot);
+
             _mapQueryService = new FieldMapQueryService(_mapManager);
+
+            _unitRoot = new GameObject("Unit").transform;
+            _unitRoot.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _unitRoot.SetParent(fieldRoot);
+
             _isFieldActive = false;
         }
 
-        // --- Life Cycle ---       
         public void StartFieldAsync(Transform cameraTransform)
         {
             _isFieldActive = true;
-            _ = _mapManager.PlayStreamingAsync(cameraTransform); // fire and forgot
+            _ = _mapManager.PlayStreamingAsync(cameraTransform); // fire and forget
+            _ = SpawnPlayerAsync();                              // fire and forget
+            // _ = SpawnUnitsAsync(units);
         }
+
+        /// <summary> 플레이어 유닛을 비동기 생성·초기화. StartFieldAsync에서 fire and forget으로 호출. </summary>
+        private async Awaitable SpawnPlayerAsync()
+        {
+            try
+            {
+                _playerEntity = await AssetProvider.GetorNewUnitInstanceAsync<FieldPlayerEntity>(key: 1, _unitRoot);
+                _playerEntity.SetMapQuery(_mapQueryService);
+                
+                // for test
+                _playerEntity.transform.SetPositionAndRotation(Vector3.back, Quaternion.identity);
+#if UNITY_EDITOR
+                _playerEntity.gameObject.name = "player";
+#endif
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e.Message);
+                throw;
+            }
+        }
+
         public void Update()
         {
+            _playerEntity?.UpdateManual();
             // TODO: 하위 Manager·Service Update 순차 호출 (향후 추가)
         }
+
         public void Dispose()
         {
             _mapManager.StopStreaming();
+
+            if (_playerEntity)
+            {
+                AssetProvider.ReleaseInstance(_playerEntity.Key, _playerEntity.gameObject);
+                _playerEntity = null;
+            }
+
             _isFieldActive = false;
-        }
-        
-        // --- Layer Control ----
-        // MapTileData에서 public ushort LayerMask; 으로 레이어 판별할 예정
-        public async Awaitable UpdateMapLayerAsync()
-        {
-            
         }
     }
 }

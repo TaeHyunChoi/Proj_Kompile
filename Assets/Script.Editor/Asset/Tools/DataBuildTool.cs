@@ -24,7 +24,8 @@ namespace  Kompile.Asset.Editor.Tools
         private const string SaveDirectory = "Assets/Rcs/Bytes/Table";
         private const string AddressableGroupName = "DataTable";
 
-        // 구글 시트 보안 설정 (실제 주소와 키로 교체 필요)
+        // 구글 시트 보안 설정
+        // 시트 링크: https://docs.google.com/spreadsheets/d/1H3Gn8GfkjLo4e5_7DCUf0GM-EtAmPFG-s_SaP2nDZmE/edit?gid=0#gid=0
         private const string WebAppUrl =
             "https://script.google.com/macros/s/AKfycbxGpber8YHl_X76nm-hIjaud2kpm40-ncWfBy5C9zIRLJ6YNoggPMpCRBoWDERnQbT04w/exec";
 

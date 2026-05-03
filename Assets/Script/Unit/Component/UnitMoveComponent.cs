@@ -54,7 +54,10 @@ namespace Kompile.Unit.Component
         public void Update_(in UnitIntent intent)
         {
             _moveInput = intent.MoveInput;
-            if (_moveInput == Vector2.zero) return;
+            if (_moveInput == Vector2.zero)
+            {
+                return;
+            }
 
             // step 10: 대각선 이동 속도 정규화 (크기 > 1이면 normalize)
             Vector2 dir = _moveInput.sqrMagnitude > 1f ? _moveInput.normalized : _moveInput;
@@ -78,7 +81,10 @@ namespace Kompile.Unit.Component
         /// </summary>
         private bool CheckWalkable(Vector3 pos)
         {
-            if (_mapQuery == null) return true;
+            if (null == _mapQuery)
+            {
+                return false;
+            }
 
             float2 playerXZ = new float2(pos.x, pos.z);
             float radiusSq = WALKABLE_RADIUS * WALKABLE_RADIUS;
@@ -94,8 +100,10 @@ namespace Kompile.Unit.Component
                     // 타일 중심으로 쿼리 (floor 결과가 올바른 tile key를 가리키도록 +0.5 오프셋)
                     float3 queryPos = new float3(tileX + dx + 0.5f, pos.y, tileZ + dz + 0.5f);
                     if (!_mapQuery.TryGetTileData(queryPos, out MapTileData tile))
-                        continue;
-
+                    {
+                        continue;                        
+                    }
+                    
                     // 플레이어 위치를 해당 타일의 로컬 좌표(0~1 범위)로 변환
                     float2 localCenter = playerXZ - new float2(tileX + dx, tileZ + dz);
 
@@ -125,12 +133,17 @@ namespace Kompile.Unit.Component
         /// </summary>
         private float SampleHeight(Vector3 pos)
         {
-            if (_mapQuery == null) return pos.y;
+            if (null == _mapQuery)
+            {
+                return pos.y;
+            }
 
             float3 queryPos = new float3(pos.x, pos.y, pos.z);
             if (!_mapQuery.TryGetTileData(queryPos, out MapTileData tile))
-                return pos.y;
-
+            {
+                return pos.y;                
+            }
+            
             float tileBaseY = Mathf.Floor(pos.y);
             float2 localPos = new float2(
                 pos.x - Mathf.Floor(pos.x),
@@ -139,7 +152,10 @@ namespace Kompile.Unit.Component
             // 플레이어 XZ가 속하는 유효 서브타일 탐색
             for (int s = 0; s < MapConsts.TRIANGLES_COUNT; s++)
             {
-                if (!MapNaviTileUtil.IsSubTileValid(tile.NaviMask, s)) continue;
+                if (!MapNaviTileUtil.IsSubTileValid(tile.NaviMask, s))
+                {
+                    continue;
+                }
 
                 int v0 = MapConsts.SubTileVertexMap[s * 3 + 0];
                 int v1 = MapConsts.SubTileVertexMap[s * 3 + 1];
@@ -149,7 +165,10 @@ namespace Kompile.Unit.Component
                 float2 p1 = MapConsts.VertexPositions[v1];
                 float2 p2 = MapConsts.VertexPositions[v2];
 
-                if (!IsPointInTriangle(localPos, p0, p1, p2)) continue;
+                if (!IsPointInTriangle(localPos, p0, p1, p2))
+                {
+                    continue;
+                }
 
                 // 3정점의 높이 값 추출 (0~14)
                 int h0 = MapNaviTileUtil.GetHeightFromNaviMask(tile.NaviMask, v0);
@@ -179,17 +198,29 @@ namespace Kompile.Unit.Component
                 || (cp1 <= 0f && cp2 <= 0f && cp3 <= 0f);
         }
 
-        /// <summary> 삼각형 (a, b, c) 기준으로 점 p의 바리센트릭 좌표를 반환합니다. </summary>
-        private static float3 BarycentricCoords(float2 p, float2 a, float2 b, float2 c)
+        /// <summary> 
+        /// 삼각형 (a, b, c) 내 점 p의 바리센트릭 좌표를 반환합니다. 
+        /// </summary>
+        public static float3 BarycentricCoords(float2 p, float2 a, float2 b, float2 c)
         {
-            float denom = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
-            if (math.abs(denom) < 1e-6f)
-                return new float3(1f / 3f, 1f / 3f, 1f / 3f); // 퇴화 삼각형 → 균등 분배
+            // 각 꼭짓점에서 p와 다른 꼭짓점들로 향하는 벡터 정의
+            float2 v0 = b - a, v1 = c - a, v2 = p - a;
 
-            float w0 = ((b.y - c.y) * (p.x - c.x) + (c.x - b.x) * (p.y - c.y)) / denom;
-            float w1 = ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) / denom;
-            float w2 = 1f - w0 - w1;
-            return new float3(w0, w1, w2);
+            // 2D Determinant (외적)을 이용한 전체 삼각형 면적(의 2배) 계산
+            float den = v0.x * v1.y - v1.x * v0.y;
+
+            // 퇴화 삼각형(Degenerate Triangle) 처리
+            if (math.abs(den) < 1e-6f)
+            {
+                return new float3(1f / 3f);
+            }
+
+            // 면적비를 이용하여 좌표 계산
+            float v = (v2.x * v1.y - v1.x * v2.y) / den;
+            float w = (v0.x * v2.y - v2.x * v0.y) / den;
+            float u = 1.0f - v - w;
+
+            return new float3(u, v, w);
         }
     }
 }
