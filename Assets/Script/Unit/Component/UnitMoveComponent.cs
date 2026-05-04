@@ -83,7 +83,7 @@ namespace Kompile.Unit.Component
         {
             if (null == _mapQuery)
             {
-                return false;
+                return true; // mapQuery 없으면 충돌 판정 생략하고 이동 허용
             }
 
             float2 playerXZ = new float2(pos.x, pos.z);

@@ -19,9 +19,6 @@ namespace Kompile.Map.Utility
         /// </summary>
         public static long ComputeTileIDInt(in int3 pInt)
         {
-            const int TILE_BITS = 6;
-            const int TILE_MASK_VAL = (1 << TILE_BITS) - 1; // 63 (0x3F)
-
             // 1. 0.25f 단위 인덱스 -> 1.0f 단위 타일 좌표 변환
             int absTx = pInt.x >> 3;
             int absTy = pInt.y >> 3;
@@ -33,15 +30,15 @@ namespace Kompile.Map.Utility
             int gZ = absTz >> 6;
 
             // 3. 그룹 내 로컬 타일 좌표 계산 (Modulo 64)
-            int tX = absTx & TILE_MASK_VAL;
-            int tY = absTy & TILE_MASK_VAL;
-            int tZ = absTz & TILE_MASK_VAL;
+            int tX = absTx & TILE_MASK;
+            int tY = absTy & TILE_MASK;
+            int tZ = absTz & TILE_MASK;
 
             // 4. 비트 패킹 (기존 로직과 동일)
             uint tKey =
-                (uint)((tX & TILE_MASK_VAL) << (TILE_BITS * 2)) |
-                (uint)((tY & TILE_MASK_VAL) << (TILE_BITS * 1)) |
-                (uint)((tZ & TILE_MASK_VAL) << (TILE_BITS * 0));
+                (uint)((tX & TILE_MASK) << (TILE_BITS * 2)) |
+                (uint)((tY & TILE_MASK) << (TILE_BITS * 1)) |
+                (uint)((tZ & TILE_MASK) << (TILE_BITS * 0));
 
             // Group 좌표 패킹 (byte 캐스팅으로 범위 초과 시 자동 순환)
             byte bX = (byte)gX;
@@ -56,8 +53,7 @@ namespace Kompile.Map.Utility
         [BurstCompile]
         public static void ComputeID(int gKey, int tKey, out long outID)
         {
-            const int SHFIT = 32;
-            outID = ((long)gKey << SHFIT) | (uint)tKey;
+            outID = ((long)gKey << 32) | (uint)tKey;
         }
 
         public static void ComputeWorldPosition(long id, out float3 outWorldPos)

@@ -55,9 +55,12 @@ namespace Kompile.Field.Manager
         {
             try
             {
-                _playerEntity = await AssetProvider.GetorNewUnitInstanceAsync<FieldPlayerEntity>(key: 1, _unitRoot);
-                _playerEntity.SetMapQuery(_mapQueryService);
-                
+                _playerEntity = await AssetProvider.GetOrNewUnitInstanceAsync<FieldPlayerEntity>(_unitRoot);
+
+                UnitTableData tableData = UnitTableProvider.GetUnitData(1);
+                UnitRuntimeContext ctx = new UnitRuntimeContext(tableData.Type, default);
+                _playerEntity.Initialize(ctx, _mapQueryService);
+
                 // for test
                 _playerEntity.transform.SetPositionAndRotation(Vector3.back, Quaternion.identity);
 #if UNITY_EDITOR

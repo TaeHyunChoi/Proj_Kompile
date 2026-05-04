@@ -1,12 +1,9 @@
-using Kompile.Unit.Data;
 using Kompile.Unit.Entity;
 
 namespace Kompile.Asset.Provider
 {
     using MessagePack;
     using System.Collections.Generic;
-    using System.IO;
-    using System.Threading.Tasks;
     using UnityEngine;
     using UnityEngine.AddressableAssets;
     using UnityEngine.ResourceManagement.AsyncOperations;
@@ -55,24 +52,23 @@ namespace Kompile.Asset.Provider
 
         }
 
-        public static async Awaitable<TEntity> GetorNewUnitInstanceAsync<TEntity>(int key, Transform root)
+        /// <summary>
+        /// 유닛 프리팹을 풀에서 꺼내거나 새로 인스턴스화하여 컴포넌트를 추가한 뒤 반환합니다.
+        /// Initialize는 호출하지 않습니다. 호출자가 직접 Initialize를 호출해야 합니다.
+        /// </summary>
+        public static async Awaitable<TEntity> GetOrNewUnitInstanceAsync<TEntity>(Transform root)
             where TEntity : UnitEntityBase
         {
             AssetKey prefabKey = new AssetKey(AssetConst.UNIT_PREFAB);
             GameObject go = await AssetProvider.GetOrNewInstanceAsync(prefabKey, root);
             if (!go)
             {
-                Debug.LogError("[FieldManager] 플레이어 유닛 프리팹 로드 실패");
+                Debug.LogError("[AssetProvider] 유닛 프리팹 로드 실패");
                 return null;
             }
 
             TEntity entity = go.AddComponent<TEntity>();
             entity.SetAssetKey(prefabKey);
-
-            UnitTableData tableData = UnitTableProvider.GetUnitData(1);
-            UnitRuntimeContext ctx = new UnitRuntimeContext(tableData.Type, default);
-            entity.Initialize(ctx);
-            
             return entity;
         }
 
@@ -83,7 +79,7 @@ namespace Kompile.Asset.Provider
 
 
         // Track 2. Type-Inference 방식 (시스템 및 고유 UI 에셋용)
-        public static async Task<T> GetOrNewInstanceAsync<T>(Transform parent = null, bool usePooling = true) where T : Component
+        public static async Awaitable<T> GetOrNewInstanceAsync<T>(Transform parent = null, bool usePooling = true) where T : Component
         {
             AssetKey addressKey = new AssetKey(TypeNameCache<T>.Name);
             GameObject instance = await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
@@ -167,7 +163,7 @@ namespace Kompile.Asset.Provider
 
         #region Non-GameObject Assets (Data Centric)
 
-        public static async Task<T> LoadAssetAsync<T>(AssetKey key) where T : UnityEngine.Object
+        public static async Awaitable<T> LoadAssetAsync<T>(AssetKey key) where T : UnityEngine.Object
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(key.Value);
             T result = await handle.Task;
@@ -180,40 +176,6 @@ namespace Kompile.Asset.Provider
             NonGameObjectInstances.TryAdd(result.GetInstanceID(), handle);
             return result;
 
-        }
-
-        public static async Awaitable<T> LoadBinaryDataAsync<T>(AssetKey key)
-        {
-            AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(key.Value);
-            try
-            {
-                TextAsset textAsset = await handle.Task;
-
-                if (handle.Status != AsyncOperationStatus.Succeeded 
-                    || !textAsset)
-                {
-                    if (handle.IsValid())
-                    {
-                        Addressables.Release(handle);                    
-                    }
-                
-                    throw new FileNotFoundException($"[AssetProvider] Binary file not found: {key.Value}");
-                }
-                
-                return MessagePackSerializer.Deserialize<T>(textAsset.bytes, MsgPackOptions);
-            }
-#if UNITY_EDITOR
-            catch (System.Exception ex) // 💡 핵심 추가: 에러를 낚아채서 원인을 출력합니다.
-            {
-                Debug.LogError(
-                    $"[AssetProvider] MessagePack 파싱 실패 (Key: {key.Value})\n사유: {ex.Message}\n{ex.StackTrace}");
-                return default; // 에러가 나면 null(default)을 반환하여 이후 로직이 중단점을 타도록 유도
-            }
-#endif
-            finally
-            {
-                Addressables.Release(handle);
-            }
         }
 
         public static void ReleaseAsset(int instanceID)

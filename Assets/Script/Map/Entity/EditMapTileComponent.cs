@@ -23,6 +23,7 @@ namespace Kompile.Map.Entity
         [SerializeField] private ulong heightMask;
 
         private bool _isVisualDimmed = false;
+        private MaterialPropertyBlock _propertyBlock;
 
         public MeshFilter MeshFilter => meshFilter;
         public MeshRenderer MeshRenderer => meshRenderer;
@@ -50,6 +51,7 @@ namespace Kompile.Map.Entity
             if (!meshFilter) meshFilter = GetComponent<MeshFilter>();
             if (!meshRenderer) meshRenderer = GetComponent<MeshRenderer>();
             heightData.EnsureInitialized();
+            _propertyBlock = new MaterialPropertyBlock();
         }
         private void OnEnable()
         {
@@ -69,11 +71,10 @@ namespace Kompile.Map.Entity
         public void UpdateMaterialProperties()
         {
             if (!meshRenderer) return;
-            
+
             const float UV_STEP = 1f / 8f;
-            
-            MaterialPropertyBlock pb = new MaterialPropertyBlock();
-            if (meshRenderer.HasPropertyBlock()) meshRenderer.GetPropertyBlock(pb);
+
+            if (meshRenderer.HasPropertyBlock()) meshRenderer.GetPropertyBlock(_propertyBlock);
 
             // 1. 오프셋 계산 (기존 유지)
             Vector2 topOffset = new Vector2((topTextureIndex % 8) * UV_STEP, 1f - ((topTextureIndex / 8 + 1) * UV_STEP));
@@ -83,28 +84,28 @@ namespace Kompile.Map.Entity
             Vector2 uvScale = new Vector2(UV_STEP, UV_STEP);
 
             // 3. 쉐이더 프로퍼티 주입
-            pb.SetVector("_TopUVOffset", topOffset);
-            pb.SetVector("_TopUVScale", uvScale);   // <-- 누락되었던 핵심 스케일 값 복구
-            pb.SetVector("_SideUVOffset", sideOffset);
-            pb.SetVector("_SideUVScale", uvScale);  // <-- 누락되었던 핵심 스케일 값 복구
+            _propertyBlock.SetVector("_TopUVOffset", topOffset);
+            _propertyBlock.SetVector("_TopUVScale", uvScale);   // <-- 누락되었던 핵심 스케일 값 복구
+            _propertyBlock.SetVector("_SideUVOffset", sideOffset);
+            _propertyBlock.SetVector("_SideUVScale", uvScale);  // <-- 누락되었던 핵심 스케일 값 복구
             
-            pb.SetFloat("_IsBaked", 0f);            // <-- 에디터 프리뷰용 플래그 복구
+            _propertyBlock.SetFloat("_IsBaked", 0f);            // <-- 에디터 프리뷰용 플래그 복구
 
             if (topAtlasTexture != null)
             {
-                pb.SetTexture("_TopAtlas", topAtlasTexture);
-                pb.SetTexture("_MainTex", topAtlasTexture); // URP/Standard 호환용 Fallback 복구
-                pb.SetTexture("_BaseMap", topAtlasTexture);
+                _propertyBlock.SetTexture("_TopAtlas", topAtlasTexture);
+                _propertyBlock.SetTexture("_MainTex", topAtlasTexture); // URP/Standard 호환용 Fallback 복구
+                _propertyBlock.SetTexture("_BaseMap", topAtlasTexture);
             }
             if (sideAtlasTexture != null)
             {
-                pb.SetTexture("_SideAtlas", sideAtlasTexture);
+                _propertyBlock.SetTexture("_SideAtlas", sideAtlasTexture);
             }
             
             Color tint = _isVisualDimmed ? new Color(0.2f, 0.2f, 0.2f, 1f) : Color.white;
-            pb.SetColor("_Color", tint);
+            _propertyBlock.SetColor("_Color", tint);
 
-            meshRenderer.SetPropertyBlock(pb);
+            meshRenderer.SetPropertyBlock(_propertyBlock);
         }
         
 #if UNITY_EDITOR

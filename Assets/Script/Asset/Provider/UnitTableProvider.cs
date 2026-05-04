@@ -12,8 +12,7 @@ namespace Kompile.Asset.Provider
         
         public static async Awaitable InitializeAsync()
         {
-            AssetKey key = new AssetKey(AssetConst.UNIT_TABLE);
-            _sheets = await AssetProvider.LoadBinaryDataAsync<UnitTableData[]>(key);
+            _sheets = await AssetProvider.ReadBinaryDataAsync<UnitTableData[]>(AssetConst.UNIT_TABLE);
             
             if (null == _sheets
                 || 0 == _sheets.Length)

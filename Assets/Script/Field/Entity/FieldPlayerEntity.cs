@@ -13,6 +13,10 @@ namespace Kompile.Field.Entity
         private UnitAnimComponent _animComponent;
 
         public override void Initialize(UnitRuntimeContext context)
+            => Initialize(context, null);
+
+        /// <summary> mapQuery를 포함한 완전 초기화. FieldManager의 SpawnPlayerAsync에서 호출. </summary>
+        public void Initialize(UnitRuntimeContext context, IMapQueryService mapQuery)
         {
             _context = context;
             SetBrain();
@@ -20,8 +24,7 @@ namespace Kompile.Field.Entity
             _moveComponent = transform.GetComponent<UnitMoveComponent>();
             _animComponent = transform.GetComponent<UnitAnimComponent>();
 
-            // mapQuery는 FieldUnitManager가 SetMapQuery()로 나중에 주입
-            _moveComponent.Initialize(this, null);
+            _moveComponent.Initialize(this, mapQuery);
             _animComponent.Initialize(this);
         }
 
@@ -33,12 +36,6 @@ namespace Kompile.Field.Entity
 
             _moveComponent.Update_(in intent);
             _animComponent.Update_(in intent);
-        }
-
-        /// <summary> FieldUnitManager에서 호출. IMapQueryService를 UnitMoveComponent에 주입 </summary>
-        public void SetMapQuery(IMapQueryService mapQuery)
-        {
-            _moveComponent.Initialize(this, mapQuery);
         }
 
         /// <summary>
