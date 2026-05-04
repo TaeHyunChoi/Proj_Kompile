@@ -17,7 +17,7 @@ namespace Kompile.Asset.Provider
         public static async Task InitializeAsync()
         {
             // 1. 바이너리 배열 로드
-            Sheets = await AssetProvider.LoadBinaryDataAsync<LocalizationTableData[]>(new AssetKey("LocalizationTable"));
+            Sheets = await AssetProvider.ReadBinaryDataAsync<LocalizationTableData[]>(new AssetKey("LocalizationTable"));
 
             if (Sheets == null) return;
 
