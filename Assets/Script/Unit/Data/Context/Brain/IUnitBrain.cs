@@ -1,6 +1,7 @@
 namespace Kompile.Unit.Entity
 {
     using Kompile.Unit.Data;
+    using static Kompile.Input.Data.Definition;
 
     /// <summary>
     /// 유닛의 행동 패턴을 정의하는 순수 C# 전략 개체.
@@ -10,7 +11,7 @@ namespace Kompile.Unit.Entity
     public interface IUnitBrain
     {
         void       Initialize(UnitEntityBase ownerEntity);
-        UnitIntent Update();
+        UnitIntent Update(in InputState inputState);
         void       Clear();
     }
 }

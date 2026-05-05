@@ -1,7 +1,10 @@
+using Kompile.Field.Data;
+
 namespace Kompile.Unit.Entity
 {
     using Kompile.Entity.Data; // Entity 클래스가 있는 네임스페이스
     using Kompile.Unit.Data;
+    using static Kompile.Input.Data.Definition;
     
     /// <summary> Entity 상속 필드, 전투, NPC 등 모든 유닛 개체의 베이스 클래스
     /// </summary>
@@ -38,7 +41,7 @@ namespace Kompile.Unit.Entity
             _brain = null;
         }
 
-        public abstract void Initialize(UnitRuntimeContext context);
+        public abstract void Initialize(UnitRuntimeContext context, IMapQueryService mapQuery);
 
         protected void SetBrain()
         {
@@ -46,11 +49,11 @@ namespace Kompile.Unit.Entity
             
             _brain = _context.BrainType switch
             {
-                UnitBrainType.PlayerControl => new PlayerControlBrain(),
+                UnitBrainType.Player => new PlayerControlBrain(),
                 _ => null
             };
         }
 
-        public abstract void UpdateManual(); // Manager에 의해 호출될 업데이트 수동 제어
+        public abstract void UpdateManual(in InputState inputState); // Manager에 의해 호출될 업데이트 수동 제어
     }
 }

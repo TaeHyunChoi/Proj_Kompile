@@ -5,6 +5,7 @@ using Kompile.Asset.Provider;
 using Kompile.Asset.Data;
 using Kompile.Unit.Data;
 using System;
+using static Kompile.Input.Data.Definition;
 
 namespace Kompile.Field.Manager
 {
@@ -33,6 +34,7 @@ namespace Kompile.Field.Manager
             mapRoot.SetParent(fieldRoot);
             _mapManager = new MapManager(mapRoot);
 
+            // 버전, 빌드 버전에 따라 교체할 수 있다.
             _mapQueryService = new FieldMapQueryService(_mapManager);
 
             _unitRoot = new GameObject("Unit").transform;
@@ -53,30 +55,22 @@ namespace Kompile.Field.Manager
         /// <summary> 플레이어 유닛을 비동기 생성·초기화. StartFieldAsync에서 fire and forget으로 호출. </summary>
         private async Awaitable SpawnPlayerAsync()
         {
-            try
-            {
-                _playerEntity = await AssetProvider.GetOrNewUnitInstanceAsync<FieldPlayerEntity>(_unitRoot);
+            _playerEntity = await AssetProvider.GetOrNewUnitInstanceAsync<FieldPlayerEntity>(_unitRoot);
 
-                UnitTableData tableData = UnitTableProvider.GetUnitData(1);
-                UnitRuntimeContext ctx = new UnitRuntimeContext(tableData.Type, default);
-                _playerEntity.Initialize(ctx, _mapQueryService);
+            UnitTableData tableData = UnitTableProvider.GetUnitData(1);
+            UnitRuntimeContext ctx = new UnitRuntimeContext(tableData.Type, UnitBrainType.Player);
+            _playerEntity.Initialize(ctx, _mapQueryService);
 
-                // for test
-                _playerEntity.transform.SetPositionAndRotation(Vector3.back, Quaternion.identity);
+            // for test
+            _playerEntity.transform.SetPositionAndRotation(Vector3.forward, Quaternion.identity);
 #if UNITY_EDITOR
-                _playerEntity.gameObject.name = "player";
+            _playerEntity.gameObject.name = "player";
 #endif
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e.Message);
-                throw;
-            }
         }
 
-        public void Update()
+        public void Update(in InputState inputState)
         {
-            _playerEntity?.UpdateManual();
+            _playerEntity?.UpdateManual(in inputState);
             // TODO: 하위 Manager·Service Update 순차 호출 (향후 추가)
         }
 
