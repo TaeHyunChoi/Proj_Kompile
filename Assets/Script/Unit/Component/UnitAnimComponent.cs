@@ -9,6 +9,7 @@ namespace Kompile.Unit.Component
     public class UnitAnimComponent : MonoBehaviour
     {
         [SerializeField] private Animator _animator;
+        [SerializeField] private AnimatorOverrideController _overrideController;
 
         private UnitEntityBase _ownerEntity;
         
@@ -24,6 +25,8 @@ namespace Kompile.Unit.Component
         {
             _ownerEntity = owner;
             _animator = GetComponentInChildren<Animator>();
+            if (_overrideController != null)
+                _animator.runtimeAnimatorController = _overrideController;
         }
 
         /// <summary>
@@ -73,7 +76,7 @@ namespace Kompile.Unit.Component
 
         public void PlayAttackAnimation()
         {
-            _animator.SetTrigger(HashAtk);
+            _animator.Play(HashAtk, 0, 0f);
         }
 
         public void PlayHitAnimation()
