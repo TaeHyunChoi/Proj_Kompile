@@ -9,11 +9,14 @@ namespace Kompile.Asset.Data
     public struct UnitTableData
     {
         public int ID;
-        public FixedString32Bytes AssetAddress; 
+        public FixedString32Bytes AssetAddress;
+        public FixedString32Bytes AocAddress;
         public UnitType Type;
         public UnitBrainType BrainType;
 
         [IgnoreMember]
         public string Address => AssetAddress.ToString();
+        [IgnoreMember]
+        public string AocAddressStr => AocAddress.ToString();
     }
 }

@@ -1,3 +1,2 @@
-ID,AssetAddress,Type,BrainType
-1,Ataho,Player,Ataho
-100,Monkey,Enemy,E_Monkey
+ID,AssetAddress,Type,BrainType,AocAddress
+0,Test,Player,Player,anim_test

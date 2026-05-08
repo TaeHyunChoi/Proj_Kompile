@@ -13,8 +13,15 @@ namespace Kompile.Field.Entity
         private UnitMoveComponent _moveComponent;
         private UnitAnimComponent _animComponent;
 
-        /// <summary> mapQuery를 포함한 완전 초기화. FieldManager의 SpawnPlayerAsync에서 호출. </summary>
+        /// <summary> mapQuery를 포함한 완전 초기화. AOC 없이 호출되는 경우 (Inspector 할당 또는 AOC 없음). </summary>
         public override void Initialize(UnitRuntimeContext context, IMapQueryService mapQuery)
+            => InitCore(context, mapQuery, null);
+
+        /// <summary> AOC를 포함한 완전 초기화. 동적 생성 경로(FieldManager.SpawnPlayerAsync)에서 호출. </summary>
+        public void Initialize(UnitRuntimeContext context, IMapQueryService mapQuery, AnimatorOverrideController aoc)
+            => InitCore(context, mapQuery, aoc);
+
+        private void InitCore(UnitRuntimeContext context, IMapQueryService mapQuery, AnimatorOverrideController aoc)
         {
             _context = context;
             SetBrain();
@@ -23,7 +30,7 @@ namespace Kompile.Field.Entity
             _animComponent = transform.GetComponent<UnitAnimComponent>();
 
             _moveComponent.Initialize(this, mapQuery);
-            _animComponent.Initialize(this);
+            _animComponent.Initialize(this, aoc);
         }
 
         public override void UpdateManual(in InputState inputState)
@@ -33,7 +40,7 @@ namespace Kompile.Field.Entity
             UnitIntent intent = _brain?.Update(in inputState) ?? UnitIntent.Empty;
 
             _moveComponent.Update_(in intent);
-            _animComponent.Update_(in intent);
+            _animComponent.UpdateIntent(in intent);
         }
     }
 }

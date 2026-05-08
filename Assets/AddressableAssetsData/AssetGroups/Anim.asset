@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Animation
+  m_Name: Anim
   m_EditorClassIdentifier: 
-  m_GroupName: Animation
+  m_GroupName: Anim
   m_GUID: a00b46e57dbf6ef49bd181dab2b4a5cd
   m_SerializeEntries:
-  - m_GUID: d9534d69b73ce8f4d910c36d6a6dca77
-    m_Address: AnimCtrl_Ataho
+  - m_GUID: ec5036422630c41ac90407f15f3e25c1
+    m_Address: anim_test
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

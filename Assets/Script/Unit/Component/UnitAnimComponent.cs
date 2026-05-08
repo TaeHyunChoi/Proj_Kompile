@@ -21,19 +21,20 @@ namespace Kompile.Unit.Component
         private static readonly int HashDead = Animator.StringToHash("Dead");
         private static readonly int HashAtk = Animator.StringToHash("Attack");
 
-        public void Initialize(UnitEntityBase owner)
+        public void Initialize(UnitEntityBase owner, AnimatorOverrideController aoc = null)
         {
             _ownerEntity = owner;
             _animator = GetComponentInChildren<Animator>();
-            if (_overrideController != null)
-                _animator.runtimeAnimatorController = _overrideController;
+            AnimatorOverrideController toApply = aoc ?? _overrideController;
+            if (toApply != null)
+                _animator.runtimeAnimatorController = toApply;
         }
 
         /// <summary>
         /// Entity.Update()에서 UnitIntent를 수신하여 호출합니다.
         /// 루프 상태(Idle/Walk)는 MoveInput 크기로 판단하고, 트리거성 명령(Attack/Hit/Dead)은 AnimCommand로 처리합니다.
         /// </summary>
-        public void Update_(in UnitIntent intent)
+        public void UpdateIntent(in UnitIntent intent)
         {
             float speed = intent.MoveInput.magnitude;
             Vector3 dir = new Vector3(intent.MoveInput.x, 0f, intent.MoveInput.y);

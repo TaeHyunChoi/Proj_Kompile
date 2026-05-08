@@ -4,7 +4,6 @@ using Kompile.Map.Manager;
 using Kompile.Asset.Provider;
 using Kompile.Asset.Data;
 using Kompile.Unit.Data;
-using System;
 using static Kompile.Input.Data.Definition;
 
 namespace Kompile.Field.Manager
@@ -19,6 +18,7 @@ namespace Kompile.Field.Manager
         private readonly Transform _fieldRoot;
         private readonly Transform _unitRoot;
         private FieldPlayerEntity _playerEntity;
+        private AnimatorOverrideController _playerAoc;
 
         private bool _isFieldActive;
 
@@ -59,7 +59,11 @@ namespace Kompile.Field.Manager
 
             UnitTableData tableData = UnitTableProvider.GetUnitData(1);
             UnitRuntimeContext ctx = new UnitRuntimeContext(tableData.Type, UnitBrainType.Player);
-            _playerEntity.Initialize(ctx, _mapQueryService);
+
+            AssetKey aocKey = new AssetKey(tableData.AocAddressStr);
+            _playerAoc = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(aocKey);
+
+            _playerEntity.Initialize(ctx, _mapQueryService, _playerAoc);
 
             // for test
             _playerEntity.transform.SetPositionAndRotation(Vector3.forward, Quaternion.identity);
@@ -82,6 +86,12 @@ namespace Kompile.Field.Manager
             {
                 AssetProvider.ReleaseInstance(_playerEntity.Key, _playerEntity.gameObject);
                 _playerEntity = null;
+            }
+
+            if (_playerAoc)
+            {
+                AssetProvider.ReleaseAsset(_playerAoc.GetInstanceID());
+                _playerAoc = null;
             }
 
             _isFieldActive = false;
