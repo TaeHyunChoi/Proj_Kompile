@@ -60,10 +60,11 @@ namespace Kompile.Field.Manager
             UnitTableData tableData = UnitTableProvider.GetUnitData(1);
             UnitRuntimeContext ctx = new UnitRuntimeContext(tableData.Type, UnitBrainType.Player);
 
-            AssetKey aocKey = new AssetKey(tableData.AocAddressStr);
-            _playerAoc = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(aocKey);
-
-            _playerEntity.Initialize(ctx, _mapQueryService, _playerAoc);
+            //"aoc_unit_field"
+            // AssetKey aocKey = new AssetKey(tableData.AocAddressStr);
+            AssetKey aocKey = new AssetKey("aoc_unit_field");
+            var playerAoc = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(aocKey);
+            _playerEntity.Initialize(ctx, _mapQueryService, playerAoc);
 
             // for test
             _playerEntity.transform.SetPositionAndRotation(Vector3.forward, Quaternion.identity);
@@ -74,7 +75,7 @@ namespace Kompile.Field.Manager
 
         public void Update(in InputState inputState)
         {
-            _playerEntity?.UpdateManual(in inputState);
+            // _playerEntity?.UpdateManual(in inputState);
             // TODO: 하위 Manager·Service Update 순차 호출 (향후 추가)
         }
 
@@ -88,11 +89,11 @@ namespace Kompile.Field.Manager
                 _playerEntity = null;
             }
 
-            if (_playerAoc)
-            {
-                AssetProvider.ReleaseAsset(_playerAoc.GetInstanceID());
-                _playerAoc = null;
-            }
+            // if (_playerAoc)
+            // {
+            //     AssetProvider.ReleaseAsset(_playerAoc.GetInstanceID());
+            //     _playerAoc = null;
+            // }
 
             _isFieldActive = false;
         }

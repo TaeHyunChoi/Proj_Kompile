@@ -26,7 +26,7 @@ namespace Kompile.Unit.Component
             _ownerEntity = owner;
             _animator = GetComponentInChildren<Animator>();
             AnimatorOverrideController toApply = aoc ?? _overrideController;
-            if (toApply != null)
+            if (toApply)
                 _animator.runtimeAnimatorController = toApply;
         }
 

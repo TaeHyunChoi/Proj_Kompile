@@ -15,8 +15,8 @@ MonoBehaviour:
   m_GroupName: Anim
   m_GUID: a00b46e57dbf6ef49bd181dab2b4a5cd
   m_SerializeEntries:
-  - m_GUID: ec5036422630c41ac90407f15f3e25c1
-    m_Address: anim_test
+  - m_GUID: 49bf0661331f14522b760412c2a031ae
+    m_Address: aoc_field_000
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
