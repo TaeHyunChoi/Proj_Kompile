@@ -189,7 +189,8 @@ namespace  Kompile.Asset.Editor.Tools
                     ID = int.Parse(v[0]),
                     AssetAddress = new FixedString32Bytes(v[1]),
                     Type = (UnitType)Enum.Parse(typeof(UnitType), v[2]),
-                    BrainType = (UnitBrainType)Enum.Parse(typeof(UnitBrainType), v[3])
+                    BrainType = (UnitBrainType)Enum.Parse(typeof(UnitBrainType), v[3]),
+                    AocAddress = new FixedString32Bytes(v[4])
                 });
             }
 

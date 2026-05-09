@@ -55,22 +55,27 @@ namespace Kompile.Field.Manager
         /// <summary> 플레이어 유닛을 비동기 생성·초기화. StartFieldAsync에서 fire and forget으로 호출. </summary>
         private async Awaitable SpawnPlayerAsync()
         {
-            _playerEntity = await AssetProvider.GetOrNewUnitInstanceAsync<FieldPlayerEntity>(_unitRoot);
+            try
+            {
+                _playerEntity = await AssetProvider.GetOrNewUnitInstanceAsync<FieldPlayerEntity>(_unitRoot);
 
-            UnitTableData tableData = UnitTableProvider.GetUnitData(1);
-            UnitRuntimeContext ctx = new UnitRuntimeContext(tableData.Type, UnitBrainType.Player);
+                UnitTableData tableData = UnitTableProvider.GetUnitData(0);
+                UnitRuntimeContext ctx = new UnitRuntimeContext(tableData.Type, UnitBrainType.Player);
 
-            //"aoc_unit_field"
-            // AssetKey aocKey = new AssetKey(tableData.AocAddressStr);
-            AssetKey aocKey = new AssetKey("aoc_unit_field");
-            var playerAoc = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(aocKey);
-            _playerEntity.Initialize(ctx, _mapQueryService, playerAoc);
+                AssetKey aocKey = new AssetKey(tableData.AocAddressStr);
+                var playerAoc = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(aocKey);
+                _playerEntity.Initialize(ctx, _mapQueryService, playerAoc);
 
-            // for test
-            _playerEntity.transform.SetPositionAndRotation(Vector3.forward, Quaternion.identity);
+                // for test
+                _playerEntity.transform.SetPositionAndRotation(Vector3.forward, Quaternion.identity);
 #if UNITY_EDITOR
-            _playerEntity.gameObject.name = "player";
+                _playerEntity.gameObject.name = "player";
 #endif
+            }
+            catch (System.Exception ex)
+            {
+                Debug.Log($"[Debug] {ex.Message}");
+            }
         }
 
         public void Update(in InputState inputState)

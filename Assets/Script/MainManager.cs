@@ -58,7 +58,7 @@ namespace Kompile
         private void Update()
         {
             InputState state = _input.Current;
-            _fieldManager.Update(in state);
+            //_fieldManager.Update(in state);
             _input.OnEndOfFrame();
         }
 
