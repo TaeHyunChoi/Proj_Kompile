@@ -48,6 +48,8 @@ namespace Kompile.Input.Data
             {
                 return (current & input) == 0 && (previous & input) != 0;
             }
+
+            public readonly IDxInput Current => current;
         }
     }
 }

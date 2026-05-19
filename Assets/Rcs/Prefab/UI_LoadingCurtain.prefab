@@ -11,8 +11,6 @@ GameObject:
   - component: {fileID: 7811261111361674784}
   - component: {fileID: 1499713783304608408}
   - component: {fileID: 2555294953052326248}
-  - component: {fileID: 3540116903511289143}
-  - component: {fileID: 1273230579734330037}
   m_Layer: 0
   m_Name: UI_LoadingCurtain
   m_TagString: Untagged
@@ -77,27 +75,3 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3540116903511289143
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1696081714019370872}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3106ce727e639b6418832983ac8d7b4c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1273230579734330037
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1696081714019370872}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0505e709325f8a4585f8f52fec7820a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

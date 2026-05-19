@@ -51,7 +51,7 @@ namespace Kompile.Unit.Component
         /// Entity.Update()에서 UnitIntent를 수신하여 호출합니다.
         /// intent.MoveInput.x = 좌우(world X), intent.MoveInput.y = 앞뒤(world Z)
         /// </summary>
-        public void Update_(in UnitIntent intent)
+        public void UpdateIntent(in UnitIntent intent)
         {
             _moveInput = intent.MoveInput;
             if (_moveInput == Vector2.zero)

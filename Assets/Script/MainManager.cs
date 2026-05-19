@@ -25,26 +25,34 @@ namespace Kompile
         }
         private async Awaitable AwakeAsync()
         {
-            await Initialize_Table();
+            try
+            {
+                await Initialize_Table();
 
-            // Field 루트 오브젝트 생성
-            GameObject fieldRootObj = new GameObject("Field");
-            fieldRootObj.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            _fieldRoot = fieldRootObj.transform;
-            
-            // 입력 Provider 생성
-            _input = new IngameInputProvider();
+                // Field 루트 오브젝트 생성
+                GameObject fieldRootObj = new GameObject("Field");
+                fieldRootObj.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                _fieldRoot = fieldRootObj.transform;
 
-            // 콘텐츠 Manager 일괄 생성·초기화
-            _fieldManager = new FieldManager(_fieldRoot);
+                // 입력 Provider 생성
+                _input = new IngameInputProvider();
 
-            await Awaitable.NextFrameAsync();
-            
-            // 콘텐츠 시작 (Camera.main.transform을 스트리밍 앵커로 전달)
-            _fieldManager.StartFieldAsync(Camera.main.transform);
+                // 콘텐츠 Manager 일괄 생성·초기화
+                _fieldManager = new FieldManager(_fieldRoot);
 
-            // Update() 호출 시작;
-            enabled = true;
+                await Awaitable.NextFrameAsync();
+
+                // 콘텐츠 시작 (Camera.main.transform을 스트리밍 앵커로 전달)
+                await _fieldManager.StartFieldAsync(Camera.main.transform);
+
+                // Update() 호출 시작;
+                enabled = true;
+
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Debug] {ex.Message}");
+            }
         }
 
         private async Awaitable Initialize_Table()
@@ -58,7 +66,7 @@ namespace Kompile
         private void Update()
         {
             InputState state = _input.Current;
-            //_fieldManager.Update(in state);
+            _fieldManager.Update(in state);
             _input.OnEndOfFrame();
         }
 

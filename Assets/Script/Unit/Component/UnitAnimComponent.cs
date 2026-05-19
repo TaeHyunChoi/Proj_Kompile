@@ -3,6 +3,7 @@ namespace Kompile.Unit.Component
     using UnityEngine;
     using Kompile.Unit.Data;
     using Kompile.Unit.Entity;
+    using Kompile.Asset.Provider;
 
     /// <summary> GameObject에 부착되어 유닛의 애니메이션(Animator 상태 및 스프라이트 제어)을 전담 </summary>
     [RequireComponent(typeof(Animator), typeof(SpriteRenderer))]
@@ -63,9 +64,9 @@ namespace Kompile.Unit.Component
         /// <summary>
         /// 이동 속도와 2.5D 환경에 맞춘 바라보는 방향을 업데이트합니다.
         /// </summary>
-        public void UpdateMovementAnim(float speed, Vector3 direction)
+        private void UpdateMovementAnim(float speed, Vector3 direction)
         {   
-            _animator.SetFloat(HashSpeed, speed);
+            //_animator.SetFloat(HashSpeed, speed);
 
             // 속도가 있을 때만 방향 파라미터 업데이트 (2.5D 8방향/4방향 블렌드 트리 대응)
             if (speed > 0.01f)

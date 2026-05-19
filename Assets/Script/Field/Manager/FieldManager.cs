@@ -17,14 +17,9 @@ namespace Kompile.Field.Manager
 
         private readonly Transform _fieldRoot;
         private readonly Transform _unitRoot;
-        private FieldPlayerEntity _playerEntity;
-        private AnimatorOverrideController _playerAoc;
+        private FieldEntity _playerEntity;
 
-        private bool _isFieldActive;
 
-        public IMapQueryService MapQueryService => _mapQueryService;
-
-        // --- Constructor ---
         public FieldManager(Transform fieldRoot)
         {
             _fieldRoot = fieldRoot;
@@ -40,49 +35,55 @@ namespace Kompile.Field.Manager
             _unitRoot = new GameObject("Unit").transform;
             _unitRoot.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             _unitRoot.SetParent(fieldRoot);
-
-            _isFieldActive = false;
         }
 
-        public void StartFieldAsync(Transform cameraTransform)
+
+        public async Awaitable StartFieldAsync(Transform cameraTransform)
         {
-            _isFieldActive = true;
-            _ = _mapManager.PlayStreamingAsync(cameraTransform); // fire and forget
-            _ = SpawnPlayerAsync();                              // fire and forget
-            // _ = SpawnUnitsAsync(units);
-        }
-
-        /// <summary> 플레이어 유닛을 비동기 생성·초기화. StartFieldAsync에서 fire and forget으로 호출. </summary>
-        private async Awaitable SpawnPlayerAsync()
-        {
-            try
-            {
-                _playerEntity = await AssetProvider.GetOrNewUnitInstanceAsync<FieldPlayerEntity>(_unitRoot);
-
-                UnitTableData tableData = UnitTableProvider.GetUnitData(0);
-                UnitRuntimeContext ctx = new UnitRuntimeContext(tableData.Type, UnitBrainType.Player);
-
-                AssetKey aocKey = new AssetKey(tableData.AocAddressStr);
-                var playerAoc = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(aocKey);
-                _playerEntity.Initialize(ctx, _mapQueryService, playerAoc);
-
-                // for test
-                _playerEntity.transform.SetPositionAndRotation(Vector3.forward, Quaternion.identity);
+            _playerEntity = await SpawnFieldEntityAsync(0, UnitBrainType.Player);
 #if UNITY_EDITOR
-                _playerEntity.gameObject.name = "player";
+            _playerEntity.transform.position = Vector3.up;
 #endif
-            }
-            catch (System.Exception ex)
-            {
-                Debug.Log($"[Debug] {ex.Message}");
-            }
+
+            _ = _mapManager.PlayStreamingAsync(cameraTransform);
         }
+        private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int key, UnitBrainType brainType)
+        {
+            FieldEntity fieldEntity = await AssetProvider.GetOrNewEntityInstanceAsync<FieldEntity>(_unitRoot);
+            await fieldEntity.InitializeAsync(key, brainType, _mapQueryService);
+
+            return fieldEntity;
+        }
+
 
         public void Update(in InputState inputState)
         {
-            // _playerEntity?.UpdateManual(in inputState);
-            // TODO: 하위 Manager·Service Update 순차 호출 (향후 추가)
+            // -- player -- 
+            UnitIntent playerMoveIntent = Input2Intent(inputState);
+            _playerEntity.UpdateIntent(in playerMoveIntent);
+
+            // -- party --
+            // (later)
+
+
+            // -- npc --
+            // (later)
         }
+        public UnitIntent Input2Intent(in InputState inputState)
+        {
+            float x = 0f, z = 0f;
+            if (inputState.IsPressing(IDxInput.RIGHT))  { x += 1f; }
+            if (inputState.IsPressing(IDxInput.LEFT))   { x -= 1f; }
+            if (inputState.IsPressing(IDxInput.UP))     { z += 1f; }
+            if (inputState.IsPressing(IDxInput.DOWN))   { z -= 1f; }
+
+            return new UnitIntent
+            {
+                MoveInput = new Vector2(x, z),
+                AnimCommand = UnitAnimCmd.None,
+            };
+        }
+
 
         public void Dispose()
         {
@@ -90,17 +91,10 @@ namespace Kompile.Field.Manager
 
             if (_playerEntity)
             {
+                _playerEntity.Clear();
                 AssetProvider.ReleaseInstance(_playerEntity.Key, _playerEntity.gameObject);
                 _playerEntity = null;
             }
-
-            // if (_playerAoc)
-            // {
-            //     AssetProvider.ReleaseAsset(_playerAoc.GetInstanceID());
-            //     _playerAoc = null;
-            // }
-
-            _isFieldActive = false;
         }
     }
 }

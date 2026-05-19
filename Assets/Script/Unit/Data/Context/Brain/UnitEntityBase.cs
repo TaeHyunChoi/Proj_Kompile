@@ -1,11 +1,9 @@
-using Kompile.Field.Data;
-
 namespace Kompile.Unit.Entity
 {
     using Kompile.Entity.Data; // Entity 클래스가 있는 네임스페이스
     using Kompile.Unit.Data;
-    using static Kompile.Input.Data.Definition;
-    
+
+
     /// <summary> Entity 상속 필드, 전투, NPC 등 모든 유닛 개체의 베이스 클래스
     /// </summary>
     public abstract class UnitEntityBase : Entity
@@ -14,46 +12,16 @@ namespace Kompile.Unit.Entity
         protected long _instanceID;
         protected bool _isInitialized;
         protected IUnitBrain _brain;
-        protected UnitRuntimeContext _context;
         
         public long InstanceID => _instanceID;
         public bool IsInitialized => _isInitialized;
-        public UnitRuntimeContext Context => _context;
-        
-        public void SetBrain(IUnitBrain newBrain)
-        {
-            _brain?.Clear();
-
-            if (newBrain != null)
-            {
-                _brain = newBrain;
-                _brain.Initialize(this);
-            }
-        }
 
         public virtual void Clear() // 풀링 시 호출될 수 있으므로 virtual 권장
         {
             _isInitialized = false;
             _instanceID = 0;
-            _context = default(UnitRuntimeContext);
-
             _brain?.Clear();
             _brain = null;
         }
-
-        public abstract void Initialize(UnitRuntimeContext context, IMapQueryService mapQuery);
-
-        protected void SetBrain()
-        {
-            _instanceID = GetInstanceID();
-            
-            _brain = _context.BrainType switch
-            {
-                UnitBrainType.Player => new PlayerControlBrain(),
-                _ => null
-            };
-        }
-
-        public abstract void UpdateManual(in InputState inputState); // Manager에 의해 호출될 업데이트 수동 제어
     }
 }

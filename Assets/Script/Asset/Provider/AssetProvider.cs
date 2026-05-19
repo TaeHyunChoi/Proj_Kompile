@@ -56,7 +56,7 @@ namespace Kompile.Asset.Provider
         /// 유닛 프리팹을 풀에서 꺼내거나 새로 인스턴스화하여 컴포넌트를 추가한 뒤 반환합니다.
         /// Initialize는 호출하지 않습니다. 호출자가 직접 Initialize를 호출해야 합니다.
         /// </summary>
-        public static async Awaitable<TEntity> GetOrNewUnitInstanceAsync<TEntity>(Transform root)
+        public static async Awaitable<TEntity> GetOrNewEntityInstanceAsync<TEntity>(Transform root)
             where TEntity : UnitEntityBase
         {
             AssetKey prefabKey = new AssetKey(AssetConst.UNIT_PREFAB);
@@ -175,7 +175,6 @@ namespace Kompile.Asset.Provider
 
             NonGameObjectInstances.TryAdd(result.GetInstanceID(), handle);
             return result;
-
         }
 
         public static void ReleaseAsset(int instanceID)
