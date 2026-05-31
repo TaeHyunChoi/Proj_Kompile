@@ -28,6 +28,7 @@ namespace Kompile
             try
             {
                 await Initialize_Table();
+                AssetProvider.BeginSession();
 
                 // Field 루트 오브젝트 생성
                 GameObject fieldRootObj = new GameObject("Field");
@@ -75,7 +76,8 @@ namespace Kompile
 
         private void OnDestroy()
         {
-            _fieldManager.Dispose();
+            // _fieldManager.Dispose();
+            AssetProvider.EndAndReleaseSession();
         }
     }
 }

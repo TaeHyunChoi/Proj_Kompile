@@ -23,7 +23,7 @@ namespace Kompile.Field.Manager
         private FieldEntity _playerEntity;
 
         private AnimatorOverrideController _templeteAOC;
-
+        
         public FieldManager(Transform fieldRoot)
         {
             _fieldRoot = fieldRoot;
@@ -53,8 +53,10 @@ namespace Kompile.Field.Manager
             int count = registryData.BakedGridKeys.Length;
             _validGridKeys = new NativeArray<int>(count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             _validGridKeys.CopyFrom(registryData.BakedGridKeys);
+            AssetProvider.RegisterToCurrentSession(_validGridKeys);
         }
 
+        // --- Start --- 
         public async Awaitable StartAsync(Transform cameraTransform)
         {
             _templeteAOC = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(new AssetKey("aoc_field_unit"));
@@ -65,7 +67,6 @@ namespace Kompile.Field.Manager
 
             _ = _mapManager.PlayStreamingAsync(cameraTransform, _validGridKeys);
         }
-
         private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int index, AnimatorOverrideController baseAOC)
         {
             AssetKey                 prefabKey = new AssetKey(AssetConst.UNIT_PREFAB_FIELD);
@@ -78,15 +79,7 @@ namespace Kompile.Field.Manager
             return fieldEntity;
         }
 
-        //private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int key, UnitBrainType brainType)
-        //{
-        //    FieldEntity fieldEntity = await AssetProvider.GetOrNewEntityInstanceAsync<FieldEntity>(_unitRoot);
-        //    await fieldEntity.InitializeAsync(key, brainType, _mapQueryService);
-        //    return fieldEntity;
-        //}
-
-
-
+        // --- Update ---
         public void Update(in InputState inputState)
         {
             // -- player -- 
@@ -116,16 +109,17 @@ namespace Kompile.Field.Manager
         }
 
 
-        public void Dispose()
-        {
-            _mapManager.StopStreaming();
-
-            if (_playerEntity)
-            {
-                _playerEntity.Clear();
-                AssetProvider.ReleaseInstance(_playerEntity.Key, _playerEntity.gameObject);
-                _playerEntity = null;
-            }
-        }
+        // public void Dispose()
+        // {
+        //     _mapManager.StopStreaming();
+        //     
+        //     if (_playerEntity)
+        //     {
+        //         _playerEntity.Clear();
+        //         AssetProvider.ReleaseInstance(_playerEntity.Key, _playerEntity.gameObject);
+        //         AssetProvider.ReleaseAsset(_templeteAOC.GetHashCode());
+        //         _playerEntity = null;
+        //     }
+        // }
     }
 }
