@@ -24,25 +24,24 @@ namespace Kompile.Asset.Provider
         public static ref readonly UnitTableData GetUnitData(int unitID)
         {
             int left = 0;
-            int right = _sheets.Length - 1; // 길이-1이 안전한 초기 인덱스입니다.
+            int right = _sheets.Length - 1;
 
-            while (left <= right) // 조건 교정: <= 로 해야 마지막 요소까지 탐색합니다.
+            while (left <= right)
             {
-                int mid = left + (right - left) / 2; // 오버플로우 방지형 중간값 계산
+                int mid = left + ((right - left) >> 1);
 
                 if (unitID == _sheets[mid].ID)
                 {
                     return ref _sheets[mid];
                 }
 
-                // 오름차순 이진 탐색의 올바른 분기
                 if (unitID < _sheets[mid].ID)
                 {
-                    right = mid - 1; // 타겟이 작으면 왼쪽 절반을 탐색
+                    right = mid - 1;
                 }
                 else
                 {
-                    left = mid + 1;  // 타겟이 크면 오른쪽 절반을 탐색
+                    left = mid + 1;
                 }
             }
 

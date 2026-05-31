@@ -57,10 +57,12 @@ namespace Kompile
 
         private async Awaitable Initialize_Table()
         {
-            Awaitable unit = UnitTableProvider.InitializeAsync();
+            //Awaitable unitTable = UnitTableProvider.InitializeAsync();
+            Awaitable fieldUnitTable = FieldUnitTableProvider.InitializeAsync();
             //TODO: 추후 추가 예정
-            
-            await unit;
+
+            //await unitTable;
+            await fieldUnitTable;
         }
 
         private void Update()

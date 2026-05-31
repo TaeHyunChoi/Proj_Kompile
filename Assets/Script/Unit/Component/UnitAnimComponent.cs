@@ -1,110 +1,73 @@
 namespace Kompile.Unit.Component
 {
+    using System.Collections.Generic;
     using UnityEngine;
     using Kompile.Unit.Data;
-    using Kompile.Unit.Entity;
-    using Kompile.Asset.Provider;
 
     /// <summary> GameObject에 부착되어 유닛의 애니메이션(Animator 상태 및 스프라이트 제어)을 전담 </summary>
     [RequireComponent(typeof(Animator), typeof(SpriteRenderer))]
     public class UnitAnimComponent : MonoBehaviour
     {
-        [SerializeField] private Animator _animator;
-        [SerializeField] private AnimatorOverrideController _overrideController;
-
-        private UnitEntityBase _ownerEntity;
-        
-        // 문자열 캐싱을 통한 가비지(GC) 할당 방지 및 탐색 속도 최적화
-        private static readonly int HashSpeed = Animator.StringToHash("Speed");
         private static readonly int HashDirX = Animator.StringToHash("DirX");
         private static readonly int HashDirZ = Animator.StringToHash("DirZ");
-        private static readonly int HashHit = Animator.StringToHash("Hit");
-        private static readonly int HashDead = Animator.StringToHash("Dead");
-        private static readonly int HashAtk = Animator.StringToHash("Attack");
 
-        public void Initialize(UnitEntityBase owner, AnimatorOverrideController aoc = null)
+        private Animator _animator;
+        private AnimatorOverrideController _runtimeAOC;
+        private List<KeyValuePair<AnimationClip, AnimationClip>> _templatedPairCached = new List<KeyValuePair<AnimationClip, AnimationClip>>((int)FieldUnitAnimIndex.Count);
+
+        public void Initialize(AnimatorOverrideController baseTemplateAOC, in FieldUnitAnimClipContext clipSet)
         {
-            _ownerEntity = owner;
-            _animator = GetComponentInChildren<Animator>();
-            AnimatorOverrideController toApply = aoc ?? _overrideController;
-            if (toApply)
-                _animator.runtimeAnimatorController = toApply;
+            _animator = transform.GetComponent<Animator>();
+
+            // 템플릿 복사본을 만들어 독점적 인스턴스 확보 (어드레서블 원본 보호)
+            _runtimeAOC = new AnimatorOverrideController(baseTemplateAOC);
+            _animator.runtimeAnimatorController = _runtimeAOC;
+
+            // 클립 오버라이드 매핑
+            ApplyRuntimeClips(baseTemplateAOC, in clipSet);
+            _animator.Rebind();
+            _animator.Update(0f);
+        }
+        private void ApplyRuntimeClips(AnimatorOverrideController templateAOC, in FieldUnitAnimClipContext clipSet)
+        {
+            if (!_runtimeAOC || !templateAOC || 
+                null == clipSet.Clips)
+            {
+                return;
+            }
+
+            // 가비지 없이 목록 초기화
+            _templatedPairCached.Clear();
+            templateAOC.GetOverrides(_templatedPairCached);
+
+            AnimationClip[] baseClips = templateAOC.animationClips;
+            int maxCount = Mathf.Min(baseClips.Length, clipSet.Clips.Length);
+
+            AnimationClip baseClip;
+            for (int i = 0; i < maxCount; ++i)
+            {
+                baseClip = _templatedPairCached[i].Key;
+                _runtimeAOC[baseClip] = clipSet.Clips[i];
+            }
         }
 
-        /// <summary>
-        /// Entity.Update()에서 UnitIntent를 수신하여 호출합니다.
-        /// 루프 상태(Idle/Walk)는 MoveInput 크기로 판단하고, 트리거성 명령(Attack/Hit/Dead)은 AnimCommand로 처리합니다.
-        /// </summary>
+        /// <summary> Entity.Update()에서 UnitIntent를 수신하여 호출 </summary>
         public void UpdateIntent(in UnitIntent intent)
         {
             float speed = intent.MoveInput.magnitude;
             Vector3 dir = new Vector3(intent.MoveInput.x, 0f, intent.MoveInput.y);
             UpdateMovementAnim(speed, dir);
-
-            ApplyAnimCommand(intent.AnimCommand);
         }
 
-        private void ApplyAnimCommand(UnitAnimCmd cmd)
-        {
-            switch (cmd)
-            {
-                case UnitAnimCmd.Attack: PlayAttackAnimation(); break;
-                case UnitAnimCmd.Hit:    PlayHitAnimation();    break;
-                case UnitAnimCmd.Dead:   PlayDeathAnimation();  break;
-                case UnitAnimCmd.None:
-                default:
-                    break;
-            }
-        }
-
-        // ===================================================================================
-        // 외부 제어 인터페이스 (Entity가 호출)
-        // ===================================================================================
-
-        /// <summary>
-        /// 이동 속도와 2.5D 환경에 맞춘 바라보는 방향을 업데이트합니다.
-        /// </summary>
+        /// <summary> 이동 속도와 2.5D 환경에 맞춘 바라보는 방향을 업데이트 </summary>
         private void UpdateMovementAnim(float speed, Vector3 direction)
-        {   
-            //_animator.SetFloat(HashSpeed, speed);
-
+        {
             // 속도가 있을 때만 방향 파라미터 업데이트 (2.5D 8방향/4방향 블렌드 트리 대응)
             if (speed > 0.01f)
             {
                 _animator.SetFloat(HashDirX, direction.x);
                 _animator.SetFloat(HashDirZ, direction.z);
             }
-        }
-
-        public void PlayAttackAnimation()
-        {
-            _animator.Play(HashAtk, 0, 0f);
-        }
-
-        public void PlayHitAnimation()
-        {
-            _animator.SetTrigger(HashHit);
-        }
-
-        public void PlayDeathAnimation()
-        {
-            _animator.SetBool(HashDead, true);
-        }
-
-        // ===================================================================================
-        // Animation Event 수신 (AnimationClip 설정용)
-        // ===================================================================================
-
-        /// <summary>
-        /// 공격 애니메이션 도중 실제 타격(데미지 판정)이 들어가는 프레임에서 호출됩니다.
-        /// </summary>
-        public void OnAttackStrikeEvent()
-        {
-            if (!_ownerEntity) 
-                return;
-
-            // 예시: Entity를 통해 Manager에게 공격이 적중했음을 알리거나 데미지 계산을 트리거합니다.
-            // _ownerEntity.ExecuteAttackHitLogic(); 
         }
     }
 }

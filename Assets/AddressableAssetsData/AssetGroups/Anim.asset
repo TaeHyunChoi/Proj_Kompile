@@ -15,10 +15,106 @@ MonoBehaviour:
   m_GroupName: Anim
   m_GUID: a00b46e57dbf6ef49bd181dab2b4a5cd
   m_SerializeEntries:
-  - m_GUID: 49bf0661331f14522b760412c2a031ae
-    m_Address: aoc_field_000
+  - m_GUID: 03609fb05f43c43c1ab9312115e794e4
+    m_Address: Ataho_Idle_SE
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f5b2f09b57844039b5e1afae74dbe39
+    m_Address: Ataho_Idle_SW
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1bb435d0afa734146a32a60bc776a6d4
+    m_Address: Ataho_Idle_W
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 277fc3b74dec3ab49b2252e908926da9
+    m_Address: Ataho_Walk_NE
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 53d3629bc86344ea4ad1df67118b2ea4
+    m_Address: Ataho_Idle_E
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 54845b68a05d44b20b73a79db4252acc
+    m_Address: aoc_field_unit
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73e7680a5aedd69439143d8d4735b9cf
+    m_Address: Ataho_Walk_S
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e096eea3a374ba4297c4d5ac6387d63
+    m_Address: Ataho_Walk_NW
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 81e644d9c635d4d889349eeb43e282c2
+    m_Address: Ataho_Idle_NW
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 92407a1e11c2fc6478b034a9d25934bf
+    m_Address: Ataho_Walk_E
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 97d93f1341a391f4e94be3c7dfae58be
+    m_Address: Ataho_Walk_W
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a4ca0a2b6b0e8154aa92f826eb090f36
+    m_Address: Ataho_Walk_SE
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a8e6cefcc2e6e7341b9f8b94fb22c23d
+    m_Address: Ataho_Walk_SW
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b2bcaa09b1e7242eaacc8b24c4024df1
+    m_Address: Ataho_Idle_N
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d24aaf3e0dc974ce38f66bd0d9c212e0
+    m_Address: Ataho_Idle_NE
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ebd8ecae2d9414034bb757b6a38d199e
+    m_Address: Ataho_Idle_S
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f98689873137ff5489aab640db558e0b
+    m_Address: Ataho_Walk_N
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Anim_Ataho
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9cb2df5c815d0564f8d437994c8ce537, type: 2}

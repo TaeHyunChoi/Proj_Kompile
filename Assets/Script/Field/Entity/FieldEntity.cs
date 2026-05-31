@@ -16,27 +16,54 @@ namespace Kompile.Field.Entity
 
         private AnimatorOverrideController _aoc;
 
-        public async Awaitable InitializeAsync(int index, UnitBrainType brainType, FieldMapQueryService mapQuery)
+        public void Initialize(FieldUnitTableData data, FieldUnitAnimClipContext clip, AnimatorOverrideController baseAOC, FieldMapQueryService mapQuery)
         {
-            _moveComponent = transform.GetComponent<UnitMoveComponent>();
-            _animComponent = transform.GetComponent<UnitAnimComponent>();
-
-            _instanceID = GetInstanceID();
-
-            UnitTableData tableData = UnitTableProvider.GetUnitData(index);
-            AssetKey aocKey = new AssetKey(tableData.AocAddressStr);
-            _aoc = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(aocKey);
-
-            _moveComponent.Initialize(this, mapQuery);
-            _animComponent.Initialize(this, _aoc);
-
-            switch (brainType)
+            // brain
+            switch (data.BrainType)
             {
                 case UnitBrainType.Player: _brain = new PlayerControlBrain(this); break;
                 default:
                     break;
             }
+
+            // anim-component
+            _animComponent = transform.GetComponent<UnitAnimComponent>();
+            _animComponent.Initialize(baseAOC, in clip);  
+
+            // move-component
+            _moveComponent = transform.GetComponent<UnitMoveComponent>();
+            _moveComponent.Initialize(this, mapQuery);
         }
+
+        //public async Awaitable InitializeAsync(int index, UnitBrainType brainType, FieldMapQueryService mapQuery)
+        //{
+
+        //    UnitTableData tableData = UnitTableProvider.GetUnitData(index);
+        //    if (!AssetProvider.TryGetFieldUnitAnim(tableData.Address, out FieldUnitAnimClipContext clipSet))
+        //    {
+        //        Debug.LogError($"[Debug] fail to get unit anim (unit index: {index})");
+        //        return;
+        //    }
+
+        //    _moveComponent = transform.GetComponent<UnitMoveComponent>();
+        //    _animComponent = transform.GetComponent<UnitAnimComponent>();
+
+        //    _instanceID = GetInstanceID();
+
+
+        //    //AssetKey aocKey = new AssetKey(tableData.AocAddressStr);
+        //    //_aoc = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(aocKey);
+
+        //    _moveComponent.Initialize(this, mapQuery);
+        //    //_animComponent.Initialize(_aoc, in clipSet);
+
+        //    switch (brainType)
+        //    {
+        //        case UnitBrainType.Player: _brain = new PlayerControlBrain(this); break;
+        //        default:
+        //            break;
+        //    }
+        //}
 
         /// <summary> _brain을 사용하여 owner가 intent를 직접 판단 </summary>
         public void UpdateIntent()

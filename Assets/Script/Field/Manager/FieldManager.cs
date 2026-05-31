@@ -1,13 +1,13 @@
+using Kompile.Asset.Provider;
 using Kompile.Field.Data;
 using Kompile.Field.Entity;
 using Kompile.Map.Manager;
-using Kompile.Asset.Provider;
-using Kompile.Asset.Data;
 using Kompile.Unit.Data;
 using static Kompile.Input.Data.Definition;
 
 namespace Kompile.Field.Manager
 {
+    using Kompile.Asset.Data;
     using UnityEngine;
 
     public class FieldManager
@@ -19,6 +19,7 @@ namespace Kompile.Field.Manager
         private readonly Transform _unitRoot;
         private FieldEntity _playerEntity;
 
+        private AnimatorOverrideController _templeteAOC;
 
         public FieldManager(Transform fieldRoot)
         {
@@ -40,20 +41,36 @@ namespace Kompile.Field.Manager
 
         public async Awaitable StartFieldAsync(Transform cameraTransform)
         {
-            _playerEntity = await SpawnFieldEntityAsync(0, UnitBrainType.Player);
+            //await AssetProvider.PreloadFieldUnitAnimsAsync(new string[] { "Ataho" });
+
+            _templeteAOC = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(new AssetKey("aoc_field_unit"));
+            _playerEntity = await SpawnFieldEntityAsync(1, _templeteAOC);
 #if UNITY_EDITOR
-            _playerEntity.transform.position = Vector3.up;
+            _playerEntity.transform.position = Vector3.back;
 #endif
 
             _ = _mapManager.PlayStreamingAsync(cameraTransform);
         }
-        private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int key, UnitBrainType brainType)
+
+        private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int index, AnimatorOverrideController baseAOC)
         {
-            FieldEntity fieldEntity = await AssetProvider.GetOrNewEntityInstanceAsync<FieldEntity>(_unitRoot);
-            await fieldEntity.InitializeAsync(key, brainType, _mapQueryService);
+            AssetKey                 prefabKey = new AssetKey(AssetConst.UNIT_PREFAB_FIELD);
+            FieldUnitTableData       data      = FieldUnitTableProvider.GetData(index);
+            FieldUnitAnimClipContext clip      = await data.GetAnimClipsAsync();
+
+            FieldEntity fieldEntity = await AssetProvider.GetOrNewEntityInstanceAsync<FieldEntity>(prefabKey, _unitRoot);
+            fieldEntity.Initialize(data, clip, baseAOC, _mapQueryService);
 
             return fieldEntity;
         }
+
+        //private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int key, UnitBrainType brainType)
+        //{
+        //    FieldEntity fieldEntity = await AssetProvider.GetOrNewEntityInstanceAsync<FieldEntity>(_unitRoot);
+        //    await fieldEntity.InitializeAsync(key, brainType, _mapQueryService);
+        //    return fieldEntity;
+        //}
+
 
 
         public void Update(in InputState inputState)

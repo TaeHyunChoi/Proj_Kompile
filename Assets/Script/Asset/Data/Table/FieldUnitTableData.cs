@@ -1,0 +1,28 @@
+namespace Kompile.Asset.Data
+{
+    using MessagePack;
+    using Kompile.Asset.Provider;
+    using Kompile.Unit.Data;
+    using Unity.Collections;
+    using UnityEngine;
+
+    /// <summary> 기획 데이터 (CSV 등) 1줄에 해당하는 순수 데이터 정의. 메모리 복사 비용 및 GC 방지를 위해 struct로 정의 </summary>
+    [MessagePackObject]
+    public struct FieldUnitTableData
+    {
+        [Key(0)]
+        public int                  Index;
+        [Key(1)]
+        public FixedString32Bytes   nameKey;
+        [Key(2)]
+        public UnitBrainType        BrainType;
+        [Key(3)]
+        public float                CollisionRange;
+
+        public async Awaitable<FieldUnitAnimClipContext> GetAnimClipsAsync()
+        {
+            var clips = await AssetProvider.LoadFieldUnitAnimClipSetAsync(nameKey.ToString());
+            return clips;
+        }
+    }
+}
