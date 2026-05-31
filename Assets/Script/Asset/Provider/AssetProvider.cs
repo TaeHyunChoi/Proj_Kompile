@@ -11,15 +11,6 @@ namespace Kompile.Asset.Provider
     using UnityEngine.AddressableAssets;
     using UnityEngine.ResourceManagement.AsyncOperations;
     
-    using UnityEngine;
-    using UnityEngine.AddressableAssets;
-    using UnityEngine.ResourceManagement.AsyncOperations;
-    using MessagePack;
-    using System;
-    using System.IO;
-    using Unity.Collections;
-    using Unity.Collections.LowLevel.Unsafe; // 언세이프 유틸리티 필요
-    
     /// <summary>
     /// 에셋과 데이터의 비동기 로드, 캐싱, 풀링을 전담하는 순수 공급자 클래스.<br/>
     /// Enum 기반의 맵핑 테이블을 제거하고 Data-Driven(AssetKey) 및 Type 추론 방식을 사용
@@ -32,14 +23,15 @@ namespace Kompile.Asset.Provider
         private static readonly Dictionary<int, AsyncOperationHandle> 
             NonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
 
-// 💡 커스텀 포매터가 포함된 CompositeResolver로 교체
-        private static readonly MessagePackSerializerOptions MsgPackOptions = 
-            MessagePackSerializerOptions.Standard.WithResolver(
-                MessagePack.Resolvers.CompositeResolver.Create(
-                    new MessagePack.Formatters.IMessagePackFormatter[] { new FixedString32BytesFormatter() },
-                    new MessagePack.IFormatterResolver[] { MessagePack.Resolvers.ContractlessStandardResolver.Instance }
-                )
-            );
+        // 커스텀 포매터가 포함된 CompositeResolver로 교체
+        // private static readonly MessagePackSerializerOptions MsgPackOptions = 
+        //     MessagePackSerializerOptions.Standard.WithResolver(
+        //         MessagePack.Resolvers.CompositeResolver.Create(
+        //             new MessagePack.Formatters.IMessagePackFormatter[] { new FixedString32BytesFormatter() },
+        //             new MessagePack.IFormatterResolver[] { MessagePack.Resolvers.ContractlessStandardResolver.Instance }
+        //         )
+        //     );
+        
         // typeof(T).Name 호출 시 발생하는 string 할당(GC) 방지 캐시
         private static class TypeNameCache<T> where T : Component
         {
@@ -233,53 +225,6 @@ namespace Kompile.Asset.Provider
             
             return default;
         }
-
-        //public static async Awaitable<T> ReadBinaryDataAsync<T>(string key)
-        //{
-        //    // ★ 복구됨: Addressables 예외(Exception)를 막기 위한 안전장치.
-        //    // Manager의 블랙리스트 처리 덕분에 없는 키에 대해서는 단 1회만 호출되므로 최적화가 보장됩니다.
-        //    AsyncOperationHandle<IList<IResourceLocation>> locHandle = Addressables.LoadResourceLocationsAsync(key);
-        //    IList<IResourceLocation> locations = await locHandle.Task;
-
-        //    if (locations == null 
-        //        || locations.Count == 0)
-        //    {
-        //        if (locHandle.IsValid())
-        //        {
-        //            Addressables.Release(locHandle);                    
-        //        }
-
-        //        return default; // null 반환 시 Manager가 블랙리스트에 등록함
-        //    }
-
-        //    if (locHandle.IsValid())
-        //    {
-        //        Addressables.Release(locHandle);                
-        //    }
-
-        //    // 2. 실제 에셋 로드 (안전하게 호출됨)
-        //    AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(key);
-        //    TextAsset textAsset = await handle.Task;
-
-        //    try
-        //    {
-        //        if (handle.Status != AsyncOperationStatus.Succeeded || !textAsset)
-        //        {
-        //            return default;
-        //        }
-
-        //        // 정적으로 캐싱된 옵션 사용
-        //        return MessagePackSerializer.Deserialize<T>(textAsset.bytes, MsgPackOptions);
-        //    }
-        //    finally
-        //    {
-        //        if (handle.IsValid())
-        //        {
-        //            Addressables.Release(handle);                    
-        //        }
-        //    }
-        //}
-
         #endregion
 
         #region Animation Clips - Field

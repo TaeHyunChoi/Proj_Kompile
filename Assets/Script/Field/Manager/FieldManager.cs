@@ -1,19 +1,22 @@
-using Kompile.Asset.Provider;
-using Kompile.Field.Data;
-using Kompile.Field.Entity;
-using Kompile.Map.Manager;
-using Kompile.Unit.Data;
-using static Kompile.Input.Data.Definition;
-
 namespace Kompile.Field.Manager
 {
+    using Kompile.Asset.Provider;
+    using Kompile.Field.Data;
+    using Kompile.Field.Entity;
     using Kompile.Asset.Data;
+    using Kompile.Map.Manager;
+    using Kompile.Unit.Data;
     using UnityEngine;
+    using static Kompile.Input.Data.Definition;
+
+    using Unity.Collections;
+    using Kompile.Map.Data;
 
     public class FieldManager
     {
         private readonly MapManager _mapManager;
         private readonly FieldMapQueryService _mapQueryService;
+        private NativeArray<int> _validGridKeys;
 
         private readonly Transform _fieldRoot;
         private readonly Transform _unitRoot;
@@ -38,18 +41,29 @@ namespace Kompile.Field.Manager
             _unitRoot.SetParent(fieldRoot);
         }
 
-
-        public async Awaitable StartFieldAsync(Transform cameraTransform)
+        public async Awaitable AwakeAsync()
         {
-            //await AssetProvider.PreloadFieldUnitAnimsAsync(new string[] { "Ataho" });
+            MapRegistryData registryData = await AssetProvider.ReadBinaryDataAsync<MapRegistryData>("MapRegistry");
+            if (registryData?.BakedGridKeys == null)
+            {
+                return;                
+            }
+            
+            // 메모리 효율을 위해 캐싱용 네이티브 배열 생성 -> 안전하게 데이터 복사 (이미 에디터 빌드 시점에 순서 정렬)
+            int count = registryData.BakedGridKeys.Length;
+            _validGridKeys = new NativeArray<int>(count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            _validGridKeys.CopyFrom(registryData.BakedGridKeys);
+        }
 
+        public async Awaitable StartAsync(Transform cameraTransform)
+        {
             _templeteAOC = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(new AssetKey("aoc_field_unit"));
             _playerEntity = await SpawnFieldEntityAsync(1, _templeteAOC);
 #if UNITY_EDITOR
             _playerEntity.transform.position = Vector3.back;
 #endif
 
-            _ = _mapManager.PlayStreamingAsync(cameraTransform);
+            _ = _mapManager.PlayStreamingAsync(cameraTransform, _validGridKeys);
         }
 
         private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int index, AnimatorOverrideController baseAOC)

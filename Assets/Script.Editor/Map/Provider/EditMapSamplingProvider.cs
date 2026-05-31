@@ -49,7 +49,6 @@ namespace Kompile.Map.Editor.Provider
         private byte sceneIndex = 0;
         private ConcurrentDictionary<int, EditMapGridData> map;
 
-
         public void Bake()
         {
             Debug.Log($"Start Bake Map");
@@ -135,18 +134,19 @@ namespace Kompile.Map.Editor.Provider
             CombineAndRegister(map, tiles, computedGridKeys, sceneIndex, "MapRender");
 
             string fullNaviPath = $"Assets/{MAP_NAVI_DATA_PATH.Replace('\\', '/')}";
-            if (true == AssetDatabase.IsValidFolder(fullNaviPath))
+            if (AssetDatabase.IsValidFolder(fullNaviPath))
             {
                 AssetDatabase.DeleteAsset(fullNaviPath);
             }
 
-            if (false == System.IO.Directory.Exists(fullNaviPath))
+            if (!System.IO.Directory.Exists(fullNaviPath))
             {
                 System.IO.Directory.CreateDirectory(fullNaviPath);
             }
 
             AssetDatabase.Refresh();
 
+            // 1. 개별 MapGridData 바이너리 파일 배포 루프
             foreach (KeyValuePair<int, EditMapGridData> grid in map)
             {
                 MapGridData mapGridData = new MapGridData()
@@ -164,6 +164,32 @@ namespace Kompile.Map.Editor.Provider
                     addressableLabel: "MapNavi"
                 );
             }
+
+            // =================================================================
+            // ★ [추가 포인트] MapRegistryData (화이트 매니페스트) 저장 및 에셋 등록
+            // =================================================================
+            
+            // 2. 이번 베이크 씬에서 유효성이 확정된 모든 고유 GridKey 수집
+            List<int> validKeys = new List<int>(map.Keys);
+            
+            // 3. [중요] 런타임 MapRepoProvider의 이진 검색(BinarySearch) 성능 최적화를 위해 무조건 오름차순 정렬
+            validKeys.Sort(); 
+
+            MapRegistryData registryData = new MapRegistryData()
+            {
+                BakedGridKeys = validKeys.ToArray()
+            };
+
+            // 4. 단일 화이트리스트 파일 배포 및 Addressables 자동 생성
+            Kompile.Asset.Editor.Provider.EditAssetProvider.WriteBinaryFile<MapRegistryData>(
+                data: registryData,
+                relativePath: MAP_NAVI_DATA_PATH,
+                fileName: "MapRegistry", // 에셋 주소 및 파일명: "MapRegistry"
+                addressableGroup: "MapNavi", // 관리 편의성을 위해 내비게이션 그룹에 함께 편입
+                addressableLabel: "MapRegistry"
+            );
+
+            // =================================================================
 
             Debug.Log($"End Bake (length: {tiles.Length})");
             System.GC.Collect();
@@ -496,7 +522,7 @@ namespace Kompile.Map.Editor.Provider
                 }
             }
 
-            // ⚠️ 추가/수정된 핵심 부분: 머티리얼이 새로 생성되었든 기존에 있었든 무조건 텍스처 갱신
+            // 추가/수정된 핵심 부분: 머티리얼이 새로 생성되었든 기존에 있었든 무조건 텍스처 갱신
             if (mat)
             {
                 if (key.TopTexRef) mat.SetTexture("_TopAtlas", key.TopTexRef);
@@ -549,13 +575,13 @@ namespace Kompile.Map.Editor.Provider
         private static void RegisterAddressables(EditBakeContext ctx)
         {
             AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
-            if (false == settings || 0 == ctx.CreatedAssets.Count)
+            if (!settings || 0 == ctx.CreatedAssets.Count)
             {
                 return;
             }
 
             AddressableAssetGroup group = settings.FindGroup(ctx.AddressableGroupName);
-            if (false == group)
+            if (!group)
             {
                 return;
             }

@@ -21,6 +21,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - MapNavi
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5f10ed93812e5412e8c2677886756ca2
+    m_Address: MapRegistry
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - MapRegistry
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ad43c291bb22fe64f8bb8df2bd61db8a
     m_Address: MapNavi_65535
     m_ReadOnly: 0

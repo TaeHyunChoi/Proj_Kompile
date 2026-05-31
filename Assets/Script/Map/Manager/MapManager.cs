@@ -6,7 +6,8 @@ namespace Kompile.Map.Manager
     using UnityEngine;
     using System.Collections.Generic;
     using Unity.Mathematics;
-
+    using Unity.Collections;
+    
     /// <summary> 인게임 맵 그리드의 동적 스트리밍, 레이어 시각적 제어, 실시간 인스턴스 관리를 전담 </summary>
     public class MapManager
     {
@@ -63,13 +64,13 @@ namespace Kompile.Map.Manager
         // 시스템 제어 인터페이스
         // ===================================================================================
 
-        public async Awaitable PlayStreamingAsync(Transform cameraTransform)
+        public async Awaitable PlayStreamingAsync(Transform cameraTransform, NativeArray<int> validGridKeys)
         {
             _cameraTransform = cameraTransform;
             _isStreamingActive = true;
 
             // 배경 스트리밍 루프 시작
-            await PlayGridStreamingLoopAsync();
+            await PlayGridStreamingLoopAsync(validGridKeys);
         }
 
         public void StopStreaming()
@@ -109,7 +110,7 @@ namespace Kompile.Map.Manager
         // [핵심] 그리드 스트리밍 로직 (Hysteresis & Background Loop)
         // ===================================================================================
 
-        private async Awaitable PlayGridStreamingLoopAsync()
+        private async Awaitable PlayGridStreamingLoopAsync(NativeArray<int> validGridKeys)
         {
             const float GRID_SIZE = 64f;
             const float Y_RADIUS  = 64f;
@@ -190,6 +191,13 @@ namespace Kompile.Map.Manager
                                 continue;
                             }
 
+                            // 유효 grid 인지 판별
+                            if (!validGridKeys.Contains(targetGridKey))
+                            {
+                                Debug.Log("[Debug] Invalid grid key: " + targetGridKey);
+                                continue;
+                            }
+                            
                             _ = LoadGridDataAsync(targetGridKey); // Fire and forget
                         }
                     }
@@ -222,6 +230,8 @@ namespace Kompile.Map.Manager
         {
             try
             {
+                //여기서 grid key를 들고 있어야 하는구나?
+                
                 // 문자열 보간 캐싱으로 GC Alloc 방지
                 if (!_gridKeyAddressCache.TryGetValue(gridKey, out string addressKey))
                 {

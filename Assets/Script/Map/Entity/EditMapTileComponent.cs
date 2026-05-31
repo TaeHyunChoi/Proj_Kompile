@@ -85,16 +85,15 @@ namespace Kompile.Map.Entity
 
             // 3. 쉐이더 프로퍼티 주입
             _propertyBlock.SetVector("_TopUVOffset", topOffset);
-            _propertyBlock.SetVector("_TopUVScale", uvScale);   // <-- 누락되었던 핵심 스케일 값 복구
+            _propertyBlock.SetVector("_TopUVScale", uvScale);
             _propertyBlock.SetVector("_SideUVOffset", sideOffset);
-            _propertyBlock.SetVector("_SideUVScale", uvScale);  // <-- 누락되었던 핵심 스케일 값 복구
+            _propertyBlock.SetVector("_SideUVScale", uvScale);
+            _propertyBlock.SetFloat("_IsBaked", 0f);
             
-            _propertyBlock.SetFloat("_IsBaked", 0f);            // <-- 에디터 프리뷰용 플래그 복구
-
             if (topAtlasTexture)
             {
                 _propertyBlock.SetTexture("_TopAtlas", topAtlasTexture);
-                _propertyBlock.SetTexture("_MainTex", topAtlasTexture); // URP/Standard 호환용 Fallback 복구
+                _propertyBlock.SetTexture("_MainTex", topAtlasTexture);
                 _propertyBlock.SetTexture("_BaseMap", topAtlasTexture);
             }
             if (sideAtlasTexture)

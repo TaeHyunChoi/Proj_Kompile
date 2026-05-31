@@ -39,11 +39,12 @@ namespace Kompile
 
                 // 콘텐츠 Manager 일괄 생성·초기화
                 _fieldManager = new FieldManager(_fieldRoot);
+                await _fieldManager.AwakeAsync();
 
                 await Awaitable.NextFrameAsync();
 
                 // 콘텐츠 시작 (Camera.main.transform을 스트리밍 앵커로 전달)
-                await _fieldManager.StartFieldAsync(Camera.main.transform);
+                await _fieldManager.StartAsync(Camera.main.transform);
 
                 // Update() 호출 시작;
                 enabled = true;
