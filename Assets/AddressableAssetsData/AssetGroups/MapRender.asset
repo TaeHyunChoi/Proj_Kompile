@@ -20,18 +20,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 07d7e385ed5bf4ebf8b6e2e7a73f6733
-    m_Address: MapRender_0_G65535_L0_merged-test_merged-test_1
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 096d3148ee41cd84d925b4e78198f68f
     m_Address: Mat_merged-test_merged-test
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 37dff7f3bbfba4a589e84b7531d301c5
-    m_Address: MapRender_0_G0_L1_merged-test_merged-test_1
+  - m_GUID: 407827806f67b482da1611f49d5d131d
+    m_Address: MapRender_0_G65535_L0_merged-test_merged-test_0
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 432af96fdd4104498aa8e206c8394b5d
+    m_Address: MapRender_0_G0_L1_merged-test_merged-test_0
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -40,13 +40,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7b60fe249aa274fc893e8e2c8ea6d75c
-    m_Address: MapRender_0_G16711680_L0_merged-test_2_merged-test_2_1
+  - m_GUID: 8e5c80909a1ff4ac1a4e68a34057b535
+    m_Address: MapRender_0_G16711680_L0_merged-test_2_merged-test_2_0
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: aa3be067404ac4434af16fa6c7aa932b
-    m_Address: MapRender_0_G0_L0_merged-test_2_merged-test_2_1
+  - m_GUID: d20dc7aca7ce0403bbdd7fb6bbc9ebaa
+    m_Address: MapRender_0_G0_L0_merged-test_2_merged-test_2_0
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

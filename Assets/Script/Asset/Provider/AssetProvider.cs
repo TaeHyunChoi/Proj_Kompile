@@ -10,7 +10,15 @@ namespace Kompile.Asset.Provider
     using UnityEngine;
     using UnityEngine.AddressableAssets;
     using UnityEngine.ResourceManagement.AsyncOperations;
-    using UnityEngine.ResourceManagement.ResourceLocations;
+    
+    using UnityEngine;
+    using UnityEngine.AddressableAssets;
+    using UnityEngine.ResourceManagement.AsyncOperations;
+    using MessagePack;
+    using System;
+    using System.IO;
+    using Unity.Collections;
+    using Unity.Collections.LowLevel.Unsafe; // 언세이프 유틸리티 필요
     
     /// <summary>
     /// 에셋과 데이터의 비동기 로드, 캐싱, 풀링을 전담하는 순수 공급자 클래스.<br/>
@@ -187,19 +195,20 @@ namespace Kompile.Asset.Provider
 
         public static async Awaitable<T> ReadBinaryDataAsync<T>(string assetKey)
         {
-            var handle = UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<TextAsset>(assetKey);
+            AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(assetKey);
             await handle.Task;
 
-            if (handle.Status == UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationStatus.Succeeded)
+            if (handle.Status == AsyncOperationStatus.Succeeded)
             {
                 TextAsset textAsset = handle.Result;
-                if (textAsset != null && textAsset.bytes != null)
+                if (textAsset && textAsset.bytes != null)
                 {
                     try
                     {
                         // 실제 파싱 시도
                         T deserializedData = MessagePackSerializer.Deserialize<T>(textAsset.bytes);
-                        UnityEngine.AddressableAssets.Addressables.Release(handle);
+                        Addressables.Release(handle);
+                        
                         return deserializedData;
                     }
                     catch (System.Exception ex)
@@ -210,13 +219,18 @@ namespace Kompile.Asset.Provider
                         {
                             Debug.LogError($"[MessagePack 상세 원인] {ex.InnerException.Message}");
                         }
-                        UnityEngine.AddressableAssets.Addressables.Release(handle);
+
+                        Addressables.Release(handle);
                         throw;
                     }
                 }
             }
 
-            if (handle.IsValid()) UnityEngine.AddressableAssets.Addressables.Release(handle);
+            if (handle.IsValid())
+            {
+                Addressables.Release(handle);                
+            }
+            
             return default;
         }
 

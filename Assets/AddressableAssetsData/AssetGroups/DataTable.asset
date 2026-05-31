@@ -15,7 +15,7 @@ MonoBehaviour:
   m_GroupName: DataTable
   m_GUID: 41bd4541d5dec4415bd1f9e7fdf513aa
   m_SerializeEntries:
-  - m_GUID: 97accc72504bdf343bf143aefa9ccce6
+  - m_GUID: c89bcbc6c1afd4ba9b7c983bbf19387b
     m_Address: FieldUnitTable
     m_ReadOnly: 0
     m_SerializedLabels: []

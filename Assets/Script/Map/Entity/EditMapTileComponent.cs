@@ -91,13 +91,13 @@ namespace Kompile.Map.Entity
             
             _propertyBlock.SetFloat("_IsBaked", 0f);            // <-- 에디터 프리뷰용 플래그 복구
 
-            if (topAtlasTexture != null)
+            if (topAtlasTexture)
             {
                 _propertyBlock.SetTexture("_TopAtlas", topAtlasTexture);
                 _propertyBlock.SetTexture("_MainTex", topAtlasTexture); // URP/Standard 호환용 Fallback 복구
                 _propertyBlock.SetTexture("_BaseMap", topAtlasTexture);
             }
-            if (sideAtlasTexture != null)
+            if (sideAtlasTexture)
             {
                 _propertyBlock.SetTexture("_SideAtlas", sideAtlasTexture);
             }

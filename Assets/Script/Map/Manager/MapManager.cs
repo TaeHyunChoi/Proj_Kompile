@@ -217,6 +217,7 @@ namespace Kompile.Map.Manager
             DisposeAll();
         }
 
+        /// <summary> 카메라 안에 담기는 지역(grid) 키값으로 에셋이 있는지 확인 -> 있다면 지역 오브젝트 생성</summary>
         private async Awaitable LoadGridDataAsync(int gridKey)
         {
             try
@@ -229,7 +230,6 @@ namespace Kompile.Map.Manager
                 }
 
                 MapGridData gridData = await AssetProvider.ReadBinaryDataAsync<MapGridData>(addressKey);
-
                 if (gridData == null)
                 {
                     // ★ 핵심 방어: Addressables에 존재하지 않는 그리드는 블랙리스트에 영구 등록

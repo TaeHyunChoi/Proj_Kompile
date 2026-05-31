@@ -207,34 +207,36 @@ namespace  Kompile.Asset.Editor.Tools
         }
         private static bool ParseAndSaveFieldUnitTable(string csvPath, string savePath)
         {
+            string csvText = File.ReadAllText(csvPath);
+            var rows = CsvParserUtil.Parse(csvText);
+            var sheetList = new List<FieldUnitTableData>();
 
-            //string csvText = File.ReadAllText(csvPath);
-            //var rows = CsvParserUtil.Parse(csvText);
-            //var sheetList = new List<UnitTableData>();
+            for (int i = 1; i < rows.Count; i++)
+            {
+                var v = rows[i];
+                if (v.Length < 4 || string.IsNullOrWhiteSpace(v[0]))
+                {
+                    continue;
+                }
+                
+                sheetList.Add(new FieldUnitTableData
+                {
+                    Index = int.Parse(v[0]),
+                    NameKey = new FixedString32Bytes(v[1]),
+                    BrainType = (UnitBrainType)Enum.Parse(typeof(UnitBrainType), v[2]),
+                    CollisionRange = float.Parse(v[3])
+                });
+            }
 
-            //for (int i = 1; i < rows.Count; i++)
-            //{
-            //    var v = rows[i];
-            //    if (v.Length < 4 || string.IsNullOrWhiteSpace(v[0])) continue;
-            //    sheetList.Add(new UnitTableData
-            //    {
-            //        ID = int.Parse(v[0]),
-            //        AssetAddress = new FixedString32Bytes(v[1]),
-            //        Type = (UnitType)Enum.Parse(typeof(UnitType), v[2]),
-            //        BrainType = (UnitBrainType)Enum.Parse(typeof(UnitBrainType), v[3]),
-            //        AocAddress = new FixedString32Bytes(v[4])
-            //    });
-            //}
-
-            //sheetList.Sort((a, b) => a.ID.CompareTo(b.ID));
-            //var options = MessagePackSerializerOptions.Standard.WithResolver(
-            //    CompositeResolver.Create(
-            //        new IMessagePackFormatter[] { new FixedString32BytesFormatter() },
-            //        new IFormatterResolver[] { ContractlessStandardResolver.Instance }
-            //    )
-            //);
-            //File.WriteAllBytes(savePath, MessagePackSerializer.Serialize(sheetList.ToArray(), options));
-            //return true;
+            sheetList.Sort((a, b) => a.Index.CompareTo(b.Index));
+            var options = MessagePackSerializerOptions.Standard.WithResolver(
+                CompositeResolver.Create(
+                    new IMessagePackFormatter[] { new FixedString32BytesFormatter() },
+                    new IFormatterResolver[] { ContractlessStandardResolver.Instance }
+                )
+            );
+            File.WriteAllBytes(savePath, MessagePackSerializer.Serialize(sheetList.ToArray(), options));
+            return true;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Kompile.Asset.Data
         [Key(0)]
         public int                  Index;
         [Key(1)]
-        public FixedString32Bytes   nameKey;
+        public FixedString32Bytes   NameKey;
         [Key(2)]
         public UnitBrainType        BrainType;
         [Key(3)]
@@ -21,7 +21,7 @@ namespace Kompile.Asset.Data
 
         public async Awaitable<FieldUnitAnimClipContext> GetAnimClipsAsync()
         {
-            var clips = await AssetProvider.LoadFieldUnitAnimClipSetAsync(nameKey.ToString());
+            var clips = await AssetProvider.LoadFieldUnitAnimClipSetAsync(NameKey.ToString());
             return clips;
         }
     }
