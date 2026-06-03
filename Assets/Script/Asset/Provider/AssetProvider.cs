@@ -13,10 +13,10 @@ namespace Kompile.Asset.Provider
 
     public static partial class AssetProvider
     {
-        private static readonly Dictionary<AssetKey, InstanceEntryContext> 
+        private static readonly Dictionary<AssetKey, InstanceEntryContext>
             GameObjectInstances = new Dictionary<AssetKey, InstanceEntryContext>();
 
-        private static readonly Dictionary<int, AsyncOperationHandle> 
+        private static readonly Dictionary<int, AsyncOperationHandle>
             NonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
 
         /// <summary> typeof(T).Name 호출 시 발생하는 string 할당(GC) 방지 캐시 </summary>
@@ -25,56 +25,116 @@ namespace Kompile.Asset.Provider
             public static readonly string Name = typeof(T).Name;
         }
 
-        #region 수명 주기 세션 자동 추적 시스템 (Session Automation)
-        /// <summary> 현재 활성화된 세션 내에서 해제해야 할 액션들을 모으는 리스트<br/>
-        /// 만약 필드가 엄청나게 넓어서 중간에 잠깐 쓰고 버려야 하는 임시 에셋이 있다면,
-        /// 세션 자동 등록에 맡기지 말고 기존처럼 AssetProvider.ReleaseInstance를 통해 수동으로 즉시 해제해 주어야 메모리 정점(Peak)을 낮출 수 있습니다.
-        /// </summary>
-        private static readonly List<Action> _sessionCleanupActions = new List<Action>();
-        private static bool _isSessionTrackingActive = false;
+        #region 수명 주기 세션 자동 추적 시스템 (Optimized Version)
+        private struct InstanceCleanupData
+        {
+            public AssetKey Key;
+            public GameObject Instance;
+            /// <summary> 이미 수동 해제된 인스턴스인지 판별하기 위한 고유 식별자 </summary>
+            public int InstanceID;
+        }
 
-        /// <summary> 리소스 자동 추적 세션을 시작 (게임 초기화 시점에 호출) </summary>
+        // 각 타입별로 분할된 힙 할당 최소화용 장부 (GC 최소화 구조 유지)
+        private static readonly List<InstanceCleanupData> _sessionInstances = new List<InstanceCleanupData>(128);
+        private static readonly List<UnitEntityBase> _sessionEntities = new List<UnitEntityBase>(128);
+        private static readonly List<int> _sessionAssetIds = new List<int>(128);
+        private static readonly List<string> _sessionAnimUnitKeys = new List<string>(32);
+        private static readonly List<AsyncOperationHandle> _sessionAnimHandles = new List<AsyncOperationHandle>(256);
+        private static readonly List<Action> _sessionCustomActions = new List<Action>(16);
+
+        private static bool _isSessionTrackingActive = false;
+        private static bool _bypassSessionTracking = false;
+
         public static void BeginSession()
         {
-            _sessionCleanupActions.Clear();
+            ClearAllSessionLedgers();
             _isSessionTrackingActive = true;
         }
 
-        /// <summary> 다른 매니저의 OnDisable() 등에서 호출하여, 세션 동안 수집된 모든 에셋/인스턴스/네이티브 배열을 역순으로 일괄 해제 </summary>
         public static void EndAndReleaseSession()
         {
             _isSessionTrackingActive = false;
 
-            // 생성의 역순으로 안전하게 해제 처리
-            for (int i = _sessionCleanupActions.Count - 1; i >= 0; i--)
+            // 1. 엔티티 데이터 청소 (생성의 역순)
+            for (int i = _sessionEntities.Count - 1; i >= 0; i--)
+            {
+                if (_sessionEntities[i] != null) _sessionEntities[i].Clear();
+            }
+
+            // 2. 게임 오브젝트 인스턴스 해제
+            for (int i = _sessionInstances.Count - 1; i >= 0; i--)
+            {
+                InstanceCleanupData data = _sessionInstances[i];
+
+                // 이미 수동으로 해제되어 파괴되었거나 null이면 패스
+                if (data.Instance == null) continue;
+
+                // 풀링 시스템 연동을 위해, 이미 수동으로 풀에 반환된 객체인지 식별 검사
+                if (!data.Instance.activeSelf && GameObjectInstances.TryGetValue(data.Key, out var entry))
+                {
+                    if (entry.IsAlreadyPooled(data.Instance)) continue;
+                }
+
+                ReleaseInstanceInternal(data.Key, data.Instance, false);
+            }
+
+            // 3. 순수 넌-게임오브젝트 에셋 해제
+            for (int i = _sessionAssetIds.Count - 1; i >= 0; i--)
+            {
+                ReleaseAsset(_sessionAssetIds[i]);
+            }
+
+            // 4. 애니메이션 클립 에셋 및 매핑 해제
+            for (int i = 0; i < _sessionAnimHandles.Count; i++)
+            {
+                if (_sessionAnimHandles[i].IsValid()) Addressables.Release(_sessionAnimHandles[i]);
+            }
+            for (int i = 0; i < _sessionAnimUnitKeys.Count; i++)
+            {
+                _fieldUnitAnimMap.Remove(_sessionAnimUnitKeys[i]);
+            }
+
+            // 5. NativeArray 및 커스텀 액션 등의 수동 등록 요소 해제 (안전한 예외 처리 포함)
+            for (int i = _sessionCustomActions.Count - 1; i >= 0; i--)
             {
                 try
                 {
-                    _sessionCleanupActions[i]?.Invoke();
+                    _sessionCustomActions[i]?.Invoke();
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[AssetProvider Session] 일괄 해제 중 예외 발생: {e.Message}");
+                    Debug.LogError($"[AssetProvider Session] 커스텀 일괄 해제 중 예외 발생: {e.Message}");
                 }
             }
-            _sessionCleanupActions.Clear();
+
+            ClearAllSessionLedgers();
         }
 
-        /// <summary> 매니저 내부에서 할당한 고성능 NativeArray나 커스텀 해제 로직을 현재 세션 장부에 강제로 등록하고 싶을 때 사용 </summary>
+        private static void ClearAllSessionLedgers()
+        {
+            _sessionInstances.Clear();
+            _sessionEntities.Clear();
+            _sessionAssetIds.Clear();
+            _sessionAnimUnitKeys.Clear();
+            _sessionAnimHandles.Clear();
+            _sessionCustomActions.Clear();
+        }
+
+        /// <summary> 매니저 내부에서 할당한 커스텀 해제 로직을 현재 세션 장부에 강제로 등록하고 싶을 때 사용 </summary>
         public static void RegisterToCurrentSession(Action cleanupAction)
         {
             if (_isSessionTrackingActive && cleanupAction != null)
             {
-                _sessionCleanupActions.Add(cleanupAction);
+                _sessionCustomActions.Add(cleanupAction);
             }
         }
-        
-        /// <summary> 매니저 내부에서 할당한 고성능 NativeArray나 커스텀 해제 로직을 현재 세션 장부에 강제로 등록하고 싶을 때 사용 </summary>
+
+        /// <summary> 매니저 내부에서 할당한 고성능 NativeArray를 현재 세션 장부에 강제로 등록하고 싶을 때 사용 </summary>
         public static void RegisterToCurrentSession<T>(NativeArray<T> nativeArray) where T : struct
         {
             if (_isSessionTrackingActive)
             {
-                _sessionCleanupActions.Add(() =>
+                _sessionCustomActions.Add(() =>
                 {
                     if (nativeArray.IsCreated) nativeArray.Dispose();
                 });
@@ -83,28 +143,29 @@ namespace Kompile.Asset.Provider
         #endregion
 
         #region Game Object (Instance & Pooling)
-
         public static async Awaitable<GameObject> GetOrNewInstanceAsync(AssetKey addressKey, Transform parent = null, bool usePooling = true)
         {
             if (addressKey.IsValid)
             {
                 GameObject instance = await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
-                
-                // [자동화] 세션이 켜져 있다면 파괴 장부에 인스턴스 해제 예약 등록
-                if (_isSessionTrackingActive && instance != null)
+
+                if (_isSessionTrackingActive && !_bypassSessionTracking && instance != null)
                 {
-                    _sessionCleanupActions.Add(() => ReleaseInstanceInternal(addressKey, instance, false));
+                    _sessionInstances.Add(new InstanceCleanupData
+                    {
+                        Key = addressKey,
+                        Instance = instance,
+                        InstanceID = instance.GetInstanceID()
+                    });
                 }
-                
+
                 return instance;
             }
-
             Debug.LogError("[AssetProvider] Addressable Key is null or empty!");
             return null;
         }
 
-        public static async Awaitable<TEntity> GetOrNewEntityInstanceAsync<TEntity>(AssetKey assetKey, Transform root)
-            where TEntity : UnitEntityBase
+        public static async Awaitable<TEntity> GetOrNewEntityInstanceAsync<TEntity>(AssetKey assetKey, Transform root) where TEntity : UnitEntityBase
         {
             GameObject go = await AssetProvider.GetOrNewInstanceAsync(assetKey, root);
             if (!go)
@@ -116,13 +177,30 @@ namespace Kompile.Asset.Provider
             TEntity entity = go.AddComponent<TEntity>();
             entity.SetAssetKey(assetKey);
 
-            // [자동화] 엔티티 내부의 데이터 청소(Clear) 로직도 세션 해제 시 함께 연쇄 반응하도록 등록
-            if (_isSessionTrackingActive)
+            if (_isSessionTrackingActive && !_bypassSessionTracking)
             {
-                _sessionCleanupActions.Add(() => { if (entity != null) entity.Clear(); });
+                _sessionEntities.Add(entity);
+            }
+            return entity;
+        }
+
+        /// <summary> 제네릭 컴포넌트 타입 기반의 오브젝트 로드 복원 </summary>
+        public static async Awaitable<T> GetOrNewInstanceAsync<T>(Transform parent = null, bool usePooling = true) where T : Component
+        {
+            AssetKey addressKey = new AssetKey(TypeNameCache<T>.Name);
+            GameObject instance = await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
+
+            if (_isSessionTrackingActive && !_bypassSessionTracking && instance != null)
+            {
+                _sessionInstances.Add(new InstanceCleanupData
+                {
+                    Key = addressKey,
+                    Instance = instance,
+                    InstanceID = instance.GetInstanceID()
+                });
             }
 
-            return entity;
+            return instance ? instance.GetComponent<T>() : null;
         }
 
         public static void ReleaseInstance(AssetKey addressKey, GameObject instance, bool forcedDestroy = false)
@@ -130,19 +208,7 @@ namespace Kompile.Asset.Provider
             ReleaseInstanceInternal(addressKey, instance, forcedDestroy);
         }
 
-        public static async Awaitable<T> GetOrNewInstanceAsync<T>(Transform parent = null, bool usePooling = true) where T : Component
-        {
-            AssetKey addressKey = new AssetKey(TypeNameCache<T>.Name);
-            GameObject instance = await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
-
-            if (_isSessionTrackingActive && instance != null)
-            {
-                _sessionCleanupActions.Add(() => ReleaseInstanceInternal(addressKey, instance, false));
-            }
-
-            return instance ? instance.GetComponent<T>() : null;
-        }
-
+        /// <summary> 제네릭 컴포넌트 타입 기반의 오브젝트 해제 복원 </summary>
         public static void ReleaseInstance<T>(GameObject instance, bool forcedDestroy = false) where T : Component
         {
             AssetKey addressKey = new AssetKey(TypeNameCache<T>.Name);
@@ -161,7 +227,6 @@ namespace Kompile.Asset.Provider
                     Debug.LogError($"[AssetProvider] Failed to load: {key.Value}");
                     return null;
                 }
-
                 entry = new InstanceEntryContext(handle, usePooling);
                 GameObjectInstances.TryAdd(key, entry);
             }
@@ -184,7 +249,6 @@ namespace Kompile.Asset.Provider
         private static void ReleaseInstanceInternal(AssetKey key, GameObject instance, bool forcedDestroy)
         {
             if (instance == null) return;
-
             if (!key.IsValid || !GameObjectInstances.TryGetValue(key, out InstanceEntryContext entry))
             {
                 Addressables.ReleaseInstance(instance);
@@ -203,20 +267,15 @@ namespace Kompile.Asset.Provider
             }
 
             entry.RemoveReference();
-
-            if (!entry.ShouldRelease())
-            {
-                return;
-            }
+            if (!entry.ShouldRelease()) return;
 
             Addressables.Release(entry.Handle);
             GameObjectInstances.Remove(key);
         }
-
         #endregion
 
         #region Non-GameObject Assets (Data Centric)
-
+        /// <summary> 순수 에셋 로드 기능 복원 및 세션 자동 추적 연결 </summary>
         public static async Awaitable<T> LoadAssetAsync<T>(AssetKey key) where T : UnityEngine.Object
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(key.Value);
@@ -224,16 +283,16 @@ namespace Kompile.Asset.Provider
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
+                Debug.LogError($"[AssetProvider] 에셋 로드 실패: {key.Value}");
                 return null;
             }
 
-            NonGameObjectInstances.TryAdd(result.GetInstanceID(), handle);
+            int id = result.GetInstanceID();
+            NonGameObjectInstances.TryAdd(id, handle);
 
-            // [자동화] 순수 에셋 로드 시 세션에 자동 등록
-            if (_isSessionTrackingActive)
+            if (_isSessionTrackingActive && !_bypassSessionTracking)
             {
-                int id = result.GetInstanceID();
-                _sessionCleanupActions.Add(() => ReleaseAsset(id));
+                _sessionAssetIds.Add(id);
             }
 
             return result;
@@ -250,6 +309,7 @@ namespace Kompile.Asset.Provider
             }
         }
 
+        /// <summary> MessagePack 바이너리 데이터 파일 읽기 로직 복원 </summary>
         public static async Awaitable<T> ReadBinaryDataAsync<T>(string assetKey)
         {
             AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(assetKey);
@@ -277,17 +337,21 @@ namespace Kompile.Asset.Provider
 
             if (handle.IsValid())
             {
-                Addressables.Release(handle);                
+                Addressables.Release(handle);
             }
-            
+
             return default;
         }
         #endregion
 
-        #region Animation Clips - Field
+        #region Animation Clips - Field (Race Condition Fixed)
         private static readonly string[] DirectionNames = Enum.GetNames(typeof(EUnitAnimIndex));
         private static readonly int ClipCount = (int)EUnitAnimIndex.Count;
         private static readonly Dictionary<string, FieldUnitAnimClipContext> _fieldUnitAnimMap = new();
+        private static readonly Dictionary<string, string[]> _addressCache = new(32);
+
+        /// <summary> 동시 프레임 로딩 경쟁을 막기 위한 진행 중인 비동기 태스크 전용 장부 </summary>
+        private static readonly Dictionary<string, Awaitable<FieldUnitAnimClipContext>> _loadingTasks = new(16);
 
         public static async Awaitable<FieldUnitAnimClipContext> LoadFieldUnitAnimClipSetAsync(string unitKey)
         {
@@ -296,53 +360,71 @@ namespace Kompile.Asset.Provider
                 return clipSet;
             }
 
-            string targetLabel = $"Anim_{unitKey}";
-            AnimationClip[] clips = new AnimationClip[ClipCount];
-            AsyncOperationHandle<IList<AnimationClip>> handle = Addressables.LoadAssetsAsync<AnimationClip>(targetLabel, null);
-            await handle.Task;
-
-            if (handle.Status == AsyncOperationStatus.Succeeded)
+            // 중복 비동기 호출 시 레이스 컨디션 방지 (먼저 돌고 있는 태스크를 캐시하여 대기)
+            if (_loadingTasks.TryGetValue(unitKey, out Awaitable<FieldUnitAnimClipContext> ongoingTask))
             {
-                IList<AnimationClip> loadedClips = handle.Result;
-                int loadedCount = loadedClips.Count;
+                return await ongoingTask;
+            }
 
-                for (int i = 0; i < loadedCount; i++)
+            Awaitable<FieldUnitAnimClipContext> loadTask = ExecuteLoadAnimClipSetInternalAsync(unitKey);
+            _loadingTasks.Add(unitKey, loadTask);
+
+            try
+            {
+                clipSet = await loadTask;
+            }
+            finally
+            {
+                _loadingTasks.Remove(unitKey);
+            }
+
+            return clipSet;
+        }
+
+        private static async Awaitable<FieldUnitAnimClipContext> ExecuteLoadAnimClipSetInternalAsync(string unitKey)
+        {
+            if (!_addressCache.TryGetValue(unitKey, out string[] cachedAddresses))
+            {
+                cachedAddresses = new string[ClipCount];
+                for (int j = 0; j < ClipCount; j++)
                 {
-                    AnimationClip clip = loadedClips[i];
-                    if (clip == null) continue;
+                    cachedAddresses[j] = $"{unitKey}_{DirectionNames[j]}";
+                }
+                _addressCache.Add(unitKey, cachedAddresses);
+            }
 
-                    for (int j = 0; j < ClipCount; j++)
-                    {
-                        if (clip.name.Contains(DirectionNames[j], StringComparison.OrdinalIgnoreCase))
-                        {
-                            clips[j] = clip;
-                            break;
-                        }
-                    }
+            AnimationClip[] clips = new AnimationClip[ClipCount];
+            var handles = new AsyncOperationHandle<AnimationClip>[ClipCount];
 
-                    NonGameObjectInstances.TryAdd(clip.GetInstanceID(), handle);
-                    
-                    // [자동화] 라벨로 긁어온 개별 클립들도 세션 자동 타깃 지정
-                    if (_isSessionTrackingActive)
-                    {
-                        int id = clip.GetInstanceID();
-                        _sessionCleanupActions.Add(() => ReleaseAsset(id));
-                    }
+            for (int j = 0; j < ClipCount; j++)
+            {
+                handles[j] = Addressables.LoadAssetAsync<AnimationClip>(cachedAddresses[j]);
+            }
+
+            for (int j = 0; j < ClipCount; j++)
+            {
+                await handles[j].Task;
+                if (handles[j].Status == AsyncOperationStatus.Succeeded)
+                {
+                    clips[j] = handles[j].Result;
+                    NonGameObjectInstances.TryAdd(handles[j].Result.GetInstanceID(), handles[j]);
+                }
+                else
+                {
+                    Debug.LogError($"[AnimLoader] 에셋 로드 실패 주소 체크: {cachedAddresses[j]}");
                 }
             }
 
-            clipSet = new FieldUnitAnimClipContext
-            {
-                UnitKey = unitKey,
-                Clips = clips
-            };
-
+            var clipSet = new FieldUnitAnimClipContext { UnitKey = unitKey, Clips = clips };
             _fieldUnitAnimMap[unitKey] = clipSet;
 
-            // 세션 종료 시 글로벌 맵에서도 청소되도록 매핑 해제 등록
-            if (_isSessionTrackingActive)
+            if (_isSessionTrackingActive && !_bypassSessionTracking)
             {
-                _sessionCleanupActions.Add(() => _fieldUnitAnimMap.Remove(unitKey));
+                _sessionAnimUnitKeys.Add(unitKey);
+                for (int i = 0; i < ClipCount; i++)
+                {
+                    _sessionAnimHandles.Add(handles[i]);
+                }
             }
 
             return clipSet;
@@ -350,12 +432,20 @@ namespace Kompile.Asset.Provider
 
         public static async Awaitable PreloadFieldUnitAnimsAsync(string[] unitKeys)
         {
-            for (int i = 0; i < unitKeys.Length; i++)
+            _bypassSessionTracking = true;
+            try
             {
-                string key = unitKeys[i];
-                if (_fieldUnitAnimMap.ContainsKey(key)) continue;
+                for (int i = 0; i < unitKeys.Length; i++)
+                {
+                    string key = unitKeys[i];
+                    if (_fieldUnitAnimMap.ContainsKey(key)) continue;
 
-                await LoadFieldUnitAnimClipSetAsync(key);
+                    await LoadFieldUnitAnimClipSetAsync(key);
+                }
+            }
+            finally
+            {
+                _bypassSessionTracking = false;
             }
         }
         #endregion

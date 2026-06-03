@@ -13,42 +13,54 @@ namespace Kompile.Unit.Component
 
         private Animator _animator;
         private AnimatorOverrideController _runtimeAOC;
-        private List<KeyValuePair<AnimationClip, AnimationClip>> _templatedPairCached = new List<KeyValuePair<AnimationClip, AnimationClip>>((int)FieldUnitAnimIndex.Count);
+
+        // 캐시된 리스트를 활용해 GC Alloc을 원천 봉쇄합니다.
+        private readonly List<KeyValuePair<AnimationClip, AnimationClip>> _templatedPairCached = new(8);
 
         public void Initialize(AnimatorOverrideController baseTemplateAOC, in FieldUnitAnimClipContext clipSet)
         {
-            _animator = transform.GetComponent<Animator>();
-
-            // 템플릿 복사본을 만들어 독점적 인스턴스 확보 (어드레서블 원본 보호)
-            _runtimeAOC = new AnimatorOverrideController(baseTemplateAOC);
-            _animator.runtimeAnimatorController = _runtimeAOC;
-
-            // 클립 오버라이드 매핑
-            ApplyRuntimeClips(baseTemplateAOC, in clipSet);
-            _animator.Rebind();
-            _animator.Update(0f);
-        }
-        private void ApplyRuntimeClips(AnimatorOverrideController templateAOC, in FieldUnitAnimClipContext clipSet)
-        {
-            if (!_runtimeAOC || !templateAOC || 
-                null == clipSet.Clips)
+            if (baseTemplateAOC == null)
             {
                 return;
             }
 
-            // 가비지 없이 목록 초기화
+            _animator = transform.GetComponent<Animator>();
+
+            // 1. 템플릿 복사본을 만들어 독점적 인스턴스 확보
+            _runtimeAOC = new AnimatorOverrideController(baseTemplateAOC);
+
+            // 2. Animator에 연결하기 '전'에 클립들을 일괄 오버라이드 (애니메이션 미출력 버그 방지)
+            // 3. 수정이 완료된 컨트롤러를 런타임 컨트롤러에 할당
+            ApplyRuntimeClips(in clipSet);
+            _animator.runtimeAnimatorController = _runtimeAOC;
+
+            // 4. 상태 재바인딩 및 초기화
+            _animator.Rebind();
+            _animator.Update(0f);
+        }
+
+        private void ApplyRuntimeClips(in FieldUnitAnimClipContext clipSet)
+        {
+            if (!_runtimeAOC || null == clipSet.Clips)
+            {
+                return;
+            }
+
+            // 가비지 없이 현재 매핑 정보 리스트 가져오기
             _templatedPairCached.Clear();
-            templateAOC.GetOverrides(_templatedPairCached);
+            _runtimeAOC.GetOverrides(_templatedPairCached);
 
-            AnimationClip[] baseClips = templateAOC.animationClips;
-            int maxCount = Mathf.Min(baseClips.Length, clipSet.Clips.Length);
-
-            AnimationClip baseClip;
+            // 리스트 데이터를 직접 수정 (KeyValuePair는 구조체이므로 새로 생성하여 대입)
+            int maxCount = Mathf.Min(_templatedPairCached.Count, clipSet.Clips.Length);
             for (int i = 0; i < maxCount; ++i)
             {
-                baseClip = _templatedPairCached[i].Key;
-                _runtimeAOC[baseClip] = clipSet.Clips[i];
+                AnimationClip originalClip = _templatedPairCached[i].Key;
+                AnimationClip overrideClip = clipSet.Clips[i];
+
+                _templatedPairCached[i] = new KeyValuePair<AnimationClip, AnimationClip>(originalClip, overrideClip);
             }
+
+            _runtimeAOC.ApplyOverrides(_templatedPairCached);
         }
 
         /// <summary> Entity.Update()에서 UnitIntent를 수신하여 호출 </summary>
@@ -62,7 +74,6 @@ namespace Kompile.Unit.Component
         /// <summary> 이동 속도와 2.5D 환경에 맞춘 바라보는 방향을 업데이트 </summary>
         private void UpdateMovementAnim(float speed, Vector3 direction)
         {
-            // 속도가 있을 때만 방향 파라미터 업데이트 (2.5D 8방향/4방향 블렌드 트리 대응)
             if (speed > 0.01f)
             {
                 _animator.SetFloat(HashDirX, direction.x);
