@@ -46,21 +46,44 @@ namespace Kompile.Unit.Component
                 return;
             }
 
-            // 가비지 없이 현재 매핑 정보 리스트 가져오기
+            // 1. 현재 AOC가 가지고 있는 템플릿 오버라이드 구조를 가져옴
             _templatedPairCached.Clear();
             _runtimeAOC.GetOverrides(_templatedPairCached);
 
-            // 리스트 데이터를 직접 수정 (KeyValuePair는 구조체이므로 새로 생성하여 대입)
-            int maxCount = Mathf.Min(_templatedPairCached.Count, clipSet.Clips.Length);
-            for (int i = 0; i < maxCount; ++i)
+            // 2. 외부에 정의된 clipSet의 개수만큼 순회하며 일치하는 오리지널 클립을 찾아 교체
+            // 💡 데이터(Data) 구조 내에 대상 오리지널 클립의 이름이나 식별자가 포함되어 있어야 안전합니다.
+            int overrideCount = clipSet.Clips.Length;
+            int templateCount = _templatedPairCached.Count;
+
+            for (int i = 0; i < templateCount; ++i)
             {
                 AnimationClip originalClip = _templatedPairCached[i].Key;
-                AnimationClip overrideClip = clipSet.Clips[i];
+                if (originalClip == null) continue;
 
-                _templatedPairCached[i] = new KeyValuePair<AnimationClip, AnimationClip>(originalClip, overrideClip);
+                // clipSet 구조 내에서 originalClip.name과 일치하는 런타임 클립이 있는지 검사
+                for (int j = 0; j < overrideCount; ++j)
+                {
+                    // 예시: clipSet 내부 구조가 (OriginalName, TargetClip) 쌍이거나
+                    // 혹은 타겟 클립의 네임 규칙이 오리지널을 포함하는 구조여야 합니다.
+                    if (IsMatchingClip(originalClip.name, clipSet.Clips[j]))
+                    {
+                        _templatedPairCached[i] = new KeyValuePair<AnimationClip, AnimationClip>(originalClip, clipSet.Clips[j]);
+                        break;
+                    }
+                }
             }
 
+            // 3. 일괄 적용
             _runtimeAOC.ApplyOverrides(_templatedPairCached);
+        }
+
+        private bool IsMatchingClip(string originalName, AnimationClip targetClip)
+        {
+            if (targetClip == null) return false;
+
+            // 네이밍 규칙에 맞게 매칭 (예: 오리지널이 "Warrior_Idle" 이고 타겟이 "Orc_Idle" 일 때 "Idle" 키워드로 매칭 등)
+            // 가장 좋은 방법은 FieldUnitAnimClipContext에 애초에 매칭 정보가 포함되어 있는 것입니다.
+            return targetClip.name.Contains(originalName);
         }
 
         /// <summary> Entity.Update()에서 UnitIntent를 수신하여 호출 </summary>
