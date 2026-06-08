@@ -344,14 +344,15 @@ namespace Kompile.Asset.Provider
         }
         #endregion
 
-        #region Animation Clips - Field (Race Condition Fixed)
+        #region Animation Clips - Field & Runtime Override Integration
         private static readonly string[] DirectionNames = Enum.GetNames(typeof(EUnitAnimIndex));
         private static readonly int ClipCount = (int)EUnitAnimIndex.Count;
         private static readonly Dictionary<string, FieldUnitAnimClipContext> _fieldUnitAnimMap = new();
         private static readonly Dictionary<string, string[]> _addressCache = new(32);
-
-        /// <summary> 동시 프레임 로딩 경쟁을 막기 위한 진행 중인 비동기 태스크 전용 장부 </summary>
         private static readonly Dictionary<string, Awaitable<FieldUnitAnimClipContext>> _loadingTasks = new(16);
+
+        /// <summary> 런타임 오버라이드 시 GC Alloc을 원천 봉쇄하기 위한 내부 정적 캐시 리스트 </summary>
+        private static readonly List<KeyValuePair<AnimationClip, AnimationClip>> _animBakeCache = new(32);
 
         public static async Awaitable<FieldUnitAnimClipContext> LoadFieldUnitAnimClipSetAsync(string unitKey)
         {
@@ -360,7 +361,6 @@ namespace Kompile.Asset.Provider
                 return clipSet;
             }
 
-            // 중복 비동기 호출 시 레이스 컨디션 방지 (먼저 돌고 있는 태스크를 캐시하여 대기)
             if (_loadingTasks.TryGetValue(unitKey, out Awaitable<FieldUnitAnimClipContext> ongoingTask))
             {
                 return await ongoingTask;
@@ -430,22 +430,82 @@ namespace Kompile.Asset.Provider
             return clipSet;
         }
 
-        public static async Awaitable PreloadFieldUnitAnimsAsync(string[] unitKeys)
+        /// <summary>
+        /// [통합된 핵심 기능] 
+        /// 컴포넌트가 요청한 인스턴스 컨트롤러에 가비지와 문자열 버그 없이 오버라이드 클립 세트를 주입합니다.
+        /// </summary>
+        public static void ApplyOverrideClips(AnimatorOverrideController runtimeAOC, in FieldUnitAnimClipContext clipSet)
         {
-            _bypassSessionTracking = true;
-            try
-            {
-                for (int i = 0; i < unitKeys.Length; i++)
-                {
-                    string key = unitKeys[i];
-                    if (_fieldUnitAnimMap.ContainsKey(key)) continue;
+            if (runtimeAOC == null || clipSet.Clips == null) return;
 
-                    await LoadFieldUnitAnimClipSetAsync(key);
+            // 1. 내부 캐시 리스트를 재사용하여 가비지 생성 방지
+            _animBakeCache.Clear();
+            runtimeAOC.GetOverrides(_animBakeCache);
+
+            int templateCount = _animBakeCache.Count;
+            int clipCount = clipSet.Clips.Length;
+
+            for (int i = 0; i < templateCount; ++i)
+            {
+                AnimationClip originalClip = _animBakeCache[i].Key;
+                if (originalClip == null) continue;
+
+                // 2. [버그 완벽 차단] 단순 Contains() 대신, 정립된 구조적 규칙 검사 수행
+                // originalClip.name이 "Base_Idle_S" 일 때 "Idle_S" 접미사로 끝나는지 확인하여 "Idle_SW" 등과의 중복 매칭을 완벽히 격리합니다.
+                for (int j = 0; j < clipCount; ++j)
+                {
+                    if (originalClip.name.EndsWith(DirectionNames[j], StringComparison.Ordinal))
+                    {
+                        _animBakeCache[i] = new KeyValuePair<AnimationClip, AnimationClip>(originalClip, clipSet.Clips[j]);
+                        break;
+                    }
                 }
             }
-            finally
+
+            // 3. 일괄 적용 연산 호출
+            runtimeAOC.ApplyOverrides(_animBakeCache);
+        }
+
+        /// <summary>
+        /// [추가 권장] 세션 종료 전이라도, 특정 유닛이 더 이상 쓰이지 않을 때 관련 애니메이션 에셋만 메모리에서 정밀 해제합니다.
+        /// </summary>
+        public static void ReleaseUnitAnimClipSet(string unitKey)
+        {
+            // 1. 장부에서 데이터가 있는지 확인하고 추출
+            if (!_fieldUnitAnimMap.Remove(unitKey, out FieldUnitAnimClipContext clipSet))
             {
-                _bypassSessionTracking = false;
+                return;
+            }
+
+            if (clipSet.Clips == null) return;
+
+            // 2. 해당 유닛이 가졌던 클립들을 순회하며 개별 핸들 해제
+            for (int i = 0; i < clipSet.Clips.Length; i++)
+            {
+                if (clipSet.Clips[i] == null) continue;
+
+                int id = clipSet.Clips[i].GetInstanceID();
+
+                // NonGameObjectInstances 장부에서 핸들을 찾아 Release 수행
+                if (NonGameObjectInstances.Remove(id, out var handle))
+                {
+                    if (handle.IsValid())
+                    {
+                        // 세션 추적 리스트에서도 해당 핸들을 찾아 제거 (중복 해제 방지)
+                        if (_isSessionTrackingActive)
+                        {
+                            _sessionAnimHandles.Remove(handle);
+                        }
+
+                        Addressables.Release(handle);
+                    }
+                }
+            }
+
+            // 3. 세션 키 리스트에서도 제외
+            if (_isSessionTrackingActive)
+            {
+                _sessionAnimUnitKeys.Remove(unitKey);
             }
         }
         #endregion
