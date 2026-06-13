@@ -3,11 +3,12 @@ namespace Kompile.Map.Manager
     using Kompile.Map.Utility;
     using Kompile.Map.Data;
     using Kompile.Asset.Provider;
+    using Kompile.Unit.Data;
     using UnityEngine;
     using System.Collections.Generic;
     using Unity.Mathematics;
     using Unity.Collections;
-    
+
     /// <summary> 인게임 맵 그리드의 동적 스트리밍, 레이어 시각적 제어, 실시간 인스턴스 관리를 전담 </summary>
     public class MapManager
     {
@@ -15,6 +16,10 @@ namespace Kompile.Map.Manager
         private readonly Dictionary<int, MapGridData> _mapGridDataDic;
         private readonly Dictionary<int, List<MapChunkContext>> _spawnedMapObjects;
         private readonly Transform _rootTransform;
+
+        // 고유 3D 공간 위상 식별을 위해 long 키와 고속 정보 구조체를 매핑합니다.
+        private NativeHashMap<long, BurstTileInfo> _nativeTileMap;
+        public NativeHashMap<long, BurstTileInfo> NativeTileMap => _nativeTileMap;
 
         // --- Streaming State ---
         private readonly HashSet<int> _activeGrids;     // 로드 완료된 그리드 키
@@ -41,6 +46,7 @@ namespace Kompile.Map.Manager
         private const float PRELOAD_RADIUS = 10f;  // 로드 시작 반경 (Far 5 + 여유 5)
         private const float UNLOAD_RADIUS = 20f;  // 언로드 시작 반경 (Preload + 10)
         private const float CHECK_INTERVAL = 0.5f; // 스트리밍 검사 주기 (초)
+        private const float GRID_SIZE = 64f;
 
         public MapManager(Transform root)
         {
@@ -58,6 +64,9 @@ namespace Kompile.Map.Manager
 
             _rootTransform = root;
             _propBlock = new MaterialPropertyBlock();
+
+            // 공간 넉넉히 인스턴스 확보 (DOD 매핑 용도)
+            _nativeTileMap = new NativeHashMap<long, BurstTileInfo>(4096, Allocator.Persistent);
         }
 
         // ===================================================================================
@@ -104,25 +113,28 @@ namespace Kompile.Map.Manager
             _gridsToRemove.Clear();
             _keepGrids.Clear();
             _animatingChunksCache.Clear();
+
+            if (_nativeTileMap.IsCreated)
+            {
+                _nativeTileMap.Dispose();
+            }
         }
 
         // ===================================================================================
-        // [핵심] 그리드 스트리밍 로직 (Hysteresis & Background Loop)
+        // 그리드 스트리밍 로직 (Hysteresis & Background Loop)
         // ===================================================================================
 
         private async Awaitable PlayGridStreamingLoopAsync(NativeArray<int> validGridKeys)
         {
-            const float GRID_SIZE = 64f;
-            const float Y_RADIUS  = 64f;
+            const float Y_RADIUS = 64f;
 
             // 반복 연산을 피하기 위해 루프 밖에서 미리 제곱값 계산
-            float unloadRadSq  = UNLOAD_RADIUS * UNLOAD_RADIUS;
+            float unloadRadSq = UNLOAD_RADIUS * UNLOAD_RADIUS;
             float preloadRadSq = PRELOAD_RADIUS * PRELOAD_RADIUS;
 
             // 검사할 그리드 셀 범위: 반경 ÷ 그리드 크기 + 여유 1칸
-            // PRELOAD_RADIUS(10) < GRID_SIZE(64)이므로 현재 상수 기준 keepRange=2, yRange=1
             int keepRange = Mathf.CeilToInt(UNLOAD_RADIUS / GRID_SIZE) + 1;
-            int yRange    = Mathf.CeilToInt(Y_RADIUS / GRID_SIZE);
+            int yRange = Mathf.CeilToInt(Y_RADIUS / GRID_SIZE);
 
             while (_isStreamingActive)
             {
@@ -139,8 +151,6 @@ namespace Kompile.Map.Manager
                 _keepGrids.Clear();
 
                 // 1. 이웃 그리드 셀을 직접 열거하여 Preload·Keep 판정
-                //    월드 좌표 샘플링 방식은 그리드 경계 근처에서 탐지 누락이 발생하므로,
-                //    그리드 AABB ↔ 카메라 수평 최단 거리로 판정한다.
                 for (int dy = -yRange; dy <= yRange; dy++)
                 {
                     for (int dx = -keepRange; dx <= keepRange; dx++)
@@ -152,18 +162,18 @@ namespace Kompile.Map.Manager
                             int gz = camGz + dz;
 
                             // 그리드 AABB에서 카메라까지의 수평 최단 거리 계산
-                            float nearX  = Mathf.Clamp(camX, gx * GRID_SIZE, (gx + 1) * GRID_SIZE);
-                            float nearZ  = Mathf.Clamp(camZ, gz * GRID_SIZE, (gz + 1) * GRID_SIZE);
-                            float ddx    = camX - nearX;
-                            float ddz    = camZ - nearZ;
+                            float nearX = Mathf.Clamp(camX, gx * GRID_SIZE, (gx + 1) * GRID_SIZE);
+                            float nearZ = Mathf.Clamp(camZ, gz * GRID_SIZE, (gz + 1) * GRID_SIZE);
+                            float ddx = camX - nearX;
+                            float ddz = camZ - nearZ;
                             float distSq = ddx * ddx + ddz * ddz;
 
                             // Unload 반경 밖 → 완전 무시
                             if (distSq > unloadRadSq)
                             {
-                                continue;                                
+                                continue;
                             }
-                            
+
                             // 그리드 키 계산 (MapCoordUtil.ComputeGridKey와 동일한 패킹)
                             byte bX = (byte)(sbyte)gx;
                             byte bY = (byte)(sbyte)gy;
@@ -185,8 +195,7 @@ namespace Kompile.Map.Manager
                                 continue;
                             }
 
-                            if (_activeGrids.Contains(targetGridKey)
-                                || !_loadingGrids.Add(targetGridKey))
+                            if (_activeGrids.Contains(targetGridKey) || !_loadingGrids.Add(targetGridKey))
                             {
                                 continue;
                             }
@@ -197,7 +206,7 @@ namespace Kompile.Map.Manager
                                 Debug.Log("[Debug] Invalid grid key: " + targetGridKey);
                                 continue;
                             }
-                            
+
                             _ = LoadGridDataAsync(targetGridKey); // Fire and forget
                         }
                     }
@@ -230,8 +239,6 @@ namespace Kompile.Map.Manager
         {
             try
             {
-                //여기서 grid key를 들고 있어야 하는구나?
-                
                 // 문자열 보간 캐싱으로 GC Alloc 방지
                 if (!_gridKeyAddressCache.TryGetValue(gridKey, out string addressKey))
                 {
@@ -242,12 +249,54 @@ namespace Kompile.Map.Manager
                 MapGridData gridData = await AssetProvider.ReadBinaryDataAsync<MapGridData>(addressKey);
                 if (gridData == null)
                 {
-                    // ★ 핵심 방어: Addressables에 존재하지 않는 그리드는 블랙리스트에 영구 등록
                     _invalidGrids.Add(gridKey);
                     return;
                 }
 
                 _mapGridDataDic[gridKey] = gridData;
+
+                sbyte gx = (sbyte)((gridKey >> 16) & 0xFF);
+                sbyte gy = (sbyte)((gridKey >> 8) & 0xFF);
+                sbyte gz = (sbyte)(gridKey & 0xFF);
+                int baseTx = gx * 64;
+                int baseTz = gz * 64;
+
+                // 💡 [완벽 교정] 64x64 공간의 모든 수직 높이 레이어(0~63)를 저인망식으로 스캔하여 복층 구조 타일을 누락 없이 전부 구워냅니다.
+                int columnCounter = 0;
+                for (int x = 0; x < 64; x++)
+                {
+                    for (int z = 0; z < 64; z++)
+                    {
+                        int globalTx = baseTx + x;
+                        int globalTz = baseTz + z;
+
+                        for (int y = 0; y < 64; y++)
+                        {
+                            float worldY = gy * 64f + y;
+                            float3 testWorldPos = new float3(globalTx + 0.5f, worldY + 0.5f, globalTz + 0.5f);
+                            MapCoordUtil.ComputeKey(testWorldPos, out int gKey, out int tKey);
+
+                            if (gridData.TryGetTileData(tKey, out MapTileData tileData))
+                            {
+                                long packedKey = ((long)gKey << 32) | (uint)tKey;
+                                MapCoordUtil.GetPivot(gKey, tKey, out float3 pivot);
+
+                                _nativeTileMap[packedKey] = new BurstTileInfo
+                                {
+                                    TileData = tileData,
+                                    TileBaseY = pivot.y
+                                };
+                            }
+                        }
+                    }
+
+                    // 💡 [렉 방지] 대량 수직 탐색으로 인한 메인 스레드 병목을 분산하기 위해 8개 컬럼 처리마다 부드럽게 프레임을 양보합니다.
+                    columnCounter++;
+                    if (columnCounter % 8 == 0)
+                    {
+                        await Awaitable.NextFrameAsync();
+                    }
+                }
 
                 if (gridData.layerMeshAssets != null)
                 {
@@ -271,7 +320,7 @@ namespace Kompile.Map.Manager
         }
 
         // ===================================================================================
-        // [핵심] 메쉬 생성 및 타임 슬라이싱 (렉 방지)
+        // 메쉬 생성 및 타임 슬라이싱 (렉 방지)
         // ===================================================================================
 
         private async Awaitable CreateMapChunksAsync(int gridKey, MapGridLayerData layerData)
@@ -284,9 +333,9 @@ namespace Kompile.Map.Manager
                 Mesh bakedMesh = await AssetProvider.LoadAssetAsync<Mesh>(meshAddress);
                 if (!bakedMesh)
                 {
-                    continue;                    
+                    continue;
                 }
-                
+
                 string matAddress = GetMaterialAddress(meshAddress);
                 Material mat = await AssetProvider.LoadAssetAsync<Material>(matAddress);
 
@@ -301,7 +350,6 @@ namespace Kompile.Map.Manager
                 MeshRenderer renderer = chunkObj.AddComponent<MeshRenderer>();
                 renderer.sharedMaterial = mat ? mat : new Material(Shader.Find("Standard"));
 
-                // MapChunk 엔티티 생성 및 관리 리스트 추가
                 MapChunkContext chunk = new MapChunkContext
                 {
                     Layer = layerData.layer,
@@ -312,7 +360,6 @@ namespace Kompile.Map.Manager
 
                 _spawnedMapObjects[gridKey].Add(chunk);
 
-                // 💡 Time-Slicing: 3개 생성마다 한 프레임 쉬어감으로써 메인 스레드 점유율 제어
                 instantiateCounter++;
                 if (instantiateCounter % 3 == 0)
                 {
@@ -335,18 +382,36 @@ namespace Kompile.Map.Manager
                 _spawnedMapObjects.Remove(gridKey);
             }
 
+            // 💡 [완벽 교정] 언로드 시에도 추가했던 모든 수직 레이어 타일 포인터 키들을 정밀하게 청소하여 메모리 누수를 완벽히 방지합니다.
+            sbyte gx = (sbyte)((gridKey >> 16) & 0xFF);
+            sbyte gy = (sbyte)((gridKey >> 8) & 0xFF);
+            sbyte gz = (sbyte)(gridKey & 0xFF);
+            int baseTx = gx * 64;
+            int baseTz = gz * 64;
+
+            for (int x = 0; x < 64; x++)
+            {
+                for (int z = 0; z < 64; z++)
+                {
+                    for (int y = 0; y < 64; y++)
+                    {
+                        float worldY = gy * 64f + y;
+                        float3 testWorldPos = new float3(baseTx + x + 0.5f, worldY + 0.5f, baseTz + z + 0.5f);
+                        MapCoordUtil.ComputeKey(testWorldPos, out int gKey, out int tKey);
+                        long packedKey = ((long)gKey << 32) | (uint)tKey;
+                        _nativeTileMap.Remove(packedKey);
+                    }
+                }
+            }
+
             _mapGridDataDic.Remove(gridKey);
             _activeGrids.Remove(gridKey);
         }
 
         // ===================================================================================
-        // [핵심] 레이어 시각적 제어 (Async Fade)
+        // 레이어 시각적 제어 (Async Fade)
         // ===================================================================================
 
-        /// <summary>
-        /// 플레이어 월드 좌표의 타일 LayerMask를 확인하여, 직전 값과 다를 때만 레이어 시각 갱신을 트리거합니다.
-        /// 이동 이벤트 또는 주기적으로 호출하십시오.
-        /// </summary>
         public async Awaitable UpdateLayerFromTileAsync(float3 playerWorldPos, float fadeDuration = 1.0f)
         {
             if (!TryGetTileData(in playerWorldPos, out MapTileData tileData))
@@ -373,7 +438,6 @@ namespace Kompile.Map.Manager
             Color dimColor = new Color(0.1f, 0.1f, 0.1f, 1f);
             Color hideColor = new Color(0f, 0f, 0f, 0f);
 
-            // 매 프레임 Dictionary를 순회하지 않도록 애니메이션 대상만 1차원 리스트로 캐싱
             _animatingChunksCache.Clear();
 
             foreach (var kvp in _spawnedMapObjects)
@@ -389,7 +453,7 @@ namespace Kompile.Map.Manager
                         chunk.TargetColor = normalColor;
                         if (!chunk.Renderer.enabled)
                         {
-                            chunk.Renderer.enabled = true;                            
+                            chunk.Renderer.enabled = true;
                         }
                     }
                     else
@@ -397,15 +461,14 @@ namespace Kompile.Map.Manager
                         chunk.TargetColor = hideInsteadOfDim ? hideColor : dimColor;
                         if (!chunk.Renderer.enabled && !hideInsteadOfDim)
                         {
-                            chunk.Renderer.enabled = true;                            
+                            chunk.Renderer.enabled = true;
                         }
                     }
-                    
+
                     _animatingChunksCache.Add(chunk);
                 }
             }
 
-            // 보간 루프 (메인 스레드 부하 최소화)
             float elapsed = 0f;
             while (elapsed < duration)
             {
@@ -414,7 +477,6 @@ namespace Kompile.Map.Manager
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
 
-                // 평탄화된 1차원 리스트만 순회
                 for (int i = 0; i < _animatingChunksCache.Count; i++)
                 {
                     MapChunkContext chunk = _animatingChunksCache[i];
@@ -428,12 +490,11 @@ namespace Kompile.Map.Manager
                 await Awaitable.NextFrameAsync();
             }
 
-            // 최종 상태 확정
             if (_layerTransitionToken != currentToken)
             {
-                return;                
+                return;
             }
-            
+
             for (int i = 0; i < _animatingChunksCache.Count; i++)
             {
                 MapChunkContext chunk = _animatingChunksCache[i];
@@ -449,18 +510,13 @@ namespace Kompile.Map.Manager
                 }
             }
 
-            // 참조 해제 (메모리 릭 방지)
             _animatingChunksCache.Clear();
         }
 
         // ===================================================================================
-        // 데이터 접근 (Field 레이어 → IMapQueryService 경유)
+        // 데이터 접근 
         // ===================================================================================
 
-        /// <summary>
-        /// 월드 좌표를 받아 해당 위치의 MapTileData를 반환합니다.
-        /// 그리드가 로드되지 않았거나 타일이 없으면 false를 반환합니다.
-        /// </summary>
         public bool TryGetTileData(in float3 worldPos, out MapTileData tileData)
         {
             MapCoordUtil.ComputeKey(worldPos, out int gKey, out int tKey);
@@ -468,7 +524,7 @@ namespace Kompile.Map.Manager
             {
                 return gridData.TryGetTileData(tKey, out tileData);
             }
-            
+
             tileData = default;
             return false;
         }
@@ -479,7 +535,6 @@ namespace Kompile.Map.Manager
 
         private string GetMaterialAddress(string meshName)
         {
-            // 캐싱을 통해 무거운 Substring 연산과 문자열 보간을 최초 1회로 제한
             if (_materialAddressCache.TryGetValue(meshName, out string cachedMatAddress))
             {
                 return cachedMatAddress;
