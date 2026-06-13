@@ -10,8 +10,7 @@ namespace Kompile.Unit.Component
 
     /// <summary>
     /// [Framework] Component 계층
-    /// 입력 방향 기준 +-90도 내 대안 방향들을 우선순위(대각선->직교)에 따라 탐색하여
-    /// 완벽하고 부드러운 2.5D 슬라이딩 감각을 구현하는 컴포넌트입니다.
+    /// 입력 방향 기준 대안 방향들을 탐색하여 부드러운 2.5D 슬라이딩을 구현하는 컴포넌트입니다.
     /// </summary>
     public class UnitMoveComponent : MonoBehaviour
     {
@@ -19,9 +18,7 @@ namespace Kompile.Unit.Component
         private const float WALKABLE_RADIUS = 0.35f;
         private const float HEIGHT_STEP = 0.125f;
 
-        // 💡 조작감 미세 조정을 위한 슬라이딩 감속 상수 (상수로 격리하여 커스텀 용이)
-        private const float DIAGONAL_SLIDE_DAMPING = 0.7071068f; // 45도 경사 미끄러짐 가중치 (Cos 45°)
-        private const float ORTHOGONAL_SLIDE_DAMPING = 0.5f;     // 90도 직교 벽면 마찰 마찰력 모사 가중치
+        private const float DIAGONAL_SLIDE_DAMPING = 0.7071068f; 
         private const float COS_45 = 0.7071068f;
 
         private UnitEntityBase _ownerEntity;
@@ -34,59 +31,43 @@ namespace Kompile.Unit.Component
             _mapQuery = mapQuery;
         }
 
+        private static readonly float[] DiagonalAngleDegree = new[] { 45f, -45f, 90f, -90f };
+        
         public void UpdateIntent(in UnitIntent intent)
         {
-            if (null == _ownerEntity) return;
-
+            if (!_ownerEntity) return;                
+            
             _moveInput = intent.MoveInput;
-            if (_moveInput == Vector2.zero) return;
+            if (Vector2.zero == _moveInput) return;
 
-            // 1. 입력 축 정규화 및 원본 프레임 이동 속도 연산
-            Vector2 dir = _moveInput.sqrMagnitude > 1f ? _moveInput.normalized : _moveInput;
             float baseSpeed = MOVE_SPEED * Time.deltaTime;
-
+    
+            Vector2 dir = _moveInput.sqrMagnitude > 1f ? _moveInput.normalized : _moveInput;
             float3 moveDir3D = new float3(dir.x, 0f, dir.y);
             Vector3 currentPos = _ownerEntity.transform.position;
 
-            // 2. [나으리의 우선순위 알고리즘 이식] 5단계 전방 방향성 탐색 체인
-            bool hasMoved = false;
-
-            // [우선순위 1] 원래 가려던 전방 메인 방향 검증 (100% 속도)
             Vector3 targetPos = currentPos + (Vector3)(moveDir3D * baseSpeed);
-            if (CheckWalkableWithVelocity(targetPos, moveDir3D))
+            Vector3 nextPos;
+
+            // 의도한 주 방향 이동: 캐릭터 반경 전체 수호를 위해 호(Arc) 기반 고정밀 검사 수행
+            if (CheckWalkableArc(targetPos, moveDir3D, WALKABLE_RADIUS, sampleCount: 5, maxAngleRad: math.PI * 0.5f))
             {
                 currentPos = targetPos;
-                hasMoved = true;
             }
-
-            // [우선순위 2] 좌측 45도 대각선 방향 탐색 (동 -> 동북)
-            if (!hasMoved && TryAlternativeMove(currentPos, moveDir3D, 45f, baseSpeed * DIAGONAL_SLIDE_DAMPING, out Vector3 nextPos))
+            // 대체 방향 탐색 (슬라이딩)
+            else
             {
-                currentPos = nextPos;
-                hasMoved = true;
+                float moveDistance = baseSpeed * DIAGONAL_SLIDE_DAMPING;
+                for (int i = 0; i < DiagonalAngleDegree.Length; ++i)
+                {
+                    if (TryAlternativeMove(currentPos, moveDir3D, i, moveDistance, out nextPos))
+                    {
+                        currentPos = nextPos;
+                        break;
+                    }
+                }
             }
 
-            // [우선순위 3] 우측 45도 대각선 방향 탐색 (동 -> 동남)
-            if (!hasMoved && TryAlternativeMove(currentPos, moveDir3D, -45f, baseSpeed * DIAGONAL_SLIDE_DAMPING, out nextPos))
-            {
-                currentPos = nextPos;
-                hasMoved = true;
-            }
-
-            // [우선순위 4] 좌측 90도 완전 직교 방향 탐색 (동 -> 북)
-            if (!hasMoved && TryAlternativeMove(currentPos, moveDir3D, 90f, baseSpeed * ORTHOGONAL_SLIDE_DAMPING, out nextPos))
-            {
-                currentPos = nextPos;
-                hasMoved = true;
-            }
-
-            // [우선순위 5] 우측 90도 완전 직교 방향 탐색 (동 -> 남)
-            if (!hasMoved && TryAlternativeMove(currentPos, moveDir3D, -90f, baseSpeed * ORTHOGONAL_SLIDE_DAMPING, out nextPos))
-            {
-                currentPos = nextPos;
-            }
-
-            // 3. 최종 확정된 평면 좌표 위에서 완벽한 3D 지형 높이 보간 결합
             if (TrySampleHeight(currentPos, out float groundY))
             {
                 currentPos.y = groundY;
@@ -94,31 +75,28 @@ namespace Kompile.Unit.Component
 
             _ownerEntity.transform.position = currentPos;
         }
-
-        /// <summary>
-        /// 원래 방향 벡터를 각도만큼 회전시켜 대안 변위를 시뮬레이션하고 지형 안전성을 검증합니다. (Zero GC)
-        /// </summary>
-        private bool TryAlternativeMove(Vector3 currentPos, float3 baseDir, float angleDeg, float moveDistance, out Vector3 nextPos)
+        
+        private bool TryAlternativeMove(Vector3 currentPos, float3 baseDir, int index, float moveDistance, out Vector3 nextPos)
         {
             nextPos = currentPos;
+            float cos = 0f, sin = 0f;
 
-            // 삼각함수 호출 힙 부하를 방지하기 위한 하드코딩 회전 행렬 매핑
-            float cos = 0f;
-            float sin = 0f;
-
-            if (angleDeg == 45f) { cos = COS_45; sin = COS_45; }
-            else if (angleDeg == -45f) { cos = COS_45; sin = -COS_45; }
-            else if (angleDeg == 90f) { cos = 0f; sin = 1f; }
-            else if (angleDeg == -90f) { cos = 0f; sin = -1f; }
-
-            // 3D XZ 평면 회전 수식
+            switch (index)
+            {
+                case 0: cos = COS_45; sin = COS_45;  break;
+                case 1: cos = COS_45; sin = -COS_45; break;
+                case 2: cos = 0f; sin = 1f; break;
+                case 3: cos = 0f; sin = -1f; break;
+                default: return false;
+            }
+            
             float rotX = baseDir.x * cos - baseDir.z * sin;
             float rotZ = baseDir.x * sin + baseDir.z * cos;
 
             float3 altDir = math.normalize(new float3(rotX, 0f, rotZ));
             Vector3 targetPos = currentPos + (Vector3)(altDir * moveDistance);
 
-            if (CheckWalkableWithVelocity(targetPos, altDir))
+            if (CheckWalkableArc(targetPos, altDir, WALKABLE_RADIUS, sampleCount: 3, maxAngleRad: math.PI * 0.25f))
             {
                 nextPos = targetPos;
                 return true;
@@ -127,35 +105,34 @@ namespace Kompile.Unit.Component
             return false;
         }
 
-        /// <summary>
-        /// 목적지 좌표를 기준으로, 진행하는 선단 에지(Leading Edge)에 반원 호 모양의 3개 프롭 포인트를 심어 지형을 다이렉트 검증합니다.
-        /// 이 방식으로 사각형 박스 충돌 연산 특유의 내부 유령 모서리 걸림 문제를 완전히 해소합니다.
-        /// </summary>
-        private bool CheckWalkableWithVelocity(Vector3 targetPos, float3 moveDir)
+        private bool CheckWalkableArc(Vector3 targetPos, float3 moveDir, float radius, int sampleCount, float maxAngleRad)
         {
-            // 중심점 베이스 라인 검사
-            if (!IsPointWalkable(targetPos, (float3)targetPos)) return false;
+            if (!IsPointWalkable(targetPos, (float3)targetPos)) 
+                return false;
 
-            // 정전방 프롭 포인트 샘플링
-            float3 pFront = (float3)targetPos + moveDir * WALKABLE_RADIUS;
-            if (!IsPointWalkable(targetPos, pFront)) return false;
+            if (sampleCount <= 1)
+            {
+                float3 pFront = (float3)targetPos + moveDir * radius;
+                return IsPointWalkable(targetPos, pFront);
+            }
 
-            // 전방 좌측 45도 프롭 포인트 샘플링
-            float3 pLeft = (float3)targetPos + RotateQuarterVector(moveDir, true) * WALKABLE_RADIUS;
-            if (!IsPointWalkable(targetPos, pLeft)) return false;
+            float angleStep = (maxAngleRad * 2f) / (sampleCount - 1); 
 
-            // 전방 우측 45도 프롭 포인트 샘플링
-            float3 pRight = (float3)targetPos + RotateQuarterVector(moveDir, false) * WALKABLE_RADIUS;
-            if (!IsPointWalkable(targetPos, pRight)) return false;
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float angle = -maxAngleRad + (angleStep * i);
+                
+                // 💡 Utility 계층의 BurstCompile된 고속 방향 연산 대리 호출
+                MapGeometryUtil.CalculateArcDirection(in moveDir, in angle, out float3 sampleDir);
+                float3 checkPoint = (float3)targetPos + sampleDir * radius;
+
+                if (!IsPointWalkable(targetPos, checkPoint))
+                {
+                    return false;
+                }
+            }
 
             return true;
-        }
-
-        private float3 RotateQuarterVector(float3 dir, bool left)
-        {
-            float sin = left ? COS_45 : -COS_45;
-            float cos = COS_45;
-            return new float3(dir.x * cos - dir.z * sin, 0f, dir.x * sin + dir.z * cos);
         }
 
         private bool IsPointWalkable(Vector3 referencePos, float3 point)
@@ -165,32 +142,16 @@ namespace Kompile.Unit.Component
             int tx = Mathf.FloorToInt(point.x);
             int tz = Mathf.FloorToInt(point.z);
 
-            // 타일이 없는 허공 격자 낭떠러지 즉시 예외 컷
+            // 로우레벨 탐색 컨텍스트(인터페이스 참조 영역)
             if (!TryGetTileAt(tx, tz, referencePos.y, out MapTileData tile, out _))
             {
                 return false;
             }
 
             float2 localPos = new float2(point.x - tx, point.z - tz);
-
-            // 16개 서브타일 삼각면 매핑 레이어 서치 후 최종 유효성 비트 연산 바인딩
-            for (int s = 0; s < MapConsts.TRIANGLES_COUNT; s++)
-            {
-                int v0 = MapConsts.SubTileVertexMap[s * 3 + 0];
-                int v1 = MapConsts.SubTileVertexMap[s * 3 + 1];
-                int v2 = MapConsts.SubTileVertexMap[s * 3 + 2];
-
-                float2 p0 = MapConsts.VertexPositions[v0];
-                float2 p1 = MapConsts.VertexPositions[v1];
-                float2 p2 = MapConsts.VertexPositions[v2];
-
-                if (MapGeometryUtil.IsPointInTriangle(localPos, p0, p1, p2))
-                {
-                    return MapNaviTileUtil.IsSubTileValid(tile.NaviMask, s);
-                }
-            }
-
-            return false;
+            
+            // 💡 빽빽한 삼각형 포함 루프 연산을 Utility의 BurstCompile 메서드로 전량 위임
+            return MapGeometryUtil.IsTilePointWalkable(in tile, in localPos);
         }
 
         private bool TrySampleHeight(Vector3 pos, out float groundY)
@@ -208,39 +169,16 @@ namespace Kompile.Unit.Component
 
             float2 localPos = new float2(pos.x - targetTx, pos.z - targetTz);
 
-            for (int s = 0; s < MapConsts.TRIANGLES_COUNT; s++)
-            {
-                if (!MapNaviTileUtil.IsSubTileValid(tile.NaviMask, s)) continue;
-
-                int v0 = MapConsts.SubTileVertexMap[s * 3 + 0];
-                int v1 = MapConsts.SubTileVertexMap[s * 3 + 1];
-                int v2 = MapConsts.SubTileVertexMap[s * 3 + 2];
-
-                float2 p0 = MapConsts.VertexPositions[v0];
-                float2 p1 = MapConsts.VertexPositions[v1];
-                float2 p2 = MapConsts.VertexPositions[v2];
-
-                if (!MapGeometryUtil.IsPointInTriangle(localPos, p0, p1, p2)) continue;
-
-                int h0 = MapNaviTileUtil.GetHeightFromNaviMask(tile.NaviMask, v0);
-                int h1 = MapNaviTileUtil.GetHeightFromNaviMask(tile.NaviMask, v1);
-                int h2 = MapNaviTileUtil.GetHeightFromNaviMask(tile.NaviMask, v2);
-
-                float3 bary = MapGeometryUtil.BarycentricCoords(localPos, p0, p1, p2);
-                float sampledHeight = (bary.x * h0 + bary.y * h1 + bary.z * h2) * HEIGHT_STEP;
-
-                groundY = tileBaseY + sampledHeight;
-                return true;
-            }
-            return false;
+            // 💡 무거운 삼각면 가중치 보간 연산 루프를 Utility의 BurstCompile 메서드로 전량 위임
+            return MapGeometryUtil.TrySampleTileHeight(in tile, in tileBaseY, in localPos, HEIGHT_STEP, out groundY);
         }
 
         private bool TryGetTileAt(int targetTx, int targetTz, float referenceY, out MapTileData tile, out float tileBaseY)
         {
             tile = default;
             tileBaseY = 0f;
-            if (null == _mapQuery) return false;
-
+            if (null == _mapQuery) return false;                
+            
             Vector3 curPos = _ownerEntity.transform.position;
             int curTx = Mathf.FloorToInt(curPos.x);
             int curTz = Mathf.FloorToInt(curPos.z);
@@ -248,7 +186,7 @@ namespace Kompile.Unit.Component
             float3 curQuery = new float3(curTx + 0.5f, curPos.y, curTz + 0.5f);
             if (!_mapQuery.TryGetTileData(curQuery, out MapTileData curTile))
             {
-                return TryScanTileVertical(targetTx, targetTz, referenceY, out tile, out tileBaseY);
+                return TryScanTileVertical(in targetTx, in targetTz, in referenceY, out tile, out tileBaseY);
             }
 
             int dx = targetTx - curTx;
@@ -265,15 +203,9 @@ namespace Kompile.Unit.Component
 
             int dirIndex = (dx, dz) switch
             {
-                (-1, -1) => 0,
-                (0, -1) => 1,
-                (1, -1) => 2,
-                (1, 0) => 3,
-                (1, 1) => 4,
-                (0, 1) => 5,
-                (-1, 1) => 6,
-                (-1, 0) => 7,
-                _ => -1
+                (-1, -1) => 0, (0, -1) => 1, (1, -1) => 2,
+                (1, 0) => 3,  (1, 1) => 4,  (0, 1) => 5,
+                (-1, 1) => 6, (-1, 0) => 7, _ => -1
             };
 
             if (dirIndex != -1)
@@ -291,15 +223,14 @@ namespace Kompile.Unit.Component
                 }
             }
 
-            return TryScanTileVertical(targetTx, targetTz, referenceY, out tile, out tileBaseY);
+            return TryScanTileVertical(in targetTx, in targetTz, in referenceY, out tile, out tileBaseY);
         }
 
-        private bool TryScanTileVertical(int tx, int tz, float referenceY, out MapTileData tile, out float tileBaseY)
+        private static readonly float[] yOffsets = { 0f, -1f, 1f };
+        private bool TryScanTileVertical(in int tx, in int tz, in float referenceY, out MapTileData tile, out float tileBaseY)
         {
             tile = default;
             tileBaseY = 0f;
-
-            float[] yOffsets = { 0f, -1f, 1f };
             for (int i = 0; i < yOffsets.Length; i++)
             {
                 float3 testQuery = new float3(tx + 0.5f, referenceY + yOffsets[i], tz + 0.5f);

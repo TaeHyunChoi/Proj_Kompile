@@ -64,7 +64,6 @@ namespace Kompile.Field.Manager
 #if UNITY_EDITOR
             _playerEntity.transform.position = Vector3.forward;
 #endif
-
             _ = _mapManager.PlayStreamingAsync(cameraTransform, _validGridKeys);
         }
         private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int index, AnimatorOverrideController baseAOC)
