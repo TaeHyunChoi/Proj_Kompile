@@ -62,7 +62,7 @@ namespace Kompile.Field.Manager
             _templeteAOC = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(new AssetKey("aoc_field_unit"));
             _playerEntity = await SpawnFieldEntityAsync(1, _templeteAOC);
 #if UNITY_EDITOR
-            _playerEntity.transform.position = Vector3.back;
+            _playerEntity.transform.position = Vector3.forward;
 #endif
 
             _ = _mapManager.PlayStreamingAsync(cameraTransform, _validGridKeys);
@@ -83,8 +83,11 @@ namespace Kompile.Field.Manager
         public void Update(in InputState inputState)
         {
             // -- player -- 
-            UnitIntent playerMoveIntent = Input2Intent(inputState);
-            _playerEntity.UpdateIntent(in playerMoveIntent);
+            if (inputState.Current != IDxInput.NONE)
+            {
+                UnitIntent playerMoveIntent = Input2Intent(inputState);
+                _playerEntity.UpdateIntent(in playerMoveIntent);
+            }
 
             // -- party --
             // (later)

@@ -1,79 +1,144 @@
-namespace Kompile.Map.Entity
-{
-    using UnityEngine;
-    using Unity.Mathematics;
-    using Kompile.Map.Data;
-    using Kompile.Map.Utility;
-    
-    public class MapUnitMoveComponent : MonoBehaviour
-    {
-        
-        private MovementContext _context;
+//namespace Kompile.Unit.Component
+//{
+//    using Kompile.Field.Data;
+//    using Kompile.Map.Data;
+//    using Kompile.Map.Utility;
+//    using Kompile.Unit.Data;
+//    using Kompile.Unit.Entity;
+//    using Unity.Mathematics;
+//    using UnityEngine;
 
-        public void Initialize(float3[] smoothedPath)
-        {
-            _context = new MovementContext 
-            { 
-                Path = smoothedPath, 
-                CurrentPathIndex = 0,
-                CurrentVelocity = float3.zero,
-                MaxSpeed = 5f,
-                SteeringForce = 10f,
-                StoppingDistance = 0.1f // 아주 가까워지면 도착 판정
-            };
-        }
+//    /// <summary>
+//    /// [Framework] Component 계층
+//    /// GameObject에 부착되어 실제 이동 연산을 수행하는 최소 단위.
+//    /// NaviMask 기반 높이 샘플링 및 슬라이딩 충돌 판정을 담당합니다.
+//    /// </summary>
+//    public class MapUnitMoveComponent : MonoBehaviour
+//    {
+//        private const float MOVE_SPEED = 4f;
+//        private const float WALKABLE_RADIUS = 0.35f;
+//        private const float HEIGHT_STEP = 0.125f;
 
-        private void Update()
-        {
-            if (_context?.Path == null || _context.CurrentPathIndex >= _context.Path.Length) return;
+//        private UnitEntityBase _ownerEntity;
+//        private IMapQueryService _mapQuery;
+//        private Vector2 _moveInput;
 
-            float3 currentPos = transform.position;
-            float3 targetPos = _context.Path[_context.CurrentPathIndex];
+//        public void Initialize(UnitEntityBase owner, IMapQueryService mapQuery)
+//        {
+//            _ownerEntity = owner;
+//            _mapQuery = mapQuery;
+//        }
 
-            // 1. Steering 계산 (도착 감속 로직인 Arrival이 포함된다면 여기서 처리)
-            float3 steering = MapNaviSteeringUtil.CalculateSteering(
-                currentPos, 
-                targetPos, 
-                _context.CurrentVelocity, 
-                _context.MaxSpeed, 
-                _context.SteeringForce
-            );
+//        public void UpdateIntent(in UnitIntent intent)
+//        {
+//            if (null == _ownerEntity) return;
 
-            // 2. 가속도(Steering)를 속도(Velocity)에 누적
-            _context.CurrentVelocity += steering * Time.deltaTime;
-            
-            // 최대 속도 클램핑
-            if (math.lengthsq(_context.CurrentVelocity) > _context.MaxSpeed * _context.MaxSpeed)
-            {
-                _context.CurrentVelocity = math.normalize(_context.CurrentVelocity) * _context.MaxSpeed;
-            }
+//            _moveInput = intent.MoveInput;
+//            if (_moveInput == Vector2.zero) return;
 
-            // 3. 순수 수학적 이동 (물리 엔진 없이 Transform만 변경)
-            // A* 경로에 이미 높이(Y)가 포함되어 있으므로, 3D 공간을 자연스럽게 날아가듯/걸어가듯 이동함
-            float3 nextPos = currentPos + (_context.CurrentVelocity * Time.deltaTime);
-            transform.position = nextPos;
+//            Vector2 dir = _moveInput.sqrMagnitude > 1f ? _moveInput.normalized : _moveInput;
 
-            // 4. 노드 도착 판정 (도달 거리는 매우 짧게)
-            if (math.distance(currentPos, targetPos) < _context.StoppingDistance)
-            {
-                _context.CurrentPathIndex++;
-                
-                // 만약 마지막 노드(최종 목적지)에 도달했다면 속도를 0으로 초기화하여 미끄러짐 방지
-                if (_context.CurrentPathIndex >= _context.Path.Length)
-                {
-                    _context.CurrentVelocity = float3.zero;
-                }
-            }
+//            Vector3 currentPos = _ownerEntity.transform.position;
+//            Vector3 delta = (MOVE_SPEED * Time.deltaTime) * new Vector3(dir.x, 0f, dir.y);
+//            Vector3 targetPos = currentPos + delta;
 
-            // 5. 2.5D 비주얼 업데이트 (8방향 스프라이트 변경)
-            int dirIndex = MapNaviSteeringUtil.GetSpriteDirection8(_context.CurrentVelocity);
-            UpdateSprite(dirIndex);
-        }
+//            if (CheckWalkable(targetPos))
+//            {
+//                currentPos = targetPos;
+//            }
+//            else
+//            {
+//                Vector3 testX = currentPos + new Vector3(delta.x, 0f, 0f);
+//                if (CheckWalkable(testX)) currentPos.x = testX.x;
 
-        private void UpdateSprite(int dirIndex)
-        {
-            if (dirIndex == -1) return;
-            // TODO: 방향에 따른 픽셀 아트 애니메이션 변경
-        }
-    }
-}
+//                Vector3 testZ = currentPos + new Vector3(0f, 0f, delta.z);
+//                if (CheckWalkable(testZ)) currentPos.z = testZ.z;
+//            }
+
+//            if (TrySampleHeight(currentPos, out float groundY))
+//            {
+//                currentPos.y = groundY;
+//            }
+
+//            _ownerEntity.transform.position = currentPos;
+//        }
+
+//        private bool CheckWalkable(Vector3 pos)
+//        {
+//            if (null == _mapQuery) return true;
+
+//            float2 playerXZ = new float2(pos.x, pos.z);
+//            float radiusSq = WALKABLE_RADIUS * WALKABLE_RADIUS;
+
+//            int tileX = Mathf.FloorToInt(pos.x);
+//            int tileZ = Mathf.FloorToInt(pos.z);
+
+//            for (int dx = -1; dx <= 1; dx++)
+//            {
+//                for (int dz = -1; dz <= 1; dz++)
+//                {
+//                    float3 queryPos = new float3(tileX + dx + 0.5f, pos.y, tileZ + dz + 0.5f);
+//                    if (!_mapQuery.TryGetTileData(queryPos, out MapTileData tile)) continue;
+
+//                    float2 localCenter = playerXZ - new float2(tileX + dx, tileZ + dz);
+
+//                    for (int s = 0; s < MapConsts.TRIANGLES_COUNT; s++)
+//                    {
+//                        if (!MapNaviTileUtil.IsSubTileValid(tile.NaviMask, s) &&
+//                             MapNaviTileUtil.IsCircleOverlappingSubTile(s, localCenter, radiusSq))
+//                        {
+//                            return false;
+//                        }
+//                    }
+//                }
+//            }
+//            return true;
+//        }
+
+//        private bool TrySampleHeight(Vector3 pos, out float groundY)
+//        {
+//            groundY = pos.y;
+//            if (null == _mapQuery) return false;
+
+//            float3 queryPos = new float3(pos.x, pos.y, pos.z);
+//            if (!_mapQuery.TryGetTileData(queryPos, out MapTileData tile)) return false;
+
+//            MapCoordUtil.ComputeKey(queryPos, out int gKey, out int tKey);
+//            MapCoordUtil.GetPivot(gKey, tKey, out float3 tilePivot);
+
+//            float tileBaseY = tilePivot.y;
+//            float2 localPos = new float2(pos.x - tilePivot.x, pos.z - tilePivot.z);
+
+//            for (int s = 0; s < MapConsts.TRIANGLES_COUNT; s++)
+//            {
+//                if (!MapNaviTileValid(tile.NaviMask, s)) continue;
+
+//                int v0 = MapConsts.SubTileVertexMap[s * 3 + 0];
+//                int v1 = MapConsts.SubTileVertexMap[s * 3 + 1];
+//                int v2 = MapConsts.SubTileVertexMap[s * 3 + 2];
+
+//                float2 p0 = MapConsts.VertexPositions[v0];
+//                float2 p1 = MapConsts.VertexPositions[v1];
+//                float2 p2 = MapConsts.VertexPositions[v2];
+
+//                if (!MapGeometryUtil.IsPointInTriangle(localPos, p0, p1, p2)) continue;
+
+//                int h0 = MapNaviTileUtil.GetHeightFromNaviMask(tile.NaviMask, v0);
+//                int h1 = MapNaviTileUtil.GetHeightFromNaviMask(tile.NaviMask, v1);
+//                int h2 = MapNaviTileUtil.GetHeightFromNaviMask(tile.NaviMask, v2);
+
+//                float3 bary = MapGeometryUtil.BarycentricCoords(localPos, p0, p1, p2);
+//                float sampledHeight = (bary.x * h0 + bary.y * h1 + bary.z * h2) * HEIGHT_STEP;
+
+//                groundY = tileBaseY + sampledHeight;
+//                return true;
+//            }
+//            return false;
+//        }
+
+//        private bool MapNaviTileValid(long naviMask, int s)
+//        {
+//            return MapNaviTileUtil.IsSubTileValid(naviMask, s);
+//        }
+//    }
+//}
