@@ -11,8 +11,13 @@ namespace Kompile.Asset.Provider
     using UnityEngine.ResourceManagement.AsyncOperations;
     using Unity.Collections;
 
-    public static partial class AssetProvider
+    // 💡 [규칙 교정] 데이터 공급 및 캐싱 역할에 맞게 'AssetRepoProvider'로 명칭 변경
+    public static partial class AssetProvider 
     {
+        // 원본 데이터(Prefab) 캐싱 및 핸들 보관용 (GC 최소화)
+        private static readonly Dictionary<AssetKey, GameObject> _prefabCache = new Dictionary<AssetKey, GameObject>();
+        private static readonly Dictionary<AssetKey, AsyncOperationHandle<GameObject>> _prefabHandles = new Dictionary<AssetKey, AsyncOperationHandle<GameObject>>();
+
         private static readonly Dictionary<AssetKey, InstanceEntryContext>
             GameObjectInstances = new Dictionary<AssetKey, InstanceEntryContext>();
 
@@ -103,7 +108,7 @@ namespace Kompile.Asset.Provider
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[AssetProvider Session] 커스텀 일괄 해제 중 예외 발생: {e.Message}");
+                    Debug.LogError($"[AssetRepoProvider Session] 커스텀 일괄 해제 중 예외 발생: {e.Message}");
                 }
             }
 
@@ -136,7 +141,10 @@ namespace Kompile.Asset.Provider
             {
                 _sessionCustomActions.Add(() =>
                 {
-                    if (nativeArray.IsCreated) nativeArray.Dispose();
+                    if (nativeArray.IsCreated)
+                    {
+                        nativeArray.Dispose();
+                    }
                 });
             }
         }
@@ -161,16 +169,16 @@ namespace Kompile.Asset.Provider
 
                 return instance;
             }
-            Debug.LogError("[AssetProvider] Addressable Key is null or empty!");
+            Debug.LogError("[AssetRepoProvider] Addressable Key is null or empty!");
             return null;
         }
 
         public static async Awaitable<TEntity> GetOrNewEntityInstanceAsync<TEntity>(AssetKey assetKey, Transform root) where TEntity : UnitEntityBase
         {
-            GameObject go = await AssetProvider.GetOrNewInstanceAsync(assetKey, root);
+            GameObject go = await GetOrNewInstanceAsync(assetKey, root);
             if (!go)
             {
-                Debug.LogError("[AssetProvider] 유닛 프리팹 로드 실패");
+                Debug.LogError("[AssetRepoProvider] 유닛 프리팹 로드 실패");
                 return null;
             }
 
@@ -215,18 +223,38 @@ namespace Kompile.Asset.Provider
             ReleaseInstanceInternal(addressKey, instance, forcedDestroy);
         }
 
+        // 💡 [완벽 적용] 원본 프리팹 비동기 로드를 전담하여 _prefabCache를 갱신합니다.
+        public static async Awaitable<GameObject> GetOrLoadPrefabAsync(AssetKey key)
+        {
+            if (_prefabCache.TryGetValue(key, out GameObject prefab))
+            {
+                return prefab;
+            }
+
+            AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(key.Value);
+            prefab = await handle.Task;
+
+            if (handle.Status != AsyncOperationStatus.Succeeded)
+            {
+                Debug.LogError($"[AssetRepoProvider] Failed to load prefab: {key.Value}");
+                return null;
+            }
+
+            _prefabCache[key] = prefab;
+            _prefabHandles[key] = handle;
+            return prefab;
+        }
+
         private static async Awaitable<GameObject> GetOrNewInstanceInternalAsync(AssetKey key, Transform parent, bool usePooling)
         {
+            // 1. 프리팹 원본 데이터 확보 (캐시되어 있다면 즉시 통과)
+            GameObject prefab = await GetOrLoadPrefabAsync(key);
+            if (prefab == null) return null;
+
             if (!GameObjectInstances.TryGetValue(key, out InstanceEntryContext entry))
             {
-                AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(key.Value);
-                await handle.Task;
-
-                if (handle.Status != AsyncOperationStatus.Succeeded)
-                {
-                    Debug.LogError($"[AssetProvider] Failed to load: {key.Value}");
-                    return null;
-                }
+                // 핸들은 _prefabHandles에서 가져와 Context에 위임합니다.
+                AsyncOperationHandle<GameObject> handle = _prefabHandles[key];
                 entry = new InstanceEntryContext(handle, usePooling);
                 GameObjectInstances.TryAdd(key, entry);
             }
@@ -238,8 +266,8 @@ namespace Kompile.Asset.Provider
             }
             else
             {
-                AsyncOperationHandle<GameObject> instHandle = Addressables.InstantiateAsync(key.Value, parent);
-                instance = await instHandle.Task;
+                // 💡 [Zero-GC 달성] Addressables.InstantiateAsync를 버리고 메모리상 프리팹을 직접 복제
+                instance = UnityEngine.Object.Instantiate(prefab, parent);
             }
 
             entry.AddReference();
@@ -263,12 +291,17 @@ namespace Kompile.Asset.Provider
             }
             else
             {
-                Addressables.ReleaseInstance(instance);
+                // 직접 Instantiate한 객체이므로 ReleaseInstance 대신 Destroy로 파괴합니다.
+                UnityEngine.Object.Destroy(instance);
             }
 
             entry.RemoveReference();
             if (!entry.ShouldRelease()) return;
 
+            // 💡 프리팹 캐시 동반 해제
+            _prefabCache.Remove(key);
+            _prefabHandles.Remove(key);
+            
             Addressables.Release(entry.Handle);
             GameObjectInstances.Remove(key);
         }
@@ -283,7 +316,7 @@ namespace Kompile.Asset.Provider
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                Debug.LogError($"[AssetProvider] 에셋 로드 실패: {key.Value}");
+                Debug.LogError($"[AssetRepoProvider] 에셋 로드 실패: {key.Value}");
                 return null;
             }
 
@@ -451,7 +484,6 @@ namespace Kompile.Asset.Provider
                 if (originalClip == null) continue;
 
                 // 2. [버그 완벽 차단] 단순 Contains() 대신, 정립된 구조적 규칙 검사 수행
-                // originalClip.name이 "Base_Idle_S" 일 때 "Idle_S" 접미사로 끝나는지 확인하여 "Idle_SW" 등과의 중복 매칭을 완벽히 격리합니다.
                 for (int j = 0; j < clipCount; ++j)
                 {
                     if (originalClip.name.EndsWith(DirectionNames[j], StringComparison.Ordinal))
