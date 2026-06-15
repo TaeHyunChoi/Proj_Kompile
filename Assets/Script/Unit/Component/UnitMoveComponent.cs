@@ -22,7 +22,11 @@ namespace Kompile.Unit.Component
 
         public void UpdateIntent(in UnitIntent intent)
         {
-            if (!_ownerEntity) return;
+            if (!_ownerEntity)
+            {
+                return;                
+            }
+            
             CurrentInput = intent.MoveInput;
         }
     }

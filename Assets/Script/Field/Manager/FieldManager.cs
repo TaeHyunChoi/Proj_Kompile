@@ -22,7 +22,7 @@ namespace Kompile.Field.Manager
         private readonly Transform _fieldRoot;
         private readonly Transform _unitRoot;
         private FieldEntity _playerEntity;
-        private AnimatorOverrideController _templeteAOC;
+        private AnimatorOverrideController _templateAOC;
 
         public FieldManager(Transform fieldRoot)
         {
@@ -44,39 +44,34 @@ namespace Kompile.Field.Manager
         public async Awaitable AwakeAsync()
         {
             MapRegistryData registryData = await AssetProvider.ReadBinaryDataAsync<MapRegistryData>("MapRegistry");
-            if (registryData?.BakedGridKeys == null) return;
-
+            if (null == registryData
+                || null == registryData.BakedGridKeys)
+            {
+                return;
+            }
+            
             int count = registryData.BakedGridKeys.Length;
             _validGridKeys = new NativeArray<int>(count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             _validGridKeys.CopyFrom(registryData.BakedGridKeys);
             AssetProvider.RegisterToCurrentSession(_validGridKeys);
+            
+            _templateAOC = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(new AssetKey("aoc_field_unit"));
         }
 
         public async Awaitable StartAsync(Transform cameraTransform)
         {
-            _templeteAOC = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(new AssetKey("aoc_field_unit"));
-            _playerEntity = await SpawnFieldEntityAsync(1, _templeteAOC);
+            _playerEntity = await SpawnFieldEntityAsync(1);
 #if UNITY_EDITOR
             _playerEntity.transform.position = Vector3.forward;
 #endif
             _ = _mapManager.PlayStreamingAsync(cameraTransform, _validGridKeys);
         }
 
-        private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int index, AnimatorOverrideController baseAOC)
+        private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int index)
         {
-            AssetKey prefabKey = new AssetKey(AssetConst.UNIT_PREFAB_FIELD);
-            FieldUnitTableData data = FieldUnitTableProvider.GetData(index);
-            FieldUnitAnimClipContext clip = await data.GetAnimClipsAsync();
-
-            FieldEntity fieldEntity = await AssetProvider.GetOrNewEntityInstanceAsync<FieldEntity>(prefabKey, _unitRoot);
-            fieldEntity.Initialize(data, clip, baseAOC, _mapQueryService);
-
-            var moveComponent = fieldEntity.GetComponent<Kompile.Unit.Component.UnitMoveComponent>();
-            if (moveComponent != null)
-            {
-                _unitMoveManager.Register(moveComponent);
-            }
-
+            FieldEntity fieldEntity = await AssetProvider.Field.GetOrNewEntityInstanceAsync(1, _unitRoot, _templateAOC, null);
+            _unitMoveManager.Register(fieldEntity.MoveComponent);
+            
             return fieldEntity;
         }
 
@@ -89,6 +84,7 @@ namespace Kompile.Field.Manager
             _playerEntity.UpdateIntent(in playerMoveIntent);
 
             // -- 파티원 및 NPC 의도 처리 확장 공간 (DOD 파이프라인 유지) --
+            // ....
 
             // 2. 물리적 이동 일괄 처리 위임 (UnitMoveManager)
             if (_mapManager.NativeTileMap.IsCreated)
@@ -121,7 +117,7 @@ namespace Kompile.Field.Manager
             {
                 _playerEntity.Clear();
                 AssetProvider.ReleaseInstance(_playerEntity.Key, _playerEntity.gameObject);
-                AssetProvider.ReleaseAsset(_templeteAOC.GetHashCode());
+                AssetProvider.ReleaseAsset(_templateAOC.GetHashCode());
                 _playerEntity = null;
             }
         }

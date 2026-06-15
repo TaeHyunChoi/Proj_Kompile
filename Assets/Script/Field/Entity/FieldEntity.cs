@@ -13,6 +13,8 @@ namespace Kompile.Field.Entity
     {
         private UnitMoveComponent _moveComponent;
         private UnitAnimComponent _animComponent;
+        
+        public UnitMoveComponent MoveComponent => _moveComponent;
 
         public void Initialize(FieldUnitTableData data, FieldUnitAnimClipContext clip, AnimatorOverrideController baseAOC, FieldMapQueryService mapQuery)
         {
