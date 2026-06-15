@@ -1,5 +1,3 @@
-using Kompile.Field.Entity;
-
 namespace Kompile.Unit.Manager
 {
     using System.Collections.Generic;
@@ -21,11 +19,11 @@ namespace Kompile.Unit.Manager
         private readonly HashSet<UnitMoveComponent> _activeUnits = new HashSet<UnitMoveComponent>();
         private readonly List<UnitMoveComponent> _unitCacheList = new List<UnitMoveComponent>(); // 빠른 순회를 위한 캐시
 
-        public void Register(FieldEntity unit)
+        public void Register(UnitMoveComponent unit)
         {
-            if (_activeUnits.Add(unit.MoveComponent))
+            if (_activeUnits.Add(unit))
             {
-                _unitCacheList.Add(unit.MoveComponent);
+                _unitCacheList.Add(unit);
             }
         }
 
@@ -41,11 +39,8 @@ namespace Kompile.Unit.Manager
         public void ExecuteMoveJobs(float deltaTime, NativeHashMap<long, BurstTileInfo> nativeTileMap)
         {
             int unitCount = _unitCacheList.Count;
-            if (unitCount == 0)
-            {
-                return;
-            }
-            
+            if (unitCount == 0) return;
+
             // 1. 네이티브 배열 할당 (Allocator.TempJob 사용으로 1프레임 내 자동 관리 지향)
             NativeArray<float2> inputs = new NativeArray<float2>(unitCount, Allocator.TempJob);
             NativeArray<float3> positions = new NativeArray<float3>(unitCount, Allocator.TempJob);

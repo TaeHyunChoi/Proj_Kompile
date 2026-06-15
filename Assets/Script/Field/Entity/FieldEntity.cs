@@ -13,10 +13,8 @@ namespace Kompile.Field.Entity
     {
         private UnitMoveComponent _moveComponent;
         private UnitAnimComponent _animComponent;
-        
-        public UnitMoveComponent MoveComponent => _moveComponent;
 
-        public void Initialize(FieldUnitTableData data, FieldUnitAnimClipContext clip, AnimatorOverrideController baseAOC, FieldMapQueryService mapQuery = null)
+        public void Initialize(FieldUnitTableData data, FieldUnitAnimClipContext clip, AnimatorOverrideController baseAOC, FieldMapQueryService mapQuery)
         {
             // 💡 1. Brain 초기화: 각 Brain의 기존 스펙을 철저히 존중합니다.
             switch (data.BrainType)
