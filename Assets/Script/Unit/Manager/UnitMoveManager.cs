@@ -15,10 +15,18 @@ namespace Kompile.Unit.Manager
     /// </summary>
     public class UnitMoveManager
     {
-        // Manager(Instance-Centric): 인스턴스 제어
         private readonly HashSet<UnitMoveComponent> _activeUnits = new HashSet<UnitMoveComponent>();
-        private readonly List<UnitMoveComponent> _unitCacheList = new List<UnitMoveComponent>(); // 빠른 순회를 위한 캐시
+        private readonly List<UnitMoveComponent> _unitCacheList = new List<UnitMoveComponent>();
 
+        // dispose
+        public void Dispose()
+        {
+            _activeUnits.Clear();
+            _unitCacheList.Clear();
+        }
+
+
+        // register, unregister
         public void Register(UnitMoveComponent unit)
         {
             if (_activeUnits.Add(unit))
@@ -26,7 +34,6 @@ namespace Kompile.Unit.Manager
                 _unitCacheList.Add(unit);
             }
         }
-
         public void Unregister(UnitMoveComponent unit)
         {
             if (_activeUnits.Remove(unit))
@@ -35,31 +42,35 @@ namespace Kompile.Unit.Manager
             }
         }
 
-        // 💡 [에러 해결] 매개변수 타입을 (int2, MapTileData)에서 (long, BurstTileInfo)로 교정하여 파이프라인을 연결합니다.
+
+        // excute job
         public void ExecuteMoveJobs(float deltaTime, NativeHashMap<long, BurstTileInfo> nativeTileMap)
         {
             int unitCount = _unitCacheList.Count;
-            if (unitCount == 0) return;
+            if (unitCount == 0)
+            {
+                return;
+            }
 
             // 1. 네이티브 배열 할당 (Allocator.TempJob 사용으로 1프레임 내 자동 관리 지향)
-            NativeArray<float2> inputs = new NativeArray<float2>(unitCount, Allocator.TempJob);
-            NativeArray<float3> positions = new NativeArray<float3>(unitCount, Allocator.TempJob);
-            NativeArray<float3> results = new NativeArray<float3>(unitCount, Allocator.TempJob);
+            NativeArray<float2> inputs      = new NativeArray<float2>(unitCount, Allocator.TempJob);
+            NativeArray<float3> positions   = new NativeArray<float3>(unitCount, Allocator.TempJob);
+            NativeArray<float3> results     = new NativeArray<float3>(unitCount, Allocator.TempJob);
 
             for (int i = 0; i < unitCount; i++)
             {
-                inputs[i] = _unitCacheList[i].CurrentInput;
+                inputs[i]    = _unitCacheList[i].CurrentInput;
                 positions[i] = _unitCacheList[i].transform.position;
             }
 
             // 2. Job 구성
             UnitMoveJob moveJob = new UnitMoveJob
             {
-                MoveInputs = inputs,
+                MoveInputs       = inputs,
                 CurrentPositions = positions,
-                NextPositions = results,
-                DeltaTime = deltaTime,
-                TileMap = nativeTileMap // 💡 MapManager -> FieldManager를 거쳐 온 3D 패킹 네이티브 데이터 주입
+                NextPositions    = results,
+                DeltaTime        = deltaTime,
+                TileMap          = nativeTileMap // MapManager -> FieldManager를 거쳐 온 3D 패킹 네이티브 데이터 주입
             };
 
             // 3. 스케줄링 및 완료 대기
@@ -76,12 +87,6 @@ namespace Kompile.Unit.Manager
             inputs.Dispose();
             positions.Dispose();
             results.Dispose();
-        }
-
-        public void Dispose()
-        {
-            _activeUnits.Clear();
-            _unitCacheList.Clear();
         }
     }
 }

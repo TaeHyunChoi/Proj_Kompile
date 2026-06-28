@@ -4,11 +4,9 @@ namespace Kompile.Unit.Data
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
-    using Kompile.Map.Data;
     using Kompile.Map.Utility;
 
     /// <summary>
-    /// [Framework] Data/Job 계층
     /// 원본의 LinkMask 기반 수직 단차 예측 및 폴백 스캔 알고리즘을 완벽히 보존하여
     /// 다중 스레드 상에서 Burst Compile로 초고속 실행되는 이동 연산 Job입니다.
     /// </summary>
@@ -25,14 +23,12 @@ namespace Kompile.Unit.Data
         [ReadOnly] public NativeArray<float3> CurrentPositions;
         [ReadOnly] public float DeltaTime;
 
-        // MapManager가 그리드 스트리밍 시 구워내는 고속 공간 데이터 맵
         [ReadOnly] public NativeHashMap<long, BurstTileInfo> TileMap;
-
         [WriteOnly] public NativeArray<float3> NextPositions;
 
         public void Execute(int index)
         {
-            float2 input = MoveInputs[index];
+            float2 input      = MoveInputs[index];
             float3 currentPos = CurrentPositions[index];
 
             if (input.x == 0f && input.y == 0f)
@@ -41,12 +37,12 @@ namespace Kompile.Unit.Data
                 return;
             }
 
-            float baseSpeed = MOVE_SPEED * DeltaTime;
-            float2 dir = math.lengthsq(input) > 1f ? math.normalize(input) : input;
+            float baseSpeed  = MOVE_SPEED * DeltaTime;
+            float2 dir       = math.lengthsq(input) > 1f ? math.normalize(input) : input;
             float3 moveDir3D = new float3(dir.x, 0f, dir.y);
 
             float3 targetPos = currentPos + (moveDir3D * baseSpeed);
-            float3 nextPos = currentPos;
+            float3 nextPos   = currentPos;
 
             // 1. 의도한 주 방향 이동 검사 (호 기반 고정밀 검사)
             if (CheckWalkableArc(currentPos, targetPos, moveDir3D, WALKABLE_RADIUS, 5, math.PI * 0.5f))
@@ -76,38 +72,12 @@ namespace Kompile.Unit.Data
             NextPositions[index] = nextPos;
         }
 
-        private bool TryAlternativeMove(float3 currentPos, float3 baseDir, int index, float moveDistance, out float3 nextPos)
-        {
-            nextPos = currentPos;
-            float cos = 0f, sin = 0f;
-
-            switch (index)
-            {
-                case 0: cos = COS_45; sin = COS_45; break;
-                case 1: cos = COS_45; sin = -COS_45; break;
-                case 2: cos = 0f; sin = 1f; break;
-                case 3: cos = 0f; sin = -1f; break;
-                default: return false;
-            }
-
-            float rotX = baseDir.x * cos - baseDir.z * sin;
-            float rotZ = baseDir.x * sin + baseDir.z * cos;
-
-            float3 altDir = math.normalize(new float3(rotX, 0f, rotZ));
-            float3 targetPos = currentPos + (altDir * moveDistance);
-
-            if (CheckWalkableArc(currentPos, targetPos, altDir, WALKABLE_RADIUS, 3, math.PI * 0.25f))
-            {
-                nextPos = targetPos;
-                return true;
-            }
-
-            return false;
-        }
-
         private bool CheckWalkableArc(float3 curPos, float3 targetPos, float3 moveDir, float radius, int sampleCount, float maxAngleRad)
         {
-            if (!IsPointWalkable(curPos, targetPos)) return false;
+            if (!IsPointWalkable(curPos, targetPos))
+            {
+                return false;
+            }
 
             if (sampleCount <= 1)
             {
@@ -131,13 +101,11 @@ namespace Kompile.Unit.Data
 
             return true;
         }
-
         private bool IsPointWalkable(float3 referencePos, float3 point)
         {
             int tx = (int)math.floor(point.x);
             int tz = (int)math.floor(point.z);
 
-            // 원본의 토폴로지 구조를 그대로 경유하여 타일 획득
             if (!TryGetTileAtBurst(referencePos, tx, tz, referencePos.y, out BurstTileInfo tileInfo))
             {
                 return false;
@@ -146,22 +114,6 @@ namespace Kompile.Unit.Data
             float2 localPos = new float2(point.x - tx, point.z - tz);
             return MapGeometryUtil.IsTilePointWalkable(in tileInfo.TileData, in localPos);
         }
-
-        private bool TrySampleHeight(float3 pos, out float groundY)
-        {
-            groundY = pos.y;
-            int tx = (int)math.floor(pos.x);
-            int tz = (int)math.floor(pos.z);
-
-            if (!TryGetTileAtBurst(pos, tx, tz, pos.y, out BurstTileInfo tileInfo))
-            {
-                return false;
-            }
-
-            float2 localPos = new float2(pos.x - tx, pos.z - tz);
-            return MapGeometryUtil.TrySampleTileHeight(in tileInfo.TileData, in tileInfo.TileBaseY, in localPos, HEIGHT_STEP, out groundY);
-        }
-
         /// <summary>
         /// 원본 TryGetTileAt의 LinkMask 위상 검사 알고리즘을 이식한 고속 역산 함수입니다.
         /// </summary>
@@ -223,6 +175,57 @@ namespace Kompile.Unit.Data
             return TryScanTileVerticalBurst(targetTx, targetTz, referenceY, out tileInfo);
         }
 
+
+
+
+        private bool TryAlternativeMove(float3 currentPos, float3 baseDir, int index, float moveDistance, out float3 nextPos)
+        {
+            nextPos = currentPos;
+            float cos = 0f, sin = 0f;
+
+            switch (index)
+            {
+                case 0: cos = COS_45; sin = COS_45; break;
+                case 1: cos = COS_45; sin = -COS_45; break;
+                case 2: cos = 0f; sin = 1f; break;
+                case 3: cos = 0f; sin = -1f; break;
+                default: return false;
+            }
+
+            float rotX = baseDir.x * cos - baseDir.z * sin;
+            float rotZ = baseDir.x * sin + baseDir.z * cos;
+
+            float3 altDir = math.normalize(new float3(rotX, 0f, rotZ));
+            float3 targetPos = currentPos + (altDir * moveDistance);
+
+            if (CheckWalkableArc(currentPos, targetPos, altDir, WALKABLE_RADIUS, 3, math.PI * 0.25f))
+            {
+                nextPos = targetPos;
+                return true;
+            }
+
+            return false;
+        }
+
+
+
+        private bool TrySampleHeight(float3 pos, out float groundY)
+        {
+            groundY = pos.y;
+            int tx = (int)math.floor(pos.x);
+            int tz = (int)math.floor(pos.z);
+
+            if (!TryGetTileAtBurst(pos, tx, tz, pos.y, out BurstTileInfo tileInfo))
+            {
+                return false;
+            }
+
+            float2 localPos = new float2(pos.x - tx, pos.z - tz);
+            return MapGeometryUtil.TrySampleTileHeight(in tileInfo.TileData, in tileInfo.TileBaseY, in localPos, HEIGHT_STEP, out groundY);
+        }
+
+
+
         /// <summary>
         /// 힙 할당 없이 상하 수직 레이어를 순회하며 유효 타일을 식별합니다. (Primitive 값 형식 매개변수 `in` 제거)
         /// </summary>
@@ -244,6 +247,7 @@ namespace Kompile.Unit.Data
                     return true;
                 }
             }
+
             return false;
         }
     }
