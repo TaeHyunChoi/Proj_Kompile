@@ -1,0 +1,9 @@
+- Data: 개체를 구성하는 기본적인 데이터
+  --- Define(Type, Info)
+  --- Static(Table, Data), 
+  --- Runtime(Context, Model)
+- Component: MonoBehaviour의 Component와 유사. 여러 Data값을 갖고 목적에 맞는 기능을 한다.
+- Entity: 여러 Component가 모여 하나의 실재를 만든다.
+- Manager: 여러 Entity를 생성/제어/해제한다.
+- Utility: 수학적인 계산을 전문으로 한다.
+- Provider: 컴퓨터에서의 입출력을 담당한다.
