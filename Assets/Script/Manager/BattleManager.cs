@@ -1,10 +1,10 @@
-namespace Kompile.Battle.Manager
+namespace Kompile.Manager
 {
     using System.Collections.Generic;
-    using Kompile.Battle.Data;
-    using Kompile.Unit.Entity;
-    using Kompile.Battle.RepoProvider;
-    using Kompile.Battle.Utility;
+    using Kompile.Data;
+    using Kompile.Entity;
+    using Kompile.Provider;
+    using Kompile.Utility;
 
     public class BattleManager : ITimelineHandler
     {

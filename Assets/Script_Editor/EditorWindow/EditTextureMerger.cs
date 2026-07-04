@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 namespace Kompile.Map.Editor.Tools
 {
-    using Kompile.Map.Data;
+    using Kompile.Data;
     using System.Collections.Generic;
     using System.IO;
     using UnityEditor;

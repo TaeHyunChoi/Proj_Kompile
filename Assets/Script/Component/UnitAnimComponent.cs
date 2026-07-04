@@ -1,8 +1,8 @@
 namespace Kompile.Component
 {
     using UnityEngine;
-    using Kompile.Unit.Data;
-    using Kompile.Asset.Provider;
+    using Kompile.Provider;
+    using Kompile.Data;
 
     /// <summary> GameObject에 부착되어 유닛의 애니메이션(Animator 상태 및 스프라이트 제어)을 전담 </summary>
     [RequireComponent(typeof(Animator), typeof(SpriteRenderer))]

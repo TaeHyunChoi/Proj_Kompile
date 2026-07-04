@@ -1,12 +1,12 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Provider
+namespace Kompile.Editor.Provider
 {
     using System.Collections.Generic;
     using Unity.Collections;
     using UnityEditor;
     using UnityEngine;
-    using Kompile.Map.Editor.Data;
-    using Kompile.Map.Data;
+    using Kompile.Editor.Data;
+    using Kompile.Data;
     
     /// <summary>
     /// [Framework] System 분류: [MapSampling]에 필요한 네이티브 캐시 자원을 관리하고 제공함

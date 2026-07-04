@@ -1,16 +1,15 @@
-using UnityEditor.SceneManagement;
-
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Tools
+namespace Kompile.Editor.Tools
 {
     using UnityEditor;
     using UnityEngine;
     using System.IO;
     using System.Collections.Generic;
-    using Kompile.Map.Data;
-    using Kompile.Map.Entity;           
-    using Kompile.Map.Editor.Provider;
-    
+    using Kompile.Data;
+    using Kompile.Entity;           
+    using Kompile.Editor.Provider;
+    using UnityEditor.SceneManagement;
+
     /// <summary>
     /// Editor Manager: 멀티 아틀라스 팔레트, 스포이드, Focus Mode를 지원하는 통합 맵 에디터.
     /// </summary>

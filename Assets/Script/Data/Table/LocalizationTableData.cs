@@ -1,4 +1,4 @@
-namespace Kompile.Asset.Data
+namespace Kompile.Data
 {
     using MessagePack;
     using Unity.Collections;

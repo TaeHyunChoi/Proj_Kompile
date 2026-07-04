@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Utility
+namespace Kompile.Editor.Utility
 {
     using Unity.Mathematics;
     using UnityEngine;

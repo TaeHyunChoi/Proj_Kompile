@@ -1,4 +1,4 @@
-namespace Kompile.Unit.Data
+namespace Kompile.Data
 {
     using UnityEngine;
 

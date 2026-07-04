@@ -1,4 +1,4 @@
-namespace Kompile.Map.Utility
+namespace Kompile.Utility
 {
     using Unity.Burst;
     using Unity.Collections;

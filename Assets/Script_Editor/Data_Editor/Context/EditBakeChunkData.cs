@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Provider
+namespace Kompile.Editor.Provider
 {
     using UnityEngine;
 

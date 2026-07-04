@@ -1,7 +1,5 @@
-namespace Kompile.Battle.Data
+namespace Kompile.Data
 {
-    using UnityEngine;
-
     public enum BattlePhase
     {
         Wait,   // 10,000 -> 0 대기 단계

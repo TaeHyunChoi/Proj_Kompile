@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace  Kompile.Asset.Editor.Tools
+namespace  Kompile.Editor.Tools
 {
     using UnityEngine;
     using UnityEditor;
@@ -14,9 +14,8 @@ namespace  Kompile.Asset.Editor.Tools
     using MessagePack.Formatters;
     using MessagePack.Resolvers;
     using Unity.Collections;
-    using Kompile.Asset.Data;
+    using Kompile.Data;
     using Kompile.Asset.Utility;
-    using Kompile.Unit.Data;
 
     public class DataBuildTool : EditorWindow
     {

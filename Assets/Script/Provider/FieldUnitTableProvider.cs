@@ -1,6 +1,6 @@
-namespace Kompile.Asset.Provider
+namespace Kompile.Provider
 {
-    using Kompile.Asset.Data;
+    using Kompile.Data;
     using UnityEngine;
 
     /// <summary> 필드 위의 유닛 데이터; </summary>

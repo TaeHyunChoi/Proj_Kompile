@@ -1,8 +1,7 @@
-namespace Kompile.Asset.Provider
+namespace Kompile.Provider
 {
-    using Kompile.Asset.Data;
-    using Kompile.Unit.Data;
-    using Kompile.Unit.Entity;
+    using Kompile.Data;
+    using Kompile.Entity;
     using MessagePack;
     using System;
     using System.Collections.Generic;

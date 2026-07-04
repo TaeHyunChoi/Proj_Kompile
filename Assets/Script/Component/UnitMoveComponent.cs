@@ -2,8 +2,8 @@ namespace Kompile.Component
 {
     using UnityEngine;
     using Unity.Mathematics;
-    using Kompile.Unit.Data;
-    using Kompile.Unit.Entity;
+    using Kompile.Data;
+    using Kompile.Entity;
 
     /// <summary>
     /// [Framework] Component 계층

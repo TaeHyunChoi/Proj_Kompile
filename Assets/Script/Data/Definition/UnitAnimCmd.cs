@@ -1,4 +1,4 @@
-namespace Kompile.Unit.Data
+namespace Kompile.Data
 {
     /// <summary>
     /// Brain이 한 프레임에 AnimComponent에 전달하는 트리거성 애니메이션 명령.

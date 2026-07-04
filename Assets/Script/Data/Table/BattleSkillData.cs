@@ -1,4 +1,4 @@
-namespace Kompile.Battle.Data
+namespace Kompile.Data
 {
     public struct BattleSkillData
     {

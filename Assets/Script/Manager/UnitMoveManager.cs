@@ -1,13 +1,11 @@
-namespace Kompile.Unit.Manager
+namespace Kompile.Manager
 {
     using System.Collections.Generic;
-    using UnityEngine;
     using Unity.Jobs;
     using Unity.Collections;
     using Unity.Mathematics;
     using Kompile.Component;
-    using Kompile.Unit.Data; // BurstTileInfo 사용을 위해 필수
-    using Kompile.Map.Data;
+    using Kompile.Data;
 
     /// <summary>
     /// [Framework] Manager 계층

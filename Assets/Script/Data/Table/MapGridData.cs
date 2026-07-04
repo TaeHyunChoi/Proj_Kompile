@@ -1,5 +1,6 @@
-namespace Kompile.Map.Data
+namespace Kompile.Data
 {
+    using Kompile.Data;
     using MessagePack;
     using System.Collections.Generic;
     using System.Collections.Concurrent;

@@ -1,8 +1,8 @@
-namespace Kompile.Battle.RepoProvider
+namespace Kompile.Provider
 {
     using System.Collections.Generic;
     using UnityEngine;
-    using Kompile.Battle.Data;
+    using Kompile.Data;
 
     public class BattleSkillRepoProvider
     {

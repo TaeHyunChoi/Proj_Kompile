@@ -1,11 +1,10 @@
-namespace Kompile.Unit.Data
+namespace Kompile.Data
 {
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
-    using Kompile.Map.Data;
-    using Kompile.Map.Utility;
+    using Kompile.Utility;
 
     /// <summary>
     /// [Framework] Data/Job 계층

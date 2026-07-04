@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Utility
+namespace Kompile.Editor.Utility
 {
     using Unity.Burst;
     using Unity.Mathematics;
-    using Kompile.Map.Editor.Data;
-    using static Kompile.Map.Editor.Data.EditMapConsts;
+    using Kompile.Editor.Data;
+    using static Kompile.Editor.Data.EditMapConsts;
 
     public static class EditMapNaviTileUtil
     {

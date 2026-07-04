@@ -1,13 +1,13 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Provider
+namespace Kompile.Editor.Provider
 {
-    using Kompile.Map.Entity;
-    using Kompile.Map.Data;
-    using Kompile.Map.Editor.Utility;
+    using Kompile.Entity;
+    using Kompile.Data;
+    using Kompile.Editor.Utility;
     using UnityEditor;
     using UnityEngine;
     using System.Collections.Generic;
-    using static Kompile.Map.Data.MapConsts;
+    using static Kompile.Data.MapConsts;
 
     [InitializeOnLoad] // 에디터 로드 시 실행 보장
     public static class EditMapTileOperator

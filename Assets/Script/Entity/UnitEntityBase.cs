@@ -1,8 +1,6 @@
-namespace Kompile.Unit.Entity
+namespace Kompile.Entity
 {
     using Kompile.Entity.Data; // Entity 클래스가 있는 네임스페이스
-    using Kompile.Unit.Data;
-
 
     /// <summary> Entity 상속 필드, 전투, NPC 등 모든 유닛 개체의 베이스 클래스
     /// </summary>

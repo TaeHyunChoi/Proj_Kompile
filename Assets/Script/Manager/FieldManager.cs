@@ -1,13 +1,8 @@
-namespace Kompile.Field.Manager
+namespace Kompile.Manager
 {
-    using Kompile.Asset.Data;
-    using Kompile.Asset.Provider;
-    using Kompile.Field.Data;
-    using Kompile.Field.Entity;
-    using Kompile.Map.Data;
-    using Kompile.Map.Manager;
-    using Kompile.Unit.Data;
-    using Kompile.Unit.Manager;
+    using Kompile.Provider;
+    using Kompile.Data;
+    using Kompile.Entity;
     using Unity.Collections;
     using UnityEngine;
     using static Kompile.Input.Data.Definition;

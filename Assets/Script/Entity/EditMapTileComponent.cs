@@ -1,7 +1,7 @@
-namespace Kompile.Map.Entity
+namespace Kompile.Entity
 {
-    using Kompile.Map.Data;
-    using Kompile.Map.Utility;
+    using Kompile.Data;
+    using Kompile.Utility;
     using UnityEngine;
 
     [ExecuteInEditMode]

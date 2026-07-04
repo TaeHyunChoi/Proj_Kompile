@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Tools
+namespace Kompile.Editor.Tools
 {
     using UnityEditor;
     using UnityEngine;
-    using Kompile.Map.Editor.Entity;
+    using Kompile.Editor.Entity;
 
     [CustomEditor(typeof(EditAStarTestPlayComponent))]
     public class EditAStarTestPlayInspector : Editor

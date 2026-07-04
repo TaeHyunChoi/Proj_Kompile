@@ -1,13 +1,12 @@
-using Kompile.Map.Editor.Utility;
-
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Entity
+namespace Kompile.Editor.Entity
 {
     using MessagePack;
     using MessagePack.Resolvers;
-    using Kompile.Map.Data;
-    using Kompile.Map.Utility;
-    using Kompile.Map.Editor.Provider;
+    using Kompile.Data;
+    using Kompile.Utility;
+    using Kompile.Editor.Provider;
+    using Kompile.Editor.Utility;
     using System.Collections.Generic;
     using Unity.Mathematics;
     using UnityEngine;

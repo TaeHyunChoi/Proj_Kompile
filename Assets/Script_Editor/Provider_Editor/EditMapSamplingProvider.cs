@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Provider
+namespace Kompile.Editor.Provider
 {
-    using Kompile.Map.Data;
-    using Kompile.Map.Utility;
-    using Kompile.Map.Entity;
-    using Kompile.Map.Editor.Data; 
-    using Kompile.Map.Editor.Utility;
+    using Kompile.Data;
+    using Kompile.Utility;
+    using Kompile.Entity;
+    using Kompile.Editor.Data; 
+    using Kompile.Editor.Utility;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;

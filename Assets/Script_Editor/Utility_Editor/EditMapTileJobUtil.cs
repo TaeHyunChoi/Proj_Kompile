@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Utility
+namespace Kompile.Editor.Utility
 {
-    using Kompile.Map.Data;
+    using Kompile.Data;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
-    using Kompile.Map.Editor.Data;
+    using Kompile.Editor.Data;
 
     /// <summary> 회전 로직을 제거하고, 순수하게 좌표와 HeightMask를 압축하여 NaviMask를 생성 </summary>
     public struct EditMapTileJobUtil : IJobParallelFor

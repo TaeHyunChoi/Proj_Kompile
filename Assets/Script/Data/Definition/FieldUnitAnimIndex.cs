@@ -1,4 +1,4 @@
-namespace Kompile.Unit.Data
+namespace Kompile.Data
 {
     /// <summary> 마스터 AOC 템플릿과 런타임 클립 배열 간의 고유 인덱스 정의 </summary>
     public enum FieldUnitAnimIndex

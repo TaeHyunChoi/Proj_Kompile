@@ -1,13 +1,12 @@
-namespace Kompile.Map.Manager
+namespace Kompile.Manager
 {
-    using Kompile.Map.Utility;
-    using Kompile.Map.Data;
-    using Kompile.Asset.Provider;
-    using Kompile.Unit.Data;
+    using Kompile.Data;
+    using Kompile.Provider;
+    using Kompile.Utility;
     using UnityEngine;
-    using System.Collections.Generic;
     using Unity.Mathematics;
     using Unity.Collections;
+    using System.Collections.Generic;
 
     /// <summary> 인게임 맵 그리드의 동적 스트리밍, 레이어 시각적 제어, 실시간 인스턴스 관리를 전담 </summary>
     public class MapManager

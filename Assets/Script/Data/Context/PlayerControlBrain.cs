@@ -1,7 +1,7 @@
-namespace Kompile.Unit.Entity
+namespace Kompile.Entity
 {
-    using Kompile.Field.Entity;
-    using Kompile.Unit.Data;
+    using Kompile.Data;
+    using Kompile.Entity;
 
     /// <summary> 플레이어 입력을 읽어 UnitIntent로 반환하는 Brain </summary>
     public class PlayerControlBrain : IUnitBrain

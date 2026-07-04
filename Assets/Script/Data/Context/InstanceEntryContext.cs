@@ -1,4 +1,4 @@
-namespace Kompile.Asset.Provider
+namespace Kompile.Provider
 {
     using System.Collections.Concurrent;
     using System.Threading;

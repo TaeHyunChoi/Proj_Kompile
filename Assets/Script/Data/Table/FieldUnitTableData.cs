@@ -1,8 +1,7 @@
-namespace Kompile.Asset.Data
+namespace Kompile.Data
 {
+    using Kompile.Provider;
     using MessagePack;
-    using Kompile.Asset.Provider;
-    using Kompile.Unit.Data;
     using Unity.Collections;
     using UnityEngine;
 

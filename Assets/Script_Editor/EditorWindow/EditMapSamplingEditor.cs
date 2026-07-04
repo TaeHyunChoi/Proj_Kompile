@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Tools
+namespace Kompile.Editor.Tools
 {
     using MessagePack;
     using MessagePack.Resolvers;
-    using Kompile.Map.Data;
-    using Kompile.Map.Editor.Provider;
-    using Kompile.Map.Utility;
+    using Kompile.Data;
+    using Kompile.Editor.Provider;
+    using Kompile.Utility;
     using Unity.Mathematics;
     using UnityEditor;
     using UnityEngine;

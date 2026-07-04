@@ -1,4 +1,4 @@
-namespace Kompile.Field.Data
+namespace Kompile.Data
 {
     using Kompile.Map.Data;
     using Unity.Mathematics;

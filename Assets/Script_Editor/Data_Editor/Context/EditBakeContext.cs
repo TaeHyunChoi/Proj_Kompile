@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Provider
+namespace Kompile.Editor.Provider
 {
-    using Kompile.Map.Editor.Data;
+    using Kompile.Editor.Data;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
 

@@ -1,4 +1,4 @@
-namespace Kompile.Map.Entity
+namespace Kompile.Entity
 {
     using UnityEngine;
     using System;

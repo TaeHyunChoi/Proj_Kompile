@@ -1,11 +1,7 @@
-namespace Kompile.Field.Entity
+namespace Kompile.Entity
 {
     using Kompile.Component;
-    using Kompile.Asset.Data;
-    using Kompile.Asset.Provider;
-    using Kompile.Field.Data;
-    using Kompile.Unit.Data;
-    using Kompile.Unit.Entity;
+    using Kompile.Data;
     using UnityEngine;
 
     [RequireComponent(typeof(UnitMoveComponent), typeof(UnitAnimComponent))]

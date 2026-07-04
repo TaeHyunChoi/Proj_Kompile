@@ -1,11 +1,11 @@
-namespace Kompile.Map.Utility
+namespace Kompile.Utility
 {
     using System.Collections.Generic;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
     using UnityEngine;
-
+    
     /// <summary>
     /// [Framework] Utility: 상태 없이 길찾기 계산만 수행하는 순수 함수군입니다.
     /// Burst Compile 최적화를 위해 Native 자료구조만 매개변수로 받으며, 데이터의 소유권을 가지지 않습니다.

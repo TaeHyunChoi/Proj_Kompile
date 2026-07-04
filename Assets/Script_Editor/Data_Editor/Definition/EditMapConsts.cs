@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Data
+namespace Kompile.Editor.Data
 {
     public static class EditMapConsts
     {

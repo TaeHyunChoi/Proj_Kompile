@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
-namespace Kompile.Map.Editor.Utility
+namespace Kompile.Editor.Utility
 {
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Jobs;
     using Unity.Mathematics;
-    using Kompile.Map.Editor.Data;
+    using Kompile.Editor.Data;
 
     /// <summary> 주변 타일과의 연결 여부(단차)를 확인 및 비트마스킹으로 저장합니다. </summary>
     [BurstCompile]

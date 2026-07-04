@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 // [Framework] 규칙에 따라 단수형 Script를 복수형 Scripts로, Data를 Datas로 변경
-namespace Kompile.Map.Editor.Data
+namespace Kompile.Editor.Data
 {
     using System.Collections.Generic;
     using System.Collections.Concurrent;
     using MessagePack;
-    using Kompile.Map.Data;
+    using Kompile.Data;
 
     // Data: 정보의 상태, 구조, 가공 형태 및 자료형 정의 (Value-Centric)
     [MessagePackObject]

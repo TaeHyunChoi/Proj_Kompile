@@ -1,6 +1,6 @@
-namespace Kompile.Unit.Entity
+namespace Kompile.Entity
 {
-    using Kompile.Unit.Data;
+    using Kompile.Data;
 
     /// <summary>
     /// 유닛의 행동 패턴을 정의하는 순수 C# 전략 개체.

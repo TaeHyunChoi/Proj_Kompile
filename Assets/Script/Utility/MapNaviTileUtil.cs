@@ -1,9 +1,8 @@
-namespace Kompile.Map.Utility
+namespace Kompile.Utility
 {
     using Unity.Burst;
     using Unity.Mathematics;
-    using Kompile.Map.Data;
-    using static Kompile.Map.Data.MapConsts;
+    using static Kompile.Data.MapConsts;
 
     [BurstCompile]
     public static class MapNaviTileUtil
@@ -21,7 +20,7 @@ namespace Kompile.Map.Utility
             // 3개의 정점을 순회하며 유효성 체크
             for (int i = 0; i < 3; ++i)
             {
-                int vIndex = MapConsts.SubTileVertexMap[sIndex0to15 * 3 + i];
+                int vIndex = SubTileVertexMap[sIndex0to15 * 3 + i];
 
                 // 4비트씩 시프트하여 높이값 추출
                 int vVal = (int)((naviMask >> (vIndex * 4)) & TILE_MASK);
@@ -122,13 +121,13 @@ namespace Kompile.Map.Utility
         [BurstCompile]
         public static bool IsCircleOverlappingSubTile(int sIndex, in float2 circleCenter, float radiusSq)
         {
-            int vIdx0 = MapConsts.SubTileVertexMap[sIndex * 3 + 0];
-            int vIdx1 = MapConsts.SubTileVertexMap[sIndex * 3 + 1];
-            int vIdx2 = MapConsts.SubTileVertexMap[sIndex * 3 + 2];
+            int vIdx0 = SubTileVertexMap[sIndex * 3 + 0];
+            int vIdx1 = SubTileVertexMap[sIndex * 3 + 1];
+            int vIdx2 = SubTileVertexMap[sIndex * 3 + 2];
 
-            float2 p0 = MapConsts.VertexPositions[vIdx0];
-            float2 p1 = MapConsts.VertexPositions[vIdx1];
-            float2 p2 = MapConsts.VertexPositions[vIdx2];
+            float2 p0 = VertexPositions[vIdx0];
+            float2 p1 = VertexPositions[vIdx1];
+            float2 p2 = VertexPositions[vIdx2];
 
             // 원의 중심이 삼각형 '내부'에 있는지 먼저 확인
             if (true == IsPointInTriangle(circleCenter, p0, p1, p2))

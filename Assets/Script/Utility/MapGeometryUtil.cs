@@ -1,8 +1,8 @@
-namespace Kompile.Map.Utility
+namespace Kompile.Utility
 {
     using Unity.Burst;
     using Unity.Mathematics;
-    using Kompile.Map.Data;
+    using Kompile.Data;
 
     /// <summary>
     /// [Framework] Utility 계층

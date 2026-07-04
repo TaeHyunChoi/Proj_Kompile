@@ -1,7 +1,6 @@
-namespace Kompile.Field.Data
+namespace Kompile.Data
 {
-    using Kompile.Map.Data;
-    using Kompile.Map.Manager;
+    using Kompile.Manager;
     using Unity.Mathematics;
 
     /// <summary> 
