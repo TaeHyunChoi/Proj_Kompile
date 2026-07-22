@@ -5,7 +5,7 @@ namespace Kompile.Manager
     using Kompile.Entity;
     using Unity.Collections;
     using UnityEngine;
-    using static Kompile.Input.Data.Definition;
+    using static Kompile.Data.Definition;
 
     public class FieldManager
     {
