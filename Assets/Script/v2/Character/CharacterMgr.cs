@@ -7,6 +7,14 @@ namespace Kompile.Manager
 {
     public class CharacterMgr : GameLogicMgrBase
     {
+#pragma warning disable 1998
+        public override async Awaitable<bool> OnAwake()
+        {
+            Prior = 1;
+            return true;
+        }
+#pragma warning restore 1998
+
         public override void OnUpdate()
         {
             if (_inbox.Count == 0)
@@ -35,8 +43,6 @@ namespace Kompile.Manager
                         break;
                 }
             }
-
-            InGame.AddMgr(this);
         }
     }
 }

@@ -36,22 +36,22 @@ namespace Kompile.Manager
             _unitRoot.SetParent(fieldRoot);
         }
 
-        public async Awaitable AwakeAsync()
-        {
-            MapRegistryData registryData = await AssetProvider.ReadBinaryDataAsync<MapRegistryData>("MapRegistry");
-            if (null == registryData
-                || null == registryData.BakedGridKeys)
-            {
-                return;
-            }
-            
-            int count = registryData.BakedGridKeys.Length;
-            _validGridKeys = new NativeArray<int>(count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            _validGridKeys.CopyFrom(registryData.BakedGridKeys);
-            AssetProvider.RegisterToCurrentSession(_validGridKeys);
-            
-            _templateAOC = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(new AssetKey("aoc_field_unit"));
-        }
+        // public async Awaitable AwakeAsync()
+        // {
+        //     MapRegistryData registryData = await AssetProvider.ReadBinaryDataAsync<MapRegistryData>("MapRegistry");
+        //     if (null == registryData
+        //         || null == registryData.BakedGridKeys)
+        //     {
+        //         return;
+        //     }
+        //     
+        //     int count = registryData.BakedGridKeys.Length;
+        //     _validGridKeys = new NativeArray<int>(count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        //     _validGridKeys.CopyFrom(registryData.BakedGridKeys);
+        //     AssetProvider.RegisterToCurrentSession(_validGridKeys);
+        //     
+        //     _templateAOC = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(new AssetKey("aoc_field_unit"));
+        // }
 
         public async Awaitable StartAsync(Transform cameraTransform)
         {

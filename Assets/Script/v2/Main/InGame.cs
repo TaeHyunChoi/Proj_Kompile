@@ -1,17 +1,17 @@
-using UnityEngine;
-using System.Collections.Generic;
+using UnityEditor;
 
-namespace Kompile
+namespace Kompile.Manager
 {
-    using Manager;
+    using UnityEngine;
+    using System.Collections.Generic;
     
     public class InGame : MonoBehaviour
     {
         private static InGame _instance;
+        private GameLogicMgrBase[] _mgr;
 
-        private List<GameLogicMgrBase> _mgr;
-        private CharacterMgr _character;
-
+        public static Transform Transform => Transform;
+        
         private void Awake()
         {
             if (_instance)
@@ -21,22 +21,61 @@ namespace Kompile
             }
             _instance = this;
 
-            _mgr = new List<GameLogicMgrBase>(16);
-
-            _character = new CharacterMgr();
-
+            enabled = false;
+            _ = AwakeManagersAsync();
         }
+        private async Awaitable AwakeManagersAsync()
+        {
+            _mgr = new GameLogicMgrBase[]
+            {
+                new CharacterMgr(),
+                new FieldMgr()
+            };
+            
+            // prior 순으로 정렬 (bubble sort)
+            GameLogicMgrBase swap;
+            for (int i = 0; i < _mgr.Length - 1; i++)
+            {
+                for (int j = 0; j < _mgr.Length - 1 - i; j++)
+                {
+                    if (_mgr[j].Prior > _mgr[j + 1].Prior)
+                    {
+                        swap = _mgr[j];
+                        _mgr[j] = _mgr[j + 1];
+                        _mgr[j + 1] = swap;
+                    }
+                }
+            }
+
+            for (int i = 0; i < _mgr.Length; ++i)
+            {
+                bool awake = await _mgr[i].OnAwake();
+                if (!awake)
+                {
+                    InDev.LogError($"fail {_mgr[i].GetType()}.OnAwake();");
+                    return;
+                }
+
+                InDev.Log($"{_mgr[i].GetType()}.OnAwake();");
+            }
+            
+            enabled = true;
+        }
+
         private void Update()
         {
-            InputRouteSystem.OnUpdate();
+            InSystemInput.OnUpdate();
 
-            _character.OnUpdate();
+            for (int i = 0; i < _mgr.Length; ++i)
+            {
+                _mgr[i].OnUpdate();
+            }
         }
 
-        public static void AddMgr(GameLogicMgrBase mgr)
-        {
-            _instance._mgr.Add(mgr);
-        }
+        // public static void AddMgr(GameLogicMgrBase mgr)
+        // {
+        //     _instance._mgr.Add(mgr);
+        // }
     }
 
     //public class Temp : IInputReceivable

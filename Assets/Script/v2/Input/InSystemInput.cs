@@ -7,7 +7,7 @@ namespace Kompile.Manager
     using static Data.Definition;
 
     /// <summary> receivers를 Stack처럼 구현 -> 함수명도 Stack 처럼</summary>
-    public static class InputRouteSystem
+    public static class InSystemInput
     {
         private static readonly List<IInputReceivable> _receivers = new List<IInputReceivable>(8);
         private static readonly InputProvider _provider = new InputProvider();
