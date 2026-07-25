@@ -7,7 +7,7 @@ namespace Kompile.Entity
     public class PlayerControlBrain : IUnitBrain
     {
         private UnitEntityBase _owner;
-        public PlayerControlBrain(FieldEntity entity)
+        public PlayerControlBrain(x_FieldEntity entity)
         {
             _owner = entity;
         }

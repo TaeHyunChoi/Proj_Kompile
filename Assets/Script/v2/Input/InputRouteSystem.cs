@@ -1,4 +1,3 @@
-using UnityEngine;
 using System.Collections.Generic;
 
 namespace Kompile.Manager
@@ -8,30 +7,24 @@ namespace Kompile.Manager
     using static Data.Definition;
 
     /// <summary> receivers를 Stack처럼 구현 -> 함수명도 Stack 처럼</summary>
-    public class InputRouterManager
+    public static class InputRouteSystem
     {
-        private readonly List<IInputReceivable> _receivers;
-        private readonly InputProvider _provider;
+        private static readonly List<IInputReceivable> _receivers = new List<IInputReceivable>(8);
+        private static readonly InputProvider _provider = new InputProvider();
 
-        public InputRouterManager()
-        {
-            _receivers = new List<IInputReceivable>(8);
-            _provider = new InputProvider();
-        }
-
-        public void Push(IInputReceivable receiver)
+        public static void Push(IInputReceivable receiver)
         {
             if (!_receivers.Contains(receiver))
             { 
                 _receivers.Add(receiver);
             }
         }
-        public void Pop(IInputReceivable receiver)
+        public static void Pop(IInputReceivable receiver)
         {
             _receivers.Remove(receiver);
         }
 
-        public void OnUpdate()
+        public static void OnUpdate()
         {
             IDxInput input = _provider.Current.Current;
             if (IDxInput.NONE == input)

@@ -9,7 +9,7 @@ namespace Kompile.Manager
     using System.Collections.Generic;
 
     /// <summary> 인게임 맵 그리드의 동적 스트리밍, 레이어 시각적 제어, 실시간 인스턴스 관리를 전담 </summary>
-    public class MapManager
+    public class x_MapManager
     {
         // --- Manager State (Instance-Centric) ---
         private readonly Dictionary<int, MapGridData> _mapGridDataDic;
@@ -47,7 +47,7 @@ namespace Kompile.Manager
         private const float CHECK_INTERVAL = 0.5f; // 스트리밍 검사 주기 (초)
         private const float GRID_SIZE = 64f;
 
-        public MapManager(Transform root)
+        public x_MapManager(Transform root)
         {
             _mapGridDataDic = new Dictionary<int, MapGridData>();
             _spawnedMapObjects = new Dictionary<int, List<MapChunkContext>>();

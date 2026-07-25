@@ -5,14 +5,14 @@ namespace Kompile.Entity
     using UnityEngine;
 
     [RequireComponent(typeof(UnitMoveComponent), typeof(UnitAnimComponent))]
-    public class FieldEntity : UnitEntityBase
+    public class x_FieldEntity : UnitEntityBase
     {
         private UnitMoveComponent _moveComponent;
         private UnitAnimComponent _animComponent;
         
         public UnitMoveComponent MoveComponent => _moveComponent;
 
-        public void Initialize(FieldUnitTableData data, FieldUnitAnimClipContext clip, AnimatorOverrideController baseAOC, FieldMapQueryService mapQuery)
+        public void Initialize(FieldUnitTableData data, FieldUnitAnimClipContext clip, AnimatorOverrideController baseAOC, x_FieldMapQueryService mapQuery)
         {
             // 💡 1. Brain 초기화: 각 Brain의 기존 스펙을 철저히 존중합니다.
             switch (data.BrainType)

@@ -1,25 +1,25 @@
 namespace Kompile.Manager
 {
-    using Kompile.Provider;
-    using Kompile.Data;
-    using Kompile.Entity;
+    using Provider;
+    using Data;
+    using Entity;
     using Unity.Collections;
     using UnityEngine;
     using static Kompile.Data.Definition;
 
-    public class FieldManager
+    public class x_FieldManager
     {
-        private readonly MapManager _mapManager;
-        private readonly FieldMapQueryService _mapQueryService;
-        private readonly UnitMoveManager _unitMoveManager;
+        private readonly x_MapManager _mapManager;
+        private readonly x_FieldMapQueryService _mapQueryService;
+        private readonly x_UnitMoveManager _unitMoveManager;
 
         private NativeArray<int> _validGridKeys;
         private readonly Transform _fieldRoot;
         private readonly Transform _unitRoot;
-        private FieldEntity _playerEntity;
+        private x_FieldEntity _playerEntity;
         private AnimatorOverrideController _templateAOC;
 
-        public FieldManager(Transform fieldRoot)
+        public x_FieldManager(Transform fieldRoot)
         {
             _fieldRoot = fieldRoot;
 
@@ -27,9 +27,9 @@ namespace Kompile.Manager
             mapRoot.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             mapRoot.SetParent(fieldRoot);
 
-            _mapManager = new MapManager(mapRoot);
-            _mapQueryService = new FieldMapQueryService(_mapManager);
-            _unitMoveManager = new UnitMoveManager();
+            _mapManager = new x_MapManager(mapRoot);
+            _mapQueryService = new x_FieldMapQueryService(_mapManager);
+            _unitMoveManager = new x_UnitMoveManager();
 
             _unitRoot = new GameObject("Unit").transform;
             _unitRoot.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -59,12 +59,12 @@ namespace Kompile.Manager
 #if UNITY_EDITOR
             _playerEntity.transform.position = Vector3.forward;
 #endif
-            _ = _mapManager.PlayStreamingAsync(cameraTransform, _validGridKeys);
+            _ = _mapManager.PlayStreamingAsync(cameraTransform, _validGridKeys); // 이게 있으면 안됐다. GameMgr에서 돌려야 함
         }
 
-        private async Awaitable<FieldEntity> SpawnFieldEntityAsync(int index)
+        private async Awaitable<x_FieldEntity> SpawnFieldEntityAsync(int index)
         {
-            FieldEntity fieldEntity = await AssetProvider.Field.GetOrNewEntityInstanceAsync(1, _unitRoot, _templateAOC, null);
+            x_FieldEntity fieldEntity = await AssetProvider.Field.GetOrNewEntityInstanceAsync(1, _unitRoot, _templateAOC, null);
             _unitMoveManager.Register(fieldEntity.MoveComponent);
             
             return fieldEntity;

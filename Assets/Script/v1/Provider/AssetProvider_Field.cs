@@ -9,10 +9,10 @@ namespace Kompile.Provider
         /// <summary> 필드(Field) 컨텐츠 전용 에셋 공급자 </summary>
         public static class Field
         {
-            public static async Awaitable<FieldEntity> GetOrNewEntityInstanceAsync(int index, Transform root, AnimatorOverrideController aoc, FieldMapQueryService mapQuery = null )
+            public static async Awaitable<x_FieldEntity> GetOrNewEntityInstanceAsync(int index, Transform root, AnimatorOverrideController aoc, x_FieldMapQueryService mapQuery = null )
             {
                 AssetKey prefabKey = new AssetKey(AssetConst.UNIT_PREFAB_FIELD);
-                FieldEntity fieldEntity = await AssetProvider.GetOrNewEntityInstanceAsync<FieldEntity>(prefabKey, root);
+                x_FieldEntity fieldEntity = await AssetProvider.GetOrNewEntityInstanceAsync<x_FieldEntity>(prefabKey, root);
                 FieldUnitTableData data = FieldUnitTableProvider.GetData(index);
                 FieldUnitAnimClipContext clip = await data.GetAnimClipsAsync();
                 fieldEntity.Initialize(data, clip, aoc, mapQuery);

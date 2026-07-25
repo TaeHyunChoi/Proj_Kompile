@@ -11,7 +11,7 @@ namespace Kompile.Manager
     /// [Framework] Manager 계층
     /// FieldManager의 지시를 받아 등록된 모든 유닛의 이동 Job을 스케줄링합니다.
     /// </summary>
-    public class UnitMoveManager
+    public class x_UnitMoveManager
     {
         // Manager(Instance-Centric): 인스턴스 제어
         private readonly HashSet<UnitMoveComponent> _activeUnits = new HashSet<UnitMoveComponent>();

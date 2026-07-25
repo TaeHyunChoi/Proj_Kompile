@@ -8,11 +8,11 @@ namespace Kompile.Data
     /// 💡 [Kompile DOD] 하위 물리 이동(UnitMoveComponent)용이 아닙니다.
     /// 플레이어 마우스 클릭(A*)이나 NPC/몬스터의 배회, 추적 등 상위 인공지능(Brain)의 메인 스레드 맵 탐색 전용으로 주입됩니다.
     /// </summary>
-    public class FieldMapQueryService : IMapQueryService
+    public class x_FieldMapQueryService : IMapQueryService
     {
-        private readonly MapManager _mapManager;
+        private readonly x_MapManager _mapManager;
 
-        public FieldMapQueryService(MapManager mapManager)
+        public x_FieldMapQueryService(x_MapManager mapManager)
         {
             _mapManager = mapManager;
         }

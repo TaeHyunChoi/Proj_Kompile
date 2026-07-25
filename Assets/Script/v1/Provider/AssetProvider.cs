@@ -135,7 +135,10 @@ namespace Kompile.Provider
             {
                 _sessionCustomActions.Add(() =>
                 {
-                    if (nativeArray.IsCreated) nativeArray.Dispose();
+                    if (nativeArray.IsCreated)
+                    {
+                        nativeArray.Dispose();
+                    }
                 });
             }
         }
