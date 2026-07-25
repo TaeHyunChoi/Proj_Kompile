@@ -6,7 +6,7 @@ namespace Kompile.Manager
 {
     public abstract class GameLogicMgrBase
     {
-        public int Prior { get; protected set; }
+        public float Prior { get; protected set; }
         protected List<RequestBase> _inbox      = new List<RequestBase>(64);
         protected List<RequestBase> _processing = new List<RequestBase>(64);
         

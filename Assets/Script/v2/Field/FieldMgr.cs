@@ -18,7 +18,6 @@ namespace Kompile.Manager
             bool result = true;
             try
             {
-                result &= Init_Root();
                 result &= await InitAsync_MapRegistry();
             }
             catch (Exception e)
@@ -34,15 +33,6 @@ namespace Kompile.Manager
             
         }
 
-        
-        private bool Init_Root()
-        {
-            Transform mapRoot = new GameObject("Map").transform;
-            mapRoot.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            mapRoot.SetParent(InGame.Transform);
-
-            return true;
-        }
         private async Awaitable<bool> InitAsync_MapRegistry()
         {
             MapRegistryData registryData = await AssetProvider.ReadBinaryDataAsync<MapRegistryData>("MapRegistry");

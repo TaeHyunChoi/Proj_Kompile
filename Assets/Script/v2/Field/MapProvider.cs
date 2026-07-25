@@ -28,7 +28,7 @@ namespace Kompile.Provider
             _mapGridDataDic = new Dictionary<int, MapGridData>();
             _invalidGrids = new HashSet<int>();
             _gridKeyAddressCache = new Dictionary<int, string>();
-            _nativeTileMap = new NativeHashMap<long, BurstTileInfo>();
+            _nativeTileMap = new NativeHashMap<long, BurstTileInfo>(512, Allocator.Persistent);
         }
         public void Dispose()
         {
@@ -81,18 +81,19 @@ namespace Kompile.Provider
             // 64x64 공간의 모든 수직 높이 레이어(0~63)를 스캔하여 복층 구조 타일을 굽기 
             // (현재 그리드의 모든 값은 미리 챙겨두기~)
             int columnCounter = 0;
-            
+
             // 이거 상수값이 있어야 하지 않나?
-            for (int x = 0; x < GRID_SIZE; ++x)
+            int gridSize = GRID_SIZE;
+            for (int x = 0; x < gridSize; ++x)
             {
-                for (int z = 0; z < GRID_SIZE; ++z)
+                for (int z = 0; z < gridSize; ++z)
                 {
                     int globalTx = baseTx + x;
                     int globalTz = baseTz + z;
 
-                    for (int y = 0; y < GRID_SIZE; ++y)
+                    for (int y = 0; y < gridSize; ++y)
                     {
-                        float worldY = gy * GRID_SIZE + y;
+                        float worldY = gy * gridSize + y;
                         float3 testWorldPos = new float3(globalTx + 0.5f, worldY + 0.5f, globalTz + 0.5f);
                         MapCoordUtil.ComputeKey(testWorldPos, out int gKey, out int tKey);
 
@@ -132,16 +133,18 @@ namespace Kompile.Provider
             sbyte gx = (sbyte)((gridKey >> 16) & 0xFF);
             sbyte gy = (sbyte)((gridKey >> 8) & 0xFF);
             sbyte gz = (sbyte)(gridKey & 0xFF);
-            int baseTx = gx * 64;
-            int baseTz = gz * 64;
 
-            for (int x = 0; x < 64; x++)
+            int gridSize = GRID_SIZE;
+            int baseTx = gx * gridSize;
+            int baseTz = gz * gridSize;
+
+            for (int x = 0; x < gridSize; x++)
             {
-                for (int z = 0; z < 64; z++)
+                for (int z = 0; z < gridSize; z++)
                 {
-                    for (int y = 0; y < 64; y++)
+                    for (int y = 0; y < gridSize; y++)
                     {
-                        float worldY = gy * 64f + y;
+                        float worldY = gy * gridSize + y;
                         float3 testWorldPos = new float3(baseTx + x + 0.5f, worldY + 0.5f, baseTz + z + 0.5f);
                         MapCoordUtil.ComputeKey(testWorldPos, out int gKey, out int tKey);
                         long packedKey = ((long)gKey << 32) | (uint)tKey;
@@ -154,9 +157,9 @@ namespace Kompile.Provider
         }
 
         // --- Getter ---
-        public bool TryGetTileData(float3 worldPos, out MapTileData tileData)
+        public bool TryGetTileData(in float3 worldPos, out MapTileData tileData)
         {
-            MapCoordUtil.ComputeKey(worldPos, out int gKey, out int tKey);
+            MapCoordUtil.ComputeKey(in worldPos, out int gKey, out int tKey);
             if (_mapGridDataDic.TryGetValue(gKey, out MapGridData gridData))
             {
                 return gridData.TryGetTileData(tKey, out tileData);
