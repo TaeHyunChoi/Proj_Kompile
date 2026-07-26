@@ -1,13 +1,9 @@
-using System;
-
 namespace Kompile.Manager
 {
     using Data;
     using Provider;
-    using Utility;
     using UnityEngine;
     using Unity.Mathematics;
-    using Unity.Collections;
     using System.Collections.Generic;
     
     /// <summary> 맵 오브젝트 인스턴스 스폰, 시각적 트랜지션, 큐 기반 동기적 스트리밍 제어 (Instance-Centric) </summary>
@@ -27,7 +23,7 @@ namespace Kompile.Manager
         private readonly HashSet<int> _loadingGrids = new HashSet<int>();
         private readonly List<int> _gridsToRemove = new List<int>();
         private readonly HashSet<int> _keepGrids = new HashSet<int>();
-        private readonly HashSet<int> _validGridKeys = new HashSet<int>();
+        private HashSet<int> _validGridKeys = new HashSet<int>();
 
         // --- Optimization Caches ---
         private readonly Dictionary<string, string> _materialAddressCache = new Dictionary<string, string>();
@@ -40,9 +36,10 @@ namespace Kompile.Manager
         private ushort _lastLayerMask = ushort.MaxValue;
 
         // --- Camera & Streaming Config ---
-        private Transform _cameraTransform;
+        private Transform CameraTransform => InSystemCamera.Main.transform;
+
         private bool _isStreamingActive = false;
-        private float _streamTimer = 0f;
+        private float _streamTimer = CHECK_INTERVAL;
 
         private const float PRELOAD_RADIUS = 10f;
         private const float UNLOAD_RADIUS = 20f;
@@ -104,16 +101,15 @@ namespace Kompile.Manager
         }
 
         // --- 시스템 제어 ---
-        public void PlayStreaming(Transform cameraTransform, NativeArray<int> validGridKeys)
+        public void PlayStreaming(HashSet<int> validGridKeys)
         {
-            _cameraTransform = cameraTransform;
             _isStreamingActive = true;
             _streamTimer = CHECK_INTERVAL;
 
             _validGridKeys.Clear();
-            for (int i = 0; i < validGridKeys.Length; i++)
+            foreach (var gridKey in validGridKeys)
             {
-                _validGridKeys.Add(validGridKeys[i]);
+                _validGridKeys.Add(gridKey);
             }
         }
         public void StopStreaming()
@@ -148,7 +144,7 @@ namespace Kompile.Manager
         // --- 스트리밍 (OnUpdate()에서 동기 호출) ---
         private void CheckAndTriggerStreaming()
         {
-            if (!_cameraTransform)
+            if (!CameraTransform)
             {
                 return;
             }
@@ -160,7 +156,7 @@ namespace Kompile.Manager
             int keepRange = Mathf.CeilToInt(UNLOAD_RADIUS * GRID_SIZE_RECIP) + 1;
             int yRange = Mathf.CeilToInt(Y_RADIUS * GRID_SIZE_RECIP);
 
-            Vector3 camPos = _cameraTransform.position;
+            Vector3 camPos = CameraTransform.position;
             float camX = camPos.x;
             float camY = camPos.y;
             float camZ = camPos.z;
@@ -519,6 +515,11 @@ namespace Kompile.Manager
 
             _materialAddressCache[meshName] = resultMatAddress;
             return resultMatAddress;
+        }
+
+        public override void OnDisable()
+        {
+            DisposeAll();
         }
     }
 }

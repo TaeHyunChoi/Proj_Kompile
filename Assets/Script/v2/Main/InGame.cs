@@ -1,5 +1,3 @@
-using UnityEditor;
-
 namespace Kompile.Manager
 {
     using UnityEngine;
@@ -10,7 +8,7 @@ namespace Kompile.Manager
         private static InGame _instance;
         private GameLogicMgrBase[] _mgr;
 
-        public static Transform Transform => Transform;
+        public static Transform Transform => _instance.transform;
         
         private void Awake()
         {
@@ -20,11 +18,15 @@ namespace Kompile.Manager
                 return;
             }
             _instance = this;
-
             enabled = false;
-            _ = AwakeManagersAsync();
+
+            // InSystem
+            // InSystemCamera.OnAwake();
+
+            // InGame
+            _ = AwakeIngameAsync();
         }
-        private async Awaitable AwakeManagersAsync()
+        private async Awaitable AwakeIngameAsync()
         {
             _mgr = new GameLogicMgrBase[]
             {
@@ -72,10 +74,13 @@ namespace Kompile.Manager
             }
         }
 
-        // public static void AddMgr(GameLogicMgrBase mgr)
-        // {
-        //     _instance._mgr.Add(mgr);
-        // }
+        private void OnDisable()
+        {
+            for (int i = _mgr.Length - 1; i >= 0; --i)
+            {
+                _mgr[i].OnDisable();
+            }
+        }
     }
 
     //public class Temp : IInputReceivable

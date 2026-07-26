@@ -82,7 +82,6 @@ namespace Kompile.Provider
             // (현재 그리드의 모든 값은 미리 챙겨두기~)
             int columnCounter = 0;
 
-            // 이거 상수값이 있어야 하지 않나?
             int gridSize = GRID_SIZE;
             for (int x = 0; x < gridSize; ++x)
             {

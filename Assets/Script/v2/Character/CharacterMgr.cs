@@ -14,7 +14,6 @@ namespace Kompile.Manager
             return true;
         }
 #pragma warning restore 1998
-
         public override void OnUpdate()
         {
             if (_inbox.Count == 0)
@@ -43,6 +42,10 @@ namespace Kompile.Manager
                         break;
                 }
             }
+        }
+        public override void OnDisable()
+        {
+            // 필요 시 추가
         }
     }
 }
