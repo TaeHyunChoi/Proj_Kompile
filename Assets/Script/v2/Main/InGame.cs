@@ -3,37 +3,30 @@ namespace Kompile.Manager
     using UnityEngine;
     using System.Collections.Generic;
     
-    public class InGame : MonoBehaviour
+    public partial class InGame : MonoBehaviour
     {
         private static InGame _instance;
+        
         private GameLogicMgrBase[] _mgr;
 
         public static Transform Transform => _instance.transform;
-        
-        private void Awake()
-        {
-            if (_instance)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            _instance = this;
-            enabled = false;
 
-            // InSystem
-            // InSystemCamera.OnAwake();
 
-            // InGame
-            _ = AwakeIngameAsync();
-        }
+        // --- Manager: Property : 필요하면 추가하고, 귀찮으면 .Get<T>()로 참조한다.
+        public static ActorMgr Actor => Get<ActorMgr>();
+        public static FieldMgr Field => Get<FieldMgr>();
+        public static MapMgr Map => Get<MapMgr>();
+
+
+        // --- Manager: Function
         private async Awaitable AwakeIngameAsync()
         {
             _mgr = new GameLogicMgrBase[]
             {
-                new CharacterMgr(),
+                new ActorMgr(),
                 new FieldMgr()
             };
-            
+
             // prior 순으로 정렬 (bubble sort)
             GameLogicMgrBase swap;
             for (int i = 0; i < _mgr.Length - 1; i++)
@@ -58,12 +51,40 @@ namespace Kompile.Manager
                     return;
                 }
 
+                _mgr[i].RegisterToCache();
                 InDev.Log($"{_mgr[i].GetType()}.OnAwake();");
             }
-            
+
             enabled = true;
         }
+        public static void Register<T>(T manager) where T : GameLogicMgrBase
+        {
+            ManagerCache<T>.Instance = manager;
+        }
+        public static T Get<T>() where T : GameLogicMgrBase
+        {
+            return ManagerCache<T>.Instance;
+        }
 
+
+        // --- MonoBehaviour Loop
+        private void Awake()
+        {
+            if (_instance)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            _instance = this;
+            enabled = false;
+
+            // InSystem
+            InSystemCamera inSystemCamera = transform.GetComponentInChildren<InSystemCamera>();
+            inSystemCamera.OnAwake();
+
+            // InGame
+            _ = AwakeIngameAsync();
+        }
         private void Update()
         {
             InSystemInput.OnUpdate();
@@ -73,9 +94,13 @@ namespace Kompile.Manager
                 _mgr[i].OnUpdate();
             }
         }
-
         private void OnDisable()
         {
+            if (null == _mgr || 0 == _mgr.Length)
+            {
+                return;
+            }
+
             for (int i = _mgr.Length - 1; i >= 0; --i)
             {
                 _mgr[i].OnDisable();

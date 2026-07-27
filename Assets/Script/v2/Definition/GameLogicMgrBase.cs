@@ -9,12 +9,14 @@ namespace Kompile.Manager
         public float Prior { get; protected set; }
         protected List<RequestBase> _inbox      = new List<RequestBase>(64);
         protected List<RequestBase> _processing = new List<RequestBase>(64);
-        
+
+
         public void Enqueue(RequestBase request)
         {
             _inbox.Add(request);
         }
 
+        public abstract void RegisterToCache();
         public abstract Awaitable<bool> OnAwake();
         public abstract void OnUpdate();
         public abstract void OnDisable();

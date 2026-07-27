@@ -5,8 +5,12 @@ using Kompile.Provider;
 
 namespace Kompile.Manager
 {
-    public class CharacterMgr : GameLogicMgrBase
+    public class ActorMgr : GameLogicMgrBase
     {
+        public override void RegisterToCache()
+        {
+            InGame.Register<ActorMgr>(this);
+        }
 #pragma warning disable 1998
         public override async Awaitable<bool> OnAwake()
         {

@@ -12,6 +12,10 @@ namespace Kompile.Manager
         private MapMgr _mapMgr;
 
         // --- override ---
+        public override void RegisterToCache()
+        {
+            InGame.Register(this);
+        }
         public override async Awaitable<bool> OnAwake()
         {
             Prior = 2;

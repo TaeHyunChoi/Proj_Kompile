@@ -48,6 +48,10 @@ namespace Kompile.Manager
         private const float GRID_SIZE_RECIP = 1f / 64f;
 
 #pragma warning disable 1998
+        public override void RegisterToCache()
+        {
+            InGame.Register(this);
+        }
         public override async Awaitable<bool> OnAwake()
         {
             Prior = 2.1f;
