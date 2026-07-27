@@ -18,55 +18,6 @@ namespace Kompile.Manager
         public static MapMgr Map => Get<MapMgr>();
 
 
-        // --- Manager: Function
-        private async Awaitable AwakeIngameAsync()
-        {
-            _mgr = new GameLogicMgrBase[]
-            {
-                new ActorMgr(),
-                new FieldMgr()
-            };
-
-            // prior 순으로 정렬 (bubble sort)
-            GameLogicMgrBase swap;
-            for (int i = 0; i < _mgr.Length - 1; i++)
-            {
-                for (int j = 0; j < _mgr.Length - 1 - i; j++)
-                {
-                    if (_mgr[j].Prior > _mgr[j + 1].Prior)
-                    {
-                        swap = _mgr[j];
-                        _mgr[j] = _mgr[j + 1];
-                        _mgr[j + 1] = swap;
-                    }
-                }
-            }
-
-            for (int i = 0; i < _mgr.Length; ++i)
-            {
-                bool awake = await _mgr[i].OnAwake();
-                if (!awake)
-                {
-                    InDev.LogError($"fail {_mgr[i].GetType()}.OnAwake();");
-                    return;
-                }
-
-                _mgr[i].RegisterToCache();
-                InDev.Log($"{_mgr[i].GetType()}.OnAwake();");
-            }
-
-            enabled = true;
-        }
-        public static void Register<T>(T manager) where T : GameLogicMgrBase
-        {
-            ManagerCache<T>.Instance = manager;
-        }
-        public static T Get<T>() where T : GameLogicMgrBase
-        {
-            return ManagerCache<T>.Instance;
-        }
-
-
         // --- MonoBehaviour Loop
         private void Awake()
         {
@@ -105,6 +56,55 @@ namespace Kompile.Manager
             {
                 _mgr[i].OnDisable();
             }
+        }
+
+
+        // --- Manager: Function
+        private async Awaitable AwakeIngameAsync()
+        {
+            _mgr = new GameLogicMgrBase[]
+            {
+                new ActorMgr(),
+                new FieldMgr()
+            };
+
+            // prior 순으로 정렬 (bubble sort)
+            GameLogicMgrBase swap;
+            for (int i = 0; i < _mgr.Length - 1; i++)
+            {
+                for (int j = 0; j < _mgr.Length - 1 - i; j++)
+                {
+                    if (_mgr[j].Prior > _mgr[j + 1].Prior)
+                    {
+                        swap = _mgr[j];
+                        _mgr[j] = _mgr[j + 1];
+                        _mgr[j + 1] = swap;
+                    }
+                }
+            }
+
+            for (int i = 0; i < _mgr.Length; ++i)
+            {
+                bool awake = await _mgr[i].OnAwake();
+                if (!awake)
+                {
+                    InDev.LogError($"fail {_mgr[i].GetType()}.OnAwake();");
+                    return;
+                }
+
+                _mgr[i].RegisterToCache();
+                InDev.Log($"{_mgr[i].GetType().Name}.OnAwake();");
+            }
+
+            enabled = true;
+        }
+        public static void Register<T>(T manager) where T : GameLogicMgrBase
+        {
+            ManagerCache<T>.Instance = manager;
+        }
+        public static T Get<T>() where T : GameLogicMgrBase
+        {
+            return ManagerCache<T>.Instance;
         }
     }
 

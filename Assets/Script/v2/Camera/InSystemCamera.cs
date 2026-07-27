@@ -27,7 +27,8 @@ namespace Kompile
         }
         public void OnLateUpdate()
         {
-            var actorMgr = InGame.Get<ActorMgr>();
+            // var player = InGame.Actor.GetPlayer();
+            // 다음은 Actor Set 이로구만;
 
         }
     }
