@@ -7,6 +7,7 @@ namespace Kompile.Provider
     public static class RequestProvider<T> where T: RequestBase, new()
     {
         private static readonly List<T> _pool = new List<T>(64);
+        
         public static T Get()
         {
             if (_pool.Count > 0)

@@ -1,21 +1,24 @@
 namespace Kompile.Manager
 {
     using UnityEngine;
-    using System.Collections.Generic;
-    
+
     public partial class InGame : MonoBehaviour
     {
         private static InGame _instance;
-        
+
         private GameLogicMgrBase[] _mgr;
 
         public static Transform Transform => _instance.transform;
 
-
-        // --- Manager: Property : 필요하면 추가하고, 귀찮으면 .Get<T>()로 참조한다.
+        // short-cut property for manager access
         public static ActorMgr Actor => Get<ActorMgr>();
         public static FieldMgr Field => Get<FieldMgr>();
-        public static MapMgr Map => Get<MapMgr>();
+
+
+        // --- Manager: Property : 필요하면 추가하고, 귀찮으면 .Get<T>()로 참조한다.
+        //public static ActorMgr Actor => Get<ActorMgr>();
+        //public static FieldMgr Field => Get<FieldMgr>();
+        //public static MapMgr Map => Get<MapMgr>();
 
 
         // --- MonoBehaviour Loop
@@ -36,6 +39,12 @@ namespace Kompile.Manager
             // InGame
             _ = AwakeIngameAsync();
         }
+#if DEV_BUILD
+        private void Start()
+        {
+            //Get<ActorMgr>().Spawn(); // 대충 요런 느낌으로 구현해야 하네
+        }
+#endif
         private void Update()
         {
             InSystemInput.OnUpdate();

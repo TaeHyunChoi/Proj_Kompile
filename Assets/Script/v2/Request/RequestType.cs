@@ -1,10 +1,10 @@
-using UnityEngine;
-
 namespace Kompile.Data
 {
     public enum RequestType
     {
         None = 0,
-        PlayerMove,
+
+        Actor_Instantiate,
+        Actor_Update,
     }
 }

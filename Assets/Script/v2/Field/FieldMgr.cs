@@ -27,7 +27,6 @@ namespace Kompile.Manager
 
                 _mapMgr = new MapMgr();
                 result &= await _mapMgr.OnAwake();
-
             }
             catch (Exception e)
             {
@@ -44,7 +43,16 @@ namespace Kompile.Manager
         }
         public override void OnUpdate()
         {
+            ProcessRequests();
+
+            // 맵 갱신
             _mapMgr.OnUpdate();
+
+            // 필드의 액터 업데이트 요청
+            ActorUpdateRequest request = RequestProvider<ActorUpdateRequest>.Get();
+            InGame.Actor.Enqueue(request);
+
+            // etc ...
         }
         public override void OnDisable()
         {

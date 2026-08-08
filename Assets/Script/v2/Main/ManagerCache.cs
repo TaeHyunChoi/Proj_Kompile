@@ -1,6 +1,6 @@
 namespace Kompile.Manager
 {
-    public partial class InGame
+    public partial class InGame // ManagerCache.cs
     {
         private static class ManagerCache<T> where T : GameLogicMgrBase
         {

@@ -5,5 +5,6 @@ namespace Kompile.Data
         public RequestType Type { get; protected set; }
         internal bool IsPooled { get; set; }
         public abstract void Clear();
+        public abstract void ReturnToPool();
     }
 }

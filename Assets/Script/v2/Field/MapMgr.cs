@@ -60,6 +60,7 @@ namespace Kompile.Manager
             Transform mapRoot = new GameObject("Map").transform;
             mapRoot.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             mapRoot.SetParent(InGame.Transform);
+            _rootTransform = mapRoot.transform;
 
             return true;
         }
