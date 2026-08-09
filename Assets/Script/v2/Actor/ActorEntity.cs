@@ -21,7 +21,7 @@ namespace Kompile.Entity
             _animCtrl.Initialize(baseAOC, in clip);
             
             // for test
-            _animCtrl.UpdateIntent(new UnitIntent());
+            _animCtrl.UpdateIntent(new UnitIntent(Vector3.forward));
         }
 
         public override void Clear()

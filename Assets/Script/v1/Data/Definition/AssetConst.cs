@@ -4,6 +4,6 @@ namespace Kompile.Data
     {
         public const string UNIT_TABLE         = "UnitTable";
         public const string LOCALIZATION_TABLE = "LocalizeTable";
-        public const string UNIT_PREFAB_FIELD  = "unit_prefab_field";
+        public const string ACTOR_PREFAB  = "actor_prefab";
     }
 }

@@ -11,8 +11,9 @@ GameObject:
   - component: {fileID: 2661480014977142764}
   - component: {fileID: 5710677464469744475}
   - component: {fileID: 2266342005852781286}
+  - component: {fileID: 3594603565082153559}
   m_Layer: 10
-  m_Name: unit_prefab_field
+  m_Name: actor_prefab
   m_TagString: Untagged
   m_Icon: {fileID: -5487077368411116049, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -110,3 +111,15 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &3594603565082153559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6867064432740900801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2112f70c8a99f432f9829a5499c97a09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

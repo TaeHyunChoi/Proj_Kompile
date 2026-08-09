@@ -1,5 +1,6 @@
 namespace Kompile.Manager
 {
+    using Kompile.Provider;
     using UnityEngine;
 
     public partial class InGame : MonoBehaviour
@@ -71,6 +72,10 @@ namespace Kompile.Manager
         // --- Manager: Function
         private async Awaitable AwakeIngameAsync()
         {
+            // Provider
+            // 테이블을 초기화 해야 합니다?!
+            await FieldUnitTableProvider.InitializeAsync();
+
             _mgr = new GameLogicMgrBase[]
             {
                 new ActorMgr(),

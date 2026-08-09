@@ -1,4 +1,4 @@
-using Kompile.Entity;
+  using Kompile.Entity;
 using UnityEngine;
 
 namespace Kompile.Manager
@@ -33,7 +33,7 @@ namespace Kompile.Manager
             _templateAOC = await AssetProvider.LoadAssetAsync<AnimatorOverrideController>(new AssetKey("aoc_field_unit"));
 
             // cache asset
-            _prefabKey = new AssetKey(AssetConst.UNIT_PREFAB_FIELD);
+            _prefabKey = new AssetKey(AssetConst.ACTOR_PREFAB);
             
             
             // set actor : for test
@@ -89,13 +89,13 @@ namespace Kompile.Manager
                 return false;
             }
 
+            actor.transform.SetPositionAndRotation(position, quaternion);
+
             FieldUnitTableData data = FieldUnitTableProvider.GetData(index);
             FieldUnitAnimClipContext clip = await data.GetAnimClipsAsync();
-            
-            // TODO: aoc의 고도화가 필요할 듯?...
             actor.Initialize(data, clip, _templateAOC);
-            // // Actor.Add(actor);
-            
+            // Actor.Add(actor);
+
             return false;
         }
     }

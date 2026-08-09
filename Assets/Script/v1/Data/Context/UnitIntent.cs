@@ -24,5 +24,11 @@ namespace Kompile.Data
         /// Idle / Walk는 MoveInput.magnitude에서 AnimComponent가 스스로 결정하므로 여기에 싣지 않는다.
         /// </summary>
         public UnitAnimCmd AnimCommand;
+
+        public UnitIntent(Vector3 dir)
+        {
+            MoveInput = dir;
+            AnimCommand = UnitAnimCmd.None;
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace Kompile.Provider
         {
             public static async Awaitable<x_FieldEntity> GetOrNewEntityInstanceAsync(int index, Transform root, AnimatorOverrideController aoc, x_FieldMapQueryService mapQuery = null )
             {
-                AssetKey prefabKey = new AssetKey(AssetConst.UNIT_PREFAB_FIELD);
+                AssetKey prefabKey = new AssetKey(AssetConst.ACTOR_PREFAB);
                 x_FieldEntity fieldEntity = await AssetProvider.GetOrNewEntityInstanceAsync<x_FieldEntity>(prefabKey, root);
                 FieldUnitTableData data = FieldUnitTableProvider.GetData(index);
                 FieldUnitAnimClipContext clip = await data.GetAnimClipsAsync();
