@@ -15,7 +15,7 @@ namespace Kompile.Manager
         private BattleTimelineManager   _timelineManager;
         private BattleSkillRepoProvider _skillProvider;
 
-        private Dictionary<long, UnitEntityBase>    _units    = new Dictionary<long, UnitEntityBase>();
+        private Dictionary<long, Entity>    _units    = new Dictionary<long, Entity>();
         private Dictionary<long, BattleUnitContext> _contexts = new Dictionary<long, BattleUnitContext>();
 
         private long _unitIDCounter     = 0;

@@ -18,6 +18,10 @@ namespace Kompile.Manager
         }
         public override async Awaitable<bool> OnAwake()
         {
+#if DEV_BUILD
+            InDev.Log($"Call FieldMgr.OnAwake()");
+#endif
+            
             Prior = 2;
 
             bool result = true;
@@ -38,12 +42,12 @@ namespace Kompile.Manager
             {
                 _mapMgr.PlayStreaming(_mapRegistry);
             }
-
             return result;
         }
-        public override void OnUpdate()
+        public override async Awaitable<bool> OnUpdate()
         {
-            ProcessRequests();
+            bool update = true;
+            update &= await ProcessRequests();
 
             // 맵 갱신
             _mapMgr.OnUpdate();
@@ -53,10 +57,18 @@ namespace Kompile.Manager
             InGame.Actor.Enqueue(request);
 
             // etc ...
+
+            return update;
         }
         public override void OnDisable()
         {
             _mapMgr.OnDisable();
+        }
+
+        protected override async Awaitable<bool> HandleRequestAsync(RequestBase request)
+        {
+            await Awaitable.NextFrameAsync();
+            return false;
         }
 
 

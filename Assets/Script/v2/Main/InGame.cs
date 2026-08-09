@@ -45,7 +45,7 @@ namespace Kompile.Manager
             //Get<ActorMgr>().Spawn(); // 대충 요런 느낌으로 구현해야 하네
         }
 #endif
-        private void Update()
+        private async void Update()
         {
             InSystemInput.OnUpdate();
 
@@ -74,7 +74,7 @@ namespace Kompile.Manager
             _mgr = new GameLogicMgrBase[]
             {
                 new ActorMgr(),
-                new FieldMgr()
+                //new FieldMgr()
             };
 
             // prior 순으로 정렬 (bubble sort)
@@ -94,15 +94,16 @@ namespace Kompile.Manager
 
             for (int i = 0; i < _mgr.Length; ++i)
             {
+                InDev.Log($"{_mgr[i].GetType().Name}.OnAwake();");
+                
                 bool awake = await _mgr[i].OnAwake();
                 if (!awake)
                 {
                     InDev.LogError($"fail {_mgr[i].GetType()}.OnAwake();");
                     return;
                 }
-
+                
                 _mgr[i].RegisterToCache();
-                InDev.Log($"{_mgr[i].GetType().Name}.OnAwake();");
             }
 
             enabled = true;

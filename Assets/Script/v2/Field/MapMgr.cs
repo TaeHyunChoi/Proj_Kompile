@@ -65,44 +65,37 @@ namespace Kompile.Manager
             return true;
         }
 #pragma warning restore 1998
-        public override void OnUpdate()
+        public override async Awaitable<bool> OnUpdate()
         {
-            ProcessInboxRequests();
-
             if (_isStreamingActive)
             {
-                _streamTimer += Time.deltaTime;
-                if (_streamTimer >= CHECK_INTERVAL)
-                {
-                    _streamTimer = 0f;
-                    CheckAndTriggerStreaming();
-                }
+                return false;
             }
+
+            bool update = await ProcessRequests();
+            
+            _streamTimer += Time.deltaTime;
+            if (_streamTimer >= CHECK_INTERVAL)
+            {
+                _streamTimer = 0f;
+                CheckAndTriggerStreaming();
+            }
+
+            return update;
         }
 
-        private void ProcessInboxRequests()
+        protected override async Awaitable<bool> HandleRequestAsync(RequestBase request)
         {
-            if (0 == _inbox.Count)
+            await Awaitable.NextFrameAsync();
+            
+            switch (request.Type)
             {
-                return;
+                default:
+                    break;
             }
-
-            _swap = _inbox;
-            _inbox = _processing;
-            _processing = _swap;
-
-            for (int i = 0; i < _processing.Count; ++i)
-            { 
-                RequestBase req = _processing[i];
-
-                switch (req.Type)
-                {
-                    default:
-                        break;
-                }
-            }
-
-            _processing.Clear();
+            
+            request.ReturnToPool();
+            return true;
         }
 
         // --- 시스템 제어 ---

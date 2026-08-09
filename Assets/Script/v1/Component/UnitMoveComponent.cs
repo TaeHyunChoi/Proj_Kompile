@@ -11,23 +11,23 @@ namespace Kompile.Component
     /// </summary>
     public class UnitMoveComponent : MonoBehaviour
     {
-        private UnitEntityBase _ownerEntity;
-
-        public float2 CurrentInput { get; private set; }
-
-        public void Initialize(UnitEntityBase owner)
-        {
-            _ownerEntity = owner;
-        }
-
-        public void UpdateIntent(in UnitIntent intent)
-        {
-            if (!_ownerEntity)
-            {
-                return;                
-            }
-            
-            CurrentInput = intent.MoveInput;
-        }
+        // private UnitEntityBase _ownerEntity;
+        //
+        // public float2 CurrentInput { get; private set; }
+        //
+        // public void Initialize(UnitEntityBase owner)
+        // {
+        //     _ownerEntity = owner;
+        // }
+        //
+        // public void UpdateIntent(in UnitIntent intent)
+        // {
+        //     if (!_ownerEntity)
+        //     {
+        //         return;                
+        //     }
+        //     
+        //     CurrentInput = intent.MoveInput;
+        // }
     }
 }

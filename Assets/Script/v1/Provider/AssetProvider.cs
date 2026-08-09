@@ -1,7 +1,7 @@
 namespace Kompile.Provider
 {
-    using Kompile.Data;
-    using Kompile.Entity;
+    using Data;
+    using Entity;
     using MessagePack;
     using System;
     using System.Collections.Generic;
@@ -35,7 +35,7 @@ namespace Kompile.Provider
 
         // 각 타입별로 분할된 힙 할당 최소화용 장부 (GC 최소화 구조 유지)
         private static readonly List<InstanceCleanupData> _sessionInstances = new List<InstanceCleanupData>(128);
-        private static readonly List<UnitEntityBase> _sessionEntities = new List<UnitEntityBase>(128);
+        private static readonly List<Entity> _sessionEntities = new List<Entity>(128);
         private static readonly List<int> _sessionAssetIds = new List<int>(128);
         private static readonly List<string> _sessionAnimUnitKeys = new List<string>(32);
         private static readonly List<AsyncOperationHandle> _sessionAnimHandles = new List<AsyncOperationHandle>(256);
@@ -57,7 +57,7 @@ namespace Kompile.Provider
             // 1. 엔티티 데이터 청소 (생성의 역순)
             for (int i = _sessionEntities.Count - 1; i >= 0; i--)
             {
-                if (_sessionEntities[i] != null) _sessionEntities[i].Clear();
+                if (_sessionEntities[i]) _sessionEntities[i].Clear();
             }
 
             // 2. 게임 오브젝트 인스턴스 해제
@@ -145,34 +145,40 @@ namespace Kompile.Provider
         #endregion
 
         #region Game Object (Instance & Pooling)
-        public static async Awaitable<GameObject> GetOrNewInstanceAsync(AssetKey addressKey, Transform parent = null, bool usePooling = true)
+        public static async Awaitable<GameObject> GetOrNewInstanceAsync(AssetKey addressKey, Transform parent = null,
+            bool usePooling = true)
         {
-            if (addressKey.IsValid)
+            if (!addressKey.IsValid)
             {
-                GameObject instance = await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
-
-                if (_isSessionTrackingActive && !_bypassSessionTracking && instance != null)
-                {
-                    _sessionInstances.Add(new InstanceCleanupData
-                    {
-                        Key = addressKey,
-                        Instance = instance,
-                        InstanceID = instance.GetInstanceID()
-                    });
-                }
-
-                return instance;
+#if DEV_BUILD
+                InDev.LogError("[AssetProvider] Addressable Key is null or empty!");
+#endif
+                return null;
             }
-            Debug.LogError("[AssetProvider] Addressable Key is null or empty!");
-            return null;
+
+            GameObject instance = await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
+
+            if (_isSessionTrackingActive && !_bypassSessionTracking && instance)
+            {
+                _sessionInstances.Add(new InstanceCleanupData
+                {
+                    Key = addressKey, 
+                    Instance = instance, 
+                    InstanceID = instance.GetInstanceID()
+                });
+            }
+
+            return instance;
         }
 
-        public static async Awaitable<TEntity> GetOrNewEntityInstanceAsync<TEntity>(AssetKey assetKey, Transform root) where TEntity : UnitEntityBase
+        public static async Awaitable<TEntity> GetOrNewEntityInstanceAsync<TEntity>(AssetKey assetKey, Transform root) where TEntity : Entity
         {
             GameObject go = await AssetProvider.GetOrNewInstanceAsync(assetKey, root);
             if (!go)
             {
-                Debug.LogError("[AssetProvider] 유닛 프리팹 로드 실패");
+#if DEV_BUILD
+                InDev.LogError("[AssetProvider] 유닛 프리팹 로드 실패");
+#endif   
                 return null;
             }
 
@@ -192,7 +198,7 @@ namespace Kompile.Provider
             AssetKey addressKey = new AssetKey(TypeNameCache<T>.Name);
             GameObject instance = await GetOrNewInstanceInternalAsync(addressKey, parent, usePooling);
 
-            if (_isSessionTrackingActive && !_bypassSessionTracking && instance != null)
+            if (_isSessionTrackingActive && !_bypassSessionTracking && instance)
             {
                 _sessionInstances.Add(new InstanceCleanupData
                 {
@@ -226,7 +232,9 @@ namespace Kompile.Provider
 
                 if (handle.Status != AsyncOperationStatus.Succeeded)
                 {
-                    Debug.LogError($"[AssetProvider] Failed to load: {key.Value}");
+#if DEV_BUILD
+                    InDev.LogError($"[AssetProvider] Failed to load: {key.Value}");
+#endif
                     return null;
                 }
                 entry = new InstanceEntryContext(handle, usePooling);
@@ -250,7 +258,11 @@ namespace Kompile.Provider
 
         private static void ReleaseInstanceInternal(AssetKey key, GameObject instance, bool forcedDestroy)
         {
-            if (instance == null) return;
+            if (!instance)
+            {
+                return;                
+            }
+            
             if (!key.IsValid || !GameObjectInstances.TryGetValue(key, out InstanceEntryContext entry))
             {
                 Addressables.ReleaseInstance(instance);
@@ -269,7 +281,10 @@ namespace Kompile.Provider
             }
 
             entry.RemoveReference();
-            if (!entry.ShouldRelease()) return;
+            if (!entry.ShouldRelease())
+            {
+                return;
+            }
 
             Addressables.Release(entry.Handle);
             GameObjectInstances.Remove(key);
@@ -285,7 +300,9 @@ namespace Kompile.Provider
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                Debug.LogError($"[AssetProvider] 에셋 로드 실패: {key.Value}");
+#if DEV_BUILD
+                InDev.LogError($"[AssetProvider] 에셋 로드 실패: {key.Value}");
+#endif
                 return null;
             }
 
@@ -302,7 +319,7 @@ namespace Kompile.Provider
 
         public static void ReleaseAsset(int instanceID)
         {
-            if (NonGameObjectInstances.Remove(instanceID, out var handle))
+            if (NonGameObjectInstances.Remove(instanceID, out AsyncOperationHandle handle))
             {
                 if (handle.IsValid())
                 {
@@ -330,7 +347,9 @@ namespace Kompile.Provider
                     }
                     catch (System.Exception ex)
                     {
-                        Debug.LogError($"[MessagePack 디버그 에러] {ex.Message}");
+#if DEV_BUILD
+                        InDev.LogError($"[MessagePack 디버그 에러] {ex.Message}");
+#endif
                         Addressables.Release(handle);
                         throw;
                     }
@@ -413,7 +432,9 @@ namespace Kompile.Provider
                 }
                 else
                 {
-                    Debug.LogError($"[AnimLoader] 에셋 로드 실패 주소 체크: {cachedAddresses[j]}");
+#if DEV_BUILD
+                    InDev.LogError($"[AnimLoader] 에셋 로드 실패 주소 체크: {cachedAddresses[j]}");
+#endif
                 }
             }
 
@@ -438,7 +459,10 @@ namespace Kompile.Provider
         /// </summary>
         public static void ApplyOverrideClips(AnimatorOverrideController runtimeAOC, in FieldUnitAnimClipContext clipSet)
         {
-            if (runtimeAOC == null || clipSet.Clips == null) return;
+            if (!runtimeAOC || null == clipSet.Clips)
+            {
+                return;
+            }
 
             // 1. 내부 캐시 리스트를 재사용하여 가비지 생성 방지
             _animBakeCache.Clear();
@@ -450,7 +474,10 @@ namespace Kompile.Provider
             for (int i = 0; i < templateCount; ++i)
             {
                 AnimationClip originalClip = _animBakeCache[i].Key;
-                if (originalClip == null) continue;
+                if (!originalClip)
+                {
+                    continue;
+                }
 
                 // 2. [버그 완벽 차단] 단순 Contains() 대신, 정립된 구조적 규칙 검사 수행
                 // originalClip.name이 "Base_Idle_S" 일 때 "Idle_S" 접미사로 끝나는지 확인하여 "Idle_SW" 등과의 중복 매칭을 완벽히 격리합니다.
@@ -479,12 +506,18 @@ namespace Kompile.Provider
                 return;
             }
 
-            if (clipSet.Clips == null) return;
+            if (null == clipSet.Clips)
+            {
+                return;
+            }
 
             // 2. 해당 유닛이 가졌던 클립들을 순회하며 개별 핸들 해제
             for (int i = 0; i < clipSet.Clips.Length; i++)
             {
-                if (clipSet.Clips[i] == null) continue;
+                if (!clipSet.Clips[i])
+                {
+                    continue;
+                }
 
                 int id = clipSet.Clips[i].GetInstanceID();
 

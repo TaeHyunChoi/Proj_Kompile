@@ -13,7 +13,7 @@ namespace Kompile.Utility
     {
         /// <summary> 점 p가 삼각형 (a, b, c) 내부에 있는지 외적 부호로 판별합니다. </summary>
         [BurstCompile]
-        private static bool IsPointInTriangle(in float2 p, in float2 a, in float2 b, in float2 c)
+        public static bool IsPointInTriangle(in float2 p, in float2 a, in float2 b, in float2 c)
         {
             float cp1 = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
             float cp2 = (c.x - b.x) * (p.y - b.y) - (c.y - b.y) * (p.x - b.x);
@@ -24,7 +24,7 @@ namespace Kompile.Utility
 
         /// <summary> 삼각형 (a, b, c) 내 점 p의 바리센트릭 가중치 좌표를 계산합니다. </summary>
         [BurstCompile]
-        private static void BarycentricCoords(in float2 p, in float2 a, in float2 b, in float2 c, out float3 result)
+        public static void BarycentricCoords(in float2 p, in float2 a, in float2 b, in float2 c, out float3 result)
         {
             float2 v0 = b - a, v1 = c - a, v2 = p - a;
             float den = v0.x * v1.y - v1.x * v0.y;

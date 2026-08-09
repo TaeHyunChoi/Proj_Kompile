@@ -1,8 +1,8 @@
-namespace Kompile.Component
+namespace Kompile.Entity
 {
     using UnityEngine;
-    using Kompile.Provider;
-    using Kompile.Data;
+    using Provider;
+    using Data;
 
     /// <summary> GameObject에 부착되어 유닛의 애니메이션(Animator 상태 및 스프라이트 제어)을 전담 </summary>
     [RequireComponent(typeof(Animator), typeof(SpriteRenderer))]
@@ -17,7 +17,7 @@ namespace Kompile.Component
 
         public void Initialize(AnimatorOverrideController baseTemplateAOC, in FieldUnitAnimClipContext clipSet)
         {
-            if (baseTemplateAOC == null)
+            if (!baseTemplateAOC)
             {
                 return;
             }

@@ -6,7 +6,7 @@ namespace Kompile.Entity
     /// </summary>
     public interface IUnitBrainComponent
     {
-        void Initialize(UnitEntityBase ownerEntity);
+        void Initialize(Entity ownerEntity);
         void ManualUpdate();
     }
 }

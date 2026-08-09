@@ -2,8 +2,7 @@ namespace Kompile.Entity
 {
     using System.Collections.Generic;
     using UnityEngine;
-    using Kompile.Entity.Data;
-
+    
     /// <summary>
     /// [Framework] 핵심 계층: Entity
     /// 기존 MapGridObject를 대체하는 맵 그리드 엔티티입니다.

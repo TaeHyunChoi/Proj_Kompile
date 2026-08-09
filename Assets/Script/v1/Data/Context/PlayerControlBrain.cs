@@ -1,13 +1,12 @@
 namespace Kompile.Entity
 {
-    using Kompile.Data;
-    using Kompile.Entity;
+    using Data;
 
     /// <summary> 플레이어 입력을 읽어 UnitIntent로 반환하는 Brain </summary>
     public class PlayerControlBrain : IUnitBrain
     {
-        private UnitEntityBase _owner;
-        public PlayerControlBrain(x_FieldEntity entity)
+        private Entity _owner;
+        public PlayerControlBrain(Entity entity)
         {
             _owner = entity;
         }
