@@ -5,6 +5,7 @@ namespace Kompile.Data
         None = 0,
 
         Actor_Instantiate,
+        Actor_PlayerUpdate,
         Actor_Update,
     }
 }

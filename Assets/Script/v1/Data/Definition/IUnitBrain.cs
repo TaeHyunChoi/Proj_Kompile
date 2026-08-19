@@ -9,7 +9,7 @@ namespace Kompile.Entity
     /// </summary>
     public interface IUnitBrain
     {
-        public UnitIntent Update();
+        public UnitIntent Calculate();
         public void Clear();
     }
 }

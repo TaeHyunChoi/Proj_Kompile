@@ -13,7 +13,7 @@ namespace Kompile.Provider
             {
                 AssetKey prefabKey = new AssetKey(AssetConst.ACTOR_PREFAB);
                 x_FieldEntity fieldEntity = await AssetProvider.GetOrNewEntityInstanceAsync<x_FieldEntity>(prefabKey, root);
-                FieldUnitTableData data = FieldUnitTableProvider.GetData(index);
+                FieldUnitTableData data = ActorDataProvider.GetData(index);
                 FieldUnitAnimClipContext clip = await data.GetAnimClipsAsync();
                 fieldEntity.Initialize(data, clip, aoc, mapQuery);
                 

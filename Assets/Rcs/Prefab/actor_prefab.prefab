@@ -11,7 +11,8 @@ GameObject:
   - component: {fileID: 2661480014977142764}
   - component: {fileID: 5710677464469744475}
   - component: {fileID: 2266342005852781286}
-  - component: {fileID: 3594603565082153559}
+  - component: {fileID: 4795327455081311746}
+  - component: {fileID: 3472789158518472297}
   m_Layer: 10
   m_Name: actor_prefab
   m_TagString: Untagged
@@ -111,7 +112,7 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &3594603565082153559
+--- !u!114 &4795327455081311746
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -120,6 +121,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 6867064432740900801}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2112f70c8a99f432f9829a5499c97a09, type: 3}
+  m_Script: {fileID: 11500000, guid: e6a12d55ffeaf4065bc88fc0c8eb5884, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &3472789158518472297
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6867064432740900801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20fb98630c63c7e499a305e5036fd6df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

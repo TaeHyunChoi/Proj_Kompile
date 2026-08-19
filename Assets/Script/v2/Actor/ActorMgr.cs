@@ -1,10 +1,10 @@
-  using Kompile.Entity;
-using UnityEngine;
-
 namespace Kompile.Manager
 {
+    using UnityEngine;
+    using Entity;
     using Data;
     using Provider;
+    using System.Collections.Generic;
 
     public class ActorMgr : GameLogicMgrBase
     {
@@ -13,9 +13,10 @@ namespace Kompile.Manager
         private AnimatorOverrideController _templateAOC;
         private AssetKey _prefabKey;
 
-        // 여기서 List<Actor> 들고 있어야겠네;
-        // Actor에게 '장소를 부여' 하고.. 풀링 여자처자를..
-        
+        private List<ActorEntity> _actors = new List<ActorEntity>();
+        private ActorEntity _playerActor;
+
+
         // --- override ---
         public override void RegisterToCache()
         {
@@ -34,13 +35,7 @@ namespace Kompile.Manager
 
             // cache asset
             _prefabKey = new AssetKey(AssetConst.ACTOR_PREFAB);
-            
-            
-            // set actor : for test
-#if DEV_BUILD
-            var request = ActorInstantiateRequest.Create(index: 1, Vector3.zero, Quaternion.identity);
-            Enqueue(request);
-#endif
+
             return true;
         }
 #pragma warning restore 1998
@@ -57,13 +52,27 @@ namespace Kompile.Manager
         protected override async Awaitable<bool> HandleRequestAsync(RequestBase request)
         {
             bool update = true;
-            
+            float deltaTime = Time.deltaTime;
+
             switch (request.Type)
             {
                 case RequestType.Actor_Instantiate:
-                    InDev.Log("Actor_Instantiate");
                     update &= await InstantiateAsync(request);
                     break;
+                case RequestType.Actor_PlayerUpdate:
+                    Definition.InputState input = InGame.Input.Current;
+                    if (input.IsPressing(Definition.IDxInput.MOVE_ALL))
+                    {
+                        Debug.Log($"[DEBUG] {input.Current}");
+                    }
+                    break;
+                case RequestType.Actor_Update:
+                    for (int i = 0; i < _actors.Count; ++i)
+                    {
+                        update &= _actors[i].OnUpdate(deltaTime);
+                    }
+                    break;
+
                 default:
                     break;
             }
@@ -91,12 +100,17 @@ namespace Kompile.Manager
 
             actor.transform.SetPositionAndRotation(position, quaternion);
 
-            FieldUnitTableData data = FieldUnitTableProvider.GetData(index);
+            FieldUnitTableData data = ActorDataProvider.GetData(index);
             FieldUnitAnimClipContext clip = await data.GetAnimClipsAsync();
-            actor.Initialize(data, clip, _templateAOC);
-            // Actor.Add(actor);
+            actor.Initialize(data, clip, _templateAOC, req.MapProvider);
+            _actors.Add(actor);
 
-            return false;
+            if (UnitBrainType.Player == actor.BrainType)
+            {
+                _playerActor = actor;
+            }
+
+            return true;
         }
     }
 }

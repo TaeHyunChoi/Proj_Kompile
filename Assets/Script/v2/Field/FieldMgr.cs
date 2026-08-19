@@ -31,6 +31,11 @@ namespace Kompile.Manager
 
                 _mapMgr = new MapMgr();
                 result &= await _mapMgr.OnAwake();
+
+#if DEV_BUILD
+                var request = ActorInstantiateRequest.Create(_mapMgr.Provider, index: 1, Vector3.zero, Quaternion.identity);
+                InGame.Actor.Enqueue(request);
+#endif
             }
             catch (Exception e)
             {
@@ -46,17 +51,25 @@ namespace Kompile.Manager
         }
         public override async Awaitable<bool> OnUpdate()
         {
+            // process request
             bool update = true;
             update &= await ProcessRequests();
 
-            // 맵 갱신
-            _mapMgr.OnUpdate();
+            // update map
+            await _mapMgr.OnUpdate();
 
-            // 필드의 액터 업데이트 요청
-            ActorUpdateRequest request = RequestProvider<ActorUpdateRequest>.Get();
-            InGame.Actor.Enqueue(request);
+            // update player
+            // enqueue에서 input Main.Input();을 받아야 하니?
+            var reqPlayer = PlayerUpdateRequest.Create();
+            InGame.Actor.Enqueue(reqPlayer);
 
-            // etc ...
+            // update actor
+            var reqActor = ActorUpdateRequest.Create();
+            InGame.Actor.Enqueue(reqActor);
+
+
+            // do etc
+            // ...
 
             return update;
         }

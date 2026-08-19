@@ -8,18 +8,14 @@ namespace Kompile.Manager
         private static InGame _instance;
 
         private GameLogicMgrBase[] _mgr;
+        private static InputProvider _inputProvider;
 
         public static Transform Transform => _instance.transform;
+        public static InputProvider Input => _inputProvider;
 
         // short-cut property for manager access
         public static ActorMgr Actor => Get<ActorMgr>();
         public static FieldMgr Field => Get<FieldMgr>();
-
-
-        // --- Manager: Property : 필요하면 추가하고, 귀찮으면 .Get<T>()로 참조한다.
-        //public static ActorMgr Actor => Get<ActorMgr>();
-        //public static FieldMgr Field => Get<FieldMgr>();
-        //public static MapMgr Map => Get<MapMgr>();
 
 
         // --- MonoBehaviour Loop
@@ -40,6 +36,7 @@ namespace Kompile.Manager
             // InGame
             _ = AwakeIngameAsync();
         }
+
 #if DEV_BUILD
         private void Start()
         {
@@ -48,12 +45,14 @@ namespace Kompile.Manager
 #endif
         private async void Update()
         {
-            InSystemInput.OnUpdate();
+            //InSystemInput.OnUpdate();
 
             for (int i = 0; i < _mgr.Length; ++i)
             {
-                _mgr[i].OnUpdate();
+                await _mgr[i].OnUpdate();
             }
+
+            _inputProvider.OnEndOfFrame();
         }
         private void OnDisable()
         {
@@ -72,14 +71,16 @@ namespace Kompile.Manager
         // --- Manager: Function
         private async Awaitable AwakeIngameAsync()
         {
-            // Provider
-            // 테이블을 초기화 해야 합니다?!
-            await FieldUnitTableProvider.InitializeAsync();
+            // 입력
+            _inputProvider = new InputProvider();
+
+            // Table
+            await LoadTableAsync();
 
             _mgr = new GameLogicMgrBase[]
             {
                 new ActorMgr(),
-                //new FieldMgr()
+                new FieldMgr()
             };
 
             // prior 순으로 정렬 (bubble sort)
@@ -112,6 +113,14 @@ namespace Kompile.Manager
             }
 
             enabled = true;
+        }
+        private async Awaitable LoadTableAsync()
+        {
+            Awaitable loadActor = ActorDataProvider.InitializeAsync();
+            // load...
+            // load...
+
+            await loadActor;
         }
         public static void Register<T>(T manager) where T : GameLogicMgrBase
         {

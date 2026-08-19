@@ -25,9 +25,21 @@ namespace Kompile.Provider
         public static void Return(T request)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (request == null) { Debug.LogError("Null 반납 차단"); return; }
-            if (request.IsPooled) { Debug.LogError("중복 반납 차단"); return; }
-            if (request.GetType() != typeof(T)) { Debug.LogError("타입 불일치 차단"); return; }
+            if (request == null) 
+            {
+                Debug.LogError("Null 반납 차단"); 
+                return; 
+            }
+            if (request.IsPooled)
+            {
+                Debug.LogError("중복 반납 차단"); 
+                return;
+            }
+            if (request.GetType() != typeof(T))
+            {
+                Debug.LogError("타입 불일치 차단"); 
+                return;
+            }
 #endif
             request.Clear();
             request.IsPooled = true;

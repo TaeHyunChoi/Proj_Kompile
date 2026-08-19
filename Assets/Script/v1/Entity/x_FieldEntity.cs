@@ -4,11 +4,11 @@ namespace Kompile.Entity
     using Kompile.Data;
     using UnityEngine;
 
-    [RequireComponent(typeof(UnitMoveComponent), typeof(UnitAnimComponent))]
+    [RequireComponent(typeof(UnitMoveComponent), typeof(ActorAnimComponent))]
     public class x_FieldEntity : Entity
     {
         private UnitMoveComponent _moveComponent;
-        private UnitAnimComponent _animComponent;
+        private ActorAnimComponent _animComponent;
         
         public UnitMoveComponent MoveComponent => _moveComponent;
 
@@ -33,7 +33,7 @@ namespace Kompile.Entity
             }
 
             // 2. Anim Component 초기화
-            _animComponent = transform.GetComponent<UnitAnimComponent>();
+            _animComponent = transform.GetComponent<ActorAnimComponent>();
             _animComponent.Initialize(baseAOC, in clip);
 
             // 3. Move Component 초기화: 맵 정보가 필요 없는 순수 데이터 껍데기 구조 유지

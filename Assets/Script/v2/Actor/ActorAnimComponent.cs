@@ -6,7 +6,7 @@ namespace Kompile.Entity
 
     /// <summary> GameObject에 부착되어 유닛의 애니메이션(Animator 상태 및 스프라이트 제어)을 전담 </summary>
     [RequireComponent(typeof(Animator), typeof(SpriteRenderer))]
-    public class UnitAnimComponent : MonoBehaviour
+    public class ActorAnimComponent : MonoBehaviour
     {
         private static readonly int HashDirX = Animator.StringToHash("DirX");
         private static readonly int HashDirZ = Animator.StringToHash("DirZ");
@@ -38,7 +38,7 @@ namespace Kompile.Entity
         }
 
         /// <summary> Entity.Update()에서 UnitIntent를 수신하여 호출 </summary>
-        public void UpdateIntent(in UnitIntent intent)
+        public void OnUpdate(in UnitIntent intent)
         {
             float speed = intent.MoveInput.magnitude;
             Vector3 dir = new Vector3(intent.MoveInput.x, 0f, intent.MoveInput.y);
@@ -60,6 +60,12 @@ namespace Kompile.Entity
                 _animator.SetFloat(HashDirX, direction.x);
                 _animator.SetFloat(HashDirZ, direction.z);
             }
+        }
+
+        public void Clear()
+        {
+            _animator = null;
+            _runtimeAOC = null;
         }
     }
 }

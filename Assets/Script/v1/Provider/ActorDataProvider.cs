@@ -4,7 +4,7 @@ namespace Kompile.Provider
     using UnityEngine;
 
     /// <summary> 필드 위의 유닛 데이터; </summary>
-    public static class FieldUnitTableProvider
+    public static class ActorDataProvider
     {
         private static FieldUnitTableData[] _sheet;
         public static FieldUnitTableData[] Sheet => _sheet;

@@ -47,6 +47,8 @@ namespace Kompile.Manager
         private const float GRID_SIZE = 64f;
         private const float GRID_SIZE_RECIP = 1f / 64f;
 
+        public MapProvider Provider => _mapProvider;
+
 #pragma warning disable 1998
         public override void RegisterToCache()
         {
@@ -67,7 +69,7 @@ namespace Kompile.Manager
 #pragma warning restore 1998
         public override async Awaitable<bool> OnUpdate()
         {
-            if (_isStreamingActive)
+            if (!_isStreamingActive)
             {
                 return false;
             }

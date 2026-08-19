@@ -16,7 +16,7 @@ namespace Kompile.Entity
         {
             _owner = null;
         }
-        public UnitIntent Update()
+        public UnitIntent Calculate()
         {
             // (26.05.13) 현재로서는 intent를 직접 주입하니까 사용을 하지 않는다.
             return default;
