@@ -2,6 +2,7 @@ namespace Kompile.Manager
 {
     using Data;
     using Provider;
+    using Entity;
     using System;
     using System.Collections.Generic;
     using UnityEngine;
@@ -103,6 +104,16 @@ namespace Kompile.Manager
             }
 
             return true;
+        }
+
+        public UnitIntent GetPlayerInteractionIntent(Entity playerEntity, Definition.InputState input)
+        {
+            
+            
+            // 입력을 사용했다면 input을 초기화
+            InGame.Input.OnEndOfFrame();
+
+            return default;
         }
     }
 }

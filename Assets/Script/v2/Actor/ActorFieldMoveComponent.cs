@@ -29,7 +29,8 @@ namespace Kompile
             {
                 return;
             }
-            if (input.x == 0f || input.y == 0f)
+            
+            if (input.x == 0f && input.y == 0f)
             { 
                 return;
             }
@@ -69,6 +70,7 @@ namespace Kompile
 
             _transform.position = nextPos;
         }
+
         private bool TryAlernativeMove(float3 currentPos, float3 baseDir, int index, float moveDistance, out float3 nextPos)
         {
             nextPos = currentPos;
@@ -84,7 +86,7 @@ namespace Kompile
                     return false;
             }
 
-            float rotX  = baseDir.x * cos - baseDir.z * sin;
+            float rotX = baseDir.x * cos - baseDir.z * sin;
             float rotZ = baseDir.x * sin + baseDir.z * cos;
 
             float3 altDir = math.normalize(new float3(rotX, 0f, rotZ));
@@ -98,6 +100,7 @@ namespace Kompile
 
             return false;
         }
+
         private bool TrySampleHeight(float3 pos, out float groudY)
         {
             groudY = pos.y;
@@ -109,9 +112,10 @@ namespace Kompile
                 return false;
             }
 
-            float2 localPos = new float2(pos.x - tx, pos.z- tz);
+            float2 localPos = new float2(pos.x - tx, pos.z - tz);
             return MapGeometryUtil.TrySampleTileHeight(in tileInfo.TileData, tileInfo.TileBaseY, in localPos, HEIGHT_STEP, out groudY);
         }
+
         private bool CheckWalkableArc(float3 curPos, float3 targetPos, float3 moveDir, float radius, int sampleCount, float maxAngleRad)
         { 
             if (!IsPointWalkable(curPos, targetPos))
@@ -139,6 +143,7 @@ namespace Kompile
 
             return true;
         }
+
         private bool IsPointWalkable(float3 referencePos, float3 point)
         {
             int tx = (int)math.floor(point.x);
@@ -152,6 +157,7 @@ namespace Kompile
             float2 localPos = new float2(point.x - tx, point.z - tz);
             return MapGeometryUtil.IsTilePointWalkable(in tileInfo.TileData, in localPos);
         }
+
         private bool TryGetTile(float3 curPos, int targetTx, int targetTz, float referenceY, out BurstTileInfo tileInfo)
         {
             tileInfo = default;
@@ -161,7 +167,8 @@ namespace Kompile
 
             float3 curQuery = new float3(curTx + 0.5f, curPos.y, curTz + 0.5f);
             MapCoordUtil.ComputeKey(curQuery, out int curGKey, out int curTKey);
-            long curPackedKey = ((long)curTKey << 32) | (uint)curTKey;
+            // [수정] 상위 32비트를 curGKey로 수정
+            long curPackedKey = ((long)curGKey << 32) | (uint)curTKey;
 
             var tileMap = _mapProvider.NativeTileMap;
             if (!tileMap.TryGetValue(curPackedKey, out BurstTileInfo curTileInfo))
@@ -206,13 +213,13 @@ namespace Kompile
 
             return TryScanTileVertical(targetTx, targetTz, referenceY, out tileInfo);
         }
+
         private bool TryScanTileVertical(int tx, int tz, float referenceY, out BurstTileInfo tileInfo)
         {
             tileInfo = default;
             var tileMap = _mapProvider.NativeTileMap;
 
-            // y축 탐색 순서를 지정: 0 -> -1 -> +1
-            for(int i = 0; i < 3; ++i)
+            for (int i = 0; i < 3; ++i)
             {
                 float yOff = (0 == i) ? 0f : (1 == i) ? -1f : 1f;
                 float3 testQuery = new float3(tx + 0.5f, referenceY + yOff, tz + 0.5f);

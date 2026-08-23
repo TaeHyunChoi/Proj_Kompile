@@ -48,8 +48,6 @@ namespace Kompile.Data
                 return (current & input) == 0 && (previous & input) != 0;
             }
 
-            public readonly IDxInput Current => current;
-
             public Vector2 Dir
             {
                 get

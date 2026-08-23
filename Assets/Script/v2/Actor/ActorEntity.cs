@@ -7,35 +7,33 @@ namespace Kompile.Entity
 
     public class ActorEntity : Entity
     {
+        private FieldUnitTableData _rawData;
         private ActorFieldMoveComponent _moveCtrl;
         private ActorAnimComponent _animCtrl;
+        
         private IUnitBrain _brain;
 
-        private UnitBrainType _brainType;
-        public UnitBrainType BrainType => _brainType;
+        public UnitBrainType BrainType => _rawData.BrainType;
 
+        
         public void Initialize(FieldUnitTableData data, FieldUnitAnimClipContext clip, AnimatorOverrideController baseAOC, MapProvider mapProvider)
         {
+            _rawData = data;
             UnitBrainType brainType = data.BrainType;
             switch (brainType)
             {
                 case UnitBrainType.Player:
-                    _brain = new PlayerControlBrain(this);
+                    _brain = new FieldPlayerBrain(this);
                     break;
                 default:
                     return;
             }
-
-            _brainType = brainType;
 
             _moveCtrl = new ActorFieldMoveComponent();
             _moveCtrl.Initialize(transform, mapProvider);
 
             _animCtrl = transform.GetComponent<ActorAnimComponent>();
             _animCtrl.Initialize(baseAOC, in clip);
-
-            // 
-            // ...
         }
 
         public bool OnUpdate(float deltaTime)

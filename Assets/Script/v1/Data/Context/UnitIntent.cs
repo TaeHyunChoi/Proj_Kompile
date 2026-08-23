@@ -23,17 +23,17 @@ namespace Kompile.Data
         /// 트리거성 애니메이션 명령. None이면 AnimComponent가 무시한다.
         /// Idle / Walk는 MoveInput.magnitude에서 AnimComponent가 스스로 결정하므로 여기에 싣지 않는다. - 이게 맞나?
         /// </summary>
-        public UnitAnimCmd AnimCommand;
+        public EntityState State;
 
         public UnitIntent(Vector3 dir)
         {
             MoveInput = dir;
-            AnimCommand = UnitAnimCmd.None;
+            State = EntityState.None;
         }
-        public UnitIntent(Vector3 dir, UnitAnimCmd anim)
+        public UnitIntent(Vector3 dir, EntityState anim)
         {
             MoveInput = dir;
-            AnimCommand = anim;
+            State = anim;
         }
     }
 }
