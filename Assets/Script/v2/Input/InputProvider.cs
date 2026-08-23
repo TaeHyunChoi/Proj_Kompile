@@ -1,9 +1,9 @@
-using UnityEngine;
-using UnityEngine.InputSystem;
-using static Kompile.Data.Definition;
-
 namespace Kompile.Provider
 {
+    using UnityEngine;
+    using UnityEngine.InputSystem;
+    using static Data.Definition;
+
     public class InputProvider
     {
         // 입력 액션 정의

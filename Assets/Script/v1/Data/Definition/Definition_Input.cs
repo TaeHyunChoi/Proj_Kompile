@@ -63,6 +63,11 @@ namespace Kompile.Data
                     return new Vector2(x, z);
                 }
             }
+            public bool TryGetDirection(out Vector2 dir)
+            {
+                dir = Dir;
+                return dir != Vector2.zero;
+            }
         }
     }
 }

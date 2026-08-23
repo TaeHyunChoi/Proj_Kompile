@@ -6,9 +6,11 @@ namespace Kompile.Data
     /// </summary>
     public enum UnitAnimCmd
     {
-        None   = 0,
-        Attack = 1,
-        Hit    = 2,
-        Dead   = 3,
+        None = 0,
+        Idle,
+        Walk,
+        Attack,
+        Hit,
+        Dead,
     }
 }

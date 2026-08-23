@@ -38,27 +38,6 @@ namespace Kompile.Data
         }
     }
 
-    /// <summary> 필드 위에서 플레이어 액터 업데이트 요청 </summary>
-    public class PlayerUpdateRequest : RequestBase
-    {
-        public static PlayerUpdateRequest Create()
-        {
-            var request = RequestProvider<PlayerUpdateRequest>.Get();
-            request.Type = RequestType.Actor_PlayerUpdate;
-
-            return request;
-        }
-        public override void Clear()
-        {
-            // do nothing;
-        }
-        public override void ReturnToPool()
-        {
-            RequestProvider<PlayerUpdateRequest>.Return(this);
-        }
-
-    }
-
     /// <summary> 필드 위에서의 액터 업데이트 요청 </summary>
     public class ActorUpdateRequest : RequestBase
     {

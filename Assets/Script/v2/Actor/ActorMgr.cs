@@ -59,13 +59,6 @@ namespace Kompile.Manager
                 case RequestType.Actor_Instantiate:
                     update &= await InstantiateAsync(request);
                     break;
-                case RequestType.Actor_PlayerUpdate:
-                    Definition.InputState input = InGame.Input.Current;
-                    if (input.IsPressing(Definition.IDxInput.MOVE_ALL))
-                    {
-                        Debug.Log($"[DEBUG] {input.Current}");
-                    }
-                    break;
                 case RequestType.Actor_Update:
                     for (int i = 0; i < _actors.Count; ++i)
                     {

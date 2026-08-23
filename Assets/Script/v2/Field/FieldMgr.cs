@@ -58,11 +58,6 @@ namespace Kompile.Manager
             // update map
             await _mapMgr.OnUpdate();
 
-            // update player
-            // enqueue에서 input Main.Input();을 받아야 하니?
-            var reqPlayer = PlayerUpdateRequest.Create();
-            InGame.Actor.Enqueue(reqPlayer);
-
             // update actor
             var reqActor = ActorUpdateRequest.Create();
             InGame.Actor.Enqueue(reqActor);
