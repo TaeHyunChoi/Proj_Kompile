@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
-namespace Kompile.Editor.Entity
+namespace Kompile.Editor.Entities
 {
     using MessagePack;
     using MessagePack.Resolvers;
     using Kompile.Data;
     using Kompile.Utility;
-    using Kompile.Editor.Provider;
+    using Kompile.Editor.Domain;
     using Kompile.Editor.Utility;
     using System.Collections.Generic;
     using Unity.Mathematics;

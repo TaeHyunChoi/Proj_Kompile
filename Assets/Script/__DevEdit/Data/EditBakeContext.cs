@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-namespace Kompile.Editor.Provider
+namespace Kompile.Editor.Domain
 {
     using Kompile.Editor.Data;
     using System.Collections.Concurrent;

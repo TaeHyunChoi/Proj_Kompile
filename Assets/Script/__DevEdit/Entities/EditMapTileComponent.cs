@@ -1,4 +1,4 @@
-namespace Kompile.Editor.Entity
+namespace Kompile.Editor.Entities
 {
     using Kompile.Data;
     using UnityEngine;

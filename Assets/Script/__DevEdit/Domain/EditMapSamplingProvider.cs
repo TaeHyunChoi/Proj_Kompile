@@ -1,11 +1,10 @@
 #if UNITY_EDITOR
-namespace Kompile.Editor.Provider
+namespace Kompile.Editor.Domain
 {
     using Kompile.Data;
     using Kompile.Utility;
-    using Kompile.Entity;
     using Data;
-    using Entity;
+    using Entities;
     using Utility;
     using System;
     using System.Collections.Concurrent;

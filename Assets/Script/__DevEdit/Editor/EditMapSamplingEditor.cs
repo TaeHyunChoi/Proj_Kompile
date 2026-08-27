@@ -4,7 +4,7 @@ namespace Kompile.Editor.Tools
     using MessagePack;
     using MessagePack.Resolvers;
     using Kompile.Data;
-    using Kompile.Editor.Provider;
+    using Kompile.Editor.Domain;
     using Kompile.Utility;
     using Unity.Mathematics;
     using UnityEditor;

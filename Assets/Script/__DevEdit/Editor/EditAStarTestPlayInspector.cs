@@ -3,7 +3,7 @@ namespace Kompile.Editor.Tools
 {
     using UnityEditor;
     using UnityEngine;
-    using Kompile.Editor.Entity;
+    using Kompile.Editor.Entities;
 
     [CustomEditor(typeof(EditAStarTestPlayComponent))]
     public class EditAStarTestPlayInspector : Editor

@@ -6,10 +6,11 @@ namespace Kompile.Editor.Tools
     using System.IO;
     using System.Collections.Generic;
     using Kompile.Data;
-    using Kompile.Entity;
-    using Kompile.Editor.Entity;
-    using Kompile.Editor.Provider;
+    using Data;
+    using Domain;
+    using Entities;
     using UnityEditor.SceneManagement;
+    using Kompile.Editor.Utility;
 
     /// <summary>
     /// Editor Manager: 멀티 아틀라스 팔레트, 스포이드, Focus Mode를 지원하는 통합 맵 에디터.

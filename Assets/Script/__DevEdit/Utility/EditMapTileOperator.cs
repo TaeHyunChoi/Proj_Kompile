@@ -1,9 +1,8 @@
 #if UNITY_EDITOR
-namespace Kompile.Editor.Provider
+namespace Kompile.Editor.Utility
 {
-    using Kompile.Editor.Entity;
+    using Kompile.Editor.Entities;
     using Kompile.Data;
-    using Kompile.Editor.Utility;
     using UnityEditor;
     using UnityEngine;
     using System.Collections.Generic;
