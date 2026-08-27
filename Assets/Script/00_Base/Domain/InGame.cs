@@ -1,6 +1,5 @@
-namespace Kompile.Manager
+namespace Kompile.Domain
 {
-    using Kompile.Provider;
     using UnityEngine;
 
     public partial class InGame : MonoBehaviour

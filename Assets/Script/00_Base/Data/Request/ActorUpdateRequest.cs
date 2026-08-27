@@ -1,7 +1,6 @@
 namespace Kompile.Data
 {
-    using Provider;
-    using System;
+    using Domain;
     using UnityEngine;
 
     /// <summary> 액터 생성 요청. 액터의 index를 매개변수로 전달 </summary>

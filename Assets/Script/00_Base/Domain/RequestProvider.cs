@@ -1,9 +1,9 @@
-using UnityEngine;
-using Kompile.Data;
-using System.Collections.Generic;
-
-namespace Kompile.Provider
+namespace Kompile.Domain
 {
+    using UnityEngine;
+    using System.Collections.Generic;
+    using Data;
+
     public static class RequestProvider<T> where T: RequestBase, new()
     {
         private static readonly List<T> _pool = new List<T>(64);

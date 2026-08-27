@@ -1,9 +1,8 @@
-namespace Kompile.Entity
+namespace Kompile.Entities
 {
     using UnityEngine;
     using Data;
-    using Provider;
-
+    using Domain;
 
     public class ActorEntity : EntityBase
     {

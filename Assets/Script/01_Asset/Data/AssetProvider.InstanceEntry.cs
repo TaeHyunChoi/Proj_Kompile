@@ -1,4 +1,4 @@
-namespace Kompile.Provider
+namespace Kompile.Domain
 {
     using System.Collections.Concurrent;
     using System.Threading;

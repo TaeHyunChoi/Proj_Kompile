@@ -1,10 +1,10 @@
-namespace Kompile.Provider
+namespace Kompile.Domain
 {
     using Unity.Collections;
     using UnityEngine;
     using System.Threading.Tasks;
     using System.Collections.Generic;
-    using Kompile.Data;
+    using Data;
 
     /// <summary> 로컬라이제이션 데이터를 공급하는 Provider (Value-Centric) </summary>
     public static class LocalizationTableProvider

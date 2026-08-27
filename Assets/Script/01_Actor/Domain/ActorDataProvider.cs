@@ -1,4 +1,4 @@
-namespace Kompile.Provider
+namespace Kompile.Domain
 {
     using Kompile.Data;
     using UnityEngine;

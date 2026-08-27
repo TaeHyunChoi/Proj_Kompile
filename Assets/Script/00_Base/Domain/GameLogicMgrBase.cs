@@ -1,4 +1,4 @@
-namespace Kompile.Manager
+namespace Kompile.Domain
 {
     using Data;
     using System.Collections.Generic;

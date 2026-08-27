@@ -3,7 +3,7 @@ namespace Kompile.Map.Editor.Tools
 {
     using Kompile.Data;
     using Kompile.Utility;
-    using Kompile.Provider;
+    using Kompile.Domain;
     using UnityEditor;
     using UnityEngine;
     using Unity.Mathematics;

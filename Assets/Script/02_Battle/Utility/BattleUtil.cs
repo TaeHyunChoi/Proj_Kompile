@@ -2,7 +2,7 @@ namespace Kompile.Utility
 {
     using UnityEngine;
     using Unity.Burst;
-    using Kompile.Data;
+    using Data;
 
     /// <summary> 전투 관련한 수학 연산 및 판정을 담당 (상태값을 가지지 않는다) </summary>
     [BurstCompile]

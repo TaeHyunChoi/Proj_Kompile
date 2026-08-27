@@ -1,7 +1,7 @@
-namespace Kompile.Provider
+namespace Kompile.Domain
 {
     using Data;
-    using Entity;
+    using Entities;
     using MessagePack;
     using System;
     using System.Collections.Generic;

@@ -1,9 +1,9 @@
-namespace Kompile
+namespace Kompile.Entities
 {
     using UnityEngine;
     using Unity.Mathematics;
     using Data;
-    using Provider;
+    using Domain;
     using Utility;
 
     public class ActorFieldMoveComponent

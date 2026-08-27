@@ -1,7 +1,7 @@
-using MessagePack;
-
 namespace Kompile.Data
 {
+    using MessagePack;
+
     /// <summary>
     /// [Data Layer] 빌드 타임에 생성되는 전체 유효 그리드 키 레지스트리 (Static Table)
     /// </summary>

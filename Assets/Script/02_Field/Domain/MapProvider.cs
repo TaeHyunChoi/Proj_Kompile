@@ -1,4 +1,4 @@
-namespace Kompile.Provider
+namespace Kompile.Domain
 {
     using Data;
     using Utility;

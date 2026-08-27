@@ -1,8 +1,8 @@
-namespace Kompile.Provider
+namespace Kompile.Domain
 {
     using UnityEngine;
     using UnityEngine.InputSystem;
-    using Kompile.Data;
+    using Data;
 
     public class InputProvider
     {

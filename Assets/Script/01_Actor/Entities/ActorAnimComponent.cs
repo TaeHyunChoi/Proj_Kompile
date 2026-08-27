@@ -1,7 +1,7 @@
-namespace Kompile.Entity
+namespace Kompile.Entities
 {
     using UnityEngine;
-    using Provider;
+    using Domain;
     using Data;
 
     /// <summary> GameObject에 부착되어 유닛의 애니메이션(Animator 상태 및 스프라이트 제어)을 전담 </summary>

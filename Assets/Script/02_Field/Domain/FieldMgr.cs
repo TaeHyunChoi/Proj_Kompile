@@ -1,8 +1,7 @@
-namespace Kompile.Manager
+namespace Kompile.Domain
 {
     using Data;
-    using Provider;
-    using Entity;
+    using Entities;
     using System;
     using System.Collections.Generic;
     using UnityEngine;

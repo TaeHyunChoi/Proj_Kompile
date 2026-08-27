@@ -1,10 +1,9 @@
-namespace Kompile.Manager
+namespace Kompile.Domain
 {
     using System.Collections.Generic;
-    using Kompile.Data;
-    using Kompile.Entity;
-    using Kompile.Provider;
-    using Kompile.Utility;
+    using Data;
+    using Entities;
+    using Utility;
 
     public class BattleManager : ITimelineHandler
     {

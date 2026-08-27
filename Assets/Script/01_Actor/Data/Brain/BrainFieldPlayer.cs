@@ -1,7 +1,7 @@
-namespace Kompile.Entity
+namespace Kompile.Entities
 {
     using Data;
-    using Manager;
+    using Domain;
     using UnityEngine;
     
     /// <summary> 플레이어 입력을 읽어 UnitIntent로 반환하는 Brain </summary>

@@ -1,9 +1,8 @@
-namespace Kompile.Manager
+namespace Kompile.Domain
 {
     using UnityEngine;
-    using Entity;
+    using Entities;
     using Data;
-    using Provider;
     using System.Collections.Generic;
 
     public class ActorMgr : GameLogicMgrBase

@@ -1,4 +1,4 @@
-namespace Kompile.Entity
+namespace Kompile.Entities
 {
     using System.Collections.Generic;
     using UnityEngine;

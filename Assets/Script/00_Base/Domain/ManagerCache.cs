@@ -1,4 +1,4 @@
-namespace Kompile.Manager
+namespace Kompile.Domain
 {
     public partial class InGame // ManagerCache.cs
     {

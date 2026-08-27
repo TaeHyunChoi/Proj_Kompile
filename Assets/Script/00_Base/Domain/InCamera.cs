@@ -1,6 +1,5 @@
-namespace Kompile
+namespace Kompile.Domain
 {
-    using Kompile.Manager;
     using UnityEngine;
 
     public class InCamera : MonoBehaviour

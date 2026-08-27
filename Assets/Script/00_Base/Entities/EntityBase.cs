@@ -1,7 +1,7 @@
-namespace Kompile.Entity
+namespace Kompile.Entities
 {
     using UnityEngine;
-    using Kompile.Data;
+    using Data;
 
     /// <summary> Component들의 조합으로 구현된 게임 내 논리적 실체. Manager에 의해 생명주기가 관리 </summary>
     public abstract class EntityBase : MonoBehaviour
