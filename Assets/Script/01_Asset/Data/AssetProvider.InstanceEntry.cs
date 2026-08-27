@@ -9,7 +9,7 @@ namespace Kompile.Provider
     public static partial class AssetProvider // InstanceEntry
     {
         /// <summary> 프리팹 원본 핸들과 풀링된 인스턴스들을 관리하는 내부 클래스 </summary>
-        private class InstanceEntryContext
+        private class InstanceEntry
         {
             public AsyncOperationHandle Handle { get; }
             public bool UsePooling { get; }
@@ -17,7 +17,7 @@ namespace Kompile.Provider
             private int _referenceCount;
             private readonly ConcurrentQueue<GameObject> _pool;
 
-            public InstanceEntryContext(AsyncOperationHandle handle, bool usePooling)
+            public InstanceEntry(AsyncOperationHandle handle, bool usePooling)
             {
                 Handle = handle;
                 UsePooling = usePooling;

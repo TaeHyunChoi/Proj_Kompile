@@ -94,7 +94,7 @@ namespace Kompile.Manager
             actor.transform.SetPositionAndRotation(position, quaternion);
 
             FieldUnitTableData data = ActorDataProvider.GetData(index);
-            FieldActorAnimClipContext clip = await data.GetAnimClipsAsync();
+            FieldActorAnimClip clip = await data.GetAnimClipsAsync();
             actor.Initialize(data, clip, _templateAOC, req.MapProvider);
             _actors.Add(actor);
 

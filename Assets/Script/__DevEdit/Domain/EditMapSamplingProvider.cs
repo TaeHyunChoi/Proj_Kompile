@@ -4,9 +4,9 @@ namespace Kompile.Editor.Provider
     using Kompile.Data;
     using Kompile.Utility;
     using Kompile.Entity;
-    using Kompile.Editor.Data;
-    using Kompile.Editor.Entity;
-    using Kompile.Editor.Utility;
+    using Data;
+    using Entity;
+    using Utility;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
@@ -55,7 +55,7 @@ namespace Kompile.Editor.Provider
             Debug.Log($"Start Bake Map");
 
             var instance = Object.FindFirstObjectByType<EditMapSamplingComponent>();
-            if (false == instance)
+            if (!instance)
             {
                 return;
             }

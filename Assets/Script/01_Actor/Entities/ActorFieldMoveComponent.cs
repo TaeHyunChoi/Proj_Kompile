@@ -107,7 +107,7 @@ namespace Kompile
             int tx = (int)math.floor(pos.x);
             int tz = (int)math.floor(pos.z);
 
-            if (!TryGetTile(pos, tx, tz, pos.y, out TileInfoContext tileInfo))
+            if (!TryGetTile(pos, tx, tz, pos.y, out MapTileInfo tileInfo))
             {
                 return false;
             }
@@ -149,7 +149,7 @@ namespace Kompile
             int tx = (int)math.floor(point.x);
             int tz = (int)math.floor(point.z);
 
-            if (!TryGetTile(referencePos, tx, tz, referencePos.y, out TileInfoContext tileInfo))
+            if (!TryGetTile(referencePos, tx, tz, referencePos.y, out MapTileInfo tileInfo))
             {
                 return false;
             }
@@ -158,7 +158,7 @@ namespace Kompile
             return InUtilMapGeometry.IsTilePointWalkable(in tileInfo.TileData, in localPos);
         }
 
-        private bool TryGetTile(float3 curPos, int targetTx, int targetTz, float referenceY, out TileInfoContext tileInfo)
+        private bool TryGetTile(float3 curPos, int targetTx, int targetTz, float referenceY, out MapTileInfo tileInfo)
         {
             tileInfo = default;
 
@@ -171,7 +171,7 @@ namespace Kompile
             long curPackedKey = ((long)curGKey << 32) | (uint)curTKey;
 
             var tileMap = _mapProvider.NativeTileMap;
-            if (!tileMap.TryGetValue(curPackedKey, out TileInfoContext curTileInfo))
+            if (!tileMap.TryGetValue(curPackedKey, out MapTileInfo curTileInfo))
             {
                 return TryScanTileVertical(targetTx, targetTz, referenceY, out tileInfo);
             }
@@ -214,7 +214,7 @@ namespace Kompile
             return TryScanTileVertical(targetTx, targetTz, referenceY, out tileInfo);
         }
 
-        private bool TryScanTileVertical(int tx, int tz, float referenceY, out TileInfoContext tileInfo)
+        private bool TryScanTileVertical(int tx, int tz, float referenceY, out MapTileInfo tileInfo)
         {
             tileInfo = default;
             var tileMap = _mapProvider.NativeTileMap;

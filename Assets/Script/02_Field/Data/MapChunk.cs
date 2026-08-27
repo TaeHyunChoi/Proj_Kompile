@@ -2,7 +2,7 @@ namespace Kompile.Data
 {
     using UnityEngine;
 
-    public class MapChunkContext
+    public class MapChunk
     {
         public int Layer;
         public GameObject Obj;

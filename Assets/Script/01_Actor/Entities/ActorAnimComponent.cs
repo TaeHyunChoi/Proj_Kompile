@@ -15,7 +15,7 @@ namespace Kompile.Entity
         private Animator _animator;
         private AnimatorOverrideController _runtimeAOC;
 
-        public void Initialize(AnimatorOverrideController baseTemplateAOC, in FieldActorAnimClipContext clipSet)
+        public void Initialize(AnimatorOverrideController baseTemplateAOC, in FieldActorAnimClip clipSet)
         {
             if (!baseTemplateAOC)
             {

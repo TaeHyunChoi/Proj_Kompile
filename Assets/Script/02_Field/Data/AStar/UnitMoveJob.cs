@@ -25,7 +25,7 @@ namespace Kompile.Data
         [ReadOnly] public float DeltaTime;
 
         // MapManager가 그리드 스트리밍 시 구워내는 고속 공간 데이터 맵
-        [ReadOnly] public NativeHashMap<long, TileInfoContext> TileMap;
+        [ReadOnly] public NativeHashMap<long, MapTileInfo> TileMap;
 
         [WriteOnly] public NativeArray<float3> NextPositions;
 
@@ -137,7 +137,7 @@ namespace Kompile.Data
             int tz = (int)math.floor(point.z);
 
             // 원본의 토폴로지 구조를 그대로 경유하여 타일 획득
-            if (!TryGetTileAtBurst(referencePos, tx, tz, referencePos.y, out TileInfoContext tileInfo))
+            if (!TryGetTileAtBurst(referencePos, tx, tz, referencePos.y, out MapTileInfo tileInfo))
             {
                 return false;
             }
@@ -152,7 +152,7 @@ namespace Kompile.Data
             int tx = (int)math.floor(pos.x);
             int tz = (int)math.floor(pos.z);
 
-            if (!TryGetTileAtBurst(pos, tx, tz, pos.y, out TileInfoContext tileInfo))
+            if (!TryGetTileAtBurst(pos, tx, tz, pos.y, out MapTileInfo tileInfo))
             {
                 return false;
             }
@@ -164,7 +164,7 @@ namespace Kompile.Data
         /// <summary>
         /// 원본 TryGetTileAt의 LinkMask 위상 검사 알고리즘을 이식한 고속 역산 함수입니다.
         /// </summary>
-        private bool TryGetTileAtBurst(float3 curPos, int targetTx, int targetTz, float referenceY, out TileInfoContext tileInfo)
+        private bool TryGetTileAtBurst(float3 curPos, int targetTx, int targetTz, float referenceY, out MapTileInfo tileInfo)
         {
             tileInfo = default;
 
@@ -176,7 +176,7 @@ namespace Kompile.Data
             InUtilMapKey.ComputeKey(curQuery, out int curGKey, out int curTKey);
             long curPackedKey = ((long)curGKey << 32) | (uint)curTKey;
 
-            if (!TileMap.TryGetValue(curPackedKey, out TileInfoContext curTileInfo))
+            if (!TileMap.TryGetValue(curPackedKey, out MapTileInfo curTileInfo))
             {
                 return TryScanTileVerticalBurst(targetTx, targetTz, referenceY, out tileInfo);
             }
@@ -225,7 +225,7 @@ namespace Kompile.Data
         /// <summary>
         /// 힙 할당 없이 상하 수직 레이어를 순회하며 유효 타일을 식별합니다. (Primitive 값 형식 매개변수 `in` 제거)
         /// </summary>
-        private bool TryScanTileVerticalBurst(int tx, int tz, float referenceY, out TileInfoContext tileInfo)
+        private bool TryScanTileVerticalBurst(int tx, int tz, float referenceY, out MapTileInfo tileInfo)
         {
             tileInfo = default;
 

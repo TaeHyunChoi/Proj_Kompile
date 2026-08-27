@@ -5,12 +5,12 @@ namespace Kompile.Entity
     using UnityEngine;
     
     /// <summary> 플레이어 입력을 읽어 UnitIntent로 반환하는 Brain </summary>
-    public class FieldPlayerBrainContext : IUnitBrain
+    public class BrainFieldPlayer : IUnitBrain
     {
         private EntityBase _owner;
 
 
-        public FieldPlayerBrainContext(EntityBase entity)
+        public BrainFieldPlayer(EntityBase entity)
         {
             _owner = entity;
         }

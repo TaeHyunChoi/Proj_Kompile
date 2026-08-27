@@ -12,8 +12,8 @@ namespace Kompile.Provider
 
     public static partial class AssetProvider
     {
-        private static readonly Dictionary<AssetKey, InstanceEntryContext>
-            GameObjectInstances = new Dictionary<AssetKey, InstanceEntryContext>();
+        private static readonly Dictionary<AssetKey, InstanceEntry>
+            GameObjectInstances = new Dictionary<AssetKey, InstanceEntry>();
 
         private static readonly Dictionary<int, AsyncOperationHandle>
             NonGameObjectInstances = new Dictionary<int, AsyncOperationHandle>();
@@ -225,7 +225,7 @@ namespace Kompile.Provider
 
         private static async Awaitable<GameObject> GetOrNewInstanceInternalAsync(AssetKey key, Transform parent, bool usePooling)
         {
-            if (!GameObjectInstances.TryGetValue(key, out InstanceEntryContext entry))
+            if (!GameObjectInstances.TryGetValue(key, out InstanceEntry entry))
             {
                 AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(key.Value);
                 await handle.Task;
@@ -237,7 +237,7 @@ namespace Kompile.Provider
 #endif
                     return null;
                 }
-                entry = new InstanceEntryContext(handle, usePooling);
+                entry = new InstanceEntry(handle, usePooling);
                 GameObjectInstances.TryAdd(key, entry);
             }
 
@@ -263,7 +263,7 @@ namespace Kompile.Provider
                 return;                
             }
             
-            if (!key.IsValid || !GameObjectInstances.TryGetValue(key, out InstanceEntryContext entry))
+            if (!key.IsValid || !GameObjectInstances.TryGetValue(key, out InstanceEntry entry))
             {
                 Addressables.ReleaseInstance(instance);
                 return;
@@ -368,26 +368,26 @@ namespace Kompile.Provider
         #region Animation Clips - Field & Runtime Override Integration
         private static readonly string[] DirectionNames = Enum.GetNames(typeof(EUnitAnimIndex));
         private static readonly int ClipCount = (int)EUnitAnimIndex.Count;
-        private static readonly Dictionary<string, FieldActorAnimClipContext> _fieldUnitAnimMap = new();
+        private static readonly Dictionary<string, FieldActorAnimClip> _fieldUnitAnimMap = new();
         private static readonly Dictionary<string, string[]> _addressCache = new(32);
-        private static readonly Dictionary<string, Awaitable<FieldActorAnimClipContext>> _loadingTasks = new(16);
+        private static readonly Dictionary<string, Awaitable<FieldActorAnimClip>> _loadingTasks = new(16);
 
         /// <summary> 런타임 오버라이드 시 GC Alloc을 원천 봉쇄하기 위한 내부 정적 캐시 리스트 </summary>
         private static readonly List<KeyValuePair<AnimationClip, AnimationClip>> _animBakeCache = new(32);
 
-        public static async Awaitable<FieldActorAnimClipContext> LoadFieldUnitAnimClipSetAsync(string unitKey)
+        public static async Awaitable<FieldActorAnimClip> LoadFieldUnitAnimClipSetAsync(string unitKey)
         {
-            if (_fieldUnitAnimMap.TryGetValue(unitKey, out FieldActorAnimClipContext clipSet))
+            if (_fieldUnitAnimMap.TryGetValue(unitKey, out FieldActorAnimClip clipSet))
             {
                 return clipSet;
             }
 
-            if (_loadingTasks.TryGetValue(unitKey, out Awaitable<FieldActorAnimClipContext> ongoingTask))
+            if (_loadingTasks.TryGetValue(unitKey, out Awaitable<FieldActorAnimClip> ongoingTask))
             {
                 return await ongoingTask;
             }
 
-            Awaitable<FieldActorAnimClipContext> loadTask = ExecuteLoadAnimClipSetInternalAsync(unitKey);
+            Awaitable<FieldActorAnimClip> loadTask = ExecuteLoadAnimClipSetInternalAsync(unitKey);
             _loadingTasks.Add(unitKey, loadTask);
 
             try
@@ -402,7 +402,7 @@ namespace Kompile.Provider
             return clipSet;
         }
 
-        private static async Awaitable<FieldActorAnimClipContext> ExecuteLoadAnimClipSetInternalAsync(string unitKey)
+        private static async Awaitable<FieldActorAnimClip> ExecuteLoadAnimClipSetInternalAsync(string unitKey)
         {
             if (!_addressCache.TryGetValue(unitKey, out string[] cachedAddresses))
             {
@@ -438,7 +438,7 @@ namespace Kompile.Provider
                 }
             }
 
-            var clipSet = new FieldActorAnimClipContext { UnitKey = unitKey, Clips = clips };
+            var clipSet = new FieldActorAnimClip { UnitKey = unitKey, Clips = clips };
             _fieldUnitAnimMap[unitKey] = clipSet;
 
             if (_isSessionTrackingActive && !_bypassSessionTracking)
@@ -457,7 +457,7 @@ namespace Kompile.Provider
         /// [통합된 핵심 기능] 
         /// 컴포넌트가 요청한 인스턴스 컨트롤러에 가비지와 문자열 버그 없이 오버라이드 클립 세트를 주입합니다.
         /// </summary>
-        public static void ApplyOverrideClips(AnimatorOverrideController runtimeAOC, in FieldActorAnimClipContext clipSet)
+        public static void ApplyOverrideClips(AnimatorOverrideController runtimeAOC, in FieldActorAnimClip clipSet)
         {
             if (!runtimeAOC || null == clipSet.Clips)
             {
@@ -501,7 +501,7 @@ namespace Kompile.Provider
         public static void ReleaseUnitAnimClipSet(string unitKey)
         {
             // 1. 장부에서 데이터가 있는지 확인하고 추출
-            if (!_fieldUnitAnimMap.Remove(unitKey, out FieldActorAnimClipContext clipSet))
+            if (!_fieldUnitAnimMap.Remove(unitKey, out FieldActorAnimClip clipSet))
             {
                 return;
             }

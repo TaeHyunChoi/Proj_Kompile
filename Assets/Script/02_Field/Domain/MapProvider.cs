@@ -15,10 +15,10 @@ namespace Kompile.Provider
         private readonly Dictionary<int, MapGridData> _mapGridDataDic;
         private readonly HashSet<int> _invalidGrids;
         private readonly Dictionary<int, string> _gridKeyAddressCache;
-        private NativeHashMap<long, TileInfoContext> _nativeTileMap;
+        private NativeHashMap<long, MapTileInfo> _nativeTileMap;
         
         
-        public NativeHashMap<long, TileInfoContext> NativeTileMap => _nativeTileMap;
+        public NativeHashMap<long, MapTileInfo> NativeTileMap => _nativeTileMap;
 
         public bool IsInvalidGrid(int gridKey) => _invalidGrids.Contains(gridKey);
 
@@ -28,7 +28,7 @@ namespace Kompile.Provider
             _mapGridDataDic = new Dictionary<int, MapGridData>();
             _invalidGrids = new HashSet<int>();
             _gridKeyAddressCache = new Dictionary<int, string>();
-            _nativeTileMap = new NativeHashMap<long, TileInfoContext>(512, Allocator.Persistent);
+            _nativeTileMap = new NativeHashMap<long, MapTileInfo>(512, Allocator.Persistent);
         }
         public void Dispose()
         {
@@ -100,7 +100,7 @@ namespace Kompile.Provider
                         {
                             long packedKey = ((long)gKey << 32) | (uint)tKey;
                             InUtilMapKey.GetPivot(gKey, tKey, out float3 pivot);
-                            _nativeTileMap[packedKey] = new TileInfoContext()
+                            _nativeTileMap[packedKey] = new MapTileInfo()
                             {
                                 TileData = tileData,
                                 TileBaseY =  pivot.y

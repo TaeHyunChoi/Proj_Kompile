@@ -16,14 +16,14 @@ namespace Kompile.Entity
         public ActorBrainType BrainType => _rawData.BrainType;
 
         
-        public void Initialize(FieldUnitTableData data, FieldActorAnimClipContext clip, AnimatorOverrideController baseAOC, MapProvider mapProvider)
+        public void Initialize(FieldUnitTableData data, FieldActorAnimClip clip, AnimatorOverrideController baseAOC, MapProvider mapProvider)
         {
             _rawData = data;
             ActorBrainType brainType = data.BrainType;
             switch (brainType)
             {
                 case ActorBrainType.Player:
-                    _brain = new FieldPlayerBrainContext(this);
+                    _brain = new BrainFieldPlayer(this);
                     break;
                 default:
                     return;

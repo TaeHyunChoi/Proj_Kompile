@@ -18,7 +18,7 @@ namespace Kompile.Data
         [Key(3)]
         public float                CollisionRange;
 
-        public async Awaitable<FieldActorAnimClipContext> GetAnimClipsAsync()
+        public async Awaitable<FieldActorAnimClip> GetAnimClipsAsync()
         {
             var clips = await AssetProvider.LoadFieldUnitAnimClipSetAsync(NameKey.ToString());
             return clips;

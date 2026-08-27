@@ -12,7 +12,7 @@ namespace Kompile.Manager
         private MapProvider _mapProvider;
         
         // --- Manage: Map ---
-        private readonly Dictionary<int, List<MapChunkContext>> _spawnedMapObjects = new Dictionary<int, List<MapChunkContext>>();
+        private readonly Dictionary<int, List<MapChunk>> _spawnedMapObjects = new Dictionary<int, List<MapChunk>>();
         private Transform _rootTransform;
 
 
@@ -25,7 +25,7 @@ namespace Kompile.Manager
 
         // --- Optimization Caches ---
         private readonly Dictionary<string, string> _materialAddressCache = new Dictionary<string, string>();
-        private readonly List<MapChunkContext> _animatingChunksCache = new List<MapChunkContext>();
+        private readonly List<MapChunk> _animatingChunksCache = new List<MapChunk>();
 
         // --- Rendering & Visuals ---
         private readonly MaterialPropertyBlock _propBlock = new MaterialPropertyBlock();
@@ -118,7 +118,7 @@ namespace Kompile.Manager
         {
             StopStreaming();
 
-            List<MapChunkContext> chunks;
+            List<MapChunk> chunks;
             foreach (var kvp in _spawnedMapObjects)
             {
                 chunks = kvp.Value;
@@ -254,7 +254,7 @@ namespace Kompile.Manager
                 {
                     if (!_spawnedMapObjects.ContainsKey(gridKey))
                     {
-                        _spawnedMapObjects[gridKey] = new List<MapChunkContext>();
+                        _spawnedMapObjects[gridKey] = new List<MapChunk>();
                     }
 
                     for (int i = 0; i < gridData.layerMeshAssets.Count; ++i)
@@ -284,7 +284,7 @@ namespace Kompile.Manager
         }
         private void UnloadAndDestroyGrid(int gridKey)
         {
-            if (_spawnedMapObjects.TryGetValue(gridKey, out List<MapChunkContext> chunk))
+            if (_spawnedMapObjects.TryGetValue(gridKey, out List<MapChunk> chunk))
             {
                 for (int i = 0; i < chunk.Count; ++i)
                 {
@@ -340,7 +340,7 @@ namespace Kompile.Manager
                 renderer = chunkObj.AddComponent<MeshRenderer>();
                 renderer.sharedMaterial = mat ? mat : new Material(Shader.Find("Standard"));
 
-                MapChunkContext chunk = new MapChunkContext()
+                MapChunk chunk = new MapChunk()
                 {
                     Layer = layerData.layer,
                     Obj = chunkObj,
@@ -348,7 +348,7 @@ namespace Kompile.Manager
                     CurrentColor = Color.white
                 };
 
-                if (_spawnedMapObjects.TryGetValue(gridKey, out List<MapChunkContext> chunkList))
+                if (_spawnedMapObjects.TryGetValue(gridKey, out List<MapChunk> chunkList))
                 {
                     chunkList.Add(chunk);
                 }
@@ -403,9 +403,9 @@ namespace Kompile.Manager
 
             foreach (var kvp in _spawnedMapObjects)
             {
-                List<MapChunkContext> gridChunks = kvp.Value;
+                List<MapChunk> gridChunks = kvp.Value;
 
-                MapChunkContext chunk;
+                MapChunk chunk;
                 for (int i = 0; i < gridChunks.Count; ++i)
                 {
                     chunk = gridChunks[i];
@@ -447,7 +447,7 @@ namespace Kompile.Manager
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed * duration_recip);
 
-                MapChunkContext chunk;
+                MapChunk chunk;
                 for (int i = 0; i < _animatingChunksCache.Count; ++i)
                 {
                     chunk = _animatingChunksCache[i];
@@ -468,7 +468,7 @@ namespace Kompile.Manager
 
             for (int i = 0; i < _animatingChunksCache.Count; i++)
             {
-                MapChunkContext chunk = _animatingChunksCache[i];
+                MapChunk chunk = _animatingChunksCache[i];
                 chunk.CurrentColor = chunk.TargetColor;
 
                 chunk.Renderer.GetPropertyBlock(_propBlock);
