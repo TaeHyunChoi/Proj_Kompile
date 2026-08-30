@@ -70,7 +70,7 @@ namespace Kompile.Entities
 
             _transform.position = nextPos;
 
-            MapLayerUpdateRequest reqMapLayer = MapLayerUpdateRequest.Create(nextPos);
+            MapUpdateRequest reqMapLayer = MapUpdateRequest.Create(nextPos);
             InGame.Field.Enqueue(reqMapLayer);
         }
 

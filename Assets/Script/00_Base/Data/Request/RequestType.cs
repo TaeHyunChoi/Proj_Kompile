@@ -9,6 +9,6 @@ namespace Kompile.Data
         Actor_Update,
 
 
-        MapLayerUpdate,
+        Map_Update,
     }
 }

@@ -3,8 +3,23 @@ namespace Kompile.Domain
     using Data;
     using UnityEngine;
     using Unity.Mathematics;
+    using System;
+    using System.Threading;
     using System.Collections.Generic;
-    using Mono.Cecil.Cil;
+
+    /// <summary> 거리 기반 우선순위 큐 정렬을 위한 구조체 (GC Alloc 방지) </summary>
+    public struct GridLoadRequest : IComparable<GridLoadRequest>
+    {
+        public int Key;
+        public float DistSq;
+
+        /// <summary>
+        /// CompareTo를 미리 정의해둔 것입니다. 이렇게 하면 _loadList.Sort(); 단 한 줄만 호출해도 
+        /// 가비지 생성(0 bytes) 없이 완벽하고 빠르게 가장 가까운 거리순으로 정렬이 이루어집니다. 
+        /// 겉으로는 안 보이지만 보이지 않는 곳에서 제일 열심히 일하고 있는 녀석입니다!
+        /// </summary>
+        public int CompareTo(GridLoadRequest other) => DistSq.CompareTo(other.DistSq);
+    }
 
     /// <summary> 맵 오브젝트 인스턴스 스폰, 시각적 트랜지션, 큐 기반 동기적 스트리밍 제어 (Instance-Centric) </summary>
     public class MapMgr : GameLogicMgrBase
@@ -15,16 +30,32 @@ namespace Kompile.Domain
         private const float GRID_SIZE = 64f;
         private const float GRID_SIZE_RECIP = 1f / 64f;
 
+        // --- 동시 로딩 제어 ---
+        private const int MAX_CONCURRENT_LOADS = 2;
+        private int _currentLoadingCount = 0;
 
         private MapProvider _mapProvider;
         private Transform _rootTransform;
 
+        // 캐싱된 대체 매터리얼 (메인 스레드 스파이크 방지용)
+        private Material _fallbackMaterial;
+
+        // --- 로컬 오브젝트 풀 ---
+        // 생성 및 파괴 스파이크를 없애기 위해 다 쓴 청크를 보관하는 큐
+        private readonly Queue<MapChunk> _chunkPool = new Queue<MapChunk>();
 
         private readonly Dictionary<int, List<MapChunk>> _spawnedMapObjects = new Dictionary<int, List<MapChunk>>();
         private readonly HashSet<int> _activeGrids = new HashSet<int>();
-        private readonly HashSet<int> _loadingGrids = new HashSet<int>();
-        private readonly List<int> _gridsToRemove = new List<int>();
+
+        // 상태/대기열 관리 컬렉션
         private readonly HashSet<int> _keepGrids = new HashSet<int>();
+        private readonly HashSet<int> _queuedGrids = new HashSet<int>();
+        private readonly List<GridLoadRequest> _loadList = new List<GridLoadRequest>();
+        private readonly Dictionary<int, CancellationTokenSource> _loadingTasks = new Dictionary<int, CancellationTokenSource>();
+
+        private readonly List<int> _gridsToRemove = new List<int>();
+        private readonly List<int> _tasksToCancel = new List<int>();
+
         private HashSet<int> _validGridKeys = new HashSet<int>();
         private bool _isStreamingActive = false;
         private float _streamTimer = CHECK_INTERVAL;
@@ -34,9 +65,7 @@ namespace Kompile.Domain
 
 
         // --- Optimization Caches ---
-        private readonly Dictionary<string, string> _materialAddressCache = new Dictionary<string, string>();
         private readonly List<MapChunk> _animatingChunksCache = new List<MapChunk>();
-
 
         // --- Rendering & Visuals ---
         private readonly MaterialPropertyBlock _propBlock = new MaterialPropertyBlock();
@@ -51,6 +80,7 @@ namespace Kompile.Domain
         {
             InGame.Register(this);
         }
+
         public override async Awaitable<bool> OnAwake()
         {
             Prior = 2.1f;
@@ -61,9 +91,17 @@ namespace Kompile.Domain
             mapRoot.SetParent(InGame.Transform);
             _rootTransform = mapRoot.transform;
 
+            // 로딩 스파이크 방지를 위해 시스템 초기화 시점에 1회 셰이더 검색 및 캐싱
+            Shader stdShader = Shader.Find("Standard");
+            if (stdShader != null)
+            {
+                _fallbackMaterial = new Material(stdShader);
+            }
+
             return true;
         }
 #pragma warning restore 1998
+
         public override async Awaitable<bool> OnUpdate()
         {
             if (!_isStreamingActive)
@@ -71,31 +109,33 @@ namespace Kompile.Domain
                 return false;
             }
 
-            bool update = await ProcessRequests();
-            
             _streamTimer += Time.deltaTime;
-            if (_streamTimer >= CHECK_INTERVAL)
-            {
-                _streamTimer = 0f;
-                CheckAndTriggerStreaming();
-            }
+            bool update = await ProcessRequests();
 
             return update;
         }
+
         protected override async Awaitable<bool> HandleRequestAsync(RequestBase request)
         {
             await Awaitable.NextFrameAsync();
-            
+
             switch (request.Type)
             {
-                case RequestType.MapLayerUpdate:
-                    var req = request as MapLayerUpdateRequest;
-                    _ = UpdateLayerFormTileAsync(req.Position);
+                case RequestType.Map_Update:
+                    var req = request as MapUpdateRequest;
+                    float3 pos = req.Position;
+                    if (_streamTimer >= CHECK_INTERVAL)
+                    {
+                        _streamTimer = 0f;
+                        CheckAndTriggerStreaming(pos);
+                    }
+
+                    _ = UpdateLayerFormTileAsync(pos);
                     break;
                 default:
                     break;
             }
-            
+
             request.ReturnToPool();
             return true;
         }
@@ -113,13 +153,24 @@ namespace Kompile.Domain
                 _validGridKeys.Add(gridKey);
             }
         }
+
         public void StopStreaming()
         {
             _isStreamingActive = false;
         }
+
         public void DisposeAll()
         {
             StopStreaming();
+
+            // 진행 중인 모든 로딩 작업 강제 취소
+            foreach (var kvp in _loadingTasks)
+            {
+                kvp.Value.Cancel();
+                // [안전장치] Dispose는 각 태스크의 finally 블록에게 온전히 위임하여 ObjectDisposedException 예외 방지
+            }
+            _loadingTasks.Clear();
+            _currentLoadingCount = 0;
 
             List<MapChunk> chunks;
             foreach (var kvp in _spawnedMapObjects)
@@ -127,24 +178,40 @@ namespace Kompile.Domain
                 chunks = kvp.Value;
                 for (int i = 0; i < chunks.Count; ++i)
                 {
-                    if (chunks[i].Obj) Object.Destroy(chunks[i].Obj);
+                    if (chunks[i].Obj) UnityEngine.Object.Destroy(chunks[i].Obj);
                 }
+            }
+
+            // 풀에 보관된 청크들도 모두 파괴하여 메모리 완전 해제
+            while (_chunkPool.Count > 0)
+            {
+                MapChunk chunk = _chunkPool.Dequeue();
+                if (chunk.Obj) UnityEngine.Object.Destroy(chunk.Obj);
             }
 
             _spawnedMapObjects.Clear();
             _activeGrids.Clear();
-            _loadingGrids.Clear();
             _gridsToRemove.Clear();
             _keepGrids.Clear();
             _validGridKeys.Clear();
             _animatingChunksCache.Clear();
+            _loadList.Clear();
+            _queuedGrids.Clear();
+            _tasksToCancel.Clear();
+
+            // 생성해둔 대체 매터리얼 메모리 해제
+            if (_fallbackMaterial != null)
+            {
+                UnityEngine.Object.Destroy(_fallbackMaterial);
+                _fallbackMaterial = null;
+            }
 
             _mapProvider?.Dispose();
         }
 
 
         // --- Streaming (sync) ---
-        private void CheckAndTriggerStreaming()
+        private void CheckAndTriggerStreaming(float3 playerPos)
         {
             if (!CameraTransform)
             {
@@ -158,14 +225,13 @@ namespace Kompile.Domain
             int keepRange = Mathf.CeilToInt(UNLOAD_RADIUS * GRID_SIZE_RECIP) + 1;
             int yRange = Mathf.CeilToInt(Y_RADIUS * GRID_SIZE_RECIP);
 
-            Vector3 camPos = CameraTransform.position;
-            float camX = camPos.x;
-            float camY = camPos.y;
-            float camZ = camPos.z;
+            float px = playerPos.x;
+            float py = playerPos.y;
+            float pz = playerPos.z;
 
-            int camGx = Mathf.FloorToInt(camX * GRID_SIZE_RECIP);
-            int camGy = Mathf.FloorToInt(camY * GRID_SIZE_RECIP);
-            int camGz = Mathf.FloorToInt(camZ * GRID_SIZE_RECIP);
+            int pgx = Mathf.FloorToInt(px * GRID_SIZE_RECIP);
+            int pgy = Mathf.FloorToInt(py * GRID_SIZE_RECIP);
+            int pgz = Mathf.FloorToInt(pz * GRID_SIZE_RECIP);
 
             _keepGrids.Clear();
 
@@ -174,16 +240,16 @@ namespace Kompile.Domain
                 for (int dx = -keepRange; dx <= keepRange; ++dx)
                 {
                     for (int dz = -keepRange; dz <= keepRange; ++dz)
-                    { 
-                        int gx = camGx + dx;
-                        int gy = camGy + dy;
-                        int gz = camGz + dz;
+                    {
+                        int gx = pgx + dx;
+                        int gy = pgy + dy;
+                        int gz = pgz + dz;
 
-                        float nearX = Mathf.Clamp(camX, gx * GRID_SIZE, (gx + 1) * GRID_SIZE);
-                        float nearZ = Mathf.Clamp(camZ, gz * GRID_SIZE, (gz + 1) * GRID_SIZE);
-                        
-                        float ddx = camX - nearX;
-                        float ddz = camZ - nearZ;
+                        float nearX = Mathf.Clamp(px, gx * GRID_SIZE, (gx + 1) * GRID_SIZE);
+                        float nearZ = Mathf.Clamp(pz, gz * GRID_SIZE, (gz + 1) * GRID_SIZE);
+
+                        float ddx = px - nearX;
+                        float ddz = pz - nearZ;
                         float distSq = ddx * ddx + ddz * ddz;
 
                         if (distSq > unloadRadSq)
@@ -207,22 +273,41 @@ namespace Kompile.Domain
                         {
                             continue;
                         }
-                        if (_activeGrids.Contains(targetGridKey)
-                            || !_loadingGrids.Add(targetGridKey))
-                        {
-                            continue;
-                        }
+
                         if (!_validGridKeys.Contains(targetGridKey))
                         {
-                            _loadingGrids.Remove(targetGridKey);
                             continue;
                         }
 
-                        _ = LoadAndSpawnGridAsync(targetGridKey);
+                        // 큐 수집: 이미 활성화/로딩/대기 중이면 패스
+                        if (_activeGrids.Contains(targetGridKey) ||
+                            _loadingTasks.ContainsKey(targetGridKey) ||
+                            _queuedGrids.Contains(targetGridKey))
+                        {
+                            continue;
+                        }
+
+                        _loadList.Add(new GridLoadRequest { Key = targetGridKey, DistSq = distSq });
+                        _queuedGrids.Add(targetGridKey);
                     }
                 }
             }
 
+            // 대기열 가지치기 (기다리던 중 멀어진 그리드 제외)
+            for (int i = _loadList.Count - 1; i >= 0; --i)
+            {
+                if (!_keepGrids.Contains(_loadList[i].Key))
+                {
+                    _queuedGrids.Remove(_loadList[i].Key);
+                    _loadList.RemoveAt(i);
+                }
+            }
+
+            // 거리 우선순위 정렬 및 로드 큐 가동
+            _loadList.Sort();
+            TryProcessLoadQueue();
+
+            // 1. 활성화된 그리드 언로드
             _gridsToRemove.Clear();
             foreach (int loadedGridKey in _activeGrids)
             {
@@ -231,126 +316,165 @@ namespace Kompile.Domain
                     _gridsToRemove.Add(loadedGridKey);
                 }
             }
-
             for (int i = 0; i < _gridsToRemove.Count; ++i)
             {
-                UnloadAndDestroyGrid(_gridsToRemove[i]);
+                CleanupGridState(_gridsToRemove[i]);
+            }
+
+            // 2. 현재 로딩 중인 태스크가 범위를 벗어났다면 '취소 신호' 전송
+            _tasksToCancel.Clear();
+            foreach (var kvp in _loadingTasks)
+            {
+                if (!_keepGrids.Contains(kvp.Key))
+                {
+                    _tasksToCancel.Add(kvp.Key);
+                }
+            }
+            for (int i = 0; i < _tasksToCancel.Count; ++i)
+            {
+                _loadingTasks[_tasksToCancel[i]].Cancel();
             }
         }
-        private async Awaitable LoadAndSpawnGridAsync(int gridKey)
+
+        private void TryProcessLoadQueue()
+        {
+            while (_currentLoadingCount < MAX_CONCURRENT_LOADS && _loadList.Count > 0)
+            {
+                GridLoadRequest req = _loadList[0];
+                _loadList.RemoveAt(0);
+                _queuedGrids.Remove(req.Key);
+
+                if (!_keepGrids.Contains(req.Key) || _activeGrids.Contains(req.Key) || _loadingTasks.ContainsKey(req.Key))
+                {
+                    continue;
+                }
+
+                CancellationTokenSource cts = new CancellationTokenSource();
+                _loadingTasks.Add(req.Key, cts);
+                _currentLoadingCount++;
+
+                _ = LoadAndSpawnGridAsync(req.Key, cts.Token);
+            }
+        }
+
+        private async Awaitable LoadAndSpawnGridAsync(int gridKey, CancellationToken token)
         {
             try
             {
                 MapGridData gridData = await _mapProvider.LoadGridDataAsync(gridKey);
 
-                // DisposeAll() 호출했는지 검증
-                if (!_loadingGrids.Contains(gridKey))
+                if (token.IsCancellationRequested)
                 {
-                    if (null != gridData)
-                    {
-                        _mapProvider.UnloadGridData(gridKey);
-                    }
-
+                    if (gridData != null) _mapProvider.UnloadGridData(gridKey);
                     return;
                 }
-                if (null != gridData
-                    && null != gridData.layerMeshAssets)
+
+                if (gridData != null && gridData.layerMeshAssets != null)
                 {
                     if (!_spawnedMapObjects.ContainsKey(gridKey))
                     {
                         _spawnedMapObjects[gridKey] = new List<MapChunk>();
                     }
 
-                    for (int i = 0; i < gridData.layerMeshAssets.Count; ++i)
+                    bool success = await CreateMapChunksAsync(gridKey, gridData, token);
+                    if (!success || token.IsCancellationRequested)
                     {
-                        bool success = await CreateMapChunksAsync(gridKey, gridData.layerMeshAssets[i]);
-                        if (!success)
-                        {
-                            _mapProvider.UnloadGridData(gridKey);
-                            return;
-                        }
+                        CleanupGridState(gridKey);
+                        return;
                     }
                 }
 
-                if (_loadingGrids.Contains(gridKey))
+                if (!token.IsCancellationRequested && _keepGrids.Contains(gridKey))
                 {
                     _activeGrids.Add(gridKey);
                 }
+                else
+                {
+                    CleanupGridState(gridKey);
+                }
             }
-            catch (System.Exception e)
+            catch (OperationCanceledException)
+            {
+                CleanupGridState(gridKey);
+            }
+            catch (Exception e)
             {
                 InLog.LogWarning($"[MapManager] Grid {gridKey} 로드 중 오류: {e.Message}");
+                CleanupGridState(gridKey);
             }
             finally
             {
-                _loadingGrids.Remove(gridKey);
-            }
-        }
-        private void UnloadAndDestroyGrid(int gridKey)
-        {
-            if (_spawnedMapObjects.TryGetValue(gridKey, out List<MapChunk> chunk))
-            {
-                for (int i = 0; i < chunk.Count; ++i)
+                // Task가 완전히 종료되는 이 지점에서만 안전하게 Dispose
+                if (_loadingTasks.TryGetValue(gridKey, out var cts) && cts.Token == token)
                 {
-                    if (chunk[i].Obj)
-                    {
-                        Object.Destroy(chunk[i].Obj);
-                    }
+                    cts.Dispose();
+                    _loadingTasks.Remove(gridKey);
                 }
 
-                _spawnedMapObjects.Remove(gridKey);
+                _currentLoadingCount--;
+                TryProcessLoadQueue();
+            }
+        }
+
+        // --- 풀에서 꺼내오거나 생성하는 헬퍼 메서드 ---
+        private MapChunk GetOrCreateChunkFromPool()
+        {
+            if (_chunkPool.Count > 0)
+            {
+                MapChunk pooledChunk = _chunkPool.Dequeue();
+                pooledChunk.Obj.SetActive(true);
+                return pooledChunk;
             }
 
-            _mapProvider.UnloadGridData(gridKey);
-            _activeGrids.Remove(gridKey);
+            GameObject obj = new GameObject("PooledMapChunk");
+            obj.transform.SetParent(_rootTransform);
+
+            MeshFilter filter = obj.AddComponent<MeshFilter>();
+            MeshRenderer renderer = obj.AddComponent<MeshRenderer>();
+
+            return new MapChunk()
+            {
+                Obj = obj,
+                Renderer = renderer
+            };
         }
-        private async Awaitable<bool> CreateMapChunksAsync(int gridKey, MapGridLayerData layerData)
+
+        private async Awaitable<bool> CreateMapChunksAsync(int gridKey, MapGridData gridData, CancellationToken token)
         {
-            // 한 번에 생성하는 청크 개수를 제한;
-            // n개 이상 청크 생성을 하면 다음 프레임으로 이어감;
             int instantiateCounter = 0;
 
             string meshAddress, matAddress;
             Mesh bakedMesh;
-            MeshFilter filter;
-            MeshRenderer renderer;
             Material mat;
-            GameObject chunkObj;
 
-            for (int i = 0; i < layerData.assets.Count; ++i)
+            for (int i = 0; i < gridData.layerMeshAssets.Count; ++i)
             {
-                meshAddress = layerData.assets[i];
-                bakedMesh = await AssetProvider.LoadAssetAsync<Mesh>(meshAddress);
-                if (!bakedMesh)
-                {
-                    continue;
-                }
+                // 중간에 멀어지면 생성 중단
+                if (token.IsCancellationRequested) return false;
 
-                matAddress = GetMaterialAddress(meshAddress);
+                // [유의] AssetProvider 내부에 비동기 대기가 포함되어 있으므로 이 시점에도 취소될 수 있습니다.
+                meshAddress = gridData.layerMeshAssets[i].assets[0];
+                bakedMesh = await AssetProvider.LoadAssetAsync<Mesh>(meshAddress);
+                if (!bakedMesh) continue;
+
+                if (token.IsCancellationRequested) return false;
+
+                matAddress = AssetProvider.GetMaterialAddress(meshAddress);
                 mat = await AssetProvider.LoadAssetAsync<Material>(matAddress);
 
-                if (!_loadingGrids.Contains(gridKey))
-                {
-                    return false;
-                }
+                if (token.IsCancellationRequested) return false;
 
-                chunkObj = new GameObject(meshAddress);
-                chunkObj.transform.SetParent(_rootTransform);
-                chunkObj.transform.position = Vector3.zero;
+                // 오브젝트 생성(new GameObject) 부하를 없애고 풀링 시스템 적용
+                MapChunk chunk = GetOrCreateChunkFromPool();
+                chunk.Obj.name = meshAddress;
+                chunk.Obj.transform.position = Vector3.zero;
 
-                filter = chunkObj.AddComponent<MeshFilter>();
+                MeshFilter filter = chunk.Obj.GetComponent<MeshFilter>();
                 filter.sharedMesh = bakedMesh;
 
-                renderer = chunkObj.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = mat ? mat : new Material(Shader.Find("Standard"));
-
-                MapChunk chunk = new MapChunk()
-                {
-                    Layer = layerData.layer,
-                    Obj = chunkObj,
-                    Renderer = renderer,
-                    CurrentColor = Color.white
-                };
+                chunk.Renderer.sharedMaterial = mat ? mat : _fallbackMaterial;
+                chunk.Layer = gridData.layerMeshAssets[i].layer;
+                chunk.CurrentColor = Color.white;
 
                 if (_spawnedMapObjects.TryGetValue(gridKey, out List<MapChunk> chunkList))
                 {
@@ -358,15 +482,20 @@ namespace Kompile.Domain
                 }
                 else
                 {
-                    Object.Destroy(chunkObj);   
+                    // 로딩 도중 그리드가 해제되어 리스트가 사라진 경우 객체를 다시 풀로 반납
+                    chunk.Obj.SetActive(false);
+                    chunk.Obj.GetComponent<MeshFilter>().sharedMesh = null;
+                    chunk.Renderer.sharedMaterial = null;
+                    _chunkPool.Enqueue(chunk);
                     return false;
                 }
 
+                // 프레임 분산 로직 (3개당 1번 프레임 대기)
                 ++instantiateCounter;
                 if (0 == instantiateCounter % 3)
                 {
                     await Awaitable.NextFrameAsync();
-                    if (!_loadingGrids.Contains(gridKey))
+                    if (token.IsCancellationRequested)
                     {
                         return false;
                     }
@@ -376,6 +505,38 @@ namespace Kompile.Domain
             return true;
         }
 
+        private void CleanupGridState(int gridKey)
+        {
+            // 로딩 중인 태스크가 있다면 취소 플래그 세팅 (Dispose는 비동기 함수가 끝날 때 스스로 함)
+            if (_loadingTasks.TryGetValue(gridKey, out var cts))
+            {
+                cts.Cancel();
+            }
+
+            if (_spawnedMapObjects.TryGetValue(gridKey, out List<MapChunk> chunkList))
+            {
+                for (int i = 0; i < chunkList.Count; ++i)
+                {
+                    if (chunkList[i].Obj)
+                    {
+                        // Destroy 대신 비활성화하여 풀에 반환 (메모리 릭 방지를 위해 참조 제거)
+                        chunkList[i].Obj.SetActive(false);
+
+                        MeshFilter filter = chunkList[i].Obj.GetComponent<MeshFilter>();
+                        if (filter) filter.sharedMesh = null;
+                        if (chunkList[i].Renderer) chunkList[i].Renderer.sharedMaterial = null;
+
+                        _chunkPool.Enqueue(chunkList[i]);
+                    }
+                }
+                chunkList.Clear();
+                _spawnedMapObjects.Remove(gridKey);
+            }
+
+            _mapProvider.UnloadGridData(gridKey);
+            _activeGrids.Remove(gridKey);
+            _queuedGrids.Remove(gridKey);
+        }
 
         // --- Control Layer Visualization ---
         public async Awaitable<bool> UpdateLayerFormTileAsync(float3 playerWorldPos, float fadeDuration = 1.0f)
@@ -395,6 +556,7 @@ namespace Kompile.Domain
             await UpdateLayerVisibilityAsync(newLayerMask, false, fadeDuration);
             return true;
         }
+
         private async Awaitable UpdateLayerVisibilityAsync(int currentLayer, bool hideInsteadOfDim = false, float duration = 1.0f)
         {
             ++_layerTransitionToken;
@@ -484,42 +646,6 @@ namespace Kompile.Domain
             }
 
             _animatingChunksCache.Clear();
-        }
-
-
-        // --- 유틸리티 ---
-        private string GetMaterialAddress(string meshName)
-        {
-            if (_materialAddressCache.TryGetValue(meshName, out string cachedMatAddress)) return cachedMatAddress;
-
-            int lastUnderScore = meshName.LastIndexOf('_');
-            if (lastUnderScore == -1) return "Mat_Default";
-
-            int prefixEndIndex = -1;
-            int underscoreCount = 0;
-
-            for (int i = 0; i < meshName.Length; i++)
-            {
-                if ('_' == meshName[i])
-                {
-                    underscoreCount++;
-                    if (4 == underscoreCount)
-                    {
-                        prefixEndIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            string resultMatAddress = "Mat_Default";
-            if (prefixEndIndex != -1 && lastUnderScore > prefixEndIndex)
-            {
-                string atlases = meshName.Substring(prefixEndIndex + 1, lastUnderScore - prefixEndIndex - 1);
-                resultMatAddress = $"Mat_{atlases}";
-            }
-
-            _materialAddressCache[meshName] = resultMatAddress;
-            return resultMatAddress;
         }
 
         public override void OnDisable()

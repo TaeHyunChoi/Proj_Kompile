@@ -1,9 +1,10 @@
 namespace Kompile.Domain
 {
-    using UnityEngine;
-    using Entities;
     using Data;
+    using Entities;
     using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.UIElements;
 
     public class ActorMgr : GameLogicMgrBase
     {
@@ -100,6 +101,9 @@ namespace Kompile.Domain
             if (ActorBrainType.Player == actor.BrainType)
             {
                 _playerActor = actor;
+
+                MapUpdateRequest reqMapLayer = MapUpdateRequest.Create(_playerActor.transform.position);
+                InGame.Field.Enqueue(reqMapLayer);
             }
 
             return true;

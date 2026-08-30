@@ -5,16 +5,16 @@ namespace Kompile
     using UnityEngine;
     using Unity.Mathematics;
 
-    public class MapLayerUpdateRequest : RequestBase
+    public class MapUpdateRequest : RequestBase
     {
         private float3 _position;
         public float3 Position => _position;
 
-        public static MapLayerUpdateRequest Create(Vector3 pos)
+        public static MapUpdateRequest Create(Vector3 pos)
         {
-            var request = RequestProvider<MapLayerUpdateRequest>.Get();
+            var request = RequestProvider<MapUpdateRequest>.Get();
 
-            request.Type = RequestType.MapLayerUpdate;
+            request.Type = RequestType.Map_Update;
             request._position = new float3(pos.x, pos.y, pos.z);
 
             return request;
@@ -26,7 +26,7 @@ namespace Kompile
 
         public override void ReturnToPool()
         {
-            RequestProvider<MapLayerUpdateRequest>.Return(this);
+            RequestProvider<MapUpdateRequest>.Return(this);
         }
     }
 }

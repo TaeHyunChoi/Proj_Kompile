@@ -544,5 +544,46 @@ namespace Kompile.Domain
             }
         }
         #endregion
+
+        // 맵 매터리얼
+        private static readonly Dictionary<string, string> _materialAddressCache = new Dictionary<string, string>();
+        public static string GetMaterialAddress(string meshName)
+        {
+            if (_materialAddressCache.TryGetValue(meshName, out string cachedMatAddress))
+            {
+                return cachedMatAddress;
+            }
+
+            int lastUnderScore = meshName.LastIndexOf('_');
+            if (lastUnderScore == -1) return "Mat_Default";
+
+            int prefixEndIndex = -1;
+            int underscoreCount = 0;
+
+            for (int i = 0; i < meshName.Length; i++)
+            {
+                if ('_' == meshName[i])
+                {
+                    underscoreCount++;
+                    if (4 == underscoreCount)
+                    {
+                        prefixEndIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            string resultMatAddress = "Mat_Default";
+            if (prefixEndIndex != -1 && lastUnderScore > prefixEndIndex)
+            {
+                string atlases = meshName.Substring(prefixEndIndex + 1, lastUnderScore - prefixEndIndex - 1);
+                resultMatAddress = $"Mat_{atlases}";
+            }
+
+            _materialAddressCache[meshName] = resultMatAddress;
+            return resultMatAddress;
+        }
+
+
     }
 }

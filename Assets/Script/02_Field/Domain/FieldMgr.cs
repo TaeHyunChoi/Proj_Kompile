@@ -82,7 +82,7 @@ namespace Kompile.Domain
             bool done;
             switch (request.Type)
             {
-                case RequestType.MapLayerUpdate:
+                case RequestType.Map_Update:
                     _mapMgr.Enqueue(request);
                     done = false;
                     break;
