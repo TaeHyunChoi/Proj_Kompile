@@ -23,7 +23,7 @@ namespace Kompile.Editor.Utility
                 {
                     if (tile == null) return;
                     RefreshMesh(tile);
-                    tile.UpdateMaterialProperties();
+                    tile.UpdateVisual();
                     EditorUtility.SetDirty(tile);
                 };
             };
@@ -90,7 +90,7 @@ namespace Kompile.Editor.Utility
             if (tAtlas) type.GetField("topAtlasTexture", flags).SetValue(tile, tAtlas);
             if (sAtlas) type.GetField("sideAtlasTexture", flags).SetValue(tile, sAtlas);
 
-            tile.UpdateMaterialProperties();
+            tile.UpdateVisual();
             EditorUtility.SetDirty(tile);
         }
 

@@ -101,7 +101,7 @@ namespace Kompile.Editor.Tools
                 if (tile)
                 {
                     EditMapTileOperator.RefreshMesh(tile);
-                    tile.UpdateMaterialProperties();
+                    tile.UpdateVisual();
                 }
             }
 

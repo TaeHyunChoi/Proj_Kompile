@@ -4,27 +4,39 @@ namespace Kompile.Domain
     using UnityEngine;
     using Unity.Mathematics;
     using System.Collections.Generic;
-    
+    using Mono.Cecil.Cil;
+
     /// <summary> 맵 오브젝트 인스턴스 스폰, 시각적 트랜지션, 큐 기반 동기적 스트리밍 제어 (Instance-Centric) </summary>
     public class MapMgr : GameLogicMgrBase
     {
+        private const float PRELOAD_RADIUS = 10f;
+        private const float UNLOAD_RADIUS = 20f;
+        private const float CHECK_INTERVAL = 1f;
+        private const float GRID_SIZE = 64f;
+        private const float GRID_SIZE_RECIP = 1f / 64f;
+
+
         private MapProvider _mapProvider;
-        
-        // --- Manage: Map ---
-        private readonly Dictionary<int, List<MapChunk>> _spawnedMapObjects = new Dictionary<int, List<MapChunk>>();
         private Transform _rootTransform;
 
 
-        // --- Streaming State ---
+        private readonly Dictionary<int, List<MapChunk>> _spawnedMapObjects = new Dictionary<int, List<MapChunk>>();
         private readonly HashSet<int> _activeGrids = new HashSet<int>();
         private readonly HashSet<int> _loadingGrids = new HashSet<int>();
         private readonly List<int> _gridsToRemove = new List<int>();
         private readonly HashSet<int> _keepGrids = new HashSet<int>();
         private HashSet<int> _validGridKeys = new HashSet<int>();
+        private bool _isStreamingActive = false;
+        private float _streamTimer = CHECK_INTERVAL;
+
+        private Transform CameraTransform => InCamera.Main.transform;
+        public MapProvider Provider => _mapProvider;
+
 
         // --- Optimization Caches ---
         private readonly Dictionary<string, string> _materialAddressCache = new Dictionary<string, string>();
         private readonly List<MapChunk> _animatingChunksCache = new List<MapChunk>();
+
 
         // --- Rendering & Visuals ---
         private readonly MaterialPropertyBlock _propBlock = new MaterialPropertyBlock();
@@ -32,20 +44,8 @@ namespace Kompile.Domain
         private int _layerTransitionToken = 0;
         private ushort _lastLayerMask = ushort.MaxValue;
 
+
         // --- Camera & Streaming Config ---
-        private Transform CameraTransform => InCamera.Main.transform;
-
-        private bool _isStreamingActive = false;
-        private float _streamTimer = CHECK_INTERVAL;
-
-        private const float PRELOAD_RADIUS = 10f;
-        private const float UNLOAD_RADIUS = 20f;
-        private const float CHECK_INTERVAL = 1f;
-        private const float GRID_SIZE = 64f;
-        private const float GRID_SIZE_RECIP = 1f / 64f;
-
-        public MapProvider Provider => _mapProvider;
-
 #pragma warning disable 1998
         public override void RegisterToCache()
         {
@@ -82,13 +82,16 @@ namespace Kompile.Domain
 
             return update;
         }
-
         protected override async Awaitable<bool> HandleRequestAsync(RequestBase request)
         {
             await Awaitable.NextFrameAsync();
             
             switch (request.Type)
             {
+                case RequestType.MapLayerUpdate:
+                    var req = request as MapLayerUpdateRequest;
+                    _ = UpdateLayerFormTileAsync(req.Position);
+                    break;
                 default:
                     break;
             }
@@ -97,7 +100,8 @@ namespace Kompile.Domain
             return true;
         }
 
-        // --- 시스템 제어 ---
+
+        // --- System Control ---
         public void PlayStreaming(HashSet<int> validGridKeys)
         {
             _isStreamingActive = true;
@@ -138,7 +142,8 @@ namespace Kompile.Domain
             _mapProvider?.Dispose();
         }
 
-        // --- 스트리밍 (OnUpdate()에서 동기 호출) ---
+
+        // --- Streaming (sync) ---
         private void CheckAndTriggerStreaming()
         {
             if (!CameraTransform)
@@ -372,22 +377,23 @@ namespace Kompile.Domain
         }
 
 
-        // --- 레이어 시각적 제어 ---
-        public async Awaitable UpdateLayerFormTileAsync(float3 playerWorldPos, float fadeDuration = 1.0f)
+        // --- Control Layer Visualization ---
+        public async Awaitable<bool> UpdateLayerFormTileAsync(float3 playerWorldPos, float fadeDuration = 1.0f)
         {
             if (!_mapProvider.TryGetTileData(in playerWorldPos, out MapTileData tileData))
             {
-                return;
+                return false;
             }
 
             ushort newLayerMask = tileData.LayerMask;
             if (_lastLayerMask == newLayerMask)
             {
-                return;
+                return false;
             }
 
             _lastLayerMask = newLayerMask;
             await UpdateLayerVisibilityAsync(newLayerMask, false, fadeDuration);
+            return true;
         }
         private async Awaitable UpdateLayerVisibilityAsync(int currentLayer, bool hideInsteadOfDim = false, float duration = 1.0f)
         {
@@ -479,7 +485,7 @@ namespace Kompile.Domain
 
             _animatingChunksCache.Clear();
         }
-        //*/
+
 
         // --- 유틸리티 ---
         private string GetMaterialAddress(string meshName)

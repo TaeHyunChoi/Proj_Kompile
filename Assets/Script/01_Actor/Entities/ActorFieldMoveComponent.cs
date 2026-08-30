@@ -69,6 +69,9 @@ namespace Kompile.Entities
             }
 
             _transform.position = nextPos;
+
+            MapLayerUpdateRequest reqMapLayer = MapLayerUpdateRequest.Create(nextPos);
+            InGame.Field.Enqueue(reqMapLayer);
         }
 
         private bool TryAlernativeMove(float3 currentPos, float3 baseDir, int index, float moveDistance, out float3 nextPos)

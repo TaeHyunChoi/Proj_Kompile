@@ -5,13 +5,12 @@ namespace Kompile.Utility
     using Data;
 
     /// <summary>
-    /// [Framework] Utility 계층
     /// 상태 없이 오직 기하학적 연산만 처리하는 순수 함수군. Burst Compile 최적화 적용.
     /// </summary>
     [BurstCompile]
     public static class InUtilMapGeometry
     {
-        /// <summary> 점 p가 삼각형 (a, b, c) 내부에 있는지 외적 부호로 판별합니다. </summary>
+        /// <summary> 점 p가 삼각형 (a, b, c) 내부에 있는지 외적 부호로 판별 </summary>
         [BurstCompile]
         public static bool IsPointInTriangle(in float2 p, in float2 a, in float2 b, in float2 c)
         {
@@ -22,7 +21,7 @@ namespace Kompile.Utility
             return (cp1 >= 0f && cp2 >= 0f && cp3 >= 0f) || (cp1 <= 0f && cp2 <= 0f && cp3 <= 0f);
         }
 
-        /// <summary> 삼각형 (a, b, c) 내 점 p의 바리센트릭 가중치 좌표를 계산합니다. </summary>
+        /// <summary> 삼각형 (a, b, c) 내 점 p의 바리센트릭 가중치 좌표를 계산 </summary>
         [BurstCompile]
         public static void BarycentricCoords(in float2 p, in float2 a, in float2 b, in float2 c, out float3 result)
         {
@@ -42,9 +41,7 @@ namespace Kompile.Utility
             result = new float3(u, v, w);
         }
 
-        /// <summary> 
-        /// 💡 [Burst] 특정 타일 데이터와 로컬 좌표를 기반으로 서브타일 삼각면 매핑 레이어를 고속 탐색하여 통과 가능 여부를 판별합니다. 
-        /// </summary>
+        /// <summary> 특정 타일 데이터와 로컬 좌표를 기반으로 서브타일 삼각면 매핑 레이어를 고속 탐색하여 통과 가능 여부를 판별 </summary>
         [BurstCompile]
         public static bool IsTilePointWalkable(in MapTileData tile, in float2 localPos)
         {
@@ -66,9 +63,7 @@ namespace Kompile.Utility
             return false;
         }
 
-        /// <summary> 
-        /// 💡 [Burst] 특정 타일 데이터 내 서브타일 삼각면 가중치를 보간하여 완벽한 3D 지형 높이를 역산합니다. 
-        /// </summary>
+        /// <summary> 특정 타일 데이터 내 서브타일 삼각면 가중치를 보간하여 완벽한 3D 지형 높이를 역산 </summary>
         [BurstCompile]
         public static bool TrySampleTileHeight(in MapTileData tile, in float tileBaseY, in float2 localPos, in float heightStep, out float groundY)
         {
@@ -103,9 +98,7 @@ namespace Kompile.Utility
             return false;
         }
 
-        /// <summary> 
-        /// [Burst] 기준 방향 벡터와 회전 각도를 받아 XZ 평면 기준의 회전 변환된 방향 벡터를 초고속으로 계산합니다. 
-        /// </summary>
+        /// <summary>  기준 방향 벡터와 회전 각도를 받아 XZ 평면 기준의 회전 변환된 방향 벡터를 초고속으로 계산 </summary>
         [BurstCompile]
         public static void CalculateArcDirection(in float3 moveDir, in float angle, out float3 result)
         {

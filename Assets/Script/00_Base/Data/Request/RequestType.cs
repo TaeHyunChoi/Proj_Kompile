@@ -4,7 +4,11 @@ namespace Kompile.Data
     {
         None = 0,
 
+
         Actor_Instantiate,
         Actor_Update,
+
+
+        MapLayerUpdate,
     }
 }

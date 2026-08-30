@@ -11,6 +11,10 @@ namespace Kompile.Domain
         private HashSet<int> _mapRegistry;
         private MapMgr _mapMgr;
 
+
+        public MapMgr Map => _mapMgr;
+
+
         // --- override ---
         public override void RegisterToCache()
         {
@@ -75,8 +79,23 @@ namespace Kompile.Domain
 
         protected override async Awaitable<bool> HandleRequestAsync(RequestBase request)
         {
-            await Awaitable.NextFrameAsync();
-            return false;
+            bool done;
+            switch (request.Type)
+            {
+                case RequestType.MapLayerUpdate:
+                    _mapMgr.Enqueue(request);
+                    done = false;
+                    break;
+                default:
+                    return false;
+            }
+
+            if (done)
+            {
+                request.ReturnToPool();
+            }
+
+            return true;
         }
 
 
